@@ -1,0 +1,1683 @@
+openapi: 3.0.3
+info:
+  title: Campus Companion API
+  version: 0.1.0
+  description: >
+    REST API for Campus Companion. This file is the authoritative contract for
+    the endpoints it lists. It covers every student-facing P0 endpoint and the
+    main admin endpoints. The remaining admin CRUD endpoints in section 7.6 of
+    docs/09-api-contract.md (subjects, units, timetable, notice and resource
+    updates) and all P1 and P2 endpoints MUST be added here in the same change
+    that implements them.
+servers:
+  - url: /api/v1
+tags:
+  - name: Auth
+  - name: Student
+  - name: Resources
+  - name: Quiz
+  - name: AI
+  - name: Admin
+security:
+  - sessionCookie: []
+    csrfHeader: []
+
+paths:
+  /auth/csrf:
+    get:
+      tags: [Auth]
+      summary: Get a CSRF token
+      security: []
+      responses:
+        "200":
+          description: Token issued; also set as the XSRF-TOKEN cookie.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [headerName, token]
+                properties:
+                  headerName: { type: string, example: X-XSRF-TOKEN }
+                  token: { type: string }
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Log in
+      security:
+        - csrfHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LoginRequest" }
+      responses:
+        "200":
+          description: Logged in; session cookie set.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CurrentUser" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "423": { $ref: "#/components/responses/Problem" }
+        "429": { $ref: "#/components/responses/Problem" }
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Log out
+      responses:
+        "204": { description: Session ended. }
+        "401": { $ref: "#/components/responses/Problem" }
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Current user
+      responses:
+        "200":
+          description: The logged-in user.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CurrentUser" }
+        "401": { $ref: "#/components/responses/Problem" }
+
+  /auth/change-password:
+    post:
+      tags: [Auth]
+      summary: Change own password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ChangePasswordRequest" }
+      responses:
+        "204": { description: Password changed. }
+        "400": { $ref: "#/components/responses/Problem" }
+        "401": { $ref: "#/components/responses/Problem" }
+
+  /students/me:
+    get:
+      tags: [Student]
+      summary: Own profile
+      responses:
+        "200":
+          description: Profile.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StudentProfile" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+
+  /students/me/dashboard:
+    get:
+      tags: [Student]
+      summary: Dashboard summary
+      responses:
+        "200":
+          description: Dashboard.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Dashboard" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+
+  /attendance/me:
+    get:
+      tags: [Student]
+      summary: Own subject-wise attendance
+      responses:
+        "200":
+          description: Attendance summary.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AttendanceSummary" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+
+  /attendance/me/subjects/{subjectId}:
+    get:
+      tags: [Student]
+      summary: Own attendance history for one subject
+      parameters:
+        - { $ref: "#/components/parameters/SubjectIdPath" }
+        - { $ref: "#/components/parameters/Page" }
+        - { $ref: "#/components/parameters/Size" }
+      responses:
+        "200":
+          description: Page of attendance entries, newest first.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - { $ref: "#/components/schemas/PageMeta" }
+                  - type: object
+                    properties:
+                      content:
+                        type: array
+                        items: { $ref: "#/components/schemas/AttendanceEntry" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /marks/me:
+    get:
+      tags: [Student]
+      summary: Own published marks
+      parameters:
+        - { name: subjectId, in: query, schema: { type: integer, format: int64 } }
+        - { name: semester, in: query, schema: { type: integer, minimum: 1, maximum: 8 } }
+      responses:
+        "200":
+          description: Marks grouped by subject.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/SubjectMarks" }
+        "401": { $ref: "#/components/responses/Problem" }
+
+  /results/me:
+    get:
+      tags: [Student]
+      summary: Own semester results and CGPA
+      responses:
+        "200":
+          description: Results.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Results" }
+        "401": { $ref: "#/components/responses/Problem" }
+
+  /timetable/me:
+    get:
+      tags: [Student]
+      summary: Own timetable
+      parameters:
+        - name: day
+          in: query
+          description: 1 is Monday. Omit for the whole week.
+          schema: { type: integer, minimum: 1, maximum: 7 }
+      responses:
+        "200":
+          description: Timetable entries in day and time order.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/TimetableEntry" }
+        "401": { $ref: "#/components/responses/Problem" }
+
+  /notices:
+    get:
+      tags: [Student]
+      summary: Published notices visible to the user
+      parameters:
+        - name: category
+          in: query
+          schema: { $ref: "#/components/schemas/NoticeCategory" }
+        - { $ref: "#/components/parameters/Page" }
+        - { $ref: "#/components/parameters/Size" }
+      responses:
+        "200":
+          description: Page of notices, newest first.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - { $ref: "#/components/schemas/PageMeta" }
+                  - type: object
+                    properties:
+                      content:
+                        type: array
+                        items: { $ref: "#/components/schemas/Notice" }
+        "401": { $ref: "#/components/responses/Problem" }
+
+  /notices/{id}:
+    get:
+      tags: [Student]
+      summary: One published notice
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      responses:
+        "200":
+          description: Notice.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Notice" }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /subjects:
+    get:
+      tags: [Student]
+      summary: Subjects visible to the user
+      parameters:
+        - { name: semester, in: query, schema: { type: integer, minimum: 1, maximum: 8 } }
+      responses:
+        "200":
+          description: Subjects.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Subject" }
+
+  /subjects/{id}/units:
+    get:
+      tags: [Student]
+      summary: Units of a subject
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      responses:
+        "200":
+          description: Units in order.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Unit" }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /resources:
+    get:
+      tags: [Resources]
+      summary: Search published resources
+      parameters:
+        - { name: subjectId, in: query, schema: { type: integer, format: int64 } }
+        - { name: unitId, in: query, schema: { type: integer, format: int64 } }
+        - { name: semester, in: query, schema: { type: integer, minimum: 1, maximum: 8 } }
+        - name: type
+          in: query
+          schema: { $ref: "#/components/schemas/ResourceType" }
+        - { name: q, in: query, schema: { type: string, minLength: 2, maxLength: 100 } }
+        - { $ref: "#/components/parameters/Page" }
+        - { $ref: "#/components/parameters/Size" }
+        - name: sort
+          in: query
+          schema: { type: string, default: "createdAt,desc", enum: ["createdAt,desc", "createdAt,asc", "title,asc", "title,desc"] }
+      responses:
+        "200":
+          description: Page of resources.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ResourcePage" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "401": { $ref: "#/components/responses/Problem" }
+
+  /resources/{id}:
+    get:
+      tags: [Resources]
+      summary: Resource details
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      responses:
+        "200":
+          description: Resource.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Resource" }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /resources/{id}/download-url:
+    get:
+      tags: [Resources]
+      summary: Short-lived signed link to the file
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      responses:
+        "200":
+          description: Signed link valid for at most five minutes.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [url, expiresAt]
+                properties:
+                  url: { type: string, format: uri }
+                  expiresAt: { type: string, format: date-time }
+        "404": { $ref: "#/components/responses/Problem" }
+        "503": { $ref: "#/components/responses/Problem" }
+
+  /question-papers:
+    get:
+      tags: [Resources]
+      summary: Search previous-year and model papers
+      parameters:
+        - { name: subjectId, in: query, schema: { type: integer, format: int64 } }
+        - { name: examYear, in: query, schema: { type: integer, minimum: 2000, maximum: 2100 } }
+        - name: examType
+          in: query
+          schema: { $ref: "#/components/schemas/ExamType" }
+        - { name: q, in: query, schema: { type: string, minLength: 2, maxLength: 100 } }
+        - { $ref: "#/components/parameters/Page" }
+        - { $ref: "#/components/parameters/Size" }
+      responses:
+        "200":
+          description: Page of papers.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ResourcePage" }
+
+  /bookmarks/me:
+    get:
+      tags: [Resources]
+      summary: Own bookmarks
+      parameters:
+        - { $ref: "#/components/parameters/Page" }
+        - { $ref: "#/components/parameters/Size" }
+      responses:
+        "200":
+          description: Page of bookmarked resources.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ResourcePage" }
+
+  /bookmarks/{resourceId}:
+    parameters:
+      - name: resourceId
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    put:
+      tags: [Resources]
+      summary: Add a bookmark (idempotent)
+      responses:
+        "204": { description: Bookmarked. }
+        "404": { $ref: "#/components/responses/Problem" }
+    delete:
+      tags: [Resources]
+      summary: Remove a bookmark (idempotent)
+      responses:
+        "204": { description: Removed, or was not bookmarked. }
+
+  /quiz-attempts:
+    post:
+      tags: [Quiz]
+      summary: Start a test
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StartQuizRequest" }
+      responses:
+        "201":
+          description: Attempt created. Contains no correct answers.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/QuizAttemptStarted" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+
+  /quiz-attempts/me:
+    get:
+      tags: [Quiz]
+      summary: Own attempt history
+      parameters:
+        - { $ref: "#/components/parameters/Page" }
+        - { $ref: "#/components/parameters/Size" }
+      responses:
+        "200":
+          description: Page of attempts, newest first.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - { $ref: "#/components/schemas/PageMeta" }
+                  - type: object
+                    properties:
+                      content:
+                        type: array
+                        items: { $ref: "#/components/schemas/QuizAttemptSummary" }
+
+  /quiz-attempts/{id}:
+    get:
+      tags: [Quiz]
+      summary: Result of own attempt
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      responses:
+        "200":
+          description: Result.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/QuizResult" }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /quiz-attempts/{id}/submit:
+    post:
+      tags: [Quiz]
+      summary: Submit answers
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SubmitQuizRequest" }
+      responses:
+        "200":
+          description: Scored result.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/QuizResult" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+
+  /progress/me:
+    get:
+      tags: [Quiz]
+      summary: Unit performance and revision recommendations
+      responses:
+        "200":
+          description: Progress.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Progress" }
+
+  /ai/explain:
+    post:
+      tags: [AI]
+      summary: Explain a topic
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ExplainRequest" }
+      responses:
+        "200":
+          description: Explanation.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ExplainResponse" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+        "429": { $ref: "#/components/responses/Problem" }
+        "502": { $ref: "#/components/responses/Problem" }
+        "503": { $ref: "#/components/responses/Problem" }
+        "504": { $ref: "#/components/responses/Problem" }
+
+  /ai/summarize:
+    post:
+      tags: [AI]
+      summary: Summarize pasted text
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SummarizeRequest" }
+      responses:
+        "200":
+          description: Summary.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SummarizeResponse" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+        "429": { $ref: "#/components/responses/Problem" }
+        "502": { $ref: "#/components/responses/Problem" }
+        "503": { $ref: "#/components/responses/Problem" }
+        "504": { $ref: "#/components/responses/Problem" }
+
+  /ai/generate-quiz:
+    post:
+      tags: [AI]
+      summary: Generate practice questions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GenerateQuizRequest" }
+      responses:
+        "200":
+          description: Practice questions.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GenerateQuizResponse" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+        "429": { $ref: "#/components/responses/Problem" }
+        "502": { $ref: "#/components/responses/Problem" }
+        "503": { $ref: "#/components/responses/Problem" }
+        "504": { $ref: "#/components/responses/Problem" }
+
+  /ai/usage/me:
+    get:
+      tags: [AI]
+      summary: Own AI usage today
+      responses:
+        "200":
+          description: Usage.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AiUsage" }
+
+  /admin/students:
+    get:
+      tags: [Admin]
+      summary: Search students
+      parameters:
+        - { name: q, in: query, description: Roll number or name., schema: { type: string, maxLength: 100 } }
+        - { name: branch, in: query, schema: { type: string } }
+        - { name: semester, in: query, schema: { type: integer, minimum: 1, maximum: 8 } }
+        - { name: section, in: query, schema: { type: string } }
+        - { $ref: "#/components/parameters/Page" }
+        - { $ref: "#/components/parameters/Size" }
+      responses:
+        "200":
+          description: Page of students.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - { $ref: "#/components/schemas/PageMeta" }
+                  - type: object
+                    properties:
+                      content:
+                        type: array
+                        items: { $ref: "#/components/schemas/AdminStudent" }
+        "403": { $ref: "#/components/responses/Problem" }
+    post:
+      tags: [Admin]
+      summary: Create a student
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StudentWriteRequest" }
+      responses:
+        "201":
+          description: Created. The temporary password is returned only in this response.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StudentCreated" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+
+  /admin/students/{id}:
+    parameters:
+      - { $ref: "#/components/parameters/IdPath" }
+    get:
+      tags: [Admin]
+      summary: Read a student
+      responses:
+        "200":
+          description: Student.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminStudent" }
+        "404": { $ref: "#/components/responses/Problem" }
+    put:
+      tags: [Admin]
+      summary: Update a student
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StudentWriteRequest" }
+      responses:
+        "200":
+          description: Updated.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminStudent" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+
+  /admin/students/{id}/deactivate:
+    post:
+      tags: [Admin]
+      summary: Deactivate a student account
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      responses:
+        "204": { description: Deactivated. }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /admin/students/{id}/activate:
+    post:
+      tags: [Admin]
+      summary: Reactivate a student account
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      responses:
+        "204": { description: Activated. }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /admin/students/{id}/reset-password:
+    post:
+      tags: [Admin]
+      summary: Issue a temporary password and unlock the account
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      responses:
+        "200":
+          description: The temporary password, shown once.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [temporaryPassword]
+                properties:
+                  temporaryPassword: { type: string }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /admin/attendance:
+    get:
+      tags: [Admin]
+      summary: Attendance sheet for one class
+      parameters:
+        - { name: subjectId, in: query, required: true, schema: { type: integer, format: int64 } }
+        - { name: section, in: query, required: true, schema: { type: string } }
+        - { name: classDate, in: query, required: true, schema: { type: string, format: date } }
+        - { name: periodNo, in: query, required: true, schema: { type: integer, minimum: 1, maximum: 12 } }
+      responses:
+        "200":
+          description: Students of the section with any saved status.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AttendanceSheet" }
+    put:
+      tags: [Admin]
+      summary: Save a whole attendance sheet
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AttendanceSheet" }
+      responses:
+        "200":
+          description: Saved in one transaction.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SheetSaved" }
+        "400": { $ref: "#/components/responses/Problem" }
+
+  /admin/assessments:
+    get:
+      tags: [Admin]
+      summary: List assessments
+      parameters:
+        - { name: subjectId, in: query, schema: { type: integer, format: int64 } }
+      responses:
+        "200":
+          description: Assessments.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Assessment" }
+    post:
+      tags: [Admin]
+      summary: Create an assessment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AssessmentWriteRequest" }
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Assessment" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+
+  /admin/assessments/{id}:
+    put:
+      tags: [Admin]
+      summary: Update an assessment, including publishing it
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AssessmentWriteRequest" }
+      responses:
+        "200":
+          description: Updated.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Assessment" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /admin/assessments/{id}/marks:
+    parameters:
+      - { $ref: "#/components/parameters/IdPath" }
+    get:
+      tags: [Admin]
+      summary: Marks sheet for an assessment
+      responses:
+        "200":
+          description: Marks sheet.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MarksSheet" }
+        "404": { $ref: "#/components/responses/Problem" }
+    put:
+      tags: [Admin]
+      summary: Save a marks sheet
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MarksSheet" }
+      responses:
+        "200":
+          description: Saved in one transaction and audited.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SheetSaved" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /admin/semester-results:
+    put:
+      tags: [Admin]
+      summary: Create or update one student's semester result
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SemesterResultWriteRequest" }
+      responses:
+        "200":
+          description: Saved and audited.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SemesterResult" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /admin/notices:
+    get:
+      tags: [Admin]
+      summary: List all notices including drafts
+      parameters:
+        - { $ref: "#/components/parameters/Page" }
+        - { $ref: "#/components/parameters/Size" }
+      responses:
+        "200":
+          description: Page of notices.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - { $ref: "#/components/schemas/PageMeta" }
+                  - type: object
+                    properties:
+                      content:
+                        type: array
+                        items: { $ref: "#/components/schemas/Notice" }
+    post:
+      tags: [Admin]
+      summary: Create a draft notice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/NoticeWriteRequest" }
+      responses:
+        "201":
+          description: Created as a draft.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Notice" }
+        "400": { $ref: "#/components/responses/Problem" }
+
+  /admin/notices/{id}/publish:
+    post:
+      tags: [Admin]
+      summary: Publish a notice
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      responses:
+        "204": { description: Published. }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /admin/resources:
+    post:
+      tags: [Admin]
+      summary: Upload a resource
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file, metadata]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: PDF, at most 10 MB.
+                metadata: { $ref: "#/components/schemas/ResourceMetadata" }
+            encoding:
+              metadata:
+                contentType: application/json
+      responses:
+        "201":
+          description: Stored and published.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Resource" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "413": { $ref: "#/components/responses/Problem" }
+        "415": { $ref: "#/components/responses/Problem" }
+        "503": { $ref: "#/components/responses/Problem" }
+
+  /admin/quiz-questions:
+    get:
+      tags: [Admin]
+      summary: List questions
+      parameters:
+        - { name: subjectId, in: query, schema: { type: integer, format: int64 } }
+        - { name: unitId, in: query, schema: { type: integer, format: int64 } }
+        - name: status
+          in: query
+          schema: { $ref: "#/components/schemas/QuestionStatus" }
+        - { $ref: "#/components/parameters/Page" }
+        - { $ref: "#/components/parameters/Size" }
+      responses:
+        "200":
+          description: Page of questions including correct options.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - { $ref: "#/components/schemas/PageMeta" }
+                  - type: object
+                    properties:
+                      content:
+                        type: array
+                        items: { $ref: "#/components/schemas/AdminQuizQuestion" }
+    post:
+      tags: [Admin]
+      summary: Create a question
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/QuizQuestionWriteRequest" }
+      responses:
+        "201":
+          description: Created as a draft.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminQuizQuestion" }
+        "400": { $ref: "#/components/responses/Problem" }
+
+  /admin/quiz-questions/{id}:
+    put:
+      tags: [Admin]
+      summary: Update a question, including its status
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/QuizQuestionWriteRequest" }
+      responses:
+        "200":
+          description: Updated.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminQuizQuestion" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: JSESSIONID
+    csrfHeader:
+      type: apiKey
+      in: header
+      name: X-XSRF-TOKEN
+      description: Required on POST, PUT, PATCH and DELETE.
+
+  parameters:
+    IdPath:
+      name: id
+      in: path
+      required: true
+      schema: { type: integer, format: int64 }
+    SubjectIdPath:
+      name: subjectId
+      in: path
+      required: true
+      schema: { type: integer, format: int64 }
+    Page:
+      name: page
+      in: query
+      schema: { type: integer, minimum: 0, default: 0 }
+    Size:
+      name: size
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+
+  responses:
+    Problem:
+      description: Error in RFC 9457 problem-detail format. See the code field.
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+
+  schemas:
+    Problem:
+      type: object
+      required: [type, title, status, code]
+      properties:
+        type: { type: string, example: "about:blank" }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string }
+        code: { $ref: "#/components/schemas/ErrorCode" }
+        traceId: { type: string }
+        available:
+          type: integer
+          description: Present with QUIZ_NOT_ENOUGH_QUESTIONS.
+        errors:
+          type: array
+          items:
+            type: object
+            required: [field, message]
+            properties:
+              field: { type: string }
+              message: { type: string }
+
+    ErrorCode:
+      type: string
+      enum:
+        - VALIDATION_FAILED
+        - AUTH_REQUIRED
+        - AUTH_INVALID_CREDENTIALS
+        - AUTH_PASSWORD_CHANGE_REQUIRED
+        - AUTH_ACCOUNT_LOCKED
+        - ACCESS_DENIED
+        - CSRF_INVALID
+        - NOT_FOUND
+        - CONFLICT
+        - QUIZ_NOT_ENOUGH_QUESTIONS
+        - QUIZ_ALREADY_SUBMITTED
+        - QUIZ_ATTEMPT_EXPIRED
+        - UPLOAD_TOO_LARGE
+        - UPLOAD_INVALID_TYPE
+        - RATE_LIMITED
+        - AI_REQUEST_DECLINED
+        - AI_QUOTA_EXCEEDED
+        - AI_INVALID_RESPONSE
+        - AI_UNAVAILABLE
+        - AI_TIMEOUT
+        - STORAGE_UNAVAILABLE
+        - INTERNAL_ERROR
+
+    PageMeta:
+      type: object
+      required: [page, size, totalElements, totalPages]
+      properties:
+        page: { type: integer }
+        size: { type: integer }
+        totalElements: { type: integer, format: int64 }
+        totalPages: { type: integer }
+
+    Role:
+      type: string
+      enum: [STUDENT, ADMIN]
+
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username: { type: string, minLength: 1, maxLength: 50 }
+        password: { type: string, minLength: 1, maxLength: 72, format: password }
+
+    ChangePasswordRequest:
+      type: object
+      required: [currentPassword, newPassword]
+      properties:
+        currentPassword: { type: string, minLength: 1, maxLength: 72, format: password }
+        newPassword: { type: string, minLength: 8, maxLength: 72, format: password }
+
+    CurrentUser:
+      type: object
+      required: [username, displayName, role, mustChangePassword]
+      properties:
+        username: { type: string }
+        displayName: { type: string }
+        role: { $ref: "#/components/schemas/Role" }
+        mustChangePassword: { type: boolean }
+
+    StudentProfile:
+      type: object
+      required: [rollNo, fullName, branch, currentSemester, section, admissionYear]
+      properties:
+        rollNo: { type: string }
+        fullName: { type: string }
+        branch: { type: string }
+        currentSemester: { type: integer, minimum: 1, maximum: 8 }
+        section: { type: string }
+        admissionYear: { type: integer }
+        email: { type: string, nullable: true }
+        phone: { type: string, nullable: true }
+
+    Dashboard:
+      type: object
+      properties:
+        attendance:
+          type: object
+          properties:
+            overallPercent: { type: number, nullable: true }
+            requiredPercent: { type: number }
+            subjectsBelowRequired: { type: integer }
+        results:
+          type: object
+          properties:
+            latestSgpa: { type: number, nullable: true }
+            cgpa: { type: number, nullable: true }
+        todayClasses:
+          type: array
+          items: { $ref: "#/components/schemas/TimetableEntry" }
+        upcomingDeadlines:
+          type: array
+          items: { $ref: "#/components/schemas/Notice" }
+        recentNotices:
+          type: array
+          items: { $ref: "#/components/schemas/Notice" }
+        recommendations:
+          type: array
+          items: { $ref: "#/components/schemas/Recommendation" }
+
+    AttendanceSummary:
+      type: object
+      required: [requiredPercent, subjects]
+      properties:
+        requiredPercent: { type: number }
+        overallPercent: { type: number, nullable: true }
+        subjects:
+          type: array
+          items:
+            type: object
+            required: [subjectId, subjectCode, subjectName, classesHeld, classesAttended, belowRequired]
+            properties:
+              subjectId: { type: integer, format: int64 }
+              subjectCode: { type: string }
+              subjectName: { type: string }
+              classesHeld: { type: integer }
+              classesAttended: { type: integer }
+              percent: { type: number, nullable: true }
+              belowRequired: { type: boolean }
+
+    AttendanceStatus:
+      type: string
+      enum: [PRESENT, ABSENT]
+
+    AttendanceEntry:
+      type: object
+      required: [classDate, periodNo, status]
+      properties:
+        classDate: { type: string, format: date }
+        periodNo: { type: integer }
+        status: { $ref: "#/components/schemas/AttendanceStatus" }
+
+    AttendanceSheet:
+      type: object
+      required: [subjectId, section, classDate, periodNo, entries]
+      properties:
+        subjectId: { type: integer, format: int64 }
+        section: { type: string }
+        classDate: { type: string, format: date }
+        periodNo: { type: integer, minimum: 1, maximum: 12 }
+        entries:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [studentId, status]
+            properties:
+              studentId: { type: integer, format: int64 }
+              rollNo: { type: string, readOnly: true }
+              fullName: { type: string, readOnly: true }
+              status:
+                allOf:
+                  - { $ref: "#/components/schemas/AttendanceStatus" }
+                nullable: true
+
+    SheetSaved:
+      type: object
+      required: [saved, changed]
+      properties:
+        saved: { type: integer }
+        changed: { type: integer }
+
+    SubjectMarks:
+      type: object
+      properties:
+        subjectId: { type: integer, format: int64 }
+        subjectCode: { type: string }
+        subjectName: { type: string }
+        assessments:
+          type: array
+          items:
+            type: object
+            properties:
+              assessmentId: { type: integer, format: int64 }
+              name: { type: string }
+              type: { $ref: "#/components/schemas/AssessmentType" }
+              maxMarks: { type: number }
+              marksObtained: { type: number, nullable: true }
+              absent: { type: boolean }
+              percent: { type: number, nullable: true }
+
+    AssessmentType:
+      type: string
+      enum: [INTERNAL, ASSIGNMENT, LAB, SEMESTER_EXAM]
+
+    Assessment:
+      allOf:
+        - { $ref: "#/components/schemas/AssessmentWriteRequest" }
+        - type: object
+          required: [id]
+          properties:
+            id: { type: integer, format: int64 }
+
+    AssessmentWriteRequest:
+      type: object
+      required: [subjectId, name, type, maxMarks, academicYear, published]
+      properties:
+        subjectId: { type: integer, format: int64 }
+        name: { type: string, minLength: 1, maxLength: 100 }
+        type: { $ref: "#/components/schemas/AssessmentType" }
+        maxMarks: { type: number, exclusiveMinimum: true, minimum: 0, maximum: 999.99 }
+        heldOn: { type: string, format: date, nullable: true }
+        academicYear: { type: string, pattern: '^\d{4}-\d{2}$', example: 2026-27 }
+        published: { type: boolean }
+
+    MarksSheet:
+      type: object
+      required: [entries]
+      properties:
+        entries:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [studentId, absent]
+            properties:
+              studentId: { type: integer, format: int64 }
+              rollNo: { type: string, readOnly: true }
+              fullName: { type: string, readOnly: true }
+              marksObtained: { type: number, minimum: 0, nullable: true }
+              absent: { type: boolean }
+
+    ResultStatus:
+      type: string
+      enum: [PASS, FAIL, WITHHELD]
+
+    SemesterResult:
+      type: object
+      required: [semester, sgpa, creditsEarned, resultStatus]
+      properties:
+        semester: { type: integer, minimum: 1, maximum: 8 }
+        sgpa: { type: number, minimum: 0, maximum: 10 }
+        creditsEarned: { type: integer, minimum: 0 }
+        resultStatus: { $ref: "#/components/schemas/ResultStatus" }
+
+    SemesterResultWriteRequest:
+      allOf:
+        - { $ref: "#/components/schemas/SemesterResult" }
+        - type: object
+          required: [studentId, published]
+          properties:
+            studentId: { type: integer, format: int64 }
+            published: { type: boolean }
+
+    Results:
+      type: object
+      required: [semesters]
+      properties:
+        cgpa: { type: number, nullable: true }
+        semesters:
+          type: array
+          items: { $ref: "#/components/schemas/SemesterResult" }
+
+    TimetableEntry:
+      type: object
+      properties:
+        dayOfWeek: { type: integer, minimum: 1, maximum: 7 }
+        startTime: { type: string, example: "09:00" }
+        endTime: { type: string, example: "09:50" }
+        subjectCode: { type: string }
+        subjectName: { type: string }
+        room: { type: string, nullable: true }
+        facultyName: { type: string, nullable: true }
+
+    NoticeCategory:
+      type: string
+      enum: [GENERAL, EXAM, ASSIGNMENT, EVENT]
+
+    Notice:
+      type: object
+      required: [id, title, body, category, status]
+      properties:
+        id: { type: integer, format: int64 }
+        title: { type: string }
+        body: { type: string }
+        category: { $ref: "#/components/schemas/NoticeCategory" }
+        targetBranch: { type: string, nullable: true }
+        targetSemester: { type: integer, nullable: true }
+        dueDate: { type: string, format: date, nullable: true }
+        status: { type: string, enum: [DRAFT, PUBLISHED] }
+        publishedAt: { type: string, format: date-time, nullable: true }
+
+    NoticeWriteRequest:
+      type: object
+      required: [title, body, category]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 200 }
+        body: { type: string, minLength: 1, maxLength: 5000 }
+        category: { $ref: "#/components/schemas/NoticeCategory" }
+        targetBranch: { type: string, maxLength: 20, nullable: true }
+        targetSemester: { type: integer, minimum: 1, maximum: 8, nullable: true }
+        dueDate: { type: string, format: date, nullable: true }
+
+    Subject:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        code: { type: string }
+        name: { type: string }
+        branch: { type: string }
+        semester: { type: integer }
+        credits: { type: integer }
+
+    Unit:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        unitNo: { type: integer }
+        title: { type: string }
+
+    ResourceType:
+      type: string
+      enum: [NOTES, SYLLABUS, LAB_MANUAL, QUESTION_PAPER, MODEL_PAPER, IMPORTANT_QUESTIONS]
+
+    ExamType:
+      type: string
+      enum: [INTERNAL, SEMESTER, SUPPLEMENTARY, MODEL]
+
+    QuestionPaperDetails:
+      type: object
+      required: [examYear, examType]
+      properties:
+        examYear: { type: integer, minimum: 2000, maximum: 2100 }
+        examType: { $ref: "#/components/schemas/ExamType" }
+        maxMarks: { type: integer, minimum: 1, nullable: true }
+
+    ResourceMetadata:
+      type: object
+      required: [title, subjectId, type]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 200 }
+        description: { type: string, maxLength: 1000, nullable: true }
+        subjectId: { type: integer, format: int64 }
+        unitId: { type: integer, format: int64, nullable: true }
+        type: { $ref: "#/components/schemas/ResourceType" }
+        questionPaper:
+          allOf:
+            - { $ref: "#/components/schemas/QuestionPaperDetails" }
+          nullable: true
+
+    Resource:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        title: { type: string }
+        description: { type: string, nullable: true }
+        subjectId: { type: integer, format: int64 }
+        subjectCode: { type: string }
+        unitId: { type: integer, format: int64, nullable: true }
+        unitNo: { type: integer, nullable: true }
+        type: { $ref: "#/components/schemas/ResourceType" }
+        fileSizeBytes: { type: integer, format: int64 }
+        createdAt: { type: string, format: date-time }
+        bookmarked: { type: boolean }
+        questionPaper:
+          allOf:
+            - { $ref: "#/components/schemas/QuestionPaperDetails" }
+          nullable: true
+
+    ResourcePage:
+      allOf:
+        - { $ref: "#/components/schemas/PageMeta" }
+        - type: object
+          properties:
+            content:
+              type: array
+              items: { $ref: "#/components/schemas/Resource" }
+
+    OptionKey:
+      type: string
+      enum: [A, B, C, D]
+
+    StartQuizRequest:
+      type: object
+      required: [subjectId, unitId, questionCount]
+      properties:
+        subjectId: { type: integer, format: int64 }
+        unitId: { type: integer, format: int64 }
+        questionCount: { type: integer, enum: [5, 10, 20] }
+
+    QuizOption:
+      type: object
+      required: [key, text]
+      properties:
+        key: { $ref: "#/components/schemas/OptionKey" }
+        text: { type: string }
+
+    QuizAttemptStarted:
+      type: object
+      required: [attemptId, startedAt, expiresAt, durationSeconds, questions]
+      properties:
+        attemptId: { type: integer, format: int64 }
+        startedAt: { type: string, format: date-time }
+        expiresAt: { type: string, format: date-time }
+        durationSeconds: { type: integer }
+        questions:
+          type: array
+          items:
+            type: object
+            required: [questionId, position, text, options]
+            properties:
+              questionId: { type: integer, format: int64 }
+              position: { type: integer }
+              text: { type: string }
+              options:
+                type: array
+                minItems: 4
+                maxItems: 4
+                items: { $ref: "#/components/schemas/QuizOption" }
+
+    SubmitQuizRequest:
+      type: object
+      required: [answers]
+      properties:
+        answers:
+          type: array
+          maxItems: 20
+          items:
+            type: object
+            required: [questionId]
+            properties:
+              questionId: { type: integer, format: int64 }
+              selectedOption:
+                allOf:
+                  - { $ref: "#/components/schemas/OptionKey" }
+                nullable: true
+
+    QuizAttemptSummary:
+      type: object
+      properties:
+        attemptId: { type: integer, format: int64 }
+        subjectCode: { type: string }
+        unitNo: { type: integer }
+        unitTitle: { type: string }
+        status: { type: string, enum: [IN_PROGRESS, SUBMITTED, EXPIRED] }
+        score: { type: integer, nullable: true }
+        questionCount: { type: integer }
+        startedAt: { type: string, format: date-time }
+
+    QuizResult:
+      type: object
+      required: [attemptId, status, questionCount, items]
+      properties:
+        attemptId: { type: integer, format: int64 }
+        status: { type: string, enum: [SUBMITTED, EXPIRED] }
+        score: { type: integer }
+        questionCount: { type: integer }
+        percent: { type: number }
+        submittedAt: { type: string, format: date-time, nullable: true }
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              questionId: { type: integer, format: int64 }
+              position: { type: integer }
+              text: { type: string }
+              options:
+                type: array
+                items: { $ref: "#/components/schemas/QuizOption" }
+              selectedOption:
+                allOf:
+                  - { $ref: "#/components/schemas/OptionKey" }
+                nullable: true
+              correctOption: { $ref: "#/components/schemas/OptionKey" }
+              correct: { type: boolean }
+              explanation: { type: string }
+
+    PerformanceLevel:
+      type: string
+      enum: [NOT_ENOUGH_DATA, NEEDS_REVISION, IMPROVING, STRONG]
+
+    Recommendation:
+      type: object
+      properties:
+        subjectId: { type: integer, format: int64 }
+        subjectCode: { type: string }
+        unitId: { type: integer, format: int64 }
+        unitNo: { type: integer }
+        unitTitle: { type: string }
+        accuracyPercent: { type: number }
+        resources:
+          type: array
+          maxItems: 3
+          items:
+            type: object
+            properties:
+              id: { type: integer, format: int64 }
+              title: { type: string }
+              type: { $ref: "#/components/schemas/ResourceType" }
+
+    Progress:
+      type: object
+      properties:
+        units:
+          type: array
+          items:
+            type: object
+            properties:
+              subjectId: { type: integer, format: int64 }
+              subjectCode: { type: string }
+              unitId: { type: integer, format: int64 }
+              unitNo: { type: integer }
+              unitTitle: { type: string }
+              answered: { type: integer }
+              correct: { type: integer }
+              accuracyPercent: { type: number, nullable: true }
+              level: { $ref: "#/components/schemas/PerformanceLevel" }
+        recommendations:
+          type: array
+          items: { $ref: "#/components/schemas/Recommendation" }
+
+    AiBasis:
+      type: string
+      enum: [GENERAL_KNOWLEDGE, PROVIDED_TEXT, MIXED]
+
+    ExplainRequest:
+      type: object
+      required: [topic, answerFormat]
+      properties:
+        topic: { type: string, minLength: 3, maxLength: 200 }
+        subjectId: { type: integer, format: int64, nullable: true }
+        unitId: { type: integer, format: int64, nullable: true }
+        answerFormat: { type: string, enum: [SIMPLE, FIVE_MARK, TEN_MARK] }
+        context: { type: string, maxLength: 2000, nullable: true }
+
+    ExplainResponse:
+      type: object
+      required: [topic, answerFormat, explanation, keyPoints, basis, notice, promptVersion]
+      properties:
+        topic: { type: string }
+        answerFormat: { type: string, enum: [SIMPLE, FIVE_MARK, TEN_MARK] }
+        explanation: { type: string }
+        keyPoints:
+          type: array
+          minItems: 1
+          maxItems: 8
+          items: { type: string }
+        example: { type: string, nullable: true }
+        basis: { $ref: "#/components/schemas/AiBasis" }
+        notice: { type: string }
+        promptVersion: { type: string }
+
+    SummarizeRequest:
+      type: object
+      required: [text, style]
+      properties:
+        text: { type: string, minLength: 200, maxLength: 12000 }
+        style: { type: string, enum: [SHORT, REVISION_NOTES] }
+        subjectId: { type: integer, format: int64, nullable: true }
+
+    SummarizeResponse:
+      type: object
+      required: [summary, keyPoints, definitions, basis, notice, promptVersion]
+      properties:
+        summary: { type: string }
+        keyPoints:
+          type: array
+          maxItems: 10
+          items: { type: string }
+        definitions:
+          type: array
+          maxItems: 15
+          items:
+            type: object
+            required: [term, meaning]
+            properties:
+              term: { type: string }
+              meaning: { type: string }
+        basis: { $ref: "#/components/schemas/AiBasis" }
+        notice: { type: string }
+        promptVersion: { type: string }
+
+    GenerateQuizRequest:
+      type: object
+      required: [questionType, count]
+      description: Exactly one of topic or sourceText is required.
+      properties:
+        topic: { type: string, minLength: 3, maxLength: 200, nullable: true }
+        sourceText: { type: string, minLength: 200, maxLength: 8000, nullable: true }
+        subjectId: { type: integer, format: int64, nullable: true }
+        unitId: { type: integer, format: int64, nullable: true }
+        questionType: { type: string, enum: [MCQ, SHORT, LONG] }
+        count: { type: integer, minimum: 1, maximum: 10 }
+
+    GenerateQuizResponse:
+      type: object
+      required: [questions, requested, returned, basis, notice, promptVersion]
+      properties:
+        questions:
+          type: array
+          items:
+            type: object
+            required: [type, question, answer, explanation]
+            properties:
+              type: { type: string, enum: [MCQ, SHORT, LONG] }
+              question: { type: string }
+              options:
+                type: array
+                nullable: true
+                minItems: 4
+                maxItems: 4
+                items: { type: string }
+              correctOption:
+                allOf:
+                  - { $ref: "#/components/schemas/OptionKey" }
+                nullable: true
+              answer: { type: string }
+              explanation: { type: string }
+        requested: { type: integer }
+        returned: { type: integer }
+        basis: { $ref: "#/components/schemas/AiBasis" }
+        notice: { type: string }
+        promptVersion: { type: string }
+
+    AiUsage:
+      type: object
+      required: [dailyLimit, usedToday, remainingToday, resetsAt, enabled]
+      properties:
+        dailyLimit: { type: integer }
+        usedToday: { type: integer }
+        remainingToday: { type: integer }
+        resetsAt: { type: string, format: date-time }
+        enabled: { type: boolean }
+
+    StudentWriteRequest:
+      type: object
+      required: [rollNo, fullName, branch, currentSemester, section, admissionYear]
+      properties:
+        rollNo: { type: string, minLength: 1, maxLength: 20, pattern: "^[A-Za-z0-9]+$" }
+        fullName: { type: string, minLength: 1, maxLength: 120 }
+        branch: { type: string, minLength: 1, maxLength: 20 }
+        currentSemester: { type: integer, minimum: 1, maximum: 8 }
+        section: { type: string, minLength: 1, maxLength: 5 }
+        admissionYear: { type: integer, minimum: 2000, maximum: 2100 }
+        email: { type: string, format: email, maxLength: 254, nullable: true }
+        phone: { type: string, maxLength: 20, nullable: true }
+
+    AdminStudent:
+      allOf:
+        - { $ref: "#/components/schemas/StudentProfile" }
+        - type: object
+          required: [id, active]
+          properties:
+            id: { type: integer, format: int64 }
+            active: { type: boolean }
+            locked: { type: boolean }
+            lastLoginAt: { type: string, format: date-time, nullable: true }
+
+    StudentCreated:
+      type: object
+      required: [student, temporaryPassword]
+      properties:
+        student: { $ref: "#/components/schemas/AdminStudent" }
+        temporaryPassword: { type: string }
+
+    QuestionStatus:
+      type: string
+      enum: [DRAFT, PUBLISHED, RETIRED]
+
+    QuizQuestionWriteRequest:
+      type: object
+      required: [subjectId, unitId, questionText, optionA, optionB, optionC, optionD, correctOption, explanation, difficulty, status]
+      properties:
+        subjectId: { type: integer, format: int64 }
+        unitId: { type: integer, format: int64 }
+        questionText: { type: string, minLength: 1, maxLength: 1000 }
+        optionA: { type: string, minLength: 1, maxLength: 300 }
+        optionB: { type: string, minLength: 1, maxLength: 300 }
+        optionC: { type: string, minLength: 1, maxLength: 300 }
+        optionD: { type: string, minLength: 1, maxLength: 300 }
+        correctOption: { $ref: "#/components/schemas/OptionKey" }
+        explanation: { type: string, minLength: 1, maxLength: 2000 }
+        difficulty: { type: string, enum: [EASY, MEDIUM, HARD] }
+        status: { $ref: "#/components/schemas/QuestionStatus" }
+
+    AdminQuizQuestion:
+      allOf:
+        - { $ref: "#/components/schemas/QuizQuestionWriteRequest" }
+        - type: object
+          required: [id, source]
+          properties:
+            id: { type: integer, format: int64 }
+            source: { type: string, enum: [ADMIN, AI_GENERATED] }

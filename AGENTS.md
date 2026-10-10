@@ -1,0 +1,190 @@
+# AGENTS.md
+
+Instructions for any coding agent working in this repository. Human contributors follow the same rules; see also [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## 1. Project context
+
+**Campus Companion** is a Java-first student management and learning platform, built as a Java assignment. One Spring Boot application serves a REST API and a static HTML, CSS and JavaScript frontend. Data is in Supabase PostgreSQL, files in Supabase Storage, and an AI provider is called from Java. It is deployed to Heroku.
+
+The owner must be able to explain the Java code in a viva. Prefer clear, conventional Java over clever or generated code.
+
+**Current state:** documentation phase. Check [docs/16-implementation-plan.md](docs/16-implementation-plan.md) for what has been built before assuming anything exists.
+
+## 2. Approved stack
+
+Java 21 · Spring Boot (Web, Security, Data JPA, Validation, Actuator) · Maven · PostgreSQL on Supabase · Flyway · Supabase Storage · JUnit 5, Mockito, Spring Boot Test, Testcontainers · plain HTML, CSS, JavaScript.
+
+**Not approved** without an accepted decision record: Node.js or Express, any second backend, any frontend framework or bundler, MySQL or H2, JWT authentication, the Supabase client in the browser, Lombok, CDN-loaded libraries. The full list and versions are in [docs/04-TRD.md](docs/04-TRD.md).
+
+## 3. The seven working principles
+
+1. **Read before coding.** Read the documents listed in section 4 for the area you are changing.
+2. **Do not invent missing decisions.** If something is unspecified or marked `TBD`, stop and report it. Do not silently choose an architecture, a library, a version or a business rule.
+3. **Keep one source of truth.** API details live in the API contract and `openapi.yaml`; schema details in the database design and migrations; AI behaviour in the AI rules. Do not restate them elsewhere; link.
+4. **Update documentation with code.** A change to an endpoint, table, permission or feature includes the matching document and test updates in the same change.
+5. **Work in small tasks.** Implement one task from the implementation plan, verify it, then move to the next. Never implement several phases in one change.
+6. **Verify every claim.** Report what you actually ran and what actually happened. Never say tests pass, an integration works or a deployment succeeded unless you ran it and saw the result in this session.
+7. **Protect data and infrastructure.** Never expose credentials, never use real student data, never make destructive or production changes without explicit authorization.
+
+## 4. Required reading
+
+Always, before the first change in a session:
+
+- This file, [SECURITY_RULES.md](SECURITY_RULES.md) and [AI_AGENT_SECURITY_RULES.md](AI_AGENT_SECURITY_RULES.md).
+- The task you are implementing in [docs/16-implementation-plan.md](docs/16-implementation-plan.md).
+
+Then, by area:
+
+| If you are changing | Read |
+| --- | --- |
+| Any feature | The requirement in [02-PRD.md](docs/02-PRD.md); [05-architecture.md](docs/05-architecture.md) |
+| An endpoint | [09-api-contract.md](docs/09-api-contract.md), [openapi.yaml](docs/openapi.yaml), [10-authorization-matrix.md](docs/10-authorization-matrix.md) |
+| An entity, repository or migration | [08-database-design.md](docs/08-database-design.md) |
+| Login, sessions, roles, uploads | [11-security-plan.md](docs/11-security-plan.md) |
+| A page or frontend module | [06-app-flow.md](docs/06-app-flow.md), [07-ui-ux-spec.md](docs/07-ui-ux-spec.md) |
+| Anything under `ai` | [12](docs/12-AI-features-spec.md), [13](docs/13-AI-rules.md), [14](docs/14-AI-security-and-privacy.md), [15](docs/15-AI-features-handoff.md) |
+| Tests | [17-testing-strategy.md](docs/17-testing-strategy.md) |
+| Build, configuration, deployment | [18-production-plan.md](docs/18-production-plan.md) |
+
+## 5. Repository structure
+
+```
+.
+├── AGENTS.md, SECURITY_RULES.md, AI_AGENT_SECURITY_RULES.md, CONTRIBUTING.md, README.md
+├── .env.example                  // configuration names, no values
+├── pom.xml, mvnw, system.properties, Procfile        (from T1-01 and T6-01)
+├── docs/                         // specifications and decision records
+└── src
+    ├── main
+    │   ├── java/com/campuscompanion/...
+    │   └── resources
+    │       ├── application.yml, application-dev.yml, application-prod.yml
+    │       ├── db/migration/     // Flyway: V1__core.sql, ...
+    │       ├── prompts/          // versioned AI prompt templates
+    │       └── static/           // login.html, css/, js/, student/, admin/
+    └── test/java/com/campuscompanion/...
+```
+
+Java packages are organised by feature. The layout and dependency rule are in [docs/05-architecture.md](docs/05-architecture.md#4-package-structure).
+
+## 6. Inspect before you create
+
+- Search the codebase for an existing class, method, style or script before writing a new one.
+- Extend or reuse what exists. Do not create a parallel implementation, a second API client, a second error format or a duplicate CSS file.
+- Do not rewrite or reformat files you were not asked to change.
+- If existing code contradicts a document, report the contradiction; do not pick a side silently.
+
+## 7. Coding standards
+
+### Java
+
+- Layers: controller → service → repository. No business logic in controllers. No repository use in controllers.
+- DTOs are Java records. Entities never cross the controller boundary.
+- Constructor injection. No field injection. No Lombok.
+- `BigDecimal` for marks, percentages and grade points, with explicit `HALF_UP` rounding to two decimals. `java.time` for dates.
+- Throw the project's exceptions from `common.error`; let the global handler build the response. Do not catch and ignore exceptions.
+- No `System.out.println`; use the logger. Follow the logging rules in the TRD.
+- Methods are short and named for what they do. Add a comment only when the reason is not obvious from the code.
+- Core rule classes (attendance, CGPA, quiz evaluation, progress) are plain Java that can be unit-tested without Spring.
+
+### Naming
+
+| Kind | Convention | Example |
+| --- | --- | --- |
+| Controller | `<Feature>Controller`, `Admin<Feature>Controller` | `AttendanceController` |
+| Service | `<Feature>Service` | `QuizEvaluationService` |
+| Repository | `<Entity>Repository` | `StudentProfileRepository` |
+| Entity | Singular noun | `AttendanceRecord` |
+| DTO | `<Thing>Request`, `<Thing>Response` | `StartQuizRequest` |
+| Exception | `<Problem>Exception` | `ResourceNotFoundException` |
+| Test | `<ClassUnderTest>Test`; integration: `...IT` | `AttendanceServiceTest` |
+| Table, column | `snake_case`, plural tables | `quiz_attempts` |
+| JSON field | `camelCase` | `classesAttended` |
+| Migration | `V<n>__<description>.sql` | `V2__academic.sql` |
+| Frontend file | `kebab-case` | `quiz-history.html` |
+
+### Frontend
+
+- Plain HTML, CSS and ES modules. No framework, no build step.
+- All API calls go through `js/api.js`.
+- Insert dynamic text with `textContent`, never `innerHTML`.
+- No inline scripts or inline event handlers.
+- Use the design tokens and components in [docs/07-ui-ux-spec.md](docs/07-ui-ux-spec.md).
+
+## 8. Commands
+
+Available once task `T1-01` is complete.
+
+| Purpose | Command |
+| --- | --- |
+| Run locally | `./mvnw spring-boot:run` |
+| Unit tests | `./mvnw test` |
+| All tests and checks | `./mvnw verify` |
+| Format | `./mvnw spotless:apply` |
+| Check formatting | `./mvnw spotless:check` |
+| Build the JAR | `./mvnw -DskipTests package` |
+
+Integration tests need Docker running. If Docker is unavailable, say so in your report; do not skip the tests silently.
+
+## 9. Rules for schema changes
+
+1. Update [docs/08-database-design.md](docs/08-database-design.md) first.
+2. Add a **new** Flyway migration. Never edit a migration that has been applied anywhere.
+3. Enable Row Level Security on every new table in the same migration.
+4. Update the entity and repository, and add or update repository tests.
+5. A migration that drops or rewrites data needs the owner's approval before you write it.
+6. Never run a migration against a hosted database yourself.
+
+## 10. Rules for API changes
+
+1. Update [docs/openapi.yaml](docs/openapi.yaml) and [docs/09-api-contract.md](docs/09-api-contract.md).
+2. Add the endpoint to [docs/10-authorization-matrix.md](docs/10-authorization-matrix.md).
+3. Add controller tests for success, validation failure, unauthenticated (401), wrong role (403) and, where ownership applies, wrong owner (404).
+4. Renaming or removing a field, or changing its type, is a breaking change and needs approval.
+
+## 11. Needs approval before you proceed
+
+Stop and ask the owner before:
+
+- Adding, removing or upgrading a dependency or plugin.
+- Changing the architecture, the stack, or an accepted decision record.
+- Changing authentication, authorization, session, CSRF, upload validation or secrets handling.
+- Changing a P0 requirement or adding a feature that is not in the PRD.
+- Writing a destructive migration.
+- Anything listed as approval-required in [AI_AGENT_SECURITY_RULES.md](AI_AGENT_SECURITY_RULES.md).
+
+## 12. Before declaring a task complete
+
+- [ ] The task's acceptance criteria are met.
+- [ ] `./mvnw verify` passes, and you saw it pass.
+- [ ] New logic has tests; no test was deleted, disabled or weakened.
+- [ ] No rule in [SECURITY_RULES.md](SECURITY_RULES.md) is broken.
+- [ ] Affected documents are updated.
+- [ ] No secrets, real data or debug output are in the change.
+- [ ] You reviewed your own diff.
+
+## 13. How to report
+
+End every task with a report in this form:
+
+```
+Task: <ID and title>
+Status: complete | partial | blocked
+
+Changed files:
+- <path>: <what changed>
+
+Verification:
+- <command>: <actual result, with counts>
+
+Not verified:
+- <anything you could not run or check, and why>
+
+Known limitations:
+- <gaps, shortcuts, follow-ups>
+
+Decisions needed:
+- <open questions or TBDs you hit>
+```
+
+If a check failed, say so and include the output. A truthful "partial" is always better than an untrue "complete".

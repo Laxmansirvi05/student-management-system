@@ -1,0 +1,168 @@
+# 10. Authorization Matrix
+
+> Status: Draft v0.1 · Owner: Laxman Sirvi · Last updated: 2026-10-10
+
+This document defines who can read, create, update and delete each kind of data. Every row is a test case (see [17-testing-strategy.md](17-testing-strategy.md)).
+
+## 1. Actors
+
+| Actor | Meaning |
+| --- | --- |
+| **Visitor** | Not logged in. |
+| **Student** | Logged in with role `STUDENT`. |
+| **Admin** | Logged in with role `ADMIN`. |
+| **System** | The backend itself: scoring, audit logging, scheduled jobs, startup tasks. |
+
+There is no faculty role in the approved scope. Adding one requires updating this document first.
+
+## 2. The essential rule
+
+> A student can reach their own protected records and nobody else's. Changing an ID in a URL, a query parameter or a request body must never reveal or change another student's data.
+
+How this is guaranteed:
+
+1. Student endpoints for personal data end in `/me` and accept **no student identifier**.
+2. The service takes the user ID from the server-side session and looks up the student profile from it.
+3. Where an ID of an owned object is needed (a quiz attempt), the query includes the owner: "find attempt by ID **and** student ID". If nothing matches, the answer is `404 NOT_FOUND`, the same as for an ID that does not exist.
+4. The role is read from the session. A role sent by the browser is ignored.
+
+## 3. Legend
+
+| Symbol | Meaning |
+| --- | --- |
+| ✅ | Allowed |
+| 🔒 own | Allowed only for records belonging to the logged-in student |
+| 📢 published | Allowed only for records that are published and targeted at the user |
+| ❌ | Denied |
+| — | Not applicable |
+
+A denied Visitor gets `401`. A denied Student gets `403` for admin functions and `404` for another student's records.
+
+## 4. Matrix
+
+### 4.1 Accounts and profiles
+
+| Data | Action | Visitor | Student | Admin | System |
+| --- | --- | --- | --- | --- | --- |
+| Login | Authenticate | ✅ | ✅ | ✅ | — |
+| Own session | Read, end | ❌ | ✅ | ✅ | — |
+| Own password | Change | ❌ | ✅ | ✅ | — |
+| Student account | Create | ❌ | ❌ | ✅ | First admin only, at startup |
+| Student account | Deactivate, activate, reset password | ❌ | ❌ | ✅ | — |
+| Admin account | Create, change role | ❌ | ❌ | ❌ | Bootstrap only |
+| Student profile | Read | ❌ | 🔒 own | ✅ | — |
+| Student profile | Update | ❌ | ❌ | ✅ | — |
+| Student list and search | Read | ❌ | ❌ | ✅ | — |
+| Password hashes | Read through any API | ❌ | ❌ | ❌ | Internal comparison only |
+
+In the first release, further admin accounts are created only by the owner directly in the database. There is no API for it.
+
+### 4.2 Academic records
+
+| Data | Action | Visitor | Student | Admin | System |
+| --- | --- | --- | --- | --- | --- |
+| Attendance | Read | ❌ | 🔒 own | ✅ | — |
+| Attendance | Create, correct | ❌ | ❌ | ✅ | — |
+| Assessments | Read | ❌ | 📢 published | ✅ | — |
+| Assessments | Create, update, publish | ❌ | ❌ | ✅ | — |
+| Marks | Read | ❌ | 🔒 own, and only for published assessments | ✅ | — |
+| Marks | Create, update | ❌ | ❌ | ✅ | — |
+| Semester results | Read | ❌ | 🔒 own, published only | ✅ | — |
+| Semester results | Create, update | ❌ | ❌ | ✅ | — |
+| CGPA | Read | ❌ | 🔒 own | ✅ | Calculated |
+| Subjects and units | Read | ❌ | ✅ own branch | ✅ | — |
+| Subjects and units | Create, update, deactivate | ❌ | ❌ | ✅ | — |
+| Timetable | Read | ❌ | 🔒 own branch, semester, section | ✅ | — |
+| Timetable | Create, update, delete | ❌ | ❌ | ✅ | — |
+
+**A student can never create, update or delete any official academic record.** There is no student endpoint that writes to these tables.
+
+### 4.3 Notices
+
+| Data | Action | Visitor | Student | Admin | System |
+| --- | --- | --- | --- | --- | --- |
+| Notices | Read | ❌ | 📢 published, for all or for own branch and semester | ✅ including drafts | — |
+| Notices | Create, update, publish, unpublish, delete | ❌ | ❌ | ✅ | — |
+
+### 4.4 Learning resources
+
+| Data | Action | Visitor | Student | Admin | System |
+| --- | --- | --- | --- | --- | --- |
+| Resource metadata | Read | ❌ | 📢 published | ✅ including hidden | — |
+| Resource file | Get a signed link | ❌ | 📢 published | ✅ | Issues the link |
+| Resource file | Direct read from storage without a signed link | ❌ | ❌ | ❌ | ✅ with service key |
+| Resource | Upload, update, hide, delete | ❌ | ❌ | ✅ | — |
+| Bookmarks | Read, add, remove | ❌ | 🔒 own | ❌ | — |
+| Resource reports (P1) | Create | ❌ | ✅ | — | — |
+| Resource reports (P1) | Read, resolve | ❌ | ❌ | ✅ | — |
+
+Students may read resources of any subject, not only their branch. Study material is not personal data.
+
+### 4.5 Quick Exam and progress
+
+| Data | Action | Visitor | Student | Admin | System |
+| --- | --- | --- | --- | --- | --- |
+| Question bank | Read with correct answers | ❌ | ❌ | ✅ | ✅ for scoring |
+| Question bank | Create, update, publish, retire | ❌ | ❌ | ✅ | — |
+| Questions in a running attempt | Read without answers | ❌ | 🔒 own attempt | ❌ | — |
+| Quiz attempt | Start, submit | ❌ | 🔒 own | ❌ | — |
+| Quiz result | Read (answers revealed after submission) | ❌ | 🔒 own | ❌ | — |
+| Quiz score | Set or change | ❌ | ❌ | ❌ | ✅ |
+| Progress and recommendations | Read | ❌ | 🔒 own | ❌ | Calculated |
+
+Admins do not see individual students' practice attempts in the first release. Practice is private. Aggregate statistics are P2.
+
+### 4.6 AI assistant
+
+| Data | Action | Visitor | Student | Admin | System |
+| --- | --- | --- | --- | --- | --- |
+| AI features | Use | ❌ | ✅ within limits | ❌ | — |
+| Own AI usage count | Read | ❌ | 🔒 own | — | — |
+| AI request metadata log | Read | ❌ | ❌ | ❌ | ✅ |
+| AI provider key | Read | ❌ | ❌ | ❌ | ✅ |
+
+The AI component can read no table except its own usage log. It cannot look up marks, attendance or profiles.
+
+### 4.7 Planner (P1)
+
+| Data | Action | Visitor | Student | Admin | System |
+| --- | --- | --- | --- | --- | --- |
+| Study tasks | Read, create, update, delete | ❌ | 🔒 own | ❌ | — |
+
+### 4.8 Audit and operations
+
+| Data | Action | Visitor | Student | Admin | System |
+| --- | --- | --- | --- | --- | --- |
+| Audit log | Create | ❌ | ❌ | ❌ | ✅ |
+| Audit log | Read (P1 screen) | ❌ | ❌ | ✅ | — |
+| Audit log | Update, delete | ❌ | ❌ | ❌ | ❌ |
+| Health endpoint | Read status only | ✅ | ✅ | ✅ | — |
+| Other actuator endpoints | Any | ❌ | ❌ | ❌ | — |
+
+### 4.9 Static pages
+
+| Path | Visitor | Student | Admin |
+| --- | --- | --- | --- |
+| `/login.html`, `/css/**`, `/js/**`, images | ✅ | ✅ | ✅ |
+| `/student/**` | ❌ redirect to login | ✅ | ❌ redirect to admin dashboard |
+| `/admin/**` | ❌ redirect to login | ❌ redirect to student dashboard | ✅ |
+| `/change-password.html` | ❌ | ✅ | ✅ |
+
+Protecting pages is a convenience. The API rules above are what protect the data.
+
+## 5. Where each rule is enforced
+
+| Layer | What it enforces |
+| --- | --- |
+| **Spring Security URL rules** | Visitor versus logged-in; `/api/v1/admin/**` and `/admin/**` need `ADMIN`; `/student/**` and student-only API groups need `STUDENT`; the must-change-password restriction; CSRF. |
+| **Service layer** | Ownership (🔒 own): the student is derived from the session and included in every query. Visibility (📢 published): status and targeting filters are part of the query, not applied afterwards in the browser. |
+| **Method security** | `@PreAuthorize` on admin service methods as a second check, so a mis-mapped URL cannot expose them. |
+| **Database** | Foreign keys and constraints keep data valid. Row Level Security with no policies blocks the Supabase Data API entirely. Ownership is **not** delegated to database policies, because the backend connects as one database user. |
+| **Storage** | The bucket is private. No public URLs exist. The only access path is a signed link issued after the checks above, valid for at most five minutes. |
+| **Frontend** | Nothing. It hides controls the user cannot use, for clarity only. |
+
+## 6. Rules for changing this matrix
+
+1. A new endpoint is added here before it is implemented.
+2. Any change that widens access needs the owner's approval.
+3. Each new row gets a test for the denied actors as well as the allowed one.

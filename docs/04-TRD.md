@@ -1,0 +1,156 @@
+# 04. Technical Requirements Document
+
+> Status: Draft v0.1 · Owner: Laxman Sirvi · Last updated: 2026-10-10
+
+This document sets the technical constraints every implementation must satisfy. Requirement IDs here start with `TR-`.
+
+## 1. Approved technology stack
+
+| Area | Technology | Version | Notes |
+| --- | --- | --- | --- |
+| Language | Java | 21 (LTS) | Fixed. |
+| Framework | Spring Boot | **TBD in `T1-01`** | The current stable release line that supports Java 21. |
+| Web | Spring Web (MVC) | from Boot | REST controllers. |
+| Security | Spring Security | from Boot | Session-based login. |
+| Persistence | Spring Data JPA with Hibernate | from Boot | |
+| Validation | Jakarta Bean Validation | from Boot | |
+| Health | Spring Boot Actuator | from Boot | Only the health endpoint is exposed. |
+| Database | PostgreSQL on Supabase | Supabase-managed | |
+| JDBC driver | PostgreSQL JDBC | from Boot | |
+| Migrations | Flyway | from Boot | See [ADR 0006](decisions/0006-flyway-database-migrations.md). |
+| File storage | Supabase Storage | Supabase-managed | Called over HTTPS from Java. |
+| PDF text | Apache PDFBox | **TBD in `T3-03`** | Validation in R1, text extraction in P1. |
+| HTTP client | Spring `RestClient` | from Boot | For storage and the AI provider. |
+| Build | Maven with the Maven Wrapper | wrapper pinned | |
+| Formatting | Spotless with google-java-format | **TBD in `T1-01`** | |
+| Tests | JUnit 5, Mockito, Spring Boot Test, Spring Security Test | from Boot | |
+| Database tests | Testcontainers for PostgreSQL | **TBD in `T1-01`** | Needs Docker. |
+| Frontend | HTML5, CSS3, JavaScript (ES modules) | browser-native | No framework, no bundler. |
+| Diagrams (P1) | Mermaid | **TBD** | Vendored into `static/`, not loaded from a CDN. |
+| Hosting | Heroku | | One web dyno. |
+
+**TR-STACK-1.** Versions marked TBD MUST be chosen in the named task by checking the official documentation for mutual compatibility (Java 21, Spring Boot, Heroku runtime), then written into this table and `pom.xml` in the same change.
+
+**TR-STACK-2.** Dependency versions managed by the Spring Boot parent MUST NOT be overridden without a recorded reason.
+
+## 2. Not approved
+
+The following MUST NOT be introduced without an accepted decision record in [docs/decisions](decisions/README.md):
+
+- Node.js, Express or any second backend or microservice.
+- React, Vue, Angular, or any frontend framework, bundler or CSS framework.
+- MySQL, MongoDB, or H2 as a substitute for PostgreSQL (including in tests).
+- The Supabase JavaScript client, Supabase Auth, or the Supabase Data API from the browser.
+- JWT-based authentication.
+- Lombok or other code generators that hide the Java being assessed.
+- Any library loaded from a CDN at runtime.
+
+## 3. Java and Spring Boot requirements
+
+- **TR-JAVA-1.** Base package `com.campuscompanion`, organised by feature (see [05-architecture.md](05-architecture.md#4-package-structure)).
+- **TR-JAVA-2.** Layers are controller → service → repository. Controllers contain no business logic and never touch a repository directly.
+- **TR-JAVA-3.** Entities are never returned from controllers. Requests and responses use DTOs, written as Java records.
+- **TR-JAVA-4.** Constructor injection only. No field injection.
+- **TR-JAVA-5.** Business rules that the owner must explain (attendance percentage, CGPA, quiz scoring, progress classification, flowchart rendering) are plain Java classes with unit tests and no framework dependencies beyond annotations.
+- **TR-JAVA-6.** Money-like and percentage values use `BigDecimal` with explicit rounding (`HALF_UP`, two decimals). No `float` or `double` for marks or percentages.
+- **TR-JAVA-7.** Dates and times use `java.time`. Timestamps are stored in UTC and displayed in `Asia/Kolkata`.
+- **TR-JAVA-8.** Configuration comes from environment variables bound through `@ConfigurationProperties`. Names are listed in [.env.example](../.env.example).
+
+## 4. Frontend approach
+
+- **TR-FE-1.** Static files live in `src/main/resources/static` and are served by Spring Boot.
+- **TR-FE-2.** Multi-page: one HTML file per screen, shared CSS, and JavaScript modules per feature.
+- **TR-FE-3.** All server communication goes through one `api.js` module that adds the CSRF header, handles 401 by redirecting to login, and converts error responses into messages.
+- **TR-FE-4.** Server-supplied and AI-supplied text is inserted with `textContent`. `innerHTML` MUST NOT receive dynamic data.
+- **TR-FE-5.** No inline scripts or inline event handlers, so the Content Security Policy can forbid them.
+- **TR-FE-6.** The frontend holds no secrets and makes no authorization decisions.
+
+## 5. REST API conventions
+
+- **TR-API-1.** Base path `/api/v1`. JSON request and response bodies, `camelCase` field names, UTF-8.
+- **TR-API-2.** Errors use RFC 9457 problem details with a stable `code` field. Formats, status codes and pagination are defined in [09-api-contract.md](09-api-contract.md).
+- **TR-API-3.** [openapi.yaml](openapi.yaml) is the authoritative contract. An endpoint change updates it in the same commit.
+- **TR-API-4.** Every request body is validated with Bean Validation before reaching a service.
+
+## 6. Database connectivity
+
+- **TR-DB-1.** Connect through the Supabase **session pooler** using the PostgreSQL JDBC driver. The transaction pooler MUST NOT be used with Hibernate.
+- **TR-DB-2.** HikariCP maximum pool size is 5 (verify against the Supabase plan's connection limit in `T1-02`).
+- **TR-DB-3.** `spring.jpa.hibernate.ddl-auto` is `validate` in every profile. Only Flyway changes the schema.
+- **TR-DB-4.** `spring.jpa.open-in-view` is `false`.
+- **TR-DB-5.** Queries use Spring Data derived queries, JPQL or native queries with bound parameters. SQL built by string concatenation is prohibited.
+- **TR-DB-6.** List endpoints are paginated in the database, not in memory.
+- **TR-DB-7.** Row Level Security is enabled on every table with no policies, so the Supabase Data API exposes nothing. The application's own database user owns the tables. Verify in `T1-03`.
+
+Schema details are in [08-database-design.md](08-database-design.md).
+
+## 7. Authentication and authorization
+
+- **TR-SEC-1.** Spring Security with server-side sessions and a session cookie. See [ADR 0004](decisions/0004-session-cookie-authentication.md).
+- **TR-SEC-2.** Passwords are hashed with BCrypt through Spring's `PasswordEncoder`.
+- **TR-SEC-3.** CSRF protection is on for all state-changing requests, using a cookie-to-header token.
+- **TR-SEC-4.** URL rules protect `/api/v1/admin/**` for `ADMIN`. Ownership is enforced in services by deriving the student from the session, never from a request parameter.
+
+The complete control list is in [11-security-plan.md](11-security-plan.md). The mandatory rules are in [SECURITY_RULES.md](../SECURITY_RULES.md).
+
+## 8. Storage integration
+
+- **TR-STO-1.** One private bucket. The browser never receives the service key.
+- **TR-STO-2.** Uploads go through the backend, which validates and then stores the file.
+- **TR-STO-3.** Downloads use signed URLs created by the backend after an authorization check, valid for at most 5 minutes.
+- **TR-STO-4.** The database stores metadata and the storage path. It never stores file bytes.
+- **TR-STO-5.** Storage access is behind a Java interface (`StorageClient`) with an in-memory implementation for tests.
+
+## 9. AI provider integration
+
+- **TR-AI-1.** All AI calls are made by the backend through the `AiProvider` interface. See [ADR 0005](decisions/0005-ai-integration-behind-java-interface.md).
+- **TR-AI-2.** A `MockAiProvider` is the default and is used in all automated tests. Tests MUST NOT call a real provider.
+- **TR-AI-3.** Total time budget per AI request is 25 seconds, below Heroku's 30-second router limit.
+- **TR-AI-4.** AI output is parsed into typed Java objects and validated before it is returned.
+
+Details are in [15-AI-features-handoff.md](15-AI-features-handoff.md).
+
+## 10. Testing requirements
+
+- **TR-TEST-1.** `./mvnw verify` runs all tests and MUST pass before a change is merged.
+- **TR-TEST-2.** Every service class with business logic has unit tests.
+- **TR-TEST-3.** Every protected endpoint has a test for unauthenticated access, wrong role, and (where applicable) wrong owner.
+- **TR-TEST-4.** Repository and migration tests run against real PostgreSQL through Testcontainers.
+
+The full approach is in [17-testing-strategy.md](17-testing-strategy.md).
+
+## 11. Build and deployment
+
+- **TR-BLD-1.** The build produces one executable JAR containing the API and the static frontend.
+- **TR-BLD-2.** The Java version for Heroku is pinned in `system.properties`.
+- **TR-BLD-3.** The start command is in `Procfile` and binds to the `PORT` variable.
+- **TR-BLD-4.** No secrets appear in the repository, the JAR or build logs.
+
+Details are in [18-production-plan.md](18-production-plan.md).
+
+## 12. Performance and reliability
+
+| ID | Requirement |
+| --- | --- |
+| TR-PERF-1 | Non-AI endpoints respond in under 1 second at the 95th percentile with the demo dataset on the chosen dyno. |
+| TR-PERF-2 | List endpoints return at most 100 items per page. |
+| TR-PERF-3 | No request loads an unbounded number of rows. N+1 query patterns are fixed before merge. |
+| TR-REL-1 | A failure of the AI provider or storage never causes a failure in academic features. |
+| TR-REL-2 | External calls have explicit connect and read timeouts. No call waits indefinitely. |
+| TR-REL-3 | The application starts with the AI provider unset (`AI_PROVIDER=mock`) and with `AI_ENABLED=false`. |
+| TR-REL-4 | `GET /actuator/health` reports database connectivity. |
+
+## 13. Logging and error handling
+
+- **TR-LOG-1.** Logs go to standard output. Heroku collects them.
+- **TR-LOG-2.** Every request gets an ID, included in log lines and returned as `traceId` in error responses.
+- **TR-LOG-3.** Logs MUST NOT contain passwords, session IDs, API keys, signed URLs, or the text of AI prompts and responses.
+- **TR-LOG-4.** One global exception handler converts exceptions to problem details. Stack traces and SQL never reach the client.
+- **TR-LOG-5.** Expected failures (validation, not found, access denied) are logged at `INFO` or `WARN`. Unexpected failures are logged at `ERROR` with the stack trace.
+
+## 14. Dependencies and licensing
+
+- **TR-DEP-1.** A new dependency needs the owner's approval, a stated purpose and a check that it is maintained.
+- **TR-DEP-2.** Only permissive open-source licences (Apache 2.0, MIT, BSD, EPL) are accepted.
+- **TR-DEP-3.** Prefer the Java standard library and Spring over a new dependency.
+- **TR-DEP-4.** Frontend libraries are vendored at a pinned version with their licence file.
