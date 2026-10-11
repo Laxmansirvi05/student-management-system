@@ -1,6 +1,6 @@
 # 10. Authorization Matrix
 
-> Status: Draft v0.1 · Owner: Laxman Sirvi · Last updated: 2026-10-10
+> Status: Draft v0.2 · Owner: Laxman Sirvi · Last updated: 2026-10-11
 
 This document defines who can read, create, update and delete each kind of data. Every row is a test case (see [17-testing-strategy.md](17-testing-strategy.md)).
 
@@ -26,6 +26,8 @@ How this is guaranteed:
 3. Where an ID of an owned object is needed (a quiz attempt), the query includes the owner: "find attempt by ID **and** student ID". If nothing matches, the answer is `404 NOT_FOUND`, the same as for an ID that does not exist.
 4. The role is read from the session. A role sent by the browser is ignored.
 
+These checks run in the Spring Boot application, which is the **only** authorization boundary for users. The database sees one runtime role for every request and cannot apply these rules itself ([08-database-design.md](08-database-design.md) §11).
+
 ## 3. Legend
 
 | Symbol | Meaning |
@@ -47,15 +49,21 @@ A denied Visitor gets `401`. A denied Student gets `403` for admin functions and
 | Login | Authenticate | ✅ | ✅ | ✅ | — |
 | Own session | Read, end | ❌ | ✅ | ✅ | — |
 | Own password | Change | ❌ | ✅ | ✅ | — |
-| Student account | Create | ❌ | ❌ | ✅ | First admin only, at startup |
+| Self-registration | Create an account for oneself | ❌ | — | — | — |
+| Student account | Provision (account and profile together) | ❌ | ❌ | ✅ | The demo seeder, when the owner enables it |
 | Student account | Deactivate, activate, reset password | ❌ | ❌ | ✅ | — |
 | Admin account | Create, change role | ❌ | ❌ | ❌ | Bootstrap only |
 | Student profile | Read | ❌ | 🔒 own | ✅ | — |
 | Student profile | Update | ❌ | ❌ | ✅ | — |
 | Student list and search | Read | ❌ | ❌ | ✅ | — |
 | Password hashes | Read through any API | ❌ | ❌ | ❌ | Internal comparison only |
+| Login email, roll number | Change after the account exists | ❌ | ❌ | ❌ | ❌ |
+| Role of any account | Change | ❌ | ❌ | ❌ | ❌ |
+| Anything except changing the password, while a password change is required | Use | — | ❌ | ❌ | — |
 
-In the first release, further admin accounts are created only by the owner directly in the database. There is no API for it.
+In the first release, further admin accounts are created only by the owner directly in the database. There is no API for it. An admin account has its own separately provisioned credentials and never receives the roll-number temporary password.
+
+**Email login changes the identifier, not the permissions.** Logging in with an institutional email address instead of a roll number alters nothing in this matrix. The session still carries only the internal account ID and the role, the student is still derived from that account ID, and no request can set or change a role. While an account's password is temporary, the account has **fewer** permissions than its role normally has: only the four requests listed in [09-api-contract.md](09-api-contract.md) §2 are accepted.
 
 ### 4.2 Academic records
 
@@ -139,6 +147,8 @@ The AI component can read no table except its own usage log. It cannot look up m
 | Health endpoint | Read status only | ✅ | ✅ | ✅ | — |
 | Other actuator endpoints | Any | ❌ | ❌ | ❌ | — |
 
+"Update, delete" is denied to the System as well. The runtime database role has no such privilege on `audit_logs`, and triggers reject those statements for every role ([08-database-design.md](08-database-design.md) §12). No audit row contains password material.
+
 ### 4.9 Static pages
 
 | Path | Visitor | Student | Admin |
@@ -157,7 +167,7 @@ Protecting pages is a convenience. The API rules above are what protect the data
 | **Spring Security URL rules** | Visitor versus logged-in; `/api/v1/admin/**` and `/admin/**` need `ADMIN`; `/student/**` and student-only API groups need `STUDENT`; the must-change-password restriction; CSRF. |
 | **Service layer** | Ownership (🔒 own): the student is derived from the session and included in every query. Visibility (📢 published): status and targeting filters are part of the query, not applied afterwards in the browser. |
 | **Method security** | `@PreAuthorize` on admin service methods as a second check, so a mis-mapped URL cannot expose them. |
-| **Database** | Foreign keys and constraints keep data valid. Row Level Security with no policies blocks the Supabase Data API entirely. Ownership is **not** delegated to database policies, because the backend connects as one database user. |
+| **Database** | Foreign keys and constraints keep data valid. The runtime role `cc_app` has only the minimum row privileges and cannot change the schema or the audit log. The Data API is off, the schema is not exposed, and Row Level Security admits only `cc_app`. **None of this decides which student may see which row:** the backend connects as one role for every user, so ownership stays in the service layer. See [08-database-design.md](08-database-design.md) §11. |
 | **Storage** | The bucket is private. No public URLs exist. The only access path is a signed link issued after the checks above, valid for at most five minutes. |
 | **Frontend** | Nothing. It hides controls the user cannot use, for clarity only. |
 

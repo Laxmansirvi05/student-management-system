@@ -1,6 +1,6 @@
 # 06. App Flow
 
-> Status: Draft v0.1 · Owner: Laxman Sirvi · Last updated: 2026-10-10
+> Status: Draft v0.2 · Owner: Laxman Sirvi · Last updated: 2026-10-11
 
 This document describes how users move through the application and what happens at each step.
 
@@ -44,20 +44,23 @@ This document describes how users move through the application and what happens 
 
 ## 3. Login and logout (student and admin)
 
-The flow is the same for both roles. Only the destination differs.
+The flow is the same for both roles. Students enter their institutional email address; admins enter their administrator email address. Only the destination differs.
 
 ```mermaid
 flowchart TD
     A["Open any page"] --> B{"Has valid session?"}
     B -- No --> C["Login page"]
     B -- Yes --> H
-    C --> D["Enter username and password"]
-    D --> E{"Credentials valid?"}
-    E -- "No, under 5 failures" --> F["Show: Incorrect username or password"]
+    C --> D["Enter institutional email and password"]
+    D --> V{"Is the text an email address?"}
+    V -- No --> V1["Show: Enter a valid email address"]
+    V1 --> D
+    V -- Yes --> E{"Credentials valid?"}
+    E -- No --> F["Show: Incorrect email or password.<br/>Same message for unknown email,<br/>wrong password and deactivated account"]
     F --> D
-    E -- "No, 5th failure" --> G["Show: Too many attempts.<br/>Account locked 15 minutes"]
+    E -- "Blocked after 5 failures for this email" --> G["Show: Too many attempts.<br/>Try again in a few minutes"]
     E -- Yes --> H{"Must change password?"}
-    H -- Yes --> I["Change password page"]
+    H -- Yes --> I["Change password page.<br/>Nothing else is reachable"]
     I --> J
     H -- No --> J{"Role?"}
     J -- STUDENT --> K["Student dashboard"]
@@ -68,21 +71,44 @@ flowchart TD
     N --> C
 ```
 
-## 4. First-time password setup
+The login form has two labelled fields, "Institutional email" and "Password". It does not accept a roll number on its own, and it never says whether an email address has an account.
+
+## 4. Account provisioning and first-time password
 
 ```mermaid
 flowchart TD
-    A["Admin creates account"] --> B["System shows temporary password once"]
-    B --> C["Admin gives it to the student in person"]
-    C --> D["Student logs in"]
-    D --> E["Forced to Change password page"]
-    E --> F["Enter temporary password and new password twice"]
-    F --> G{"Valid?<br/>8 to 72 characters, not the username,<br/>not the old password, both match"}
-    G -- No --> H["Field error next to the input"]
-    H --> F
-    G -- Yes --> I["Password saved, flag cleared,<br/>other sessions ended"]
+    A["Admin enters roster details:<br/>roll number, name, branch, semester, section"] --> B{"Valid and not a duplicate?"}
+    B -- No --> B1["Rejected with the reason.<br/>Nothing saved"]
+    B -- Yes --> C["Account and profile created together.<br/>Email generated from roll number and configured domain.<br/>Temporary password is the roll number, stored only as a hash.<br/>Must change password is set"]
+    C --> D["The college tells the student their email address.<br/>The application sends no email"]
+    D --> E["Student logs in with the email and the roll number"]
+    E --> F["Redirected to Change password.<br/>Every other page and API call is refused"]
+    F --> G["Enter current password, new password, new password again"]
+    G --> H{"Valid?<br/>8 to 72 characters, both entries match,<br/>not the roll number, not the email,<br/>not the current password"}
+    H -- No --> H1["Field error next to the input"]
+    H1 --> G
+    H -- Yes --> I["Password saved and flag cleared.<br/>Other sessions ended, session identifier renewed.<br/>Audit entry written with no password data"]
     I --> J["Dashboard"]
+    J --> K["The roll number no longer works as a password"]
 ```
+
+There is no self-registration. Admin accounts do not go through this flow: they are provisioned separately and never get a roll-number password.
+
+### Password reset and deactivation
+
+```mermaid
+flowchart TD
+    A["Student tells an admin they cannot log in"] --> B["Admin confirms who they are, in person"]
+    B --> C["Admin presses Reset password"]
+    C --> D["Random temporary password shown to the admin once.<br/>Student's sessions ended, account unlocked,<br/>must change password set"]
+    D --> E["Admin gives it to the student in person"]
+    E --> F["Student logs in and must change it"]
+
+    X["Admin presses Deactivate"] --> Y["Sessions ended at once.<br/>Login fails with the generic message"]
+    Y --> Z["Reactivate restores the account<br/>with the password it had"]
+```
+
+A reset never restores the roll number as the password.
 
 ## 5. Student dashboard navigation
 

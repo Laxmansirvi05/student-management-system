@@ -1,6 +1,6 @@
 # Demo and Viva Guide
 
-> Status: Draft v0.1 · Owner: Laxman Sirvi · Last updated: 2026-10-10
+> Status: Draft v0.2 · Owner: Laxman Sirvi · Last updated: 2026-10-11
 
 This guide prepares you to present Campus Companion as a Java assignment and to answer questions about it yourself.
 
@@ -53,7 +53,8 @@ Diagrams: [05-architecture.md](05-architecture.md).
 - About 18 tables in the first release. The core chain: `users` → `student_profiles` → `attendance_records`, `marks`, `semester_results`, `quiz_attempts`.
 - `subjects` → `subject_units` categorise resources and questions.
 - **Constraints to mention:** unique roll number; foreign keys from marks to student and assessment; check constraints on ranges (semester 1 to 8, SGPA 0 to 10); a unique key so the same class cannot be recorded twice for a student.
-- **Design points:** PDFs are in file storage and the database holds only the path; CGPA is calculated, not stored; the audit log is append-only.
+- **Design points:** PDFs are in file storage and the database holds only the path; CGPA is calculated, not stored; the audit log is append-only and never holds password data.
+- **Access model:** the application logs in with a low-privilege database role that cannot change the schema or the audit log, and a separate role runs migrations. The Java code, not the database, decides which student sees which row.
 
 ER diagram and data dictionary: [08-database-design.md](08-database-design.md).
 
@@ -62,7 +63,7 @@ ER diagram and data dictionary: [08-database-design.md](08-database-design.md).
 | Class | What it shows | Be ready to explain |
 | --- | --- | --- |
 | `AttendanceService` | Plain Java business logic | The percentage formula, `BigDecimal` and rounding, the null case for zero classes |
-| `ResultService` | Calculation over a collection | Credit-weighted CGPA using streams or a loop |
+| `ResultService` | Calculation over a collection | CGPA weighted by the credits registered in each semester, using streams or a loop; why registered credits and not earned credits |
 | `QuizEvaluationService` | Collections and maps | Matching answers to questions with a `Map`, counting correct ones |
 | `ProgressService` | Rules and enums | The thresholds and why they are in Java, not AI |
 | `AttendanceController` | A REST controller | Annotations, how the current user is obtained, why there is no student ID parameter |
@@ -125,7 +126,7 @@ Then, if asked: lockout after five failures; audit log for marks changes; privat
 
 - The browser never calls the AI provider. It calls **my Java endpoint**.
 - A Java service checks the usage limit, builds a prompt from a versioned template, and calls the provider through an `AiProvider` interface with a timeout.
-- The model must reply in JSON. **Java parses and validates it** before returning it. Invalid output is rejected.
+- The model must reply in JSON. **Java parses and validates it** before returning it. Malformed output is rejected. This checks the shape of a reply, not whether its content is right, which is why every answer is labelled.
 - The AI receives only what the student typed plus the subject name. It cannot read marks or attendance.
 - **AI never scores a test.** Scoring is deterministic Java.
 - Every answer is labelled as AI-generated.
@@ -145,7 +146,9 @@ Then, if asked: lockout after five failures; audit log for marks changes; privat
 
 | # | Do | Say |
 | --- | --- | --- |
-| 1 | Open the login page; try a wrong password | "The error does not say whether the username or the password was wrong." |
+| 1 | Open the login page; try a wrong password | "The error does not say whether the email or the password was wrong, or even whether the account exists." |
+| 1a | Log in as a newly provisioned student with the institutional email and the roll number | "The first password is the roll number, so the server forces a change. Watch: I cannot open the dashboard, and a direct API call is refused too." |
+| 1b | Try the roll number as the new password, then choose a real one | "It is rejected. After the change the roll number never works again. I documented this first-password rule as a known weakness, acceptable only for a demonstration." |
 | 2 | Log in as the demo student | "The dashboard is built from one API call to my Spring Boot service." |
 | 3 | Open Attendance | "The percentage and the red flag are calculated in `AttendanceService`." |
 | 4 | Open Results | "CGPA is calculated in Java from the semester results." |
@@ -164,11 +167,12 @@ Then, if asked: lockout after five failures; audit log for marks changes; privat
 
 All data is synthetic. Fill in the real values after seeding (`T6-06`).
 
-| Account | Username | Purpose |
+| Account | Login email | Purpose |
 | --- | --- | --- |
-| Demo student with low attendance in one subject | `23CSE001` (TBD) | Main walkthrough |
-| Demo student with no data | `23CSE099` (TBD) | Showing empty states |
-| Demo admin | `admin` (TBD) | Admin walkthrough |
+| Demo student with low attendance in one subject | `23cse001@<domain>` (TBD) | Main walkthrough |
+| Freshly provisioned student, never logged in | `23cse050@<domain>` (TBD) | Showing the first-time password change |
+| Demo student with no data | `23cse099@<domain>` (TBD) | Showing empty states |
+| Demo admin | The administrator email (TBD) | Admin walkthrough |
 
 - **Passwords are never written in this document or anywhere in the repository.** Keep them privately.
 - Prepare in advance: one subject (DBMS) with five units; at least ten published questions in one unit; three or four resources including a past paper; one unpublished assessment to show that students cannot see it.
@@ -239,6 +243,12 @@ The endpoint has no student ID in it. The service takes the user from the sessio
 **What is CSRF and how do you prevent it?**
 Another site tricking a logged-in browser into sending a request. My server issues a token that the page must send back in a header; another site cannot read it.
 
+**Why do students log in with an email address and not the roll number?**
+The email is the institution's identity for the student. I keep the roll number separately as the academic identifier, so changing how someone logs in never touches their records. The domain is configuration, not code.
+
+**The first password is the roll number. Is that not insecure?**
+Yes, and I say so in the documents. The email contains the same roll number, so anyone who knows it could log in before the student does. I limit the damage: the server blocks everything until the password is changed, the roll number can never be chosen again, a reset uses a random password, and only synthetic data is loaded. It is recorded as an exception that must be reviewed before real students use it.
+
 **Why sessions and not JWT?**
 The frontend and backend are one application on one domain. A server-side session with an `HttpOnly` cookie is simpler, and logout or lockout takes effect immediately.
 
@@ -254,7 +264,7 @@ The browser calls my endpoint; a Java service builds a prompt, calls the provide
 Every answer is labelled as AI-generated and tells the student to verify it. AI is never used for scoring or official records, so a wrong answer cannot change anyone's marks.
 
 **What is prompt injection and how do you handle it?**
-Text in the input that tries to give the model new instructions. My design limits the damage: the model has no tools and no data to leak, its output must be valid JSON, and it is displayed as plain text.
+Text in the input that tries to give the model new instructions. It cannot be fully prevented, and a reply can be valid JSON and still be wrong or off-topic. So my design limits the damage instead: the model has no tools and no data to leak, it has no memory, and its output is shown only as labelled plain text and is never used for scoring or records.
 
 **What happens if the AI service is down?**
 The assistant shows an "unavailable" message. Nothing else depends on it.

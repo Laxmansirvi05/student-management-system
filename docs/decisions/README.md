@@ -12,6 +12,8 @@ A decision record (ADR) captures one significant technical decision: the context
 | [0004](0004-session-cookie-authentication.md) | Session-cookie authentication with Spring Security | Proposed |
 | [0005](0005-ai-integration-behind-java-interface.md) | AI integration behind a Java interface, server-side only | Proposed (provider not chosen) |
 | [0006](0006-flyway-database-migrations.md) | Flyway for database migrations | Proposed |
+| [0007](0007-database-roles-and-rls.md) | Two database roles, a private schema and the Data API switched off | Proposed |
+| [0008](0008-institutional-email-login.md) | Institutional email login, with the roll number as a first-time password | Accepted as a security exception, for synthetic data only |
 
 **Accepted** records reflect choices the owner has already made. **Proposed** records are recommendations written with the documentation and await the owner's approval.
 

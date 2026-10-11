@@ -1,6 +1,6 @@
 # 19. Operations Runbook
 
-> Status: Draft v0.1 · Owner: Laxman Sirvi · Last updated: 2026-10-10
+> Status: Draft v0.2 · Owner: Laxman Sirvi · Last updated: 2026-10-11
 
 What to do when the deployed system misbehaves. Each procedure lists symptoms, checks and fixes in the order to try them.
 
@@ -59,11 +59,12 @@ heroku restart --app <app>
 **Symptoms:** health is `DOWN`; log shows connection refused, timeout, authentication failure, or "too many connections"; pages show "Something went wrong on our side".
 
 1. Open the Supabase dashboard. **Is the project paused?** Free projects can pause after inactivity. Resume it and wait a few minutes.
-2. **Authentication failed?** The database password was changed or mistyped. Reset it in Supabase and update `DB_PASSWORD`.
+2. **Authentication failed?** Read which role failed. The running application logs in as `cc_app` (`DB_PASSWORD`); Flyway logs in as `cc_migrator` at startup (`DB_MIGRATION_PASSWORD`). Set a new password for that role and update the matching variable. Do not switch the application to `postgres` to get it running.
 3. **Wrong host or port?** Confirm `DB_URL` is the **session pooler** address on port 5432, not the transaction pooler.
 4. **Too many connections?** Something else is using the pool (a SQL client left open, a second dyno). Close other clients; confirm one dyno; confirm Hikari maximum is 5.
 5. **Timeouts only?** Check Supabase status; restart the dyno to rebuild the pool.
-6. Confirm recovery with the health URL.
+6. **"Permission denied" or "row-level security" errors for one table?** A migration created the table without its grants or policies for `cc_app`. Correct it with a new migration. Do not grant privileges by hand in production.
+7. Confirm recovery with the health URL.
 
 ## 3. Failed database migration
 
@@ -75,6 +76,7 @@ heroku restart --app <app>
 | --- | --- |
 | **SQL error in a new migration** | PostgreSQL runs each migration in a transaction, so it was normally rolled back. Roll the application back to the previous release (procedure 10) so the site works. Fix the SQL **in a new commit of the same file only if it has never been applied successfully anywhere**; otherwise add a corrective migration. Redeploy. |
 | **Checksum mismatch** | An applied migration file was edited. Restore the file to its original content from Git history. If the change is needed, add it as a new migration. |
+| **Permission denied while migrating** | Flyway is not connecting as `cc_migrator`, or that role no longer owns schema `app`. Check `DB_MIGRATION_USERNAME`. Changing ownership needs the owner, signed in as `postgres`. |
 | **Migration left in a failed state** | Inspect `flyway_schema_history`. With the owner's approval, remove the failed row (Flyway "repair") after confirming the schema matches the last successful version. |
 | **Migration applied but data is wrong** | Stop. Decide between a corrective migration and a restore (procedure 9). Do not improvise SQL against production. |
 
@@ -111,7 +113,7 @@ Any manual SQL against production needs the owner's approval and a backup first.
    | Provider returns 429 | Account rate or spend limit reached. Wait, or raise the limit deliberately. Consider lowering `AI_DAILY_LIMIT_PER_USER`. |
    | Timeouts | Provider slow. Nothing to fix locally; if persistent, switch off as below. |
    | `AI_INVALID_RESPONSE` on every request | The model or its output format changed. Check `AI_MODEL`; run the behaviour cases; a prompt or parser fix may be needed. |
-   | Every user at "daily limit" early | The application ceiling was reached. Check for abuse in `ai_request_logs` by user. |
+   | Every user sees "reached today's limit for everyone" | The application-wide ceiling (`AI_DAILY_LIMIT_GLOBAL`) was reached. Check `ai_request_logs` for the accounts responsible before raising it. It resets at midnight, India time. |
 
 4. **Switch AI off** if it cannot be fixed quickly or costs are rising:
 
@@ -128,7 +130,11 @@ Any manual SQL against production needs the owner's approval and a backup first.
 | --- | --- | --- |
 | Everyone was logged out at once | Dyno restart; sessions are in memory | Expected. Users log in again. |
 | "Too many attempts" for one user | Lockout after five failures | Wait 15 minutes, or reset the password from the admin screen. |
-| A user forgot their password | | Admin uses Reset password and gives the temporary password in person. |
+| A user forgot their password | | An admin confirms who they are, uses Reset password and gives them the random temporary password in person. A reset never restores the roll number. |
+| A new student cannot log in with their roll number | They typed the roll number without the domain; or the domain is not the one they were told; or the account has already been claimed | Check they entered the full email address. Check `STUDENT_EMAIL_DOMAIN` matches the address they were given. If the account is no longer awaiting first login and the student did not change the password, follow the next row. |
+| A student says their password was changed before they ever logged in | Someone else used the roll-number temporary password (security exception EX-AUTH-01) | Reset the password and hand the new one over in person. Read the `PASSWORD_CHANGED` audit row for the time and IP address. Check the other accounts still awaiting first login. Record it as an incident. |
+| Newly provisioned students have the wrong email domain | `STUDENT_EMAIL_DOMAIN` was wrong when they were provisioned | Correct the setting. That does not rewrite existing accounts; fix those with an owner-approved data migration (database design §8) and tell the students. |
+| The application will not start and the log names `STUDENT_EMAIL_DOMAIN` | The variable is missing or is not a host name | Set it and restart. |
 | Login succeeds, then every action fails with 403 | CSRF token missing | Hard-refresh the page. If it persists for everyone, check that the `XSRF-TOKEN` cookie is being set and that `api.js` sends the header. |
 | Login loops back to the login page in production only | Session cookie not stored | Confirm the site is opened over HTTPS and `server.forward-headers-strategy=native` is set, so the `Secure` cookie is accepted. |
 | The only admin is locked out | | Wait for the lock to expire. If the password is lost, the owner takes a backup, then updates that user's `password_hash` directly in the database with a newly generated BCrypt hash and sets `must_change_password` to true. Record the action. |
@@ -156,7 +162,9 @@ Treat a credential as compromised if it appeared in Git, a log, a screenshot, a 
 
 | Credential | Steps |
 | --- | --- |
-| **Database password** | 1. Reset it in the Supabase dashboard. 2. `heroku config:set DB_PASSWORD=...`. 3. Confirm health. 4. Update local `.env`. |
+| **Runtime database password** (`cc_app`) | 1. Signed in as `postgres`, set a new password for `cc_app`. 2. Set `DB_PASSWORD` on Heroku. 3. Confirm health. 4. Update local `.env`. |
+| **Migration database password** (`cc_migrator`) | The same steps with `DB_MIGRATION_PASSWORD`. This role can change the schema and the audit triggers, so also review recent schema changes and the audit log. |
+| **`postgres` administrative password** | Reset it in the Supabase dashboard. It is not in the application's configuration, so nothing needs redeploying. Review the audit log and the schema. |
 | **Supabase service key** | 1. Rotate the key in the Supabase dashboard (**verify** the current procedure there). 2. Set `SUPABASE_SERVICE_KEY`. 3. Test an upload and a preview. |
 | **AI API key** | 1. Revoke it in the provider console. 2. Create a new key. 3. Set `AI_API_KEY`. 4. Review provider usage for unexpected spend. |
 | **Bootstrap admin password** | Change the admin's password in the application; remove `ADMIN_BOOTSTRAP_PASSWORD`. |
@@ -189,7 +197,7 @@ Keep the file outside the repository. It contains password hashes; treat it as s
    ```
 
 2. Choose the source: a `pg_dump` file, or a Supabase managed backup (**verify** what the current plan provides and how to restore it from the dashboard).
-3. Restore the dump into the database.
+3. Restore the dump into the database, connected as `cc_migrator` so that it remains the owner of every object. Afterwards confirm that the grants and policies for `cc_app` are present; a dump taken with default options includes them.
 
    ```bash
    pg_restore --clean --if-exists --no-owner --dbname "<connection-string>" campus-companion-YYYYMMDD.dump
@@ -231,7 +239,8 @@ Storage objects are not in the database backup. If files are lost, re-upload the
 
 - [ ] Open the Supabase dashboard; confirm the project is active, not paused.
 - [ ] Open the site 10 minutes early to wake the dyno.
-- [ ] Log in as the demo student and the demo admin.
+- [ ] Log in as the demo student and the demo admin, with their email addresses.
+- [ ] Keep one freshly provisioned student, never logged in, to show the first-time password change.
 - [ ] Preview one resource and run one AI request.
-- [ ] Have `AI_PROVIDER=mock` ready as a fallback if the provider is down.
+- [ ] Have `AI_PROVIDER=mock` ready as a fallback if the provider is down on the day. This is a contingency for the demonstration only. It does not replace acceptance with the real provider (OQ-9).
 - [ ] Keep a recent backup and the demo PDFs at hand.

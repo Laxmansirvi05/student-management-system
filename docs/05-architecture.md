@@ -1,6 +1,6 @@
 # 05. Architecture
 
-> Status: Draft v0.1 · Owner: Laxman Sirvi · Last updated: 2026-10-10
+> Status: Draft v0.2 · Owner: Laxman Sirvi · Last updated: 2026-10-11
 
 ## 1. System context
 
@@ -87,7 +87,7 @@ flowchart LR
 
 - One web dyno runs one JAR. Sessions are held in memory, so a dyno restart logs users out (accepted for the first release).
 - Configuration and secrets are Heroku config vars.
-- Flyway migrates the schema when the application starts.
+- Flyway migrates the schema when the application starts, using the migration role. The running application uses a separate, less privileged runtime role ([08-database-design.md](08-database-design.md) §11).
 
 See [18-production-plan.md](18-production-plan.md).
 
@@ -122,6 +122,8 @@ Each feature package contains `controller`, `service`, `repository`, `entity` an
 
 ## 5. Authentication flow
 
+The login identifier is the account's institutional email address ([ADR 0008](decisions/0008-institutional-email-login.md)). Spring Security performs the authentication and manages the session, as before.
+
 ```mermaid
 sequenceDiagram
     participant B as Browser
@@ -132,24 +134,43 @@ sequenceDiagram
 
     B->>A: GET /api/v1/auth/csrf
     A-->>B: CSRF token, XSRF-TOKEN cookie
-    B->>F: POST /api/v1/auth/login with username, password, X-XSRF-TOKEN
-    F->>A: CSRF valid
+    B->>F: POST /api/v1/auth/login with email, password, X-XSRF-TOKEN
+    F->>A: CSRF valid, IP rate limit not exceeded
     A->>S: authenticate
-    S->>D: load user by username
-    S->>S: check active, lock state, BCrypt match
+    S->>S: trim and lower-case the email, check the attempt block for it
+    S->>D: load user by login_email
+    S->>S: check active, compare BCrypt hash, same work when no user is found
     alt valid
         S->>D: reset failed count, set last login
-        A-->>B: 200 with role, new session cookie
+        A-->>B: 200 with role and mustChangePassword, new session cookie
     else invalid
-        S->>D: increment failed count, maybe lock
-        A-->>B: 401 or 423 problem detail
+        S->>D: increment failed count, block after five
+        A-->>B: 401 or 423, identical for known and unknown email
     end
     B->>F: later requests with session cookie
     F->>F: load user and role from session
+    F->>F: if password change is required, allow only csrf, me, change-password, logout
 ```
 
-- The session ID changes at login to prevent session fixation.
-- The session stores the user ID and role only. The student profile is looked up from the user ID on each request that needs it.
+- The session ID changes at login to prevent session fixation, and again when the password is changed.
+- The session stores the account ID and role only. The email is used once, to find the account at login. Every later decision uses the account ID from the session.
+- A filter in the security chain enforces the password-change restriction for every endpoint and page.
+
+### Identity mapping
+
+| Concept | Stored in | Used for |
+| --- | --- | --- |
+| Login email | `users.login_email` | Finding the account at login. Nothing else. |
+| Account ID | `users.id` | The identity in the session and in audit entries |
+| Role | `users.role` | Authorization |
+| Student ID | `student_profiles.id`, reached through `user_id` | Owning attendance, marks, results, attempts and bookmarks |
+| Roll number | `student_profiles.roll_no` | The academic identifier shown to people. The source of the generated email and of the first temporary password |
+
+The chain is: email, then account, then (for a student) profile, then records. Academic records point at the student ID, so changing how a student logs in changes no academic record.
+
+### Provisioning
+
+`StudentProvisioningService` is the only code that creates a student. In one transaction it validates the roster details, generates the login email from the roll number and `STUDENT_EMAIL_DOMAIN`, stores the BCrypt hash of the roll number as the temporary password, sets `must_change_password`, creates the linked profile and writes the audit entry. The admin screen, the demo seeder and the P1 CSV import all call it. `PasswordPolicy` is the one class that decides whether a new password is acceptable.
 
 ## 6. Data flow for an academic read
 
@@ -234,6 +255,7 @@ sequenceDiagram
 
 - The prompt contains the student's input and, at most, subject and unit names. It never contains records from the database.
 - The AI service has no access to repositories other than its own usage log.
+- Parsing and validating the JSON proves the reply has the right shape. It does not prove the content follows the AI rules. See [14-AI-security-and-privacy.md](14-AI-security-and-privacy.md) §3.
 
 ## 10. Error handling and external failures
 
@@ -280,8 +302,10 @@ Security-sensitive interactions:
 1. **Browser to API:** everything from the browser is untrusted, including IDs, roles and hidden fields.
 2. **Uploads:** a file is hostile until validated. It is never executed or served from the application's own origin.
 3. **AI output:** treated as untrusted text. Parsed, validated, and rendered as text only.
-4. **Backend to Supabase:** the service key and database password grant full access. They exist only in server configuration.
+4. **Backend to Supabase:** three secrets exist only in server configuration. The runtime database password allows reading and writing rows, but not schema changes or changes to the audit log. The migration database password allows schema changes and is used only at startup. The service key allows full access to Storage and has no privileges on the application's schema.
 5. **Signed URLs:** the one place the browser talks to storage directly. They are short-lived and issued only after an authorization check.
+
+**The Spring Boot process is the only place where user-level access is decided.** The database sees one runtime role for every request, so it cannot enforce "this student, these rows". Database roles, grants, Row Level Security and the private bucket are defence in depth around that boundary.
 
 ## 12. Constraints and decisions
 
@@ -293,3 +317,4 @@ Security-sensitive interactions:
 | Session-cookie authentication | [0004](decisions/0004-session-cookie-authentication.md) |
 | AI behind a Java interface, server-side only | [0005](decisions/0005-ai-integration-behind-java-interface.md) |
 | Flyway migrations | [0006](decisions/0006-flyway-database-migrations.md) |
+| Two database roles, schema `app`, Data API off (Proposed) | [0007](decisions/0007-database-roles-and-rls.md) |

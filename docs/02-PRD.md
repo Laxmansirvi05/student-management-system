@@ -1,6 +1,6 @@
 # 02. Product Requirements Document
 
-> Status: Draft v0.2 · Owner: Laxman Sirvi · Last updated: 2026-10-10
+> Status: Draft v0.3 · Owner: Laxman Sirvi · Last updated: 2026-10-11
 
 This document says what the application must do from the user's point of view. How it is built is in [04-TRD.md](04-TRD.md). Non-functional requirements (performance, security, reliability) live in the TRD and the [security plan](11-security-plan.md) and are not repeated here.
 
@@ -15,19 +15,22 @@ Exact permissions are in [10-authorization-matrix.md](10-authorization-matrix.md
 
 ## 2. Priorities
 
-- **P0:** required for the assignment submission.
+- **P0:** required for the assignment submission. A P0 requirement is not dropped, deferred or reduced unless the owner approves a scope change and it is recorded as described in [03-scope-and-roadmap.md](03-scope-and-roadmap.md) §9. Nothing in any other document pre-authorizes cutting a P0 item.
 - **P1:** should have; built only after every P0 item works.
 - **P2:** later.
+
+A priority is changed only by editing this document, stating the reason, with the owner's approval.
 
 ## 3. Requirement index
 
 | ID | Requirement | Priority |
 | --- | --- | --- |
-| FR-AUTH-001 | Log in | P0 |
+| FR-AUTH-001 | Log in with institutional email | P0 |
 | FR-AUTH-002 | Log out and session expiry | P0 |
-| FR-AUTH-003 | First-login and voluntary password change | P0 |
+| FR-AUTH-003 | First-time password and password change | P0 |
 | FR-AUTH-004 | Role and ownership enforcement | P0 |
 | FR-AUTH-005 | Account lockout | P0 |
+| FR-AUTH-006 | Institutional email identity | P0 |
 | FR-STU-001 | Student dashboard | P0 |
 | FR-STU-002 | Student profile | P0 |
 | FR-ATT-001 | View own attendance | P0 |
@@ -58,7 +61,7 @@ Exact permissions are in [10-authorization-matrix.md](10-authorization-matrix.md
 | FR-AI-005 | Summarize a library PDF | P1 |
 | FR-AI-006 | Flowchart generation | P1 |
 | FR-AI-007 | Flashcards | P2 |
-| FR-ADM-001 | Manage student accounts | P0 |
+| FR-ADM-001 | Provision and manage student accounts | P0 |
 | FR-ADM-002 | Enter attendance | P0 |
 | FR-ADM-003 | Manage assessments and marks | P0 |
 | FR-ADM-004 | Enter semester results | P0 |
@@ -71,19 +74,34 @@ Exact permissions are in [10-authorization-matrix.md](10-authorization-matrix.md
 | FR-ADM-011 | Usage statistics | P2 |
 | FR-UX-001 | Errors, empty states and loading states | P0 |
 
-## 4. Authentication
+## 4. Authentication and accounts
 
-### FR-AUTH-001 Log in (P0)
+> **Changed on 2026-10-11 at the owner's request.** Students now log in with their institutional email address instead of their roll number, and a newly provisioned student's first password is the roll number. FR-AUTH-001, FR-AUTH-003, FR-AUTH-005 and FR-ADM-001 were revised and FR-AUTH-006 was added. The decision, and the security exception it contains, are recorded in [ADR 0008](decisions/0008-institutional-email-login.md). The change is logged in [03-scope-and-roadmap.md](03-scope-and-roadmap.md) §9.
 
-- **Story:** As a student or admin, I want to log in with my username and password so that I reach my own dashboard.
-- **Preconditions:** An active account exists. A student's username is their roll number.
+### FR-AUTH-001 Log in with institutional email (P0)
+
+- **Story:** As a student, I want to log in with my institutional email address and my password so that I reach my own dashboard. As an admin, I want to log in with my administrator email and password.
+- **Preconditions:** An active account exists. A student's login email is their roll number followed by `@` and the official student domain, for example `23cse001@university.example`. The domain is configuration, not code.
 - **Acceptance criteria:**
-  1. Correct credentials create a session and open the dashboard for the user's role.
-  2. Usernames are matched without regard to letter case.
-  3. Wrong username and wrong password produce the same message: "Incorrect username or password."
-  4. An admin never lands on the student dashboard, and the reverse.
-- **Edge cases:** Deactivated account gets the same generic message. Empty fields are rejected before the request is sent.
-- **Depends on:** nothing.
+  1. The login form asks for an email address and a password. A roll number on its own is not accepted as the identifier.
+  2. Correct credentials create a session and open the dashboard for the user's role, or the change-password page if the password is temporary (FR-AUTH-003).
+  3. The email is trimmed and compared in lower case, so letter case and surrounding spaces do not matter.
+  4. A wrong password, an email with no account and a deactivated account all get the same response and the same message: "Incorrect email or password."
+  5. Nothing in any login response shows whether an account exists for an email address.
+  6. An admin never lands on the student dashboard, and the reverse.
+  7. The login request carries the CSRF token like every other state-changing request.
+- **Failure states:**
+
+  | Situation | What the user sees |
+  | --- | --- |
+  | A field is empty | "Enter your email and password." The request is not sent. |
+  | The text is not an email address | "Enter a valid email address." The same for any text, whoever it belongs to. |
+  | Wrong password, unknown email or deactivated account | "Incorrect email or password." |
+  | Too many failed attempts for that email | "Too many attempts. Try again in a few minutes." (FR-AUTH-005) |
+  | Too many attempts from one network address | "Too many requests. Please wait a moment." |
+  | The server cannot be reached | "You appear to be offline." with Retry |
+
+- **Depends on:** FR-AUTH-006.
 
 ### FR-AUTH-002 Log out and session expiry (P0)
 
@@ -96,15 +114,20 @@ Exact permissions are in [10-authorization-matrix.md](10-authorization-matrix.md
 - **Edge cases:** The longest test (20 minutes) is shorter than the idle limit, so a test cannot expire the session by itself. If a session does end during a test, unsaved answers are lost.
 - **Depends on:** FR-AUTH-001.
 
-### FR-AUTH-003 Password change (P0)
+### FR-AUTH-003 First-time password and password change (P0)
 
-- **Story:** As a new user, I must replace my temporary password so that only I know it.
+- **Story:** As a newly provisioned student, I log in once with my temporary password and must immediately choose my own, so that the temporary password stops working.
+- **Preconditions:** The account has a temporary password. For a newly provisioned student it is the student's roll number (FR-ADM-001). After an admin reset, and for the first admin, it is a different, non-predictable password.
 - **Acceptance criteria:**
-  1. An account with a temporary password can do nothing except change the password or log out.
-  2. A new password has 8 to 72 characters, is not the username, and is not the current password.
-  3. Any user can change their password later by giving the current one.
-  4. After a change, other sessions of that user are ended.
-- **Edge cases:** Wrong current password is rejected and counts toward lockout.
+  1. After a successful login with a temporary password, the user is taken to the change-password page.
+  2. **Until the password has been changed, the server refuses every other protected function.** Only these work: seeing who is logged in, changing the password, and logging out. Calling any other endpoint directly returns "password change required". Opening any other page redirects to the change-password page.
+  3. The user gives the current (temporary) password and enters the new password twice. The two entries must match.
+  4. A new password has 8 to 72 characters and, ignoring letter case, is not the user's roll number, not the user's email address, not the part of the email before the `@`, and not the current password.
+  5. On success: the "must change password" flag is cleared, the user's other sessions are ended, the current session gets a new identifier, and the user is taken to their dashboard.
+  6. From that moment the old temporary password does not work. A roll number can never be chosen as a password at any later change either.
+  7. Any user can change their password later in the same way.
+  8. The change is recorded in the audit log with no password and no hash (FR-ADM-009).
+- **Edge cases:** A wrong current password is rejected and counts toward lockout. If the session expires on the change-password page, the user logs in again with the temporary password.
 - **Depends on:** FR-AUTH-001.
 
 ### FR-AUTH-004 Role and ownership enforcement (P0)
@@ -115,17 +138,36 @@ Exact permissions are in [10-authorization-matrix.md](10-authorization-matrix.md
   2. A student requesting another student's record, by any ID in the URL or body, gets "not found".
   3. A student calling any admin function gets "access denied".
   4. Hiding a button is never the only protection.
+  5. Logging in with an email address instead of a roll number gives no additional permission. The session still carries only the account's internal ID and role, and no request can change a role.
 - **Depends on:** FR-AUTH-001.
 
 ### FR-AUTH-005 Account lockout (P0)
 
 - **Story:** As the college, I want repeated password guessing to be blocked.
 - **Acceptance criteria:**
-  1. Five consecutive failed logins lock the account for 15 minutes.
-  2. A locked account shows "Too many attempts. Try again in a few minutes."
+  1. Five consecutive failed logins for the same email address block further attempts for that email for 15 minutes.
+  2. **The block works the same way whether or not an account exists for the email.** The message "Too many attempts. Try again in a few minutes." therefore says nothing about the account.
   3. A successful login resets the counter.
-  4. An admin can unlock an account by resetting its password.
+  4. An admin can unlock an account by resetting its password (available from milestone M2, when FR-ADM-001 exists).
+  5. Separately, one network address may make at most 20 login attempts in 10 minutes.
+- **Edge cases:** A correct password during the block still fails with the same message.
 - **Depends on:** FR-AUTH-001.
+
+### FR-AUTH-006 Institutional email identity (P0)
+
+- **Story:** As the college, I want each account identified by one institutional email address, kept separate from the roll number, so that identity and academic records are never mixed up.
+- **Preconditions:** The official student email domain has been configured.
+- **Acceptance criteria:**
+  1. Every account has exactly one login email. It is stored trimmed and in lower case, and it is unique across all accounts.
+  2. A student's login email is generated by the system: the roll number in lower case, an `@`, and the configured domain. Nobody types it in. (Whether this is the institution's real naming convention is open decision OQ-15.)
+  3. The domain comes from configuration (`STUDENT_EMAIL_DOMAIN`). It is not written into code or tests, and development and production each set their own value.
+  4. The roll number stays in the student profile as the academic identifier and is unique. Academic records refer to the student, never to the email address. Changing how a student logs in changes no roll number and no academic record.
+  5. Neither the login email nor the roll number can be changed through the application once the account exists (OQ-16).
+  6. The profile shows the institutional email. No second email address is stored for a student.
+  7. **The email address is an identifier only.** The application sends no email and makes no claim that an address has been verified or that its mailbox belongs to the student.
+  8. Uniqueness of the email and of the roll number is enforced by the database, not only by the application.
+- **Edge cases:** Two roll numbers that differ only in letter case are the same roll number and would give the same email; the second is rejected.
+- **Depends on:** nothing.
 
 ## 5. Student academic portal
 
@@ -139,14 +181,14 @@ Exact permissions are in [10-authorization-matrix.md](10-authorization-matrix.md
   4. The five most recent notices.
   5. Upcoming deadlines in the next 14 days.
   6. Up to three revision recommendations.
-- **Edge cases:** Each card has its own empty state. A failure in one card does not blank the others.
+- **Edge cases:** Each card has its own empty state. A failure in one card does not blank the others. The recommendations card stays in its empty state until Quick Exam is built (milestone M4).
 - **Depends on:** FR-ATT-001, FR-MRK-002, FR-TT-001, FR-NOT-001, FR-PRG-002.
 
 ### FR-STU-002 Profile (P0)
 
 - **Story:** As a student, I want to check that the college has my details right.
-- **Acceptance criteria:** Shows name, roll number, branch, semester, section, admission year, email and phone. All fields are read-only for the student.
-- **Edge cases:** Missing email or phone shows "Not provided".
+- **Acceptance criteria:** Shows name, roll number, institutional email, branch, semester, section, admission year and phone. All fields are read-only for the student.
+- **Edge cases:** A missing phone number shows "Not provided".
 
 ### FR-ATT-001 View own attendance (P0)
 
@@ -182,8 +224,8 @@ Exact permissions are in [10-authorization-matrix.md](10-authorization-matrix.md
 ### FR-MRK-002 View semester results and CGPA (P0)
 
 - **Acceptance criteria:**
-  1. Each published semester shows SGPA, credits earned and result status.
-  2. CGPA is calculated from published semesters (rule per OQ-3) and shown to two decimals.
+  1. Each published semester shows SGPA, credits registered, credits earned and result status.
+  2. CGPA is the average of the published SGPAs weighted by the credits **registered** in each semester, shown to two decimals. Withheld semesters are left out. The exact rule is in [08-database-design.md](08-database-design.md) §4.8. It is the default until the college's regulation is confirmed (OQ-3).
 - **Edge cases:** No published results shows "Results not published yet".
 - **Depends on:** FR-ADM-004.
 
@@ -267,7 +309,7 @@ Exact permissions are in [10-authorization-matrix.md](10-authorization-matrix.md
 - **Acceptance criteria:**
   1. Scoring is done by Java code, never by AI.
   2. The result shows score, percentage, and for each question the chosen answer, the correct answer and the explanation.
-  3. The result offers "Retake" and "Ask AI to explain".
+  3. The result offers "Retake" and "Ask AI to explain". "Ask AI to explain" is delivered with the AI study assistant (milestone M5); until then the result offers "Retake" only.
 - **Depends on:** FR-QZ-002.
 
 ### FR-QZ-004 Attempt history (P0)
@@ -302,6 +344,8 @@ Exact permissions are in [10-authorization-matrix.md](10-authorization-matrix.md
 
 Behaviour rules are in [13-AI-rules.md](13-AI-rules.md). Limits and formats are in [12-AI-features-spec.md](12-AI-features-spec.md).
 
+**Acceptance needs a real provider.** FR-AI-001 to FR-AI-003 are accepted only when they work with a real AI provider. The mock provider is for development, automated tests and a demo-day outage. Accepting them with the mock provider only would be a scope change that the owner has not approved (OQ-9; see [03-scope-and-roadmap.md](03-scope-and-roadmap.md) §3).
+
 ### FR-AI-001 Explain a topic (P0)
 
 - **Story:** As a student, I want a topic explained simply or in exam-answer form.
@@ -330,6 +374,7 @@ Behaviour rules are in [13-AI-rules.md](13-AI-rules.md). Limits and formats are 
   1. Each user has a daily request limit (default 30) and sees how many remain.
   2. If the AI service fails or takes too long, the user sees a clear message within 30 seconds and can retry.
   3. The rest of the application works when the AI service is down or switched off.
+  4. A daily limit across all users (default 500) protects the budget. When it is reached, the assistant shows as unavailable to everyone until the next day.
 - **Edge cases:** A failed request does not consume the daily limit.
 
 ### FR-AI-005 Summarize a library PDF (P1)
@@ -346,14 +391,24 @@ Behaviour rules are in [13-AI-rules.md](13-AI-rules.md). Limits and formats are 
 
 ## 10. Admin and content management
 
-### FR-ADM-001 Manage student accounts (P0)
+### FR-ADM-001 Provision and manage student accounts (P0)
 
+- **Story:** As an admin, I create accounts for the verified student roster so that students can log in.
+- **Preconditions:** Logged in as an admin. The official student email domain is configured. There is no self-registration: students cannot create accounts.
 - **Acceptance criteria:**
-  1. Create a student with roll number, name, branch, semester, section and admission year. The system generates a random temporary password and shows it once.
-  2. Edit profile fields; search by roll number or name.
-  3. Deactivate and reactivate an account. Students are never deleted.
-  4. Reset a password, which issues a new temporary password and unlocks the account.
-- **Edge cases:** Duplicate roll number is rejected with "A student with this roll number already exists".
+  1. **Create** a student from roster details: roll number, name, branch, semester, section, admission year and, optionally, a phone number. In one transaction the system creates the login account and the student profile linked to it.
+  2. The system generates the login email (FR-AUTH-006) and sets the temporary password to the student's roll number as stored (upper case). Only a salted hash is stored. The account is marked "must change password".
+  3. The temporary password is never shown, returned or logged. The response confirms the generated email and that a password change is required.
+  4. A record is **rejected**, with the reason, when the roll number is missing, contains anything other than letters and digits, or already exists; when the generated email already exists; or when a required field is missing. Nothing is saved for a rejected record.
+  5. **Search** by roll number, name or email. **Edit** profile fields other than the roll number.
+  6. The list shows each account's state: awaiting first login, active, locked, or deactivated.
+  7. **Deactivate** ends the student's sessions at once and blocks login. **Reactivate** restores the account with the password it had. Students are never deleted.
+  8. **Reset password** issues a random temporary password, shown to the admin once. It ends the student's sessions, unlocks the account and forces a change at the next login. A reset never sets the password back to the roll number (OQ-16).
+  9. **Admin accounts are not created here.** They are provisioned separately, with their own credentials, and never receive a roll-number password. The first admin is created from configuration with a strong password chosen by the owner.
+  10. Creating, deactivating, reactivating and resetting are audited (FR-ADM-009).
+- **Edge cases:** A duplicate roll number is rejected with "A student with this roll number already exists". The roster's accuracy is the admin's responsibility; the application checks format and uniqueness, not identity.
+- **Security note:** Using the roll number as the first password is predictable, because the email address contains the same roll number. This is an accepted exception for the assignment and demonstration, with synthetic data only. It must be reviewed by the owner before any use with real students. See [ADR 0008](decisions/0008-institutional-email-login.md).
+- **Depends on:** FR-AUTH-006.
 
 ### FR-ADM-002 Enter attendance (P0)
 
@@ -374,7 +429,7 @@ Behaviour rules are in [13-AI-rules.md](13-AI-rules.md). Limits and formats are 
 
 ### FR-ADM-004 Enter semester results (P0)
 
-- **Acceptance criteria:** Record SGPA (0 to 10), credits earned and status for a student and semester. Changes are audited.
+- **Acceptance criteria:** Record SGPA (0 to 10), credits registered, credits earned and status for a student and semester, and publish it. Credits earned cannot exceed credits registered. Changes are audited.
 
 ### FR-ADM-005 Manage subjects, units and timetable (P0)
 
@@ -399,11 +454,24 @@ Behaviour rules are in [13-AI-rules.md](13-AI-rules.md). Limits and formats are 
 
 ### FR-ADM-009 Audit log (P0 write, P1 viewer)
 
-- **Acceptance criteria:** Changes to marks, attendance, results, account status and passwords record who, what, when, and old and new values. Entries cannot be edited or deleted in the application. P1 adds a filterable admin screen.
+- **Story:** As the college, I want a record of who changed official data so that a wrong or dishonest change can be traced and corrected.
+- **Preconditions:** The change is made by a logged-in admin, by a user changing their own password, or by the system when it creates the first admin.
+- **Acceptance criteria:**
+  1. Each of these writes one audit entry: a change to saved marks; a correction to saved attendance; a created or changed semester result; an account created, activated or deactivated; an edited student profile; a password reset by an admin; a password change by a user.
+  2. An entry records who did it, the action, which record, when, and from which IP address.
+  3. For data changes, the entry also records the old and new values of the fields that changed.
+  4. **For password events the entry records only that the event happened.** No entry ever contains a password, a temporary password, a password hash, or any part of one, in any field.
+  5. The entry is saved in the same transaction as the change. If either fails, neither is saved.
+  6. Entries cannot be edited or deleted through the application, and the application's own database credential is not permitted to change or delete them.
+- **Edge cases:** Saving a sheet in which nothing changed writes no entries. A bulk save writes one entry per changed row.
+- **Depends on:** FR-ADM-001 to FR-ADM-004, FR-AUTH-003.
+- **Priority split:** Writing entries is **P0**. A screen for admins to browse and filter entries is **P1**. Until that screen exists, the P0 behaviour is shown by the automated tests and by a read-only database query run by the owner.
+
+The permitted contents and the protections are specified in [08-database-design.md](08-database-design.md) §12.
 
 ### FR-ADM-010 CSV bulk import (P1)
 
-- **Acceptance criteria:** Upload a CSV of students. The file is validated completely first; any invalid row stops the import and all problems are listed by row number.
+- **Acceptance criteria:** Upload a CSV of students. Every row follows the same provisioning rules as FR-ADM-001. The file is validated completely first; any invalid, duplicate or ambiguous row stops the import and all problems are listed by row number.
 
 ### FR-ADM-011 Usage statistics (P2)
 

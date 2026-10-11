@@ -16,7 +16,7 @@ The study assistant needs a large language model to explain topics, summarize te
 
 ## Decision
 
-All AI calls are made by the backend through an `AiProvider` interface. A deterministic `MockAiProvider` is the default and is used by every automated test. One real adapter, selected by configuration, calls the chosen provider over HTTPS with explicit timeouts. Prompts are versioned template files. Model output must be JSON, which Java parses and validates before anything is returned to the browser.
+All AI calls are made by the backend through an `AiProvider` interface. A deterministic `MockAiProvider` is the default and is used by every automated test. One real adapter, selected by configuration, calls the chosen provider over HTTPS with explicit timeouts. Prompts are versioned template files. Model output must be JSON, which Java parses and validates before anything is returned to the browser. That validation covers structure and size, not whether the content follows the AI rules.
 
 The model has no tools and no access to application data. It receives only the student's input for that request plus subject and unit names.
 
@@ -34,6 +34,7 @@ The model has no tools and no access to application data. It receives only the s
 - Switching provider means writing one new adapter class.
 - Development of AI features is not blocked by the provider decision until the real adapter task.
 - Limits, logging and the kill switch are implemented once, around the interface.
+- Acceptance of the AI requirements still needs the real adapter. Whether a mock-only submission is acceptable is open decision OQ-9.
 
 ## To complete before this record is accepted
 

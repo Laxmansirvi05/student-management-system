@@ -1,6 +1,6 @@
 # 15. AI Features Handoff
 
-> Status: Draft v0.1 · Owner: Laxman Sirvi · Last updated: 2026-10-10
+> Status: Draft v0.2 · Owner: Laxman Sirvi · Last updated: 2026-10-11
 
 This is the implementation guide for the AI integration. It connects [12-AI-features-spec.md](12-AI-features-spec.md) (what), [13-AI-rules.md](13-AI-rules.md) (behaviour) and [14-AI-security-and-privacy.md](14-AI-security-and-privacy.md) (protection) to concrete Java work. Task IDs refer to [16-implementation-plan.md](16-implementation-plan.md).
 
@@ -154,10 +154,11 @@ Bound to an `AiProperties` class. No real values appear in the repository.
 | `AI_PROVIDER` | `mock` | Which `AiProvider` bean is active. |
 | `AI_API_KEY` | empty | Required only for a real provider. Startup fails with a clear message if a real provider is selected without it. |
 | `AI_MODEL` | empty | Model identifier for the real provider. |
-| `AI_DAILY_LIMIT_PER_USER` | `30` | |
+| `AI_DAILY_LIMIT_PER_USER` | `30` | Per-user daily limit. |
+| `AI_DAILY_LIMIT_GLOBAL` | `500` | Application-wide daily ceiling across all users. Provisional (OQ-11). |
 | `AI_MAX_OUTPUT_TOKENS` | `1200` | |
 
-Further properties with defaults in `application.yml`: per-minute limit (5), application daily ceiling, connect timeout (5 s), response timeout (20 s), total budget (25 s).
+Fixed defaults in `application.yml`, changed only by a reviewed code change: per-minute limit (5), concurrent requests per user (2), connect timeout (5 s), response timeout (20 s), total budget (25 s). The meaning of every limit, what counts toward it and the order of checks are defined in [12-AI-features-spec.md](12-AI-features-spec.md) §2. The full configuration reference is [18-production-plan.md](18-production-plan.md) §5.
 
 ## 7. Provider integration
 
@@ -232,6 +233,8 @@ Answer format: {answerFormat}
 { "declined": false, "questions": [ { "type": "MCQ", "question": "...", "options": ["...", "...", "...", "..."], "correctOption": "B", "answer": "...", "explanation": "..." } ] }
 ```
 
+Passing the parser means a reply is well-formed. It is not a judgement on its content (see [14-AI-security-and-privacy.md](14-AI-security-and-privacy.md) §3.2).
+
 Parser limits: `explanation` and `summary` up to 4,000 characters; each key point up to 300; `example` up to 1,500; question up to 1,000; each option up to 300; explanation of a question up to 2,000. A field over its limit makes the response invalid, except `explanation` and `summary`, which are cut at the last full sentence within the limit.
 
 `basis` for Summarize is set by Java to `PROVIDED_TEXT`. `basis` for Explain is taken from the model but forced to `GENERAL_KNOWLEDGE` when no context was sent.
@@ -248,6 +251,7 @@ Parser limits: `explanation` and `summary` up to 4,000 characters; each key poin
 | `[[mock:decline]]` | Returns the decline structure |
 | `[[mock:html]]` | Returns valid JSON whose text contains `<script>` |
 | `[[mock:badmcq]]` | Returns MCQs with duplicate options |
+| `[[mock:injected]]` | Returns valid JSON whose text fields contain an injected instruction and off-topic text |
 
 Markers are honoured only by the mock. The real adapter treats them as ordinary text.
 
@@ -274,6 +278,8 @@ All automated tests use `MockAiProvider` or a Mockito mock of `AiProvider`. **No
 | Controller | Validation boundaries, error codes, role checks (visitor 401, admin 403) |
 | Integration | Full request with the mock; usage rows written with no text; failures not counted |
 | Architecture | `ai` package does not depend on `student`, `attendance`, `assessment` |
+| Injection | A schema-valid reply with injected content passes validation and is delivered as inert, labelled text. The test records that validation is structural only |
+| Ceiling | The application-wide ceiling blocks all users once reached and is independent of the per-user limit |
 | Manual | Behaviour cases B1 to B20 against the real provider |
 
 ## 14. Definition of done
@@ -288,7 +294,8 @@ A feature is done when all of these are true:
 - [ ] Unit, controller and integration tests pass.
 - [ ] No prompt or response text appears in logs.
 - [ ] The UI shows loading, result, labels, remaining requests and every error state.
-- [ ] Relevant behaviour cases pass against the real provider (after `T5-06`).
+- [ ] Relevant behaviour cases pass against the real provider (after `T5-06`), judged on content.
+- [ ] The feature has been accepted with the real provider, unless OQ-9 records an approved exception.
 - [ ] Documentation updated if anything differed from this handoff.
 
 ## 15. Open items
@@ -296,5 +303,6 @@ A feature is done when all of these are true:
 | Item | Blocks |
 | --- | --- |
 | OQ-1: provider, model, budget and data-handling terms | `T5-06` |
-| Application-wide daily ceiling value | `T5-02` (use 500 until decided) |
+| OQ-11: application-wide daily ceiling (`AI_DAILY_LIMIT_GLOBAL`, default 500) | Nothing; `T5-02` uses the default |
+| OQ-9: whether mock-only acceptance is allowed | Release acceptance |
 | Mermaid version to vendor | `T7-05` |

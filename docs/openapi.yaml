@@ -1,14 +1,15 @@
 openapi: 3.0.3
 info:
   title: Campus Companion API
-  version: 0.1.0
+  version: 0.2.0
   description: >
     REST API for Campus Companion. This file is the authoritative contract for
-    the endpoints it lists. It covers every student-facing P0 endpoint and the
-    main admin endpoints. The remaining admin CRUD endpoints in section 7.6 of
-    docs/09-api-contract.md (subjects, units, timetable, notice and resource
-    updates) and all P1 and P2 endpoints MUST be added here in the same change
-    that implements them.
+    the endpoints it lists. It covers every P0 endpoint in section 7 of
+    docs/09-api-contract.md. Endpoints marked P1 there are added by the task
+    that implements them. The health endpoint (/actuator/health) is outside
+    /api/v1 and is not listed here. Conventions and examples are in
+    docs/09-api-contract.md. Login uses the account's institutional email
+    address; see docs/decisions/0008-institutional-email-login.md.
 servers:
   - url: /api/v1
 tags:
@@ -43,7 +44,14 @@ paths:
   /auth/login:
     post:
       tags: [Auth]
-      summary: Log in
+      summary: Log in with institutional email and password
+      description: >
+        The email is trimmed and lower-cased before lookup. A wrong password,
+        an email with no account and a deactivated account return the same 401.
+        After five consecutive failures for an email, further attempts return
+        423 whether or not an account exists. When mustChangePassword is true,
+        the server accepts only /auth/csrf, /auth/me, /auth/change-password and
+        /auth/logout until the password has been changed.
       security:
         - csrfHeader: []
       requestBody:
@@ -86,6 +94,10 @@ paths:
     post:
       tags: [Auth]
       summary: Change own password
+      description: >
+        Requires the current password and the new password twice. On success
+        the must-change flag is cleared, the user's other sessions are ended
+        and the session identifier is renewed.
       requestBody:
         required: true
         content:
@@ -557,7 +569,7 @@ paths:
       tags: [Admin]
       summary: Search students
       parameters:
-        - { name: q, in: query, description: Roll number or name., schema: { type: string, maxLength: 100 } }
+        - { name: q, in: query, description: "Roll number, name or email.", schema: { type: string, maxLength: 100 } }
         - { name: branch, in: query, schema: { type: string } }
         - { name: semester, in: query, schema: { type: integer, minimum: 1, maximum: 8 } }
         - { name: section, in: query, schema: { type: string } }
@@ -579,18 +591,24 @@ paths:
         "403": { $ref: "#/components/responses/Problem" }
     post:
       tags: [Admin]
-      summary: Create a student
+      summary: Provision a student account and profile
+      description: >
+        Creates the login account and the linked profile in one transaction.
+        The login email is generated from the roll number and the configured
+        domain. The temporary password is the roll number; it is stored only
+        as a hash and is never returned. The account must change its password
+        at first login.
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: "#/components/schemas/StudentWriteRequest" }
+            schema: { $ref: "#/components/schemas/StudentCreateRequest" }
       responses:
         "201":
-          description: Created. The temporary password is returned only in this response.
+          description: Provisioned. Contains the generated email and no password.
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/StudentCreated" }
+              schema: { $ref: "#/components/schemas/AdminStudent" }
         "400": { $ref: "#/components/responses/Problem" }
         "403": { $ref: "#/components/responses/Problem" }
         "409": { $ref: "#/components/responses/Problem" }
@@ -610,12 +628,12 @@ paths:
         "404": { $ref: "#/components/responses/Problem" }
     put:
       tags: [Admin]
-      summary: Update a student
+      summary: Update a student's profile (not the roll number or email)
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: "#/components/schemas/StudentWriteRequest" }
+            schema: { $ref: "#/components/schemas/StudentUpdateRequest" }
       responses:
         "200":
           description: Updated.
@@ -629,7 +647,7 @@ paths:
   /admin/students/{id}/deactivate:
     post:
       tags: [Admin]
-      summary: Deactivate a student account
+      summary: Deactivate a student account and end its sessions
       parameters:
         - { $ref: "#/components/parameters/IdPath" }
       responses:
@@ -649,12 +667,12 @@ paths:
   /admin/students/{id}/reset-password:
     post:
       tags: [Admin]
-      summary: Issue a temporary password and unlock the account
+      summary: Issue a random temporary password, end the student's sessions and unlock the account
       parameters:
         - { $ref: "#/components/parameters/IdPath" }
       responses:
         "200":
-          description: The temporary password, shown once.
+          description: A random temporary password, shown once. Never the roll number.
           content:
             application/json:
               schema:
@@ -841,6 +859,29 @@ paths:
         "404": { $ref: "#/components/responses/Problem" }
 
   /admin/resources:
+    get:
+      tags: [Admin]
+      summary: List all resources including hidden ones
+      parameters:
+        - { name: subjectId, in: query, schema: { type: integer, format: int64 } }
+        - name: status
+          in: query
+          schema: { $ref: "#/components/schemas/ResourceStatus" }
+        - { $ref: "#/components/parameters/Page" }
+        - { $ref: "#/components/parameters/Size" }
+      responses:
+        "200":
+          description: Page of resources.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - { $ref: "#/components/schemas/PageMeta" }
+                  - type: object
+                    properties:
+                      content:
+                        type: array
+                        items: { $ref: "#/components/schemas/AdminResource" }
     post:
       tags: [Admin]
       summary: Upload a resource
@@ -931,6 +972,231 @@ paths:
               schema: { $ref: "#/components/schemas/AdminQuizQuestion" }
         "400": { $ref: "#/components/responses/Problem" }
         "404": { $ref: "#/components/responses/Problem" }
+
+  /admin/subjects:
+    get:
+      tags: [Admin]
+      summary: List all subjects including inactive ones
+      parameters:
+        - { name: branch, in: query, schema: { type: string } }
+        - { name: semester, in: query, schema: { type: integer, minimum: 1, maximum: 8 } }
+      responses:
+        "200":
+          description: Subjects.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AdminSubject" }
+    post:
+      tags: [Admin]
+      summary: Create a subject
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SubjectWriteRequest" }
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminSubject" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+
+  /admin/subjects/{id}:
+    put:
+      tags: [Admin]
+      summary: Update or deactivate a subject
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SubjectWriteRequest" }
+      responses:
+        "200":
+          description: Updated.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminSubject" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+
+  /admin/subjects/{id}/units:
+    post:
+      tags: [Admin]
+      summary: Add a unit to a subject
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UnitWriteRequest" }
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Unit" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+
+  /admin/units/{id}:
+    parameters:
+      - { $ref: "#/components/parameters/IdPath" }
+    put:
+      tags: [Admin]
+      summary: Update a unit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UnitWriteRequest" }
+      responses:
+        "200":
+          description: Updated.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Unit" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+    delete:
+      tags: [Admin]
+      summary: Remove a unit that is not in use
+      responses:
+        "204": { description: Removed. }
+        "404": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+
+  /admin/timetable:
+    get:
+      tags: [Admin]
+      summary: List timetable entries
+      parameters:
+        - { name: branch, in: query, schema: { type: string } }
+        - { name: semester, in: query, schema: { type: integer, minimum: 1, maximum: 8 } }
+        - { name: section, in: query, schema: { type: string } }
+      responses:
+        "200":
+          description: Entries in day and time order.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AdminTimetableEntry" }
+    post:
+      tags: [Admin]
+      summary: Create a timetable entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TimetableWriteRequest" }
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminTimetableEntry" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+
+  /admin/timetable/{id}:
+    parameters:
+      - { $ref: "#/components/parameters/IdPath" }
+    put:
+      tags: [Admin]
+      summary: Update a timetable entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TimetableWriteRequest" }
+      responses:
+        "200":
+          description: Updated.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminTimetableEntry" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+    delete:
+      tags: [Admin]
+      summary: Delete a timetable entry
+      responses:
+        "204": { description: Deleted. }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /admin/notices/{id}:
+    parameters:
+      - { $ref: "#/components/parameters/IdPath" }
+    put:
+      tags: [Admin]
+      summary: Update a notice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/NoticeWriteRequest" }
+      responses:
+        "200":
+          description: Updated.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Notice" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+    delete:
+      tags: [Admin]
+      summary: Delete a notice
+      responses:
+        "204": { description: Deleted. }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /admin/notices/{id}/unpublish:
+    post:
+      tags: [Admin]
+      summary: Return a notice to draft
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      responses:
+        "204": { description: Unpublished. }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /admin/resources/{id}:
+    parameters:
+      - { $ref: "#/components/parameters/IdPath" }
+    put:
+      tags: [Admin]
+      summary: Update a resource's details or status
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ResourceUpdateRequest" }
+      responses:
+        "200":
+          description: Updated.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminResource" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+    delete:
+      tags: [Admin]
+      summary: Delete a resource and its stored file
+      responses:
+        "204": { description: Deleted. }
+        "404": { $ref: "#/components/responses/Problem" }
+        "503": { $ref: "#/components/responses/Problem" }
 
 components:
   securitySchemes:
@@ -1036,38 +1302,59 @@ components:
 
     LoginRequest:
       type: object
-      required: [username, password]
+      required: [email, password]
       properties:
-        username: { type: string, minLength: 1, maxLength: 50 }
+        email:
+          type: string
+          format: email
+          maxLength: 254
+          description: The account's institutional email address. Trimmed and lower-cased by the server.
+          example: 23cse001@university.example
         password: { type: string, minLength: 1, maxLength: 72, format: password }
 
     ChangePasswordRequest:
       type: object
-      required: [currentPassword, newPassword]
+      required: [currentPassword, newPassword, confirmNewPassword]
       properties:
         currentPassword: { type: string, minLength: 1, maxLength: 72, format: password }
-        newPassword: { type: string, minLength: 8, maxLength: 72, format: password }
+        newPassword:
+          type: string
+          minLength: 8
+          maxLength: 72
+          format: password
+          description: >
+            Ignoring letter case, must not equal the user's roll number, email
+            address, the part of the email before the @, or current password.
+        confirmNewPassword:
+          type: string
+          minLength: 8
+          maxLength: 72
+          format: password
+          description: Must equal newPassword.
 
     CurrentUser:
       type: object
-      required: [username, displayName, role, mustChangePassword]
+      required: [email, displayName, role, mustChangePassword]
       properties:
-        username: { type: string }
+        email: { type: string, format: email, description: The account's login email. }
         displayName: { type: string }
         role: { $ref: "#/components/schemas/Role" }
         mustChangePassword: { type: boolean }
 
     StudentProfile:
       type: object
-      required: [rollNo, fullName, branch, currentSemester, section, admissionYear]
+      required: [rollNo, email, fullName, branch, currentSemester, section, admissionYear]
       properties:
-        rollNo: { type: string }
+        rollNo: { type: string, description: The academic identifier. Not the login identifier. }
+        email:
+          type: string
+          format: email
+          description: The institutional login email, generated at provisioning. An identifier only; not verified.
         fullName: { type: string }
         branch: { type: string }
         currentSemester: { type: integer, minimum: 1, maximum: 8 }
         section: { type: string }
         admissionYear: { type: integer }
-        email: { type: string, nullable: true }
         phone: { type: string, nullable: true }
 
     Dashboard:
@@ -1225,11 +1512,18 @@ components:
 
     SemesterResult:
       type: object
-      required: [semester, sgpa, creditsEarned, resultStatus]
+      required: [semester, sgpa, creditsRegistered, creditsEarned, resultStatus]
       properties:
         semester: { type: integer, minimum: 1, maximum: 8 }
         sgpa: { type: number, minimum: 0, maximum: 10 }
-        creditsEarned: { type: integer, minimum: 0 }
+        creditsRegistered:
+          type: integer
+          minimum: 1
+          description: Total credits registered in the semester, passed or failed. The CGPA weight.
+        creditsEarned:
+          type: integer
+          minimum: 0
+          description: Credits of courses passed. Not more than creditsRegistered.
         resultStatus: { $ref: "#/components/schemas/ResultStatus" }
 
     SemesterResultWriteRequest:
@@ -1245,7 +1539,10 @@ components:
       type: object
       required: [semesters]
       properties:
-        cgpa: { type: number, nullable: true }
+        cgpa:
+          type: number
+          nullable: true
+          description: Average of published SGPAs weighted by creditsRegistered. Null when nothing is published.
         semesters:
           type: array
           items: { $ref: "#/components/schemas/SemesterResult" }
@@ -1620,10 +1917,17 @@ components:
         usedToday: { type: integer }
         remainingToday: { type: integer }
         resetsAt: { type: string, format: date-time }
-        enabled: { type: boolean }
+        enabled:
+          type: boolean
+          description: False when AI is switched off or the application-wide daily ceiling has been reached.
 
-    StudentWriteRequest:
+    StudentCreateRequest:
       type: object
+      additionalProperties: false
+      description: >
+        Roster details for one student. There is no email and no password
+        field: the email is generated and the temporary password is the roll
+        number.
       required: [rollNo, fullName, branch, currentSemester, section, admissionYear]
       properties:
         rollNo: { type: string, minLength: 1, maxLength: 20, pattern: "^[A-Za-z0-9]+$" }
@@ -1632,26 +1936,106 @@ components:
         currentSemester: { type: integer, minimum: 1, maximum: 8 }
         section: { type: string, minLength: 1, maxLength: 5 }
         admissionYear: { type: integer, minimum: 2000, maximum: 2100 }
-        email: { type: string, format: email, maxLength: 254, nullable: true }
+        phone: { type: string, maxLength: 20, nullable: true }
+
+    StudentUpdateRequest:
+      type: object
+      additionalProperties: false
+      description: Profile fields that may be edited. The roll number and the login email cannot be changed.
+      required: [fullName, branch, currentSemester, section, admissionYear]
+      properties:
+        fullName: { type: string, minLength: 1, maxLength: 120 }
+        branch: { type: string, minLength: 1, maxLength: 20 }
+        currentSemester: { type: integer, minimum: 1, maximum: 8 }
+        section: { type: string, minLength: 1, maxLength: 5 }
+        admissionYear: { type: integer, minimum: 2000, maximum: 2100 }
         phone: { type: string, maxLength: 20, nullable: true }
 
     AdminStudent:
       allOf:
         - { $ref: "#/components/schemas/StudentProfile" }
         - type: object
-          required: [id, active]
+          required: [id, active, mustChangePassword, locked]
           properties:
             id: { type: integer, format: int64 }
             active: { type: boolean }
+            mustChangePassword:
+              type: boolean
+              description: True while the account still has a temporary password.
             locked: { type: boolean }
-            lastLoginAt: { type: string, format: date-time, nullable: true }
+            lastLoginAt:
+              type: string
+              format: date-time
+              nullable: true
+              description: Null means the account is still awaiting its first login.
 
-    StudentCreated:
+    SubjectWriteRequest:
       type: object
-      required: [student, temporaryPassword]
+      required: [code, name, branch, semester, credits, active]
       properties:
-        student: { $ref: "#/components/schemas/AdminStudent" }
-        temporaryPassword: { type: string }
+        code: { type: string, minLength: 1, maxLength: 20 }
+        name: { type: string, minLength: 1, maxLength: 150 }
+        branch: { type: string, minLength: 1, maxLength: 20 }
+        semester: { type: integer, minimum: 1, maximum: 8 }
+        credits: { type: integer, minimum: 0, maximum: 10 }
+        active: { type: boolean }
+
+    AdminSubject:
+      allOf:
+        - { $ref: "#/components/schemas/Subject" }
+        - type: object
+          required: [active]
+          properties:
+            active: { type: boolean }
+
+    UnitWriteRequest:
+      type: object
+      required: [unitNo, title]
+      properties:
+        unitNo: { type: integer, minimum: 1, maximum: 20 }
+        title: { type: string, minLength: 1, maxLength: 200 }
+
+    TimetableWriteRequest:
+      type: object
+      required: [branch, semester, section, dayOfWeek, startTime, endTime, subjectId]
+      properties:
+        branch: { type: string, minLength: 1, maxLength: 20 }
+        semester: { type: integer, minimum: 1, maximum: 8 }
+        section: { type: string, minLength: 1, maxLength: 5 }
+        dayOfWeek: { type: integer, minimum: 1, maximum: 7 }
+        startTime: { type: string, pattern: '^\d{2}:\d{2}$', example: "09:00" }
+        endTime: { type: string, pattern: '^\d{2}:\d{2}$', example: "09:50" }
+        subjectId: { type: integer, format: int64 }
+        room: { type: string, maxLength: 30, nullable: true }
+        facultyName: { type: string, maxLength: 120, nullable: true }
+
+    AdminTimetableEntry:
+      allOf:
+        - { $ref: "#/components/schemas/TimetableWriteRequest" }
+        - type: object
+          required: [id]
+          properties:
+            id: { type: integer, format: int64 }
+
+    ResourceUpdateRequest:
+      allOf:
+        - { $ref: "#/components/schemas/ResourceMetadata" }
+        - type: object
+          required: [status]
+          properties:
+            status: { $ref: "#/components/schemas/ResourceStatus" }
+
+    ResourceStatus:
+      type: string
+      enum: [PUBLISHED, HIDDEN]
+
+    AdminResource:
+      allOf:
+        - { $ref: "#/components/schemas/Resource" }
+        - type: object
+          required: [status]
+          properties:
+            status: { $ref: "#/components/schemas/ResourceStatus" }
 
     QuestionStatus:
       type: string

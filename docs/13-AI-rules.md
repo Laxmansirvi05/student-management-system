@@ -1,6 +1,6 @@
 # 13. AI Rules
 
-> Status: Draft v0.1 · Owner: Laxman Sirvi · Last updated: 2026-10-10
+> Status: Draft v0.2 · Owner: Laxman Sirvi · Last updated: 2026-10-11
 
 This document defines how the in-product AI study assistant must behave. These rules are implemented in the versioned prompt templates and checked by the tests in section 4. They apply to the assistant inside the application, not to coding agents (see [AI_AGENT_SECURITY_RULES.md](../AI_AGENT_SECURITY_RULES.md)).
 
@@ -47,6 +47,8 @@ A decline is not a punishment. It never accuses the student of anything.
 ## 4. Behaviour test cases
 
 Each case is run against the real provider before release (see [17-testing-strategy.md](17-testing-strategy.md) §9) and the result recorded. "Pass" is judged by the owner against the expected behaviour.
+
+A reply being valid JSON is **not** a pass. The automated checks confirm only the shape of a reply; they cannot tell whether its content follows these rules. These cases are how the content is checked, which is why they are re-run whenever a prompt or the model changes.
 
 | # | Rule | Input | Expected behaviour |
 | --- | --- | --- | --- |

@@ -40,7 +40,7 @@ Then, by area:
 | Any feature | The requirement in [02-PRD.md](docs/02-PRD.md); [05-architecture.md](docs/05-architecture.md) |
 | An endpoint | [09-api-contract.md](docs/09-api-contract.md), [openapi.yaml](docs/openapi.yaml), [10-authorization-matrix.md](docs/10-authorization-matrix.md) |
 | An entity, repository or migration | [08-database-design.md](docs/08-database-design.md) |
-| Login, sessions, roles, uploads | [11-security-plan.md](docs/11-security-plan.md) |
+| Login, sessions, roles, uploads | [11-security-plan.md](docs/11-security-plan.md); for login identity and first-time passwords also [ADR 0008](docs/decisions/0008-institutional-email-login.md) and [SECURITY_RULES.md](SECURITY_RULES.md) section 11 |
 | A page or frontend module | [06-app-flow.md](docs/06-app-flow.md), [07-ui-ux-spec.md](docs/07-ui-ux-spec.md) |
 | Anything under `ai` | [12](docs/12-AI-features-spec.md), [13](docs/13-AI-rules.md), [14](docs/14-AI-security-and-privacy.md), [15](docs/15-AI-features-handoff.md) |
 | Tests | [17-testing-strategy.md](docs/17-testing-strategy.md) |
@@ -148,7 +148,7 @@ Stop and ask the owner before:
 
 - Adding, removing or upgrading a dependency or plugin.
 - Changing the architecture, the stack, or an accepted decision record.
-- Changing authentication, authorization, session, CSRF, upload validation or secrets handling.
+- Changing authentication, authorization, session, CSRF, upload validation or secrets handling. This includes the login identity rules and security exception EX-AUTH-01.
 - Changing a P0 requirement or adding a feature that is not in the PRD.
 - Writing a destructive migration.
 - Anything listed as approval-required in [AI_AGENT_SECURITY_RULES.md](AI_AGENT_SECURITY_RULES.md).

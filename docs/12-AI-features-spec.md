@@ -1,6 +1,6 @@
 # 12. AI Features Specification
 
-> Status: Draft v0.1 · Owner: Laxman Sirvi · Last updated: 2026-10-10
+> Status: Draft v0.2 · Owner: Laxman Sirvi · Last updated: 2026-10-11
 
 This document defines exactly what the AI study assistant does. How it must behave is in [13-AI-rules.md](13-AI-rules.md). How it is protected is in [14-AI-security-and-privacy.md](14-AI-security-and-privacy.md). How to build it is in [15-AI-features-handoff.md](15-AI-features-handoff.md). Wire formats are in [09-api-contract.md](09-api-contract.md) §9.
 
@@ -19,6 +19,8 @@ This document defines exactly what the AI study assistant does. How it must beha
 
 The assistant is a set of **single-request tools**, not a chat. There is no conversation history. Each request stands alone, which keeps cost, privacy and testing simple.
 
+**Acceptance.** Features 1 to 4 are accepted only when they work with a real AI provider (task `T5-06`). The mock provider is for development, automated tests and a demo-day outage. Whether a mock-only submission is acceptable is an open owner decision (OQ-9); the default is that it is not.
+
 ## 2. Requirements common to every feature
 
 | Topic | Requirement |
@@ -27,13 +29,36 @@ The assistant is a set of **single-request tools**, not a chat. There is no conv
 | Where the call happens | Backend only, through `AiProvider`. |
 | Context sent to the provider | The student's input for that request, the selected subject and unit **names**, and the versioned instructions. Nothing from the database about any person. |
 | Output | Structured JSON, validated by Java, returned as typed fields of plain text. |
+| What validation proves | Shape and size only. A well-formed reply can still be wrong, off-topic or the result of an injected instruction. See [14-AI-security-and-privacy.md](14-AI-security-and-privacy.md) §3. |
 | Labelling | Every response includes `basis`, `notice` and `promptVersion`. |
-| Time budget | 25 seconds in total. |
-| Daily limit | 30 successful requests per user per day (`AI_DAILY_LIMIT_PER_USER`). |
-| Burst limit | 5 requests per user per minute. |
-| Output size | At most `AI_MAX_OUTPUT_TOKENS` (default 1,200). |
-| Switch | `AI_ENABLED=false` makes every AI endpoint return `503 AI_UNAVAILABLE`. |
+| Limits | See "Limits" below. This is the only place their values are defined. |
 | Storage | Prompt and response text are not stored. Only metadata is logged. |
+
+### Limits
+
+Other documents refer to this table and do not restate the values.
+
+| Limit | Default | Set by | When reached |
+| --- | --- | --- | --- |
+| Per user, per day | 30 requests | `AI_DAILY_LIMIT_PER_USER` | `429 AI_QUOTA_EXCEEDED` for that user until the next day |
+| Per user, per minute | 5 requests | Fixed default | `429 RATE_LIMITED` |
+| Per user, at the same time | 2 requests in flight | Fixed default | `429 RATE_LIMITED` |
+| **All users together, per day (application-wide ceiling)** | 500 requests | `AI_DAILY_LIMIT_GLOBAL` | `503 AI_UNAVAILABLE` for **every** user until the next day |
+| Output size | 1,200 tokens | `AI_MAX_OUTPUT_TOKENS` | The reply is cut off by the provider; if that makes it invalid, `502 AI_INVALID_RESPONSE` |
+| Time budget | 25 seconds in total | Fixed default | `504 AI_TIMEOUT` |
+| Kill switch | On | `AI_ENABLED` | `false` gives `503 AI_UNAVAILABLE` on every AI endpoint |
+
+Rules that apply to the per-user daily limit and the application-wide ceiling alike:
+
+1. **What counts.** A request counts when it ends as `SUCCESS` or `DECLINED`. Failures and timeouts do not count.
+2. **The day.** Both reset at midnight in `Asia/Kolkata`.
+3. **Where the count lives.** Both are counted from `ai_request_logs`, so a restart does not reset them.
+4. **Order of checks, all before any provider call:** kill switch, application-wide ceiling, per-user daily limit, per-minute limit, concurrency.
+5. **The ceiling is independent of the number of users.** It is not "30 times the number of students". It exists so that total daily use has a hard upper bound even if many accounts are used heavily at once.
+
+The ceiling's default of 500 is provisional. The owner sets the real value together with the AI budget (OQ-11).
+
+**Worst-case daily volume.** With the defaults, at most 500 counted requests are sent to the provider in a day. Each carries at most about 12,000 characters of student input plus the instructions, and at most 1,200 output tokens. Assuming roughly four characters per token, that is on the order of 2 million input tokens and 0.6 million output tokens per day. Multiply by the chosen provider's current prices to get the worst-case daily cost. Failed and timed-out calls are not counted but can still be billed; the per-minute limit and a spending limit set at the provider bound that exposure.
 
 ### Loading, timeout and failure behaviour
 
@@ -46,6 +71,7 @@ The assistant is a set of **single-request tools**, not a chat. There is no conv
 | Daily limit reached | `429 AI_QUOTA_EXCEEDED` | "You have used today's AI requests. Try again tomorrow." |
 | Too fast | `429 RATE_LIMITED` | "Please wait a moment." |
 | Provider error or AI switched off | `503 AI_UNAVAILABLE` | "The assistant is unavailable right now." and Retry. |
+| Application-wide ceiling reached | `503 AI_UNAVAILABLE` | "The assistant has reached today's limit for everyone. Try again tomorrow." No Retry. |
 | Provider too slow | `504 AI_TIMEOUT` | Same message and Retry. |
 | Output failed validation | `502 AI_INVALID_RESPONSE` | Same message and Retry. |
 
@@ -56,7 +82,7 @@ Failures (`502`, `503`, `504`) do not count toward the daily limit.
 1. Input length limits per feature (below).
 2. Output token cap.
 3. Per-user daily and per-minute limits.
-4. An application-wide daily ceiling.
+4. The application-wide daily ceiling (`AI_DAILY_LIMIT_GLOBAL`).
 5. The kill switch.
 6. A low-cost model by default (OQ-1).
 

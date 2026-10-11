@@ -1,6 +1,6 @@
 # 04. Technical Requirements Document
 
-> Status: Draft v0.1 · Owner: Laxman Sirvi · Last updated: 2026-10-10
+> Status: Draft v0.2 · Owner: Laxman Sirvi · Last updated: 2026-10-11
 
 This document sets the technical constraints every implementation must satisfy. Requirement IDs here start with `TR-`.
 
@@ -40,7 +40,7 @@ The following MUST NOT be introduced without an accepted decision record in [doc
 - Node.js, Express or any second backend or microservice.
 - React, Vue, Angular, or any frontend framework, bundler or CSS framework.
 - MySQL, MongoDB, or H2 as a substitute for PostgreSQL (including in tests).
-- The Supabase JavaScript client, Supabase Auth, or the Supabase Data API from the browser.
+- The Supabase JavaScript client, Supabase Auth, or the Supabase Data API from anywhere. The Data API is switched off.
 - JWT-based authentication.
 - Lombok or other code generators that hide the Java being assessed.
 - Any library loaded from a CDN at runtime.
@@ -54,7 +54,7 @@ The following MUST NOT be introduced without an accepted decision record in [doc
 - **TR-JAVA-5.** Business rules that the owner must explain (attendance percentage, CGPA, quiz scoring, progress classification, flowchart rendering) are plain Java classes with unit tests and no framework dependencies beyond annotations.
 - **TR-JAVA-6.** Money-like and percentage values use `BigDecimal` with explicit rounding (`HALF_UP`, two decimals). No `float` or `double` for marks or percentages.
 - **TR-JAVA-7.** Dates and times use `java.time`. Timestamps are stored in UTC and displayed in `Asia/Kolkata`.
-- **TR-JAVA-8.** Configuration comes from environment variables bound through `@ConfigurationProperties`. Names are listed in [.env.example](../.env.example).
+- **TR-JAVA-8.** Configuration comes from environment variables bound through `@ConfigurationProperties`. Names are listed in [.env.example](../.env.example) and explained in [18-production-plan.md](18-production-plan.md) §5, which is the configuration reference. A variable used in code must appear in both.
 
 ## 4. Frontend approach
 
@@ -74,22 +74,32 @@ The following MUST NOT be introduced without an accepted decision record in [doc
 
 ## 6. Database connectivity
 
-- **TR-DB-1.** Connect through the Supabase **session pooler** using the PostgreSQL JDBC driver. The transaction pooler MUST NOT be used with Hibernate.
+- **TR-DB-1.** Connect through the Supabase **session pooler** using the PostgreSQL JDBC driver. The transaction pooler MUST NOT be used with Hibernate. The application's connection pool logs in as the runtime role `cc_app`.
 - **TR-DB-2.** HikariCP maximum pool size is 5 (verify against the Supabase plan's connection limit in `T1-02`).
 - **TR-DB-3.** `spring.jpa.hibernate.ddl-auto` is `validate` in every profile. Only Flyway changes the schema.
 - **TR-DB-4.** `spring.jpa.open-in-view` is `false`.
 - **TR-DB-5.** Queries use Spring Data derived queries, JPQL or native queries with bound parameters. SQL built by string concatenation is prohibited.
 - **TR-DB-6.** List endpoints are paginated in the database, not in memory.
-- **TR-DB-7.** Row Level Security is enabled on every table with no policies, so the Supabase Data API exposes nothing. The application's own database user owns the tables. Verify in `T1-03`.
+- **TR-DB-7.** Application tables live in schema `app`. Every one has Row Level Security enabled, the minimum grants for `cc_app`, and policies for `cc_app` only. RLS is defence in depth: it does not restrict the table owner or roles that bypass RLS, and it is not the per-student access control.
+- **TR-DB-8.** Flyway connects as the migration role `cc_migrator`, which owns the schema. The runtime role `cc_app` owns nothing, cannot change the schema, and has neither `SUPERUSER` nor `BYPASSRLS`. The application MUST NOT connect as `postgres`.
+- **TR-DB-9.** The Supabase Data API is switched off, schema `app` is not an exposed schema, and `anon`, `authenticated` and `service_role` hold no privileges on it.
+- **TR-DB-10.** The Spring Boot application is the only authorization boundary for users. No user-level access rule may be delegated to the database.
+
+TR-DB-7 to TR-DB-10 summarise the model in [08-database-design.md](08-database-design.md) §11, which is Proposed in [ADR 0007](decisions/0007-database-roles-and-rls.md) and awaits approval (OQ-10).
+
 
 Schema details are in [08-database-design.md](08-database-design.md).
 
 ## 7. Authentication and authorization
 
-- **TR-SEC-1.** Spring Security with server-side sessions and a session cookie. See [ADR 0004](decisions/0004-session-cookie-authentication.md).
+- **TR-SEC-1.** Spring Security with server-side sessions and a session cookie. See [ADR 0004](decisions/0004-session-cookie-authentication.md). Spring Security remains responsible for authentication, session management and role-based authorization.
 - **TR-SEC-2.** Passwords are hashed with BCrypt through Spring's `PasswordEncoder`.
 - **TR-SEC-3.** CSRF protection is on for all state-changing requests, using a cookie-to-header token.
 - **TR-SEC-4.** URL rules protect `/api/v1/admin/**` for `ADMIN`. Ownership is enforced in services by deriving the student from the session, never from a request parameter.
+- **TR-SEC-5.** The login identifier is the account's institutional email address, normalised by trimming and lower-casing before every lookup and every write. A roll number is not a login identifier. See [ADR 0008](decisions/0008-institutional-email-login.md).
+- **TR-SEC-6.** The official student email domain is read from `STUDENT_EMAIL_DOMAIN`. It MUST NOT be hardcoded in Java, SQL, JavaScript or tests. The application refuses to start if it is missing or is not a valid host name. Tests use a reserved example domain.
+- **TR-SEC-7.** While an account has `must_change_password = true`, a filter in the security chain rejects every request except the four listed in [09-api-contract.md](09-api-contract.md) §2. This is enforced on the server for every endpoint, not by the pages.
+- **TR-SEC-8.** Password rules are implemented in one Java class (`PasswordPolicy`) used by every path that sets a password, so the rule "never the roll number" cannot be bypassed by one of them.
 
 The complete control list is in [11-security-plan.md](11-security-plan.md). The mandatory rules are in [SECURITY_RULES.md](../SECURITY_RULES.md).
 
@@ -106,7 +116,8 @@ The complete control list is in [11-security-plan.md](11-security-plan.md). The 
 - **TR-AI-1.** All AI calls are made by the backend through the `AiProvider` interface. See [ADR 0005](decisions/0005-ai-integration-behind-java-interface.md).
 - **TR-AI-2.** A `MockAiProvider` is the default and is used in all automated tests. Tests MUST NOT call a real provider.
 - **TR-AI-3.** Total time budget per AI request is 25 seconds, below Heroku's 30-second router limit.
-- **TR-AI-4.** AI output is parsed into typed Java objects and validated before it is returned.
+- **TR-AI-4.** AI output is parsed into typed Java objects and validated for structure and size before it is returned. This validation does not check that the content obeys the AI rules; that risk is handled as described in [14-AI-security-and-privacy.md](14-AI-security-and-privacy.md) §3.
+- **TR-AI-5.** The per-user limits, the application-wide daily ceiling and the kill switch are defined once, in [12-AI-features-spec.md](12-AI-features-spec.md) §2, and are enforced before any provider call.
 
 Details are in [15-AI-features-handoff.md](15-AI-features-handoff.md).
 
