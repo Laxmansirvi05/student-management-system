@@ -31,6 +31,7 @@ Use Flyway with versioned SQL migrations in `src/main/resources/db/migration`. H
 - The SQL in the repository is the real schema, readable in a viva, and must match [08-database-design.md](../08-database-design.md).
 - Integration tests build the database from the same migrations, so they test the real schema.
 - An applied migration is never edited; Flyway detects this by checksum.
-- Each migration enables Row Level Security on the tables it creates.
+- Each migration enables Row Level Security on the tables it creates and, under [0007](0007-database-roles-and-rls.md), also adds the grants and policies for the runtime role.
+- Flyway connects with its own migration role, separate from the role the running application uses ([0007](0007-database-roles-and-rls.md)).
 - Demo data is never placed in migrations.
 - Destructive migrations require approval and a backup, as stated in [AGENTS.md](../../AGENTS.md).

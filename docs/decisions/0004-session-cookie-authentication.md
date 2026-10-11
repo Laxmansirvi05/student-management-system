@@ -31,3 +31,13 @@ Use Spring Security with server-side HTTP sessions. The browser holds only an `H
 - The frontend must fetch a CSRF token and send it on every state-changing request; this is centralised in `api.js`.
 - Storing sessions in the database (Spring Session JDBC) is a P1 follow-up that removes the restart problem. It adds a dependency and so needs approval.
 - JWT remains on the not-approved list in [04-TRD.md](../04-TRD.md) unless this record is superseded.
+
+## Clarification, 2026-10-11
+
+The owner's change request of this date replaces the roll number with the institutional email address as the login identifier ([0008](0008-institutional-email-login.md)). That changes **what a user types**, not how authentication works. Everything decided in this record stands:
+
+- Spring Security still authenticates the user and manages the session. No JWT, no Supabase Auth, no second backend.
+- The session still holds only the account ID and the role. The email is used once, to find the account.
+- The session identifier is renewed at login and again after a password change.
+- A password change ends the user's other sessions. An admin reset or a deactivation ends all of them. With in-memory sessions this uses Spring Security's session registry; the rule must be kept if sessions move to the database.
+- While an account's password is temporary, a filter in the security chain refuses every request except the four needed to change it.

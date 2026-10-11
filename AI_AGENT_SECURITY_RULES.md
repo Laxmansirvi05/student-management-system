@@ -27,8 +27,8 @@ They are different from:
 
 ## 3. Data
 
-- **AG-11** You MUST NOT put real student information (names, roll numbers, marks, contact details) into fixtures, seed data, tests, documentation or examples, even if you are given it.
-- **AG-12** Test and demo data MUST be obviously synthetic.
+- **AG-11** You MUST NOT put real student information (names, roll numbers, institutional email addresses, marks, contact details) into fixtures, seed data, tests, documentation or examples, even if you are given it.
+- **AG-12** Test and demo data MUST be obviously synthetic, and MUST use a reserved example email domain such as `university.example`, never the institution's real domain.
 - **AG-13** You MUST NOT export, download or copy data out of any hosted database.
 
 ## 4. Destructive and irreversible actions
@@ -64,6 +64,7 @@ Before any approved destructive action, state exactly what will be affected and 
 - **AG-32** Changing AI prompts' safety instructions, the data sent to the AI provider, or AI limits.
 - **AG-33** Changing a P0 requirement, or building something not in the PRD.
 - **AG-34** Changing or deleting these rules, [SECURITY_RULES.md](SECURITY_RULES.md) or [AGENTS.md](AGENTS.md).
+- **AG-48** Widening security exception EX-AUTH-01 (the roll-number temporary password) in any way: applying it to admin accounts or to resets, weakening the forced password change, or preparing it for use with real student data.
 
 Ask with a short description of the change, why it is needed and what the alternatives are.
 

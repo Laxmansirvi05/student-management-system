@@ -3,6 +3,7 @@
 - Status: Accepted
 - Date: 2026-10-10
 - Deciders: Laxman Sirvi
+- Refined by: [0007](0007-database-roles-and-rls.md) (Proposed), which replaces the Row Level Security consequence below
 
 ## Context
 
@@ -22,14 +23,14 @@ Use Supabase PostgreSQL through the PostgreSQL JDBC driver with Spring Data JPA,
 ## Trade-offs
 
 - We do not use Supabase features that could save code (Auth, realtime, policies as the access model).
-- Access control depends entirely on our Java code being correct, because the backend connects as one powerful database user.
+- Access control between users depends entirely on our Java code being correct, because the backend connects to the database as one role for every user.
 - The service key and database password are high-value secrets that must be protected.
 - Two external services (database and storage) share one provider, so a Supabase outage affects both.
 
 ## Consequences
 
 - The transaction pooler must not be used, because it conflicts with Hibernate's prepared statements.
-- Row Level Security is enabled on every table with no policies, so the unused Data API exposes nothing.
+- ~~Row Level Security is enabled on every table with no policies, so the unused Data API exposes nothing.~~ Superseded on 2026-10-11: this relied on the application owning its tables, and a table owner is not restricted by RLS. See [0007](0007-database-roles-and-rls.md).
 - PDF bytes are never stored in the database; tables hold metadata and the storage path.
 - Files are uploaded through the backend, which limits their size (10 MB) because of Heroku's request timeout.
 - Storage access is behind a `StorageClient` interface so tests need no network.

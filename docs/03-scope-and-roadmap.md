@@ -1,12 +1,12 @@
 # 03. Scope and Roadmap
 
-> Status: Draft v0.1 · Owner: Laxman Sirvi · Last updated: 2026-10-10
+> Status: Draft v0.2 · Owner: Laxman Sirvi · Last updated: 2026-10-11
 
 This document controls what gets built and in what order. Requirement IDs refer to [02-PRD.md](02-PRD.md). Task-level detail is in [16-implementation-plan.md](16-implementation-plan.md).
 
 ## 1. Release structure
 
-The submission is every P0 requirement. It is built as three stacked releases so that each one is demonstrable on its own if time runs out.
+The submission is **every P0 requirement in the [PRD](02-PRD.md)**. It is built as three stacked releases so that progress can be shown at each stage. Finishing an earlier release alone is **not** a complete submission. Reducing what is submitted needs an approved scope change (section 9).
 
 | Release | Contains | Why it comes at this point |
 | --- | --- | --- |
@@ -20,7 +20,7 @@ P1 items start only after R3. P2 items are not planned.
 
 | Milestone | Requirements | Complete when |
 | --- | --- | --- |
-| M1 Foundation | FR-AUTH-001 to 005, FR-UX-001 | A student and an admin log in, land on different dashboards, and are forced to change a temporary password. |
+| M1 Foundation | FR-AUTH-001 to 006, FR-UX-001 | A student logs in with an institutional email, an admin with an administrator email; they land on different dashboards; a temporary password must be changed before anything else works. |
 | M2 Academic management | FR-STU-001, FR-STU-002, FR-ATT-001, FR-ATT-002, FR-MRK-001, FR-MRK-002, FR-TT-001, FR-NOT-001, FR-ADM-001 to 006, FR-ADM-009 (write) | A student sees only their own sample data. An admin edit appears for the student and in the audit log. Cross-student access tests pass. |
 | M3 Resource hub | FR-LIB-001 to 004, FR-ADM-007 | An admin uploads a PDF and a student finds, previews and bookmarks it. A non-PDF upload is rejected. |
 | M4 Quick Exam | FR-QZ-001 to 004, FR-PRG-001, FR-PRG-002, FR-ADM-008 | A student completes a timed test, sees score and explanations, and a weak unit appears in recommendations. |
@@ -29,9 +29,21 @@ P1 items start only after R3. P2 items are not planned.
 
 | Milestone | Requirements | Complete when |
 | --- | --- | --- |
-| M5 AI assistant | FR-AI-001 to 004 | All three AI features work against the mock provider and the real provider, fail gracefully, respect the daily limit, and pass the adversarial tests. |
+| M5 AI assistant | FR-AI-001 to 004 | All three AI features work against the mock provider **and a real provider**, fail gracefully, respect the per-user limit and the application-wide ceiling, and pass the adversarial tests. |
 
 M5 has two gates that need the owner: choosing a provider (OQ-1) and adding the API key.
+
+### Is the real provider required for acceptance?
+
+**Yes, as the documents stand.** FR-AI-001 to FR-AI-003 are P0 and are accepted only when they work with a real AI provider (task `T5-06`).
+
+The mock provider has three approved uses:
+
+1. Development, so AI work never waits for a key or costs money.
+2. Every automated test.
+3. A contingency on the day of a demonstration, if the provider is unavailable **after** acceptance with the real provider has already been recorded.
+
+Submitting with the mock provider only is **not approved**. It would reduce three P0 requirements and is an open owner decision (OQ-9), best taken after asking the course instructor whether a mocked integration is acceptable.
 
 ## 4. R3 Release hardening
 
@@ -68,7 +80,7 @@ In this order, because each is small and independent:
 
 - Any Node.js, Express or second backend service.
 - A frontend framework or build pipeline.
-- Self-registration and email-based password reset.
+- Self-registration, sending email, verifying email addresses, and email-based password reset.
 - Fee payment, admissions, hostel, library lending.
 - Mobile apps.
 - Using AI to score tests or to state official records.
@@ -93,8 +105,36 @@ M4 depends on M3 only for revision recommendations, which link to resources.
 
 1. Nothing outside the PRD is built. A new idea becomes a GitHub issue, not code.
 2. A milestone is not started until the previous one meets its "complete when" line.
-3. If the deadline (OQ-5) is at risk, cut in this order: M5 real provider (demo with the mock), then FR-PRG-002, then FR-LIB-004. Login, academic records and access control are never cut.
+3. **No P0 requirement is cut by default.** If the deadline (OQ-5) is at risk, the only route is the scope-change procedure below. No contributor or coding agent may apply it on their own.
 4. Changing a P0 requirement needs the owner's approval and an update to the PRD in the same change.
+
+### Scope-change procedure
+
+1. Open a GitHub issue naming the requirement, the reason, and what would be delivered instead.
+2. The owner decides. Where the change affects how the assignment is assessed, the owner confirms with the course instructor first.
+3. If approved, one change does all of the following:
+   - updates the requirement's priority or text in the [PRD](02-PRD.md), with the reason and the date;
+   - adds a row to the scope-change log below;
+   - updates the traceability matrix in [16-implementation-plan.md](16-implementation-plan.md), the release criteria in [17-testing-strategy.md](17-testing-strategy.md) and the [demo guide](demo-and-viva-guide.md).
+4. Until step 3 is complete, the requirement remains P0 and required.
+
+### Candidates the owner may consider
+
+**None of these is approved.** They are listed in order of least damage, so the owner has a starting point if a cut becomes necessary.
+
+| Order | Candidate | What would be lost |
+| --- | --- | --- |
+| 1 | Accept FR-AI-001 to FR-AI-003 with the mock provider only (defer `T5-06`) | No real model is called. The Java integration, limits, validation and UI are still shown. Decided under OQ-9. |
+| 2 | Defer FR-PRG-002 (revision recommendations) | Weak units are still identified (FR-PRG-001), but no resources are suggested for them. |
+| 3 | Defer FR-LIB-004 (bookmarks) | Students can still find, preview and download resources. |
+
+Never candidates: authentication, role and ownership enforcement, academic records, audit writing, and upload validation.
+
+### Scope-change log
+
+| Date | Requirement | Change | Reason | Approved by |
+| --- | --- | --- | --- | --- |
+| 2026-10-11 | FR-AUTH-001, FR-AUTH-003, FR-AUTH-005, FR-ADM-001 (revised); FR-AUTH-006 (new, P0) | Students log in with an institutional email address instead of a roll number. A new student's temporary password is the roll number, which must be changed at first login. Lockout no longer reveals whether an account exists. | Owner's change request. The roll-number temporary password is a recorded security exception ([ADR 0008](decisions/0008-institutional-email-login.md)). | Owner |
 
 ## 10. Risks of building advanced features too early
 

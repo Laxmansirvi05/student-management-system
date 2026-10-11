@@ -1,6 +1,6 @@
 # 18. Production Plan
 
-> Status: Draft v0.1 · Owner: Laxman Sirvi · Last updated: 2026-10-10
+> Status: Draft v0.2 · Owner: Laxman Sirvi · Last updated: 2026-10-11
 
 This document explains how the application moves from development to a live Heroku deployment. Items marked **Verify** must be checked against the platform's current documentation before use, because plans, prices and defaults change. Record what you find in this document.
 
@@ -25,6 +25,8 @@ The diagram is in [05-architecture.md](05-architecture.md#3-deployment).
 | `prod` | Heroku | Supabase project (prod) | Real provider | Synthetic demo data |
 
 **Verify:** whether the free Supabase allowance covers two projects. If not, use local PostgreSQL for `dev` and the single Supabase project for `prod`. Development and production never share a database.
+
+Each environment sets its own `STUDENT_EMAIL_DOMAIN`. Development and tests use a reserved example domain such as `university.example`; production uses the official domain once the owner has confirmed it. The value is not carried over by copying a `.env` file from one environment to another. Changing it later does not rewrite accounts that already exist ([08-database-design.md](08-database-design.md) §8).
 
 ## 3. Java runtime and build configuration
 
@@ -73,9 +75,12 @@ Names are defined in [.env.example](../.env.example). In production they are Her
 | Variable | Required in prod | Secret | Notes |
 | --- | --- | --- | --- |
 | `SPRING_PROFILES_ACTIVE` | Yes | No | `prod` |
+| `STUDENT_EMAIL_DOMAIN` | Yes | No | The official student email domain, for example `university.example`. A host name only, with no `@`. The application will not start without a valid value. Production uses the domain the owner confirmed (OQ-15); development and tests use a reserved example domain |
 | `DB_URL` | Yes | No | `jdbc:postgresql://<session-pooler-host>:5432/postgres` with SSL required |
-| `DB_USERNAME` | Yes | No | |
-| `DB_PASSWORD` | Yes | **Yes** | |
+| `DB_USERNAME` | Yes | No | The runtime role, `cc_app`, in the user-name format the pooler requires |
+| `DB_PASSWORD` | Yes | **Yes** | Password of `cc_app` |
+| `DB_MIGRATION_USERNAME` | Yes | No | The migration role, `cc_migrator`. Used only by Flyway at startup |
+| `DB_MIGRATION_PASSWORD` | Yes | **Yes** | Password of `cc_migrator` |
 | `SUPABASE_URL` | Yes | No | |
 | `SUPABASE_SERVICE_KEY` | Yes | **Yes** | Full storage access. Server only. |
 | `SUPABASE_STORAGE_BUCKET` | Yes | No | |
@@ -84,12 +89,36 @@ Names are defined in [.env.example](../.env.example). In production they are Her
 | `AI_API_KEY` | With a real provider | **Yes** | |
 | `AI_MODEL` | With a real provider | No | |
 | `AI_DAILY_LIMIT_PER_USER` | No | No | Default 30 |
+| `AI_DAILY_LIMIT_GLOBAL` | No | No | Application-wide daily ceiling across all users. Default 500, provisional (OQ-11). Set it deliberately before release |
 | `AI_MAX_OUTPUT_TOKENS` | No | No | Default 1200 |
-| `ADMIN_BOOTSTRAP_USERNAME` | First start | No | |
-| `ADMIN_BOOTSTRAP_PASSWORD` | First start | **Yes** | Remove after the admin has changed it |
+| `ADMIN_BOOTSTRAP_EMAIL` | First start | No | Login email of the first admin. Not a student address |
+| `ADMIN_BOOTSTRAP_PASSWORD` | First start | **Yes** | A strong password chosen by the owner, never a roll number. Remove after the admin has changed it |
+| `DEMO_SEED_ENABLED` | No | No | Default `false`. Set to `true` for one start to load synthetic demo data, then remove it |
 | `ATTENDANCE_REQUIRED_PERCENT` | No | No | Default 75 |
 | `JAVA_OPTS` | Recommended | No | Memory settings sized for the dyno |
 | `PORT` | Set by Heroku | No | Do not set it yourself |
+
+`.env.example` lists every variable above except `JAVA_OPTS` and `PORT`, which exist only on Heroku. Every variable in `.env.example` appears in this table. A variable that is in one and not the other is a defect.
+
+### Fixed defaults
+
+These are set in `application.yml`, not by environment variables. Changing one is a reviewed code change, and the document named is updated with it.
+
+| Setting | Value | Defined in |
+| --- | --- | --- |
+| Session idle timeout | 30 minutes | [11-security-plan.md](11-security-plan.md) §4 |
+| Login lockout | 5 consecutive failures for an email address, 15 minutes | [02-PRD.md](02-PRD.md) FR-AUTH-005 |
+| Password length | 8 to 72 characters | [02-PRD.md](02-PRD.md) FR-AUTH-003 |
+| Login attempts per IP address | 20 per 10 minutes | [09-api-contract.md](09-api-contract.md) §6 |
+| API calls per session | 120 per minute | [09-api-contract.md](09-api-contract.md) §6 |
+| JSON body limit | 64 KB | [09-api-contract.md](09-api-contract.md) §6 |
+| Upload limit | 10 MB, PDF only | [09-api-contract.md](09-api-contract.md) §6 |
+| Signed link lifetime | 5 minutes at most | [04-TRD.md](04-TRD.md) TR-STO-3 |
+| Quiz time per question | 60 seconds | [02-PRD.md](02-PRD.md) FR-QZ-002 |
+| Quiz submission grace period | 15 seconds | **Proposed here.** The PRD says only "a short grace period"; the owner may change the value |
+| Progress thresholds | At least 5 answers; latest 20 answers; 60% and 80% | [02-PRD.md](02-PRD.md) FR-PRG-001 |
+| AI per-minute limit, concurrency, time budget | 5; 2; 25 seconds | [12-AI-features-spec.md](12-AI-features-spec.md) §2 |
+| Database pool size | 5 connections | [04-TRD.md](04-TRD.md) TR-DB-2 |
 
 ### Secret handling
 
@@ -99,15 +128,17 @@ Names are defined in [.env.example](../.env.example). In production they are Her
 
 ## 6. Supabase connection settings
 
-- Use the **session pooler** connection string from the Supabase dashboard. Do not use the transaction pooler (it breaks Hibernate's prepared statements).
-- **Verify** whether the direct connection is reachable from Heroku. Supabase's direct connection has been IPv6-only on some plans; the session pooler supports IPv4, which is why it is the default here.
+- Use the **session pooler** connection string from the Supabase dashboard. Do not use the transaction pooler: Supabase documents that transaction mode does not support prepared statements, which Hibernate uses.
+- The application connects as `cc_app` and Flyway as `cc_migrator`. Neither is `postgres`. **Verify** in `T0-03` that custom roles can connect through the session pooler and which user-name format they need.
+- The Data API is switched off in the dashboard, and schema `app` is not listed under exposed schemas. The model is in [08-database-design.md](08-database-design.md) §11.
+- Supabase documents the direct connection as IPv6 unless the paid IPv4 add-on is enabled, and the shared pooler's session mode (port 5432) as IPv4 on every plan, recommended for a persistent backend on an IPv4-only network. That is why the session pooler is the default here. **Verify** whether Heroku's outbound connections are IPv4 only.
 - Require TLS on the JDBC connection.
 - Confirm the pooler's connection limit for the plan and keep the Hikari pool below it.
 - Storage: private bucket named by `SUPABASE_STORAGE_BUCKET`; no public access; no policies for `anon` or `authenticated`.
 
 ## 7. Database migration procedure
 
-Migrations are applied by Flyway when the application starts. With one dyno this is safe.
+Migrations are applied by Flyway when the application starts. With one dyno this is safe. Flyway uses the migration role's credentials (`DB_MIGRATION_*`); the running application uses the runtime role's.
 
 For each release that contains a migration:
 
@@ -148,6 +179,11 @@ Migrations are forward-only. A bad migration is corrected by a new migration, no
 - [ ] All required config vars are set (names checked).
 - [ ] `SPRING_PROFILES_ACTIVE=prod`.
 - [ ] Storage bucket exists and is private.
+- [ ] The Data API is off; `cc_app` and `cc_migrator` exist; the application does not connect as `postgres`.
+- [ ] `AI_DAILY_LIMIT_PER_USER` and `AI_DAILY_LIMIT_GLOBAL` are set to values the owner chose.
+- [ ] `DEMO_SEED_ENABLED` is not set.
+- [ ] `STUDENT_EMAIL_DOMAIN` is the confirmed official domain (OQ-15), and `ADMIN_BOOTSTRAP_EMAIL` is set.
+- [ ] The deployment will hold synthetic data only, as security exception EX-AUTH-01 requires (OQ-17).
 - [ ] A database backup exists if the release includes a risky migration.
 - [ ] The previous release number is noted, for rollback.
 - [ ] Heroku plan and expected cost confirmed.
@@ -158,7 +194,7 @@ Migrations are forward-only. A bad migration is corrected by a new migration, no
 2. HTTP redirects to HTTPS.
 3. Login page loads with no console errors and security headers present.
 4. Admin logs in.
-5. A student logs in and sees the dashboard.
+5. A newly provisioned student logs in with an institutional email and the roll number, is made to change the password, and then sees the dashboard.
 6. A resource previews (signed link works).
 7. A 5-question test can be taken and scored.
 8. One AI request succeeds, or returns the expected "unavailable" message if AI is off.
@@ -193,7 +229,7 @@ Rolling back the code does not undo the migration. Choose one:
 | Dyno restarts | Dynos restart about daily. In-memory sessions are lost, so users log in again. |
 | Request timeout | The router ends requests after 30 seconds, which is why AI calls are capped at 25 seconds and uploads at 10 MB. |
 | Supabase | The free plan has database, storage and bandwidth limits, and inactive free projects can be paused. Open the dashboard and the app shortly before a demo. |
-| AI provider | Pay per use. Set a spending limit at the provider. The per-user limit, application ceiling and kill switch bound the worst case. |
+| AI provider | Pay per use. Set a spending limit at the provider. The per-user limit, the application-wide ceiling (`AI_DAILY_LIMIT_GLOBAL`) and the kill switch bound the worst case. The daily volume bound is worked out in [12-AI-features-spec.md](12-AI-features-spec.md) §2. |
 | GitHub | Free for a public repository, including Actions minutes within limits. |
 
 To stop spending after the assignment: scale the dyno to zero or delete the app, revoke the AI key, and pause or delete the Supabase project after taking a final backup.

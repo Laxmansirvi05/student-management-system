@@ -1,8 +1,8 @@
 # 09. API Contract
 
-> Status: Draft v0.1 · Owner: Laxman Sirvi · Last updated: 2026-10-10
+> Status: Draft v0.2 · Owner: Laxman Sirvi · Last updated: 2026-10-11
 
-This document explains the REST API conventions and gives examples. The machine-readable contract is [openapi.yaml](openapi.yaml), which is authoritative for the paths, fields and status codes of the endpoints it lists. It currently covers every student-facing P0 endpoint and the main admin endpoints; the simpler admin CRUD endpoints in section 7.6 are added to it by the task that implements them. If the two files disagree, fix both in the same change.
+This document explains the REST API conventions and gives examples. The machine-readable contract is [openapi.yaml](openapi.yaml), which is authoritative for the paths, fields and status codes of the endpoints it lists. It covers every P0 endpoint in section 7. Endpoints marked P1 in section 7 are added to it by the task that implements them. The health endpoint in section 7.7 is outside `/api/v1` and is not in the file. If the two files disagree, fix both in the same change.
 
 ## 1. Conventions
 
@@ -24,6 +24,20 @@ This document explains the REST API conventions and gives examples. The machine-
 - Every `POST`, `PUT`, `PATCH` and `DELETE` must send the header `X-XSRF-TOKEN` with the value of the `XSRF-TOKEN` cookie.
 - The frontend gets the token by calling `GET /api/v1/auth/csrf` once when a page loads.
 - A missing or wrong token gives `403` with code `CSRF_INVALID`.
+- The login identifier is the account's institutional email address. The session holds only the internal account ID and the role.
+
+### While a password change is required
+
+When the logged-in account has a temporary password (`mustChangePassword` is `true`), the server accepts only these four requests:
+
+| Method | Path |
+| --- | --- |
+| GET | `/auth/csrf` |
+| GET | `/auth/me` |
+| POST | `/auth/change-password` |
+| POST | `/auth/logout` |
+
+Every other request under `/api/v1` returns `403` with code `AUTH_PASSWORD_CHANGE_REQUIRED`, whatever the role. Protected pages redirect to the change-password page. The restriction is enforced by a server-side filter and cannot be skipped by calling the API directly.
 
 ## 3. Error format
 
@@ -57,7 +71,7 @@ Errors use RFC 9457 problem details with media type `application/problem+json`.
 | --- | --- | --- |
 | 400 | `VALIDATION_FAILED` | A field is missing, malformed or out of range. |
 | 401 | `AUTH_REQUIRED` | No valid session. |
-| 401 | `AUTH_INVALID_CREDENTIALS` | Login failed. Same response for unknown user, wrong password and inactive account. |
+| 401 | `AUTH_INVALID_CREDENTIALS` | Login failed. The same response for an email with no account, a wrong password and a deactivated account. |
 | 403 | `ACCESS_DENIED` | Logged in, but the role is not allowed. |
 | 403 | `AUTH_PASSWORD_CHANGE_REQUIRED` | The account must change its password first. |
 | 403 | `CSRF_INVALID` | CSRF token missing or wrong. |
@@ -69,12 +83,12 @@ Errors use RFC 9457 problem details with media type `application/problem+json`.
 | 413 | `UPLOAD_TOO_LARGE` | File over 10 MB. |
 | 415 | `UPLOAD_INVALID_TYPE` | Not a valid PDF. |
 | 422 | `AI_REQUEST_DECLINED` | The assistant declined the request (off-topic or unsafe). `detail` gives the reason. |
-| 423 | `AUTH_ACCOUNT_LOCKED` | Too many failed logins. |
+| 423 | `AUTH_ACCOUNT_LOCKED` | Too many failed logins for that email address. Returned in the same way whether or not an account exists. |
 | 429 | `RATE_LIMITED` | Too many requests. Includes a `Retry-After` header. |
 | 429 | `AI_QUOTA_EXCEEDED` | Daily AI limit reached. |
 | 500 | `INTERNAL_ERROR` | Unexpected failure. |
 | 502 | `AI_INVALID_RESPONSE` | The AI provider returned output that failed validation. |
-| 503 | `AI_UNAVAILABLE` | AI provider error, or AI switched off. |
+| 503 | `AI_UNAVAILABLE` | AI provider error, AI switched off, or the application-wide daily ceiling reached. |
 | 503 | `STORAGE_UNAVAILABLE` | File storage could not be reached. |
 | 504 | `AI_TIMEOUT` | The AI provider did not answer within the time budget. |
 
@@ -110,8 +124,8 @@ Filters are query parameters named after the field (`subjectId`, `type`, `examYe
 | --- | --- |
 | JSON request body | 64 KB |
 | File upload | 10 MB, PDF only |
-| Login attempts | 5 consecutive failures lock the account for 15 minutes; 20 attempts per IP address per 10 minutes |
-| AI requests | 30 per user per day; 5 per user per minute |
+| Login attempts | 5 consecutive failures for an email address block it for 15 minutes, whether or not an account exists; 20 attempts per IP address per 10 minutes |
+| AI requests | Per-user, per-minute and application-wide limits are defined once, in [12-AI-features-spec.md](12-AI-features-spec.md) §2 |
 | Other API calls | 120 per session per minute |
 | Search text `q` | 100 characters |
 
@@ -187,10 +201,10 @@ All paths start with `/admin` and require the `ADMIN` role.
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| GET, POST | `/admin/students` | Search and create students. |
+| GET, POST | `/admin/students` | Search and provision students. |
 | GET, PUT | `/admin/students/{id}` | Read and update a student. |
-| POST | `/admin/students/{id}/deactivate`, `/activate` | Change account status. |
-| POST | `/admin/students/{id}/reset-password` | Issue a temporary password (returned once). |
+| POST | `/admin/students/{id}/deactivate`, `/admin/students/{id}/activate` | Change account status. Deactivating ends the student's sessions. |
+| POST | `/admin/students/{id}/reset-password` | Issue a random temporary password (returned once) and end the student's sessions. |
 | GET, POST | `/admin/subjects` | List and create subjects. |
 | PUT | `/admin/subjects/{id}` | Update or deactivate a subject. |
 | POST | `/admin/subjects/{id}/units` | Add a unit. |
@@ -205,7 +219,7 @@ All paths start with `/admin` and require the `ADMIN` role.
 | PUT, DELETE | `/admin/timetable/{id}` | Update or delete an entry. |
 | GET, POST | `/admin/notices` | List all notices (including drafts) and create. |
 | PUT, DELETE | `/admin/notices/{id}` | Update or delete a notice. |
-| POST | `/admin/notices/{id}/publish`, `/unpublish` | Change status. |
+| POST | `/admin/notices/{id}/publish`, `/admin/notices/{id}/unpublish` | Change status. |
 | GET, POST | `/admin/resources` | List all resources and upload (multipart). |
 | PUT, DELETE | `/admin/resources/{id}` | Update details or status; delete. |
 | GET, POST | `/admin/quiz-questions` | List and create questions. |
@@ -217,7 +231,7 @@ All paths start with `/admin` and require the `ADMIN` role.
 
 | Method | Path | Access | Purpose |
 | --- | --- | --- | --- |
-| GET | `/actuator/health` | Public | Returns `{"status":"UP"}` or `DOWN`. No details are exposed. |
+| GET | `/actuator/health` | Public | Returns `{"status":"UP"}` or `DOWN`. No details are exposed. Not part of `openapi.yaml`, because it is outside `/api/v1`. |
 
 ## 8. Examples
 
@@ -226,33 +240,57 @@ All paths start with `/admin` and require the `ADMIN` role.
 `POST /api/v1/auth/login`
 
 ```json
-{ "username": "23CSE001", "password": "<password>" }
+{ "email": "23cse001@university.example", "password": "<password>" }
 ```
+
+| Field | Rule |
+| --- | --- |
+| `email` | Required. A syntactically valid email address of at most 254 characters. The server trims it and converts it to lower case before looking it up. |
+| `password` | Required, 1 to 72 characters. Never trimmed or altered. |
 
 `200 OK`
 
 ```json
 {
-  "username": "23cse001",
+  "email": "23cse001@university.example",
   "displayName": "Demo Student One",
   "role": "STUDENT",
-  "mustChangePassword": false
+  "mustChangePassword": true
 }
 ```
 
-Failures: `401 AUTH_INVALID_CREDENTIALS`, `423 AUTH_ACCOUNT_LOCKED`, `429 RATE_LIMITED`.
+The response sets a new session cookie. When `mustChangePassword` is `true`, the frontend opens the change-password page and the server enforces the restriction described in section 2.
 
-Validation: `username` 1 to 50 characters; `password` 1 to 72 characters.
+| Case | Response |
+| --- | --- |
+| `email` missing, or not an email address | `400 VALIDATION_FAILED` naming the field. Decided from the text alone, before any lookup |
+| Email with no account, wrong password, or deactivated account | `401 AUTH_INVALID_CREDENTIALS`, identical in status, body and headers apart from `traceId` |
+| Further attempts for an email after five consecutive failures | `423 AUTH_ACCOUNT_LOCKED`, identical whether or not an account exists |
+| Too many attempts from one IP address | `429 RATE_LIMITED` |
+| No CSRF token | `403 CSRF_INVALID` |
+
+No response to this request contains a password or a hash, and no failure response differs according to whether an account exists.
 
 ### 8.2 Change password
 
 `POST /api/v1/auth/change-password`
 
 ```json
-{ "currentPassword": "<current>", "newPassword": "<new>" }
+{ "currentPassword": "<current>", "newPassword": "<new>", "confirmNewPassword": "<new>" }
 ```
 
-`204 No Content`. Validation: `newPassword` 8 to 72 characters, different from the username and from the current password.
+`204 No Content`. The response replaces the session cookie with a new session identifier. The user's other sessions are ended, and `mustChangePassword` becomes `false`.
+
+Validation failures return `400 VALIDATION_FAILED` naming the field:
+
+| Field | Rule |
+| --- | --- |
+| `currentPassword` | Must be the account's current password. A wrong value counts toward lockout. |
+| `newPassword` | 8 to 72 characters. |
+| `newPassword` | Ignoring letter case, not the user's roll number, not the user's email address, not the part of the email before the `@`, and not the current password. |
+| `confirmNewPassword` | Equal to `newPassword`. |
+
+After a successful change, logging in with the old password returns `401 AUTH_INVALID_CREDENTIALS`.
 
 ### 8.3 Own attendance
 
@@ -293,15 +331,15 @@ A subject with no classes has `classesHeld: 0` and `percent: null`.
 
 ```json
 {
-  "cgpa": 8.02,
+  "cgpa": 7.12,
   "semesters": [
-    { "semester": 1, "sgpa": 7.8, "creditsEarned": 22, "resultStatus": "PASS" },
-    { "semester": 2, "sgpa": 8.24, "creditsEarned": 22, "resultStatus": "PASS" }
+    { "semester": 1, "sgpa": 7.8, "creditsRegistered": 22, "creditsEarned": 22, "resultStatus": "PASS" },
+    { "semester": 2, "sgpa": 6.5, "creditsRegistered": 24, "creditsEarned": 20, "resultStatus": "FAIL" }
   ]
 }
 ```
 
-`cgpa` is `null` and `semesters` is empty when nothing is published.
+`cgpa` is weighted by `creditsRegistered`, not by `creditsEarned`: (7.8 × 22 + 6.5 × 24) ÷ 46 = 7.12. The rule is in [08-database-design.md](08-database-design.md) §4.8. `cgpa` is `null` and `semesters` is empty when nothing is published.
 
 ### 8.5 Search resources
 
@@ -485,6 +523,60 @@ Questions left out or sent as `null` count as wrong. A `questionId` that is not 
 
 Failures: `413 UPLOAD_TOO_LARGE`, `415 UPLOAD_INVALID_TYPE`, `503 STORAGE_UNAVAILABLE`.
 
+### 8.12 Provision a student (admin)
+
+`POST /api/v1/admin/students`
+
+```json
+{
+  "rollNo": "23CSE001",
+  "fullName": "Demo Student One",
+  "branch": "CSE",
+  "currentSemester": 3,
+  "section": "A",
+  "admissionYear": 2023,
+  "phone": null
+}
+```
+
+`201 Created`
+
+```json
+{
+  "id": 1001,
+  "rollNo": "23CSE001",
+  "email": "23cse001@university.example",
+  "fullName": "Demo Student One",
+  "branch": "CSE",
+  "currentSemester": 3,
+  "section": "A",
+  "admissionYear": 2023,
+  "phone": null,
+  "active": true,
+  "mustChangePassword": true,
+  "locked": false,
+  "lastLoginAt": null
+}
+```
+
+- The request has **no** `email` and **no** `password` field. Sending either is rejected as an unknown field (`400`).
+- `email` in the response was generated from the roll number and the configured domain.
+- The temporary password is the roll number. It is not returned.
+- `400 VALIDATION_FAILED` when the roll number is missing or has characters other than letters and digits. `409 CONFLICT` when the roll number or the generated email already exists.
+- `PUT /api/v1/admin/students/{id}` takes the same fields except `rollNo`, which cannot be changed.
+
+### 8.13 Reset a student's password (admin)
+
+`POST /api/v1/admin/students/1001/reset-password`
+
+`200 OK`
+
+```json
+{ "temporaryPassword": "<random, shown once>" }
+```
+
+The password is random, not the roll number. The student's sessions are ended, the account is unlocked, and `mustChangePassword` becomes `true`. This is the only response in the API that contains a password, and it is never logged or audited.
+
 ## 9. AI endpoints
 
 Behaviour is specified in [12-AI-features-spec.md](12-AI-features-spec.md). This section is the wire contract.
@@ -496,6 +588,7 @@ Common to all three:
 - Every success response includes `basis`, `notice` and `promptVersion`.
 - `basis` is `GENERAL_KNOWLEDGE`, `PROVIDED_TEXT` or `MIXED`.
 - All text fields are plain text. The frontend renders them as text.
+- A `200` means the reply had the required structure and size. It does not certify that the content is correct or follows the AI rules, which is why every reply carries the AI-generated notice.
 
 ### 9.1 Explain
 
@@ -611,7 +704,7 @@ For `SHORT` and `LONG`, `options` and `correctOption` are `null`. `returned` can
 { "dailyLimit": 30, "usedToday": 4, "remainingToday": 26, "resetsAt": "2026-10-10T18:30:00Z", "enabled": true }
 ```
 
-The day resets at midnight in `Asia/Kolkata`.
+The day resets at midnight in `Asia/Kolkata`. `enabled` is `false` when AI is switched off (`AI_ENABLED=false`) or when the application-wide daily ceiling has been reached. In both cases the AI endpoints return `503 AI_UNAVAILABLE`.
 
 ## 10. Changing the API
 
