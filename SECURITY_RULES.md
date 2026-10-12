@@ -84,7 +84,7 @@ The full AI rules are in [docs/14-AI-security-and-privacy.md](docs/14-AI-securit
 - **SR-45** A dependency MUST NOT be added without approval.
 - **SR-46** Destructive changes to production (dropping tables, deleting data, rotating production secrets, deploying) MUST NOT be made without explicit authorization from the owner for that specific action.
 - **SR-47** A suspected vulnerability MUST be reported privately to the owner, not in a public issue.
-- **SR-48** Any change that touches authentication, authorization, uploads, AI or secrets SHOULD be reviewed by the owner before merging.
+- **SR-48** Any change that touches authentication, authorization, uploads, AI or secrets SHOULD be reviewed line by line by the owner before it is committed.
 
 ## 11. Login identity and first-time passwords
 

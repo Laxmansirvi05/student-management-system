@@ -39,7 +39,7 @@ This plan breaks the work into ordered, verifiable tasks. One task is one small 
 | T1-08 | `PasswordPolicy`; password change with the current password and the new one entered twice; the must-change-password filter; session renewal; admin bootstrap from `ADMIN_BOOTSTRAP_EMAIL` | `auth` | T1-06 | AU5, AU6, AU8, AU9, AU10 pass; the bootstrap creates one admin once, never with a roll-number password (AU17) |
 | T1-09 | Frontend shell: tokens and base CSS, `api.js`, login page with institutional email and password fields, change-password page with the new password entered twice, student and admin layouts with navigation, standard states | `static/` | T1-06, T1-08 | Both roles log in and land on their own dashboard shell; expired session redirects to login |
 | T1-10 | `StudentProvisioningService` (generates the email, sets the roll-number temporary password, links the profile, rejects invalid and duplicate records) and a `DevDataSeeder` that uses it | `student`, `common.config` | T1-08 | PV1 to PV5 pass; the seeder runs only in `dev` or when enabled; all data is clearly fictional and uses the example domain |
-| T1-11 | CI: GitHub Actions workflow running `./mvnw verify` on pull requests 👤 approve the workflow | `.github/workflows` | T1-01 | A pull request shows a passing check |
+| T1-11 | CI: GitHub Actions workflow running `./mvnw verify` on every push to `main` 👤 approve the workflow | `.github/workflows` | T1-01 | A push to `main` shows a passing check |
 
 **Gate G1 (M1 complete):** a seeded student logs in with an institutional email and the roll number, must change the password before anything else works, and is separated from the admin by role. Scenarios AU1 to AU13, AU16, AU17 and PV1 to PV5 pass.
 

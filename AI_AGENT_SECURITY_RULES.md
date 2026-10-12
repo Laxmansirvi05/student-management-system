@@ -50,9 +50,9 @@ Before any approved destructive action, state exactly what will be affected and 
 ## 5. Git and GitHub
 
 - **AG-23** You MUST NOT commit or push unless the owner has asked you to.
-- **AG-24** You MUST NOT commit directly to `main` once branch workflow is in use; work on a branch (see [CONTRIBUTING.md](CONTRIBUTING.md)).
+- **AG-24** This repository has one branch, `main` (owner's decision, 2026-10-12). You commit to `main` only after the owner has seen the diff and the verification results and has told you to commit, as set out in [CONTRIBUTING.md](CONTRIBUTING.md) section 6. You MUST NOT create another branch unless the owner asks for one.
 - **AG-25** You MUST NOT change repository settings: visibility, branch protection, collaborators, secrets, webhooks, Actions permissions or security features.
-- **AG-26** You MUST NOT merge a pull request, approve your own change, or bypass a required check.
+- **AG-26** You MUST NOT approve your own change, commit a change whose checks failed or were not run, or bypass a required check.
 - **AG-27** You MUST review `git status` and the full diff before any commit, and confirm it contains no secrets, no real data and no unrelated files.
 - **AG-28** You MUST NOT use `git add -A` blindly; stage the files that belong to the task.
 

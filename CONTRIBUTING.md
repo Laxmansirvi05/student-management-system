@@ -8,19 +8,16 @@ How work is done in this repository, for the owner, any other developer, and cod
 2. Read the documents listed for that area in [AGENTS.md](AGENTS.md#4-required-reading).
 3. If the work is not in the [PRD](docs/02-PRD.md), discuss it in an issue first. Do not build it.
 
-## 2. Branches
+## 2. One branch: `main`
 
-- `main` is always buildable and holds only reviewed work.
-- Create one branch per issue from the latest `main`.
+Decided by the owner on 2026-10-12: this repository has a single branch, `main`. There are no feature branches and no pull requests.
 
-| Type | Pattern | Example |
-| --- | --- | --- |
-| Feature | `feature/<task-id>-<short-name>` | `feature/t2-05-attendance-service` |
-| Bug fix | `fix/<issue-number>-<short-name>` | `fix/42-login-lockout-reset` |
-| Documentation | `docs/<short-name>` | `docs/api-contract-pagination` |
-| Maintenance | `chore/<short-name>` | `chore/update-dependencies` |
+- Every change is committed directly to `main`, one task per commit.
+- `main` must build and pass its tests at every commit. Never commit work that is half done or failing.
+- Do not create other branches, locally or on GitHub, unless the owner asks for one.
+- History on `main` is never rewritten: no force-push, no rebase, no amending a pushed commit.
 
-Keep branches short-lived. Delete a branch after it is merged.
+Because nothing separates a change from the public repository once it is pushed, the review that a pull request would have given happens **before the commit** (section 6).
 
 ## 3. Commits
 
@@ -81,7 +78,7 @@ Standards and naming conventions are in [AGENTS.md](AGENTS.md#7-coding-standards
 
 - New logic comes with tests. A bug fix starts with a test that fails because of the bug.
 - Every endpoint has tests for success, validation failure, 401, 403 and, where ownership applies, 404.
-- Run everything before opening a pull request:
+- Run everything before asking for a commit:
 
   ```bash
   ./mvnw verify
@@ -91,44 +88,30 @@ Standards and naming conventions are in [AGENTS.md](AGENTS.md#7-coding-standards
 
 What to test at each level is in [docs/17-testing-strategy.md](docs/17-testing-strategy.md).
 
-## 6. Pull requests
+## 6. Before a commit
 
-1. Push your branch and open a pull request into `main`.
-2. Title: the same style as a commit summary.
-3. Description:
+Each task goes through these steps, in order, while the change is still uncommitted:
 
-   ```
-   ## What
-   <what this changes>
+1. **Verify.** Run `./mvnw verify` and read the result. A failing or skipped check stops here.
+2. **Review.** Run the `independent-code-review` skill on the full diff, and the `security-review` skill if the change touches authentication, authorization, uploads, AI, secrets or migrations. Fix what they find, then verify again.
+3. **Report.** Give the owner the report from [AGENTS.md](AGENTS.md#13-how-to-report): what changed, what was run and its actual result, what was not verified.
+4. **Owner approves.** The owner reads the diff and says to commit. An agent never commits or pushes without that.
+5. **Commit** to `main` with a message in the format of section 3. One task, one commit.
+6. **Push** only when the owner says so. After the push, check that CI on `main` is green; if it is not, fixing it is the next task and nothing else starts first.
 
-   ## Why
-   Closes #<issue>
-
-   ## How to verify
-   <commands run and their results; manual steps if any>
-
-   ## Checklist
-   - [ ] Tests added or updated, and `./mvnw verify` passes
-   - [ ] Documentation updated (API contract, openapi.yaml, database design, authorization matrix, as applicable)
-   - [ ] No rule in SECURITY_RULES.md is broken
-   - [ ] No secrets or real data
-   - [ ] Not verified: <anything you could not check>
-   ```
-
-4. Keep pull requests small: one task. A reviewer should be able to read it in one sitting.
-5. CI must be green.
+Keep each task small enough to read in one sitting.
 
 ## 7. Review
 
-- Every pull request is reviewed by the owner before merging. An agent never merges its own change.
-- The owner must understand each change well enough to explain it. If a change cannot be explained simply, it is simplified before merging.
+- The owner reviews every change before it is committed. An agent never approves its own change.
+- The owner must understand each change well enough to explain it. If a change cannot be explained simply, it is simplified before it is committed.
 - Changes touching authentication, authorization, uploads, AI, secrets or migrations get a line-by-line review.
-- Reviewers check: does it meet the acceptance criteria, is it tested, does it follow the layering, does it match the documents, is anything unrelated included.
-- Use squash merge so `main` has one commit per task.
+- The review checks: does it meet the acceptance criteria, is it tested, does it follow the layering, does it match the documents, is anything unrelated included.
+- A mistake found after a commit is fixed with a new commit. It is not hidden by rewriting history.
 
 ## 8. Documentation updates
 
-A change is incomplete without its documentation. Update in the same pull request:
+A change is incomplete without its documentation. Update in the same commit:
 
 | If you change | Update |
 | --- | --- |
@@ -157,11 +140,11 @@ A task is done when:
 
 - [ ] Its acceptance criteria in the implementation plan are met.
 - [ ] Tests exist for the new behaviour, including the failure and access-denied cases.
-- [ ] `./mvnw verify` passes locally and in CI.
+- [ ] `./mvnw verify` passes locally before the commit, and CI on `main` is green after the push.
 - [ ] Code follows the layering, naming and formatting rules.
 - [ ] Documentation is updated.
 - [ ] No security rule is broken; no secrets or real data are included.
-- [ ] The pull request is reviewed and merged by the owner.
+- [ ] The owner reviewed the diff and approved the commit.
 - [ ] The issue is closed with a note of anything left for later.
 
 ## 11. Issues

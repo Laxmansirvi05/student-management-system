@@ -145,7 +145,7 @@ Details are in [18-production-plan.md](18-production-plan.md).
 | --- | --- |
 | TR-PERF-1 | Non-AI endpoints respond in under 1 second at the 95th percentile with the demo dataset on the chosen dyno. |
 | TR-PERF-2 | List endpoints return at most 100 items per page. |
-| TR-PERF-3 | No request loads an unbounded number of rows. N+1 query patterns are fixed before merge. |
+| TR-PERF-3 | No request loads an unbounded number of rows. N+1 query patterns are fixed before the change is committed. |
 | TR-REL-1 | A failure of the AI provider or storage never causes a failure in academic features. |
 | TR-REL-2 | External calls have explicit connect and read timeouts. No call waits indefinitely. |
 | TR-REL-3 | The application starts with the AI provider unset (`AI_PROVIDER=mock`) and with `AI_ENABLED=false`. |

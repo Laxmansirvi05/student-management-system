@@ -233,7 +233,7 @@ Storage objects are not in the database backup. If files are lost, re-upload the
 3. Check health and run the smoke test.
 4. **If the faulty release included a migration,** the schema is still the new one. If the old code cannot run on it, fix forward instead (see [18-production-plan.md](18-production-plan.md) §12).
 5. A rollback also restores that release's config vars. Re-check any variable changed since.
-6. Open an issue describing what went wrong, and fix it on a branch before deploying again.
+6. Open an issue describing what went wrong, and fix it with a reviewed commit on `main` before deploying again.
 
 ## 11. Before a demo
 

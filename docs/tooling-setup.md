@@ -8,8 +8,8 @@ The setup was performed from Claude Code. It could edit files and start servers 
 
 | Step | Result |
 | --- | --- |
-| Documentation changes committed on `docs/engineering-documentation` | Done locally as commit `78d20e4`. Not pushed |
-| Documentation merged into `chore/agent-tooling-bootstrap` | Done with a normal merge, no conflicts; the existing tooling files were kept. Not pushed |
+| Documentation changes | Committed as `78d20e4`, now part of `main` |
+| Branches | The documentation and tooling work was brought onto `main` on 2026-10-12 and pushed. The two side branches were removed after confirming `main` contained them. `main` is now the only branch |
 | Eclipse Temurin JDK 21 | Installed by the owner on 2026-10-12 (21.0.12.1). Verified: Maven reports Java 21 when `JAVA_HOME` points to it. Java 25 remains the default on the `PATH` |
 | Maven | Installed with Homebrew: 3.10.0. Homebrew also installed its own OpenJDK 27 and supporting libraries as Maven's dependencies. Java 25 was not touched |
 | Java version pin | `.java-version` containing `21` was added. The pin in `pom.xml` and the Maven Wrapper belong to task `T1-01` |
@@ -22,11 +22,11 @@ The setup was performed from Claude Code. It could edit files and start servers 
 | Supabase MCP | Not configured. Blocked until a dedicated project exists |
 | Existing project skills | Reviewed against the current rules (two-role database model, email login, AI limits). They already matched. One line was added to `test-and-verify` pointing at the traceability matrix and test IDs |
 
-Nothing was pushed, deployed or built, and no application code was written.
+Nothing was deployed or built, and no application code was written.
 
 ## 2. What the owner must confirm inside Antigravity
 
-1. Reload the workspace on the `chore/agent-tooling-bootstrap` branch.
+1. Reload the workspace on `main`.
 2. Open the Skills view. All ten skills in the manifest should be listed. Ask the agent to "use the `campus-companion-workflow` skill" and check that it reads `AGENTS.md`.
 3. Open the MCP Servers panel and refresh.
    - Context7 should be connected and list `resolve-library-id` and `query-docs`.
@@ -99,10 +99,10 @@ Create a dedicated Campus Companion project and give its exact project reference
 | Start any task | `campus-companion-workflow`, then the task in `docs/16-implementation-plan.md` |
 | Write backend code | `java-spring-boot-engineering` |
 | Tests and evidence | `test-and-verify` |
-| Before a merge | `independent-code-review`, and `security-review` for anything security-relevant |
+| Before a commit | `independent-code-review`, and `security-review` for anything security-relevant |
 | Challenge a design, threat-model a feature, design API tests, check a gate | The four `agency-` skills, on demand |
 | Library documentation | Context7 |
-| Issues, pull requests, CI | The GitHub CLI (`gh`) |
+| Issues and CI | The GitHub CLI (`gh`) |
 | Browser testing | Switch Playwright on for the task, then off |
 | A stubborn small task with an automatic check | `ralph-loop`, only when asked for by name |
 
@@ -123,7 +123,7 @@ Keep the everyday set to the project skills, Context7 and the GitHub CLI. Do not
 - [ ] Skills and MCP servers confirmed inside Antigravity (section 2).
 - [x] Java 21 installed.
 - [ ] GSD decision made (section 3), or option C accepted.
-- [ ] Tooling changes on this branch reviewed and committed.
+- [x] Tooling changes committed and on `main`.
 - [ ] Owner decisions needed before Phase 1 answered: OQ-4, OQ-10, OQ-12, OQ-14, and `T0-05` (see the charter §11 and the implementation plan).
 - [ ] GitHub protections switched on (`T0-04`).
 - [ ] Owner's approval to start `T1-01`.

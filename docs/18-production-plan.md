@@ -152,7 +152,7 @@ Migrations are forward-only. A bad migration is corrected by a new migration, no
 
 ## 8. Build and release process
 
-1. Work is merged to `main` through a pull request with a green CI check.
+1. Work is committed to `main` after the owner's review, and CI on `main` is green.
 2. The owner tags the commit (`v0.1.0`).
 3. The owner deploys that commit to Heroku. **Verify** the chosen method (Git push to the Heroku remote, or GitHub integration with manual deploy). Automatic deploys are left off so that every release is deliberate.
 4. Heroku builds the JAR and starts the dyno.

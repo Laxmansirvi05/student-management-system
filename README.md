@@ -120,6 +120,6 @@ Rules for everyone working in this repository:
 - [AGENTS.md](AGENTS.md): how coding agents work here.
 - [SECURITY_RULES.md](SECURITY_RULES.md): mandatory application security rules.
 - [AI_AGENT_SECURITY_RULES.md](AI_AGENT_SECURITY_RULES.md): what a coding agent may and may not do.
-- [CONTRIBUTING.md](CONTRIBUTING.md): branching, commits, reviews.
+- [CONTRIBUTING.md](CONTRIBUTING.md): the single-branch workflow, commits, reviews.
 
 Work is tracked in [GitHub Issues](https://github.com/Laxmansirvi05/student-management-system/issues). Do not report security vulnerabilities in a public issue; see [CONTRIBUTING.md](CONTRIBUTING.md#reporting-security-problems).

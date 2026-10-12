@@ -61,7 +61,7 @@ For **every** endpoint:
 | Unknown field in the body | 400 |
 | Error response shape | Problem detail with `code` and `traceId`, no stack trace |
 
-Responses are asserted field by field against [openapi.yaml](openapi.yaml). If a response and the contract differ, one of them is wrong and the difference is resolved before merge.
+Responses are asserted field by field against [openapi.yaml](openapi.yaml). If a response and the contract differ, one of them is wrong and the difference is resolved before the change is committed.
 
 ## 5. Repository and PostgreSQL tests
 
@@ -248,7 +248,7 @@ Checked across features:
 
 ## 12. Regression
 
-- The full automated suite runs on every pull request through CI and must pass to merge.
+- The full automated suite is run locally before every commit and must pass. CI runs it again on every push to `main`; a red result is fixed before any other work.
 - Every bug fix starts with a test that fails because of the bug.
 - Before each milestone gate, re-run the manual scenario for earlier milestones.
 

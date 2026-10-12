@@ -45,8 +45,8 @@ All skills are project-local, in `.agents/skills/<name>/SKILL.md`. Every file ha
 | --- | --- | --- | --- | --- |
 | `campus-companion-workflow` | This repository | Project rules, reading order, stop conditions | Always | CONFIGURED BUT NOT VERIFIED |
 | `java-spring-boot-engineering` | This repository | Java and Spring Boot practices for this project | When writing backend code | CONFIGURED BUT NOT VERIFIED |
-| `independent-code-review` | This repository | Review of a change before merge, with severity, file and line, scenario, impact and fix | Before every merge | CONFIGURED BUT NOT VERIFIED |
-| `security-review` | This repository | Security checklist tied to `SECURITY_RULES.md` | Before merging security-relevant changes | CONFIGURED BUT NOT VERIFIED |
+| `independent-code-review` | This repository | Review of a change before it is committed, with severity, file and line, scenario, impact and fix | Before every commit | CONFIGURED BUT NOT VERIFIED |
+| `security-review` | This repository | Security checklist tied to `SECURITY_RULES.md` | Before committing security-relevant changes | CONFIGURED BUT NOT VERIFIED |
 | `test-and-verify` | This repository | Tests from acceptance criteria; real command output | With every task | CONFIGURED BUT NOT VERIFIED |
 | `ralph-loop` | This repository (written here; no package installed) | Bounded verify-fix iteration, default limit 5 | Only when the owner asks for it by name | CONFIGURED BUT NOT VERIFIED |
 | `agency-backend-architect` | Agency Agents, `engineering/engineering-backend-architect.md` | Design second opinion | On demand | CONFIGURED BUT NOT VERIFIED |
