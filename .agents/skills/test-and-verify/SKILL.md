@@ -7,6 +7,7 @@ description: Turn Campus Companion acceptance criteria into unit, integration, s
 
 ## Before testing
 - Identify the implementation-plan task and acceptance criteria.
+- Find the task's requirement in the traceability matrix in `docs/16-implementation-plan.md` and its acceptance test and scenario IDs (`AT-`, `AU`, `PV`, `Z`, `UP`) in `docs/17-testing-strategy.md`. Name the IDs a test covers.
 - Check the current Git branch and working tree; do not overwrite unrelated work.
 - Use synthetic fixtures only. Never use real student data or production credentials.
 

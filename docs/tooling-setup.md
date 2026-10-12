@@ -1,123 +1,131 @@
 # Antigravity Skills and MCP Setup
 
-> Intended environment: macOS Apple Silicon, 16 GB memory. Review every command before running. Do not install global packs or autonomous hooks by default.
+> Status: what was actually done on 2026-10-11, and what remains. The inventory with versions and statuses is [mcp-manifest.md](mcp-manifest.md). Environment: macOS on Apple Silicon, 16 GB memory, Antigravity IDE 2.5.5.
 
-## 1. Before installing
+The setup was performed from Claude Code. It could edit files and start servers directly, but it could not see Antigravity's Skills or MCP panels. Section 2 lists what the owner must confirm there.
 
-From the repository root:
+## 1. What was done
+
+| Step | Result |
+| --- | --- |
+| Documentation changes committed on `docs/engineering-documentation` | Done locally as commit `78d20e4`. Not pushed |
+| Documentation merged into `chore/agent-tooling-bootstrap` | Done with a normal merge, no conflicts; the existing tooling files were kept. Not pushed |
+| Eclipse Temurin JDK 21 | Installed by the owner on 2026-10-12 (21.0.12.1). Verified: Maven reports Java 21 when `JAVA_HOME` points to it. Java 25 remains the default on the `PATH` |
+| Maven | Installed with Homebrew: 3.10.0. Homebrew also installed its own OpenJDK 27 and supporting libraries as Maven's dependencies. Java 25 was not touched |
+| Java version pin | `.java-version` containing `21` was added. The pin in `pom.xml` and the Maven Wrapper belong to task `T1-01` |
+| Global Antigravity MCP configuration | Backed up, then `playwright` and `sequential-thinking` set to disabled. `n8n-mcp` untouched |
+| GitHub access | The GitHub CLI is used. GitHub MCP was not configured and no token was written anywhere |
+| GSD Core | **Not installed.** It needs Node.js 24; the machine has 22. See section 3 |
+| Agency Agents | Four selected skills copied into `.agents/skills/` with a project-rules preamble |
+| Ralph Loop | Written as a project skill with an iteration limit. No package installed, nothing started |
+| Ruflo | Not installed. Deferred |
+| Supabase MCP | Not configured. Blocked until a dedicated project exists |
+| Existing project skills | Reviewed against the current rules (two-role database model, email login, AI limits). They already matched. One line was added to `test-and-verify` pointing at the traceability matrix and test IDs |
+
+Nothing was pushed, deployed or built, and no application code was written.
+
+## 2. What the owner must confirm inside Antigravity
+
+1. Reload the workspace on the `chore/agent-tooling-bootstrap` branch.
+2. Open the Skills view. All ten skills in the manifest should be listed. Ask the agent to "use the `campus-companion-workflow` skill" and check that it reads `AGENTS.md`.
+3. Open the MCP Servers panel and refresh.
+   - Context7 should be connected and list `resolve-library-id` and `query-docs`.
+   - `playwright` and `sequential-thinking` should show as disabled. If they still start, Antigravity does not honour the `disabled` key in this version; switch them off with the panel's own toggle instead.
+4. Decide which of the two Context7 entries to keep (workspace remote, or global `npx`).
+5. Tell the agent the results so the manifest can be updated from CONFIGURED BUT NOT VERIFIED to VERIFIED.
+
+## 3. What is waiting on the owner
+
+### Java 21
+
+Done on 2026-10-12. To confirm both versions are present:
 
 ```bash
-git status --short
-git branch --show-current
-java -version
-git --version
-node --version
-npm --version
+/usr/libexec/java_home -V
 ```
 
-Use Java 21 for the application. Node.js is only tooling/runtime support for some MCP packages and installers; it is not an application backend. Don't install extra packages if the needed runtime is already present.
+To use Java 21 in a terminal for this project:
 
-Do not create `.env` until a dedicated Campus Companion Supabase project is approved. Never reuse Opportunity Radar credentials or database.
+```bash
+export JAVA_HOME=$(/usr/libexec/java_home -v 21)
+```
 
-## 2. Workspace skills included here
+Java 25 stays installed. `.java-version` already records 21 for tools that read it.
 
-Antigravity discovers project skills in `.agents/skills/<skill-folder>/SKILL.md`. Restart/reload the workspace or refresh skills after pulling this branch. Inspect Customizations/Skills and verify these are discoverable:
+### GSD Core and Node.js
 
-- `campus-companion-workflow`
-- `java-spring-boot-engineering`
-- `independent-code-review`
-- `security-review`
-- `test-and-verify`
+Official project: https://github.com/open-gsd/gsd-core. Package: `@opengsd/gsd-core`. The requested command is:
 
-These are project-local and version-controlled. They complement, rather than replace, `AGENTS.md`, `SECURITY_RULES.md`, and the numbered docs.
+```bash
+npx @opengsd/gsd-core@latest --antigravity --local
+```
 
-## 3. Get Shit Done (GSD)
+It was **not** run, because releases 1.11.0 and later require Node.js 24 or newer and this machine has Node.js 22.23.2. Choose one:
 
-Official project: https://github.com/gsd-open/get-shit-done-redux
+| Option | Effect |
+| --- | --- |
+| A. Install Node.js 24 | A system-wide change. `n8n`, `omniroute`, `vercel` and other global tools would then run on Node.js 24 and should be checked afterwards |
+| B. Pin GSD 1.10.0 | The last release that supports Node.js 22 (published 2026-08-08). Two months behind and will not get fixes |
+| C. Wait | Use `campus-companion-workflow` and the implementation plan, which already break the work into small verified tasks |
 
-1. Read the current upstream README and security notes first.
-2. In the Antigravity terminal, run the official interactive installer:
+Before running either install: the installer's `--dry-run` reported no file list, so run the real install on a clean working tree and review `git status` and the full diff before keeping anything. Do not pass any permission-bypass option. Note that the README names "Antigravity CLI" as the target, so check after installing that Antigravity IDE actually shows the GSD commands.
 
-   ```bash
-   npx @opengsd/get-shit-done-redux@latest
-   ```
+### Docker
 
-3. Select Antigravity/Gemini-compatible setup if offered, prefer project/workspace-local installation where supported, and choose a standard/core planning profile rather than an unnecessary full set of skills.
-4. Do not enable permission bypasses such as `--dangerously-skip-permissions`. Keep human approval for destructive or credential-sensitive actions.
-5. Restart Antigravity and verify the GSD commands/skills appear. Have it read `AGENTS.md` and the implementation plan before generating a plan. Use GSD as the primary orchestrator; don't have Ruflo orchestrate the same tasks concurrently.
+Integration tests use Testcontainers, which needs a running Docker engine. Colima is installed but stopped. Start it only when those tests are needed:
 
-If the installer does not offer an Antigravity-compatible target, stop and report it. Do not copy raw Claude-only command files into Antigravity.
+```bash
+colima start
+```
 
-## 4. Code review skill
+and stop it afterwards to free memory:
 
-The repository includes an independent review skill. Use it before every meaningful PR/merge. External skills may be added only after reviewing their source and comparing them to the project skill to avoid duplicate instructions. A review must identify findings with file/line, severity, reproduction, impact and recommended fix.
+```bash
+colima stop
+```
 
-## 5. Agency Agents (selective, not full global install)
+### GitHub repository protections
 
-Official project: https://github.com/msitarzewski/agency-agents
+Still off, as recorded in the implementation plan task `T0-04`: secret scanning, push protection, Dependabot alerts and private vulnerability reporting.
 
-1. Read the upstream Antigravity integration documentation and inspect the installer before executing it.
-2. Do not run the full global roster installer as the default; it can install a large number of skills globally.
-3. Use only selected specialist skills that add distinct value: backend architect, security reviewer, QA/test engineer, and reality checker. Prefer copies within this workspace's `.agents/skills/` after reviewing their content and license.
-4. Avoid installing agents that duplicate the Java, code-review, security and QA skills already committed here.
-5. Verify each copied skill's frontmatter and confirm that the actual skill appears in Antigravity.
+### Supabase
 
-## 6. Minimal MCP baseline
+Create a dedicated Campus Companion project and give its exact project reference. Until then no Supabase tool is configured. The `opportunity-radar` project must never be used for this project.
 
-Antigravity IDE's MCP Servers UI can be used to install and inspect connectors. The workspace file `.agents/mcp_config.json` contains only the remote Context7 endpoint; no keys are committed. Open the MCP Servers panel, refresh, and verify Context7 is connected. If the endpoint requires an account/key in your environment, add it through the supported local configuration/secrets mechanism, never in a committed file.
+## 4. Using the tools day to day
 
-Add the GitHub MCP/connector through Antigravity's MCP Store when needed, and grant only the repository permissions required. Confirm repository access before asking the coding agent to create issues or PRs.
+| Need | Use |
+| --- | --- |
+| Start any task | `campus-companion-workflow`, then the task in `docs/16-implementation-plan.md` |
+| Write backend code | `java-spring-boot-engineering` |
+| Tests and evidence | `test-and-verify` |
+| Before a merge | `independent-code-review`, and `security-review` for anything security-relevant |
+| Challenge a design, threat-model a feature, design API tests, check a gate | The four `agency-` skills, on demand |
+| Library documentation | Context7 |
+| Issues, pull requests, CI | The GitHub CLI (`gh`) |
+| Browser testing | Switch Playwright on for the task, then off |
+| A stubborn small task with an automatic check | `ralph-loop`, only when asked for by name |
 
-### Playwright (on demand)
+Keep the everyday set to the project skills, Context7 and the GitHub CLI. Do not run several agents on overlapping files at once.
 
-Official instructions: https://github.com/microsoft/playwright-mcp
+## 5. Rules for adding a tool later
 
-Don't add it to the always-on config by default. When browser QA begins, install it through Antigravity's MCP Store or use its current official MCP setup instructions. The official local command uses Node.js 20 or newer and `@playwright/mcp@latest`. Verify startup and browser availability using a harmless test page.
+1. Confirm the official repository and package, its licence and that it is maintained.
+2. Read the installer before running it. Never pipe a remote script into a shell.
+3. Prefer a project-local install. Back up any global file before editing it.
+4. Start with the fewest permissions; database tools start read-only.
+5. Test the real connection, not the presence of a config file.
+6. Record it in the manifest with source, version, transport, scope, permissions, how to stop it, and whether it is always on.
+7. If it fails, try one safe correction, then switch it off and record the blocker.
 
-### Supabase MCP (blocked until a project exists)
+## 6. Before task `T1-01`
 
-A connected Supabase account currently exposes an `opportunity-radar` project, which is not this project. Do not connect, query, migrate or mutate it on behalf of Campus Companion.
+- [ ] Skills and MCP servers confirmed inside Antigravity (section 2).
+- [x] Java 21 installed.
+- [ ] GSD decision made (section 3), or option C accepted.
+- [ ] Tooling changes on this branch reviewed and committed.
+- [ ] Owner decisions needed before Phase 1 answered: OQ-4, OQ-10, OQ-12, OQ-14, and `T0-05` (see the charter §11 and the implementation plan).
+- [ ] GitHub protections switched on (`T0-04`).
+- [ ] Owner's approval to start `T1-01`.
 
-After the owner creates a dedicated Campus Companion Supabase project:
-- Configure the MCP with that exact project reference only.
-- Begin read-only.
-- Enable only necessary tool groups.
-- Verify that project name/ref before any operation.
-- Never commit the Supabase access token or database credentials.
-- Request separate approval before migrations or any mutation.
-
-## 7. Ruflo
-
-Official project: https://github.com/ruvnet/ruflo
-
-Treat Ruflo as an optional experiment, not a prerequisite for the first implementation. Its current package describes a broad CLI/MCP/orchestration surface and much of its published workflow is oriented around other agent runtimes. Before installing it:
-1. Verify current Antigravity integration support in the official repo.
-2. Inspect the installer and the exact workspace changes it proposes.
-3. Test in a separate temporary workspace/branch first.
-4. Avoid starting a daemon/swarm or enabling autonomous hooks for the main project.
-5. Compare its actual benefit against GSD + selected Agency Agents.
-6. Only adopt it if the test demonstrates compatibility without excessive memory/context overhead.
-
-Do not paste remote install scripts directly into a shell using `curl | bash`.
-
-## 8. MCP verification checklist
-
-For every installed tool, record:
-- name and official source;
-- installed version and transport;
-- project/global scope;
-- permissions granted;
-- start/stop or disable method;
-- successful health check or harmless read operation;
-- resource and security risks;
-- whether always-on or on-demand.
-
-Never report a tool as installed merely because a config file exists. Confirm Antigravity lists it, connects successfully, and exposes the expected tools.
-
-## 9. After tooling setup
-
-1. Review and resolve the open owner decisions listed in the project charter and implementation plan.
-2. Create the dedicated Campus Companion Supabase project after the owner checks organization/region/pricing.
-3. Start with task `T1-01` only after the documentation gate is approved.
-4. Build the empty Spring Boot/Maven skeleton and verify it before adding database connectivity or features.
-5. Keep each task small; run tests, code review and security review before progressing.
+A Supabase project and Docker are not needed for `T1-01` itself; they are needed from `T1-02` and `T1-03`.

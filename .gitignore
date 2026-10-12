@@ -20,3 +20,6 @@ application-local.properties
 # Logs
 *.log
 logs/
+
+# Ralph loop working notes
+.agents/ralph/
