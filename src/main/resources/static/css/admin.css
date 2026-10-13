@@ -1,0 +1,326 @@
+/* The admin screens: tables, forms in dialogs, filter bars and the entry sheets. They use the same
+   tokens and components as the student pages, laid out a little more densely. */
+.toolbar-card {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.filters-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+  align-items: end;
+}
+
+.filters-row .field {
+  gap: 4px;
+}
+
+.filters-row .button {
+  align-self: end;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font: var(--text-small);
+}
+
+.table th {
+  padding: 0 var(--space-3) var(--space-3);
+  border-bottom: 1px solid var(--color-hairline);
+  color: var(--color-text-muted);
+  font: var(--text-label);
+  letter-spacing: 0.07em;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.table td {
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--color-hairline);
+  vertical-align: middle;
+}
+
+.table tbody tr {
+  transition: background-color var(--motion);
+}
+
+.table tbody tr:hover {
+  background: var(--color-bg-subtle);
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.table__end {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.table th.table__end {
+  text-align: right;
+}
+
+.table__empty {
+  padding: var(--space-5) 0;
+  text-align: center;
+}
+
+.table strong {
+  font-weight: 600;
+}
+
+.row-actions {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.row-action {
+  display: inline-grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  background: none;
+  border: 0;
+  border-radius: 50%;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition:
+    background-color var(--motion),
+    color var(--motion),
+    transform var(--motion);
+}
+
+.row-action .icon {
+  width: 18px;
+  height: 18px;
+}
+
+.row-action:hover {
+  background: var(--tint-primary);
+  color: var(--on-tint-primary);
+}
+
+.row-action:active {
+  transform: scale(0.9);
+}
+
+.row-action--danger:hover {
+  background: var(--tint-danger);
+  color: var(--on-tint-danger);
+}
+
+.button--danger {
+  background: var(--color-danger);
+  color: #ffffff;
+}
+
+.button--danger:hover:not([disabled]) {
+  background: #a81f26;
+}
+
+.dialog--wide {
+  width: min(720px, calc(100vw - 32px));
+}
+
+.dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
+
+.form-grid {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.form-grid .field--wide {
+  grid-column: 1 / -1;
+}
+
+.check {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.checkbox {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--color-primary);
+}
+
+.once__value {
+  font-size: 18px;
+  letter-spacing: 0.04em;
+  overflow-wrap: anywhere;
+}
+
+/* The two-way choice in an attendance sheet. */
+.choice {
+  display: inline-grid;
+  grid-auto-flow: column;
+  padding: 3px;
+  background: #e8e8ed;
+  border-radius: var(--radius-pill);
+}
+
+.choice__option {
+  min-width: 84px;
+  min-height: 34px;
+  padding: 0 var(--space-3);
+  background: none;
+  border: 0;
+  border-radius: var(--radius-pill);
+  color: var(--color-text-muted);
+  font: var(--text-small);
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color var(--motion),
+    color var(--motion),
+    box-shadow var(--motion);
+}
+
+.choice__option[aria-pressed="true"] {
+  background: var(--color-surface);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  color: var(--on-tint-success);
+}
+
+.choice__option--absent[aria-pressed="true"] {
+  color: var(--on-tint-danger);
+}
+
+.sheet-foot {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 calc(var(--space-5) * -1) calc(var(--space-5) * -1);
+  padding: var(--space-3) var(--space-5);
+  background: rgba(255, 255, 255, 0.9);
+  border-top: 1px solid var(--color-hairline);
+  border-radius: 0 0 var(--radius-card) var(--radius-card);
+  backdrop-filter: blur(14px);
+}
+
+.marks-input {
+  width: 110px;
+  min-height: 40px;
+  text-align: right;
+}
+
+.cell-error {
+  display: block;
+  color: var(--color-danger);
+  font: var(--text-caption);
+}
+
+.link-card {
+  display: grid;
+  gap: var(--space-2);
+  color: inherit;
+  text-decoration: none;
+}
+
+.link-card .more {
+  margin-top: var(--space-2);
+}
+
+.unit-list {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.unit-list li {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-bg-subtle);
+  border-radius: var(--radius-input);
+}
+
+.day-group {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.topbar__menu {
+  display: inline-grid;
+}
+
+/* On phones a table row becomes a small card, with each label beside its value. */
+@media (max-width: 719px) {
+  .table thead {
+    display: none;
+  }
+
+  .table,
+  .table tbody,
+  .table tr,
+  .table td {
+    display: block;
+  }
+
+  .table tr {
+    padding: var(--space-3) 0;
+    border-bottom: 1px solid var(--color-hairline);
+  }
+
+  .table td {
+    display: flex;
+    gap: var(--space-3);
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 0;
+    text-align: right;
+  }
+
+  .table td::before {
+    content: attr(data-label);
+    color: var(--color-text-muted);
+    font: var(--text-caption);
+    text-align: left;
+  }
+
+  .sheet-foot {
+    margin: 0 -20px -20px;
+    padding: var(--space-3) 20px;
+  }
+}
+
+@media (min-width: 720px) {
+  .filters-row {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+
+  .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 900px) {
+  .topbar__menu {
+    display: none;
+  }
+}

@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="/css/tokens.css" />
     <link rel="stylesheet" href="/css/base.css" />
     <link rel="stylesheet" href="/css/app.css" />
+    <link rel="stylesheet" href="/css/admin.css" />
   </head>
   <body class="app">
     <div class="shell">
@@ -19,56 +20,113 @@
         <nav class="nav" aria-label="Main">
           <a class="nav__item" href="/admin/dashboard.html" aria-current="page"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#grid" /></svg>Home</a>
           <p class="eyebrow nav__heading">People</p>
-          <span class="nav__item" aria-disabled="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#users" /></svg>Students</span>
+          <a class="nav__item" href="/admin/students.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#users" /></svg>Students</a>
           <p class="eyebrow nav__heading">Academics</p>
-          <span class="nav__item" aria-disabled="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#resources" /></svg>Subjects</span>
-          <span class="nav__item" aria-disabled="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#attendance" /></svg>Attendance</span>
-          <span class="nav__item" aria-disabled="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#table" /></svg>Marks</span>
-          <span class="nav__item" aria-disabled="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#results" /></svg>Results</span>
-          <span class="nav__item" aria-disabled="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#calendar" /></svg>Timetable</span>
+          <a class="nav__item" href="/admin/subjects.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#resources" /></svg>Subjects</a>
+          <a class="nav__item" href="/admin/attendance.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#attendance" /></svg>Attendance</a>
+          <a class="nav__item" href="/admin/marks.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#table" /></svg>Marks</a>
+          <a class="nav__item" href="/admin/results.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#results" /></svg>Results</a>
+          <a class="nav__item" href="/admin/timetable.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#calendar" /></svg>Timetable</a>
           <p class="eyebrow nav__heading">Content</p>
+          <a class="nav__item" href="/admin/notices.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#notices" /></svg>Notices</a>
           <span class="nav__item" aria-disabled="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#file" /></svg>Resources</span>
           <span class="nav__item" aria-disabled="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#quiz" /></svg>Question bank</span>
-          <span class="nav__item" aria-disabled="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#notices" /></svg>Notices</span>
         </nav>
         <div class="usercard">
-          <span class="usercard__who">
+          <a class="usercard__who" href="/admin/dashboard.html" title="Your account">
             <span class="avatar" id="user-initials" aria-hidden="true"></span>
             <span class="usercard__text">
               <span class="usercard__name" id="user-name"></span>
               <span class="usercard__mail" id="user-email"></span>
             </span>
-          </span>
+          </a>
           <button type="button" class="usercard__out" id="logout" data-logout>Log out</button>
         </div>
       </aside>
       <header class="topbar">
+        <button type="button" class="icon-button topbar__menu" id="menu-open" aria-label="Menu" aria-haspopup="dialog"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#menu" /></svg></button>
         <div class="topbar__where">
           <p class="eyebrow">Administration</p>
           <p class="topbar__title" aria-hidden="true">Dashboard</p>
         </div>
         <span class="topbar__spacer"></span>
         <span class="badge">Admin</span>
-        <span class="avatar" id="top-initials" aria-hidden="true"></span>
+        <a class="avatar avatar--link" id="top-initials" href="/admin/dashboard.html" aria-label="Your account"></a>
       </header>
       <main class="page">
         <section class="hero rise" aria-labelledby="greeting">
           <div class="hero__main">
             <p class="hero__eyebrow">Administration</p>
             <h1 class="hero__title" id="greeting">Welcome</h1>
-            <p class="hero__sub">Manage students, academic records and learning content.</p>
+            <p class="hero__sub">Manage students, academic records and learning content. Every change to official records is written to the audit log.</p>
           </div>
         </section>
-        <div class="card rise">
-          <div class="empty">
-            <span class="badge-icon badge-icon--round badge-icon--neutral"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#users" /></svg></span>
-            <h2>The admin tools are built next</h2>
-            <p>The student side is being finished first. Each admin screen appears in the menu when it is ready.</p>
-            <button type="button" class="button button--secondary button--small" data-logout>Log out</button>
-          </div>
+        <div class="grid grid--3 grid--stretch">
+          <a class="card card--lift link-card rise" href="/admin/students.html">
+            <span class="badge-icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#users" /></svg></span>
+            <h2>Students</h2>
+            <p class="muted">Create accounts, edit profiles, reset passwords.</p>
+            <span class="more">Open <svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#chevron-right" /></svg></span>
+          </a>
+          <a class="card card--lift link-card rise" href="/admin/subjects.html">
+            <span class="badge-icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#resources" /></svg></span>
+            <h2>Subjects</h2>
+            <p class="muted">Subjects of each semester and their units.</p>
+            <span class="more">Open <svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#chevron-right" /></svg></span>
+          </a>
+          <a class="card card--lift link-card rise" href="/admin/attendance.html">
+            <span class="badge-icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#attendance" /></svg></span>
+            <h2>Attendance</h2>
+            <p class="muted">Mark a class present or absent, or correct it.</p>
+            <span class="more">Open <svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#chevron-right" /></svg></span>
+          </a>
+          <a class="card card--lift link-card rise" href="/admin/marks.html">
+            <span class="badge-icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#table" /></svg></span>
+            <h2>Marks</h2>
+            <p class="muted">Assessments and their marks sheets.</p>
+            <span class="more">Open <svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#chevron-right" /></svg></span>
+          </a>
+          <a class="card card--lift link-card rise" href="/admin/results.html">
+            <span class="badge-icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#results" /></svg></span>
+            <h2>Results</h2>
+            <p class="muted">Semester results: SGPA, credits and status.</p>
+            <span class="more">Open <svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#chevron-right" /></svg></span>
+          </a>
+          <a class="card card--lift link-card rise" href="/admin/timetable.html">
+            <span class="badge-icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#calendar" /></svg></span>
+            <h2>Timetable</h2>
+            <p class="muted">The weekly classes of each section.</p>
+            <span class="more">Open <svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#chevron-right" /></svg></span>
+          </a>
+          <a class="card card--lift link-card rise" href="/admin/notices.html">
+            <span class="badge-icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#notices" /></svg></span>
+            <h2>Notices</h2>
+            <p class="muted">Write, publish and withdraw announcements.</p>
+            <span class="more">Open <svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#chevron-right" /></svg></span>
+          </a>
+
+
         </div>
       </main>
     </div>
+    <dialog class="dialog dialog--sheet" id="menu-sheet" aria-labelledby="menu-title">
+      <div class="sheet__grab" aria-hidden="true"></div>
+      <p class="eyebrow" id="menu-title">Administration</p>
+      <div class="sheet__links">
+        <a class="sheet__link" href="/admin/dashboard.html" aria-current="page"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#grid" /></svg>Home</a>
+        <a class="sheet__link" href="/admin/students.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#users" /></svg>Students</a>
+        <a class="sheet__link" href="/admin/subjects.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#resources" /></svg>Subjects</a>
+        <a class="sheet__link" href="/admin/attendance.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#attendance" /></svg>Attendance</a>
+        <a class="sheet__link" href="/admin/marks.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#table" /></svg>Marks</a>
+        <a class="sheet__link" href="/admin/results.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#results" /></svg>Results</a>
+        <a class="sheet__link" href="/admin/timetable.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#calendar" /></svg>Timetable</a>
+        <a class="sheet__link" href="/admin/notices.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#notices" /></svg>Notices</a>
+      </div>
+      <div class="line">
+        <button type="button" class="button button--quiet" data-logout>Log out</button>
+        <button type="button" class="button button--secondary" data-close>Close</button>
+      </div>
+    </dialog>
     <script type="module" src="/js/admin-dashboard.js"></script>
   </body>
 </html>

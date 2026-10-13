@@ -5,9 +5,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
+import javax.xml.parsers.DocumentBuilderFactory;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -108,8 +111,18 @@ class StaticFrontendRulesTest {
   }
 
   @Test
-  void everyIconUsedOnAPageExistsInTheIconFile() throws IOException {
-    String sprite = Files.readString(STATIC.resolve("img/icons.svg"));
+  void everyIconUsedOnAPageExistsInTheIconFile() throws Exception {
+    // The icon file is read as XML, so an icon that sits inside a comment does not count.
+    var symbols =
+        DocumentBuilderFactory.newInstance()
+            .newDocumentBuilder()
+            .parse(STATIC.resolve("img/icons.svg").toFile())
+            .getElementsByTagName("symbol");
+    Set<String> icons = new HashSet<>();
+    for (int i = 0; i < symbols.getLength(); i++) {
+      String id = symbols.item(i).getAttributes().getNamedItem("id").getNodeValue();
+      assertThat(icons.add(id)).as("icon %s is defined once", id).isTrue();
+    }
     Pattern use = Pattern.compile("/img/icons\\.svg#([a-z-]+)");
     Pattern scripted = Pattern.compile("icon\\(\"([a-z-]+)\"");
     for (Path file : filesEndingWith(".html", ".js")) {
@@ -117,9 +130,7 @@ class StaticFrontendRulesTest {
       for (Pattern pattern : List.of(use, scripted)) {
         var matcher = pattern.matcher(text);
         while (matcher.find()) {
-          assertThat(sprite)
-              .as("icon %s used in %s", matcher.group(1), file)
-              .contains("<symbol id=\"" + matcher.group(1) + "\"");
+          assertThat(icons).as("icon used in %s", file).contains(matcher.group(1));
         }
       }
     }
