@@ -1,0 +1,161 @@
+/* The sign-in and change-password pages: one centred card, split into a black panel and a form. */
+.auth-page {
+  display: grid;
+  min-height: 100vh;
+  min-height: 100dvh;
+  place-items: center;
+  padding: var(--space-4);
+  background: var(--color-bg-subtle);
+}
+
+.auth-card {
+  display: grid;
+  width: 100%;
+  max-width: 920px;
+  overflow: hidden;
+  background: var(--color-surface);
+  border-radius: 24px;
+  box-shadow: var(--shadow-raised);
+}
+
+/* The black panel. A soft light follows the pointer; its position is set from mascot.js. */
+.auth-art {
+  --glow-x: 50%;
+  --glow-y: 60%;
+  position: relative;
+  display: grid;
+  min-height: 180px;
+  place-items: center;
+  overflow: hidden;
+  background: var(--color-inverse-bg);
+  color: var(--color-inverse-text);
+}
+
+.auth-art::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    220px circle at var(--glow-x) var(--glow-y),
+    rgba(255, 255, 255, 0.16),
+    transparent 70%
+  );
+  transition: opacity var(--motion);
+}
+
+.auth-art__inner {
+  position: relative;
+  display: grid;
+  gap: var(--space-4);
+  justify-items: center;
+  padding: var(--space-5);
+  text-align: center;
+}
+
+.auth-art__name {
+  font: var(--text-h2);
+  letter-spacing: -0.01em;
+}
+
+.auth-art__tagline {
+  max-width: 240px;
+  color: #a1a1a6;
+  font: var(--text-small);
+}
+
+.mascot {
+  width: 132px;
+  height: 132px;
+  transition: transform 220ms ease-out;
+  will-change: transform;
+}
+
+.mascot__pupil {
+  transition: transform 120ms ease-out;
+}
+
+.mascot__lid {
+  opacity: 0;
+  transition: opacity 140ms ease-out;
+}
+
+.mascot__eye {
+  transition: opacity 140ms ease-out;
+}
+
+/* While a password is being typed, the mascot shuts its eyes. */
+.mascot--shy .mascot__eye {
+  opacity: 0;
+}
+
+.mascot--shy .mascot__lid {
+  opacity: 1;
+}
+
+.mascot__blink {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: blink 5.5s infinite;
+}
+
+@keyframes blink {
+  0%,
+  94%,
+  100% {
+    transform: scaleY(1);
+  }
+  97% {
+    transform: scaleY(0.1);
+  }
+}
+
+.auth-form {
+  display: grid;
+  gap: var(--space-5);
+  align-content: center;
+  padding: var(--space-6) var(--space-5);
+}
+
+.auth-form__head {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: center;
+  text-align: center;
+}
+
+.auth-form__avatar {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  background: var(--color-bg-subtle);
+  border-radius: 50%;
+  color: var(--color-text-muted);
+}
+
+.auth-form__fields {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.auth-form__foot {
+  color: var(--color-text-muted);
+  font: var(--text-small);
+  text-align: center;
+}
+
+@media (min-width: 760px) {
+  .auth-card {
+    grid-template-columns: 1fr 1fr;
+    min-height: 580px;
+  }
+
+  .auth-form {
+    padding: var(--space-7);
+  }
+
+  .mascot {
+    width: 168px;
+    height: 168px;
+  }
+}

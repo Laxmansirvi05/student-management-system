@@ -23,3 +23,6 @@ logs/
 
 # Ralph loop working notes
 .agents/ralph/
+
+# Local agent tooling
+.claude/

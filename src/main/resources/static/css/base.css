@@ -1,0 +1,294 @@
+/* Shared base styles and components. See docs/07-ui-ux-spec.md. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font: var(--text-body);
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+h1 {
+  font: var(--text-h1);
+  letter-spacing: -0.01em;
+}
+
+h2 {
+  font: var(--text-h2);
+  letter-spacing: -0.01em;
+}
+
+a {
+  color: var(--color-link);
+}
+
+[hidden] {
+  display: none !important;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.muted {
+  color: var(--color-text-muted);
+}
+
+.small {
+  font: var(--text-small);
+}
+
+/* Buttons: pill shaped, at least 44px tall. */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: 0 var(--space-5);
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  font: var(--text-body);
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color var(--motion),
+    transform var(--motion),
+    opacity var(--motion);
+}
+
+.button:active {
+  transform: scale(0.99);
+}
+
+.button[disabled] {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.button--primary {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.button--primary:hover:not([disabled]) {
+  background: var(--color-primary-hover);
+}
+
+/* The black button used on the sign-in card. */
+.button--inverse {
+  background: var(--color-inverse-bg);
+  color: var(--color-inverse-text);
+}
+
+.button--inverse:hover:not([disabled]) {
+  background: var(--color-text);
+}
+
+.button--secondary {
+  background: var(--color-surface);
+  border-color: var(--color-text);
+  color: var(--color-text);
+}
+
+.button--text {
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  background: none;
+  color: var(--color-link);
+}
+
+.button--block {
+  width: 100%;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 700ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Form fields: the label is always visible above the input. */
+.field {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.field__label {
+  font: var(--text-small);
+  font-weight: 500;
+}
+
+.field__control {
+  position: relative;
+}
+
+.input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 var(--space-4);
+  background: var(--color-bg-subtle);
+  border: 1px solid var(--color-border-control);
+  border-radius: var(--radius-input);
+  color: var(--color-text);
+  font: var(--text-body);
+  transition:
+    border-color var(--motion),
+    background-color var(--motion);
+}
+
+.input:hover {
+  border-color: var(--color-text);
+}
+
+.input:focus-visible {
+  background: var(--color-surface);
+  border-color: var(--color-focus);
+  outline: 2px solid var(--color-focus);
+  outline-offset: 0;
+}
+
+.input[aria-invalid="true"] {
+  border-color: var(--color-danger);
+}
+
+.input--with-toggle {
+  padding-right: 52px;
+}
+
+.field__toggle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: none;
+  border: 0;
+  border-radius: var(--radius-input);
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.field__toggle:hover {
+  color: var(--color-text);
+}
+
+.field__help {
+  color: var(--color-text-muted);
+  font: var(--text-small);
+}
+
+.field__error {
+  color: var(--color-danger);
+  font: var(--text-small);
+}
+
+/* Page-level messages. Errors use role="alert"; status is never shown by colour alone. */
+.banner {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-info-bg);
+  border-left: 3px solid var(--color-text-muted);
+  border-radius: var(--radius-input);
+  font: var(--text-small);
+}
+
+.banner--error {
+  border-left-color: var(--color-danger);
+}
+
+.banner--success {
+  border-left-color: var(--color-success);
+}
+
+.banner__label {
+  font-weight: 600;
+}
+
+.banner--error .banner__label {
+  color: var(--color-danger);
+}
+
+.banner--success .banner__label {
+  color: var(--color-success);
+}
+
+.card {
+  padding: 20px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+}
+
+.empty-state {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+  color: var(--color-text-muted);
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  font: var(--text-caption);
+}
+
+@media (min-width: 600px) {
+  .card {
+    padding: var(--space-6);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

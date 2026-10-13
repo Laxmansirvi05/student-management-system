@@ -41,7 +41,8 @@ Defined once as CSS custom properties in `css/tokens.css`. Components use tokens
 | `--color-bg` | `#FFFFFF` | Page background |
 | `--color-bg-subtle` | `#F5F5F7` | Alternating section bands, table header, input background |
 | `--color-surface` | `#FFFFFF` | Cards, dialogs |
-| `--color-border` | `#D2D2D7` | Hairline borders and dividers |
+| `--color-border` | `#D2D2D7` | Hairline borders and dividers. Decorative only: never the only edge of a control |
+| `--color-border-control` | `#86868B` | The edge of inputs and other controls, which needs 3:1 contrast |
 | `--color-text` | `#1D1D1F` | Main text, headings, headline figures |
 | `--color-text-muted` | `#6E6E73` | Secondary text, captions |
 | `--color-inverse-bg` | `#000000` | The footer, and the header on the login page |
@@ -83,7 +84,27 @@ A black theme that follows the device setting (`prefers-color-scheme`). The toke
 
 ### Contrast
 
-Every text and background pair MUST meet WCAG AA contrast (4.5:1 for body text, 3:1 for large text and control borders). These values have not yet been measured. Check each pair with a contrast tool when the stylesheet is written (task `T1-09`); if one fails, adjust the value, not the rule. White text on `--color-primary` and muted text on `--color-bg-subtle` are the two pairs most likely to be close to the limit.
+Every text and background pair MUST meet WCAG AA contrast (4.5:1 for body text, 3:1 for large text and for the edges of controls). Measured in task `T1-09`:
+
+| Pair | Ratio | Needs |
+| --- | --- | --- |
+| Text on page / on subtle background | 16.83 / 15.46 | 4.5 |
+| Muted text on page / on subtle background | 5.07 / 4.66 | 4.5 |
+| White on the primary button | 4.70 | 4.5 |
+| Link on page | 5.57 | 4.5 |
+| Danger text on page / on subtle background | 5.90 / 5.42 | 4.5 |
+| Success text on subtle background | 4.61 | 4.5 |
+| Warning text on page | 4.87 | 4.5 |
+| Light text on black | 19.29 | 4.5 |
+| Control edge (`--color-border-control`) on page / on subtle background | 3.62 / 3.33 | 3.0 |
+| Focus ring on page | 4.70 | 3.0 |
+
+Two rules follow from the measurements:
+
+- `--color-border` (1.51 on white) is too faint to be the edge of an input. It was the input border in the first draft; inputs now use `--color-border-control`.
+- `--color-primary` on the subtle background is 4.31, below 4.5. Blue text is therefore used only on the white page background, never on a grey band.
+
+If a new pair is introduced, measure it first; if it fails, adjust the value, not the rule.
 
 ## 4. Typography
 
@@ -118,7 +139,7 @@ Body text is never smaller than 14 px. Figures in tables use tabular numerals. H
 
 | Component | Rules |
 | --- | --- |
-| Button | Pill-shaped. Primary (filled blue), secondary (black outline on white), danger (filled red), text (blue, no border). One primary button per screen. Shows a spinner and is disabled while its request runs. |
+| Button | Pill-shaped. Primary (filled blue), inverse (filled black, used for the one action on the sign-in and change-password cards), secondary (black outline on white), danger (filled red), text (blue, no border). One primary or inverse button per screen. Shows a spinner and is disabled while its request runs. |
 | Card | Title, optional action link, body. Has its own loading, empty and error state. |
 | Stat card | Small muted label, one large near-black figure in the display size, one line of muted context ("3 subjects below 75%"). No coloured background. |
 | Badge | Short status text with colour: Strong, Improving, Needs revision, Below required, Draft, Published. |
@@ -179,6 +200,17 @@ Wording rules: plain language, sentence case, no blame, no technical terms, no e
 - On failure, focus moves to the first invalid field and the form keeps all values.
 - Destructive actions need a confirmation dialog.
 - The admin attendance and marks sheets are editable tables with one Save button and an unsaved-changes warning on leaving.
+
+### Sign-in and change-password pages
+
+Built in task `T1-09`, following a reference video supplied by the owner on 2026-10-13.
+
+- One centred card with large rounded corners and a soft shadow, on the pale grey background. From 760 px wide it is split in two halves; below that the black half sits on top.
+- **Black half:** the Campus Companion mascot, the product name and one line of text. A soft light follows the pointer.
+- **White half:** a small person icon, the heading, the fields and one black pill button.
+- **The mascot** is an original drawing for this project (a face in a graduation cap). Its eyes follow the pointer and it shuts them while a password field has focus. It is decorative: hidden from screen readers, and it does not move when the device asks for reduced motion. Artwork from the reference video must not be copied.
+- **Deliberately absent**, because the requirements forbid them: sign in with Google, Apple or any other provider; "Sign up"; "Remember me"; a self-service "Forgot password?" link. In their place is one line: "Forgot your password? Ask your college administrator to reset it."
+- The login form has two labelled fields, "Institutional email" and "Password", with a show-password button.
 
 ## 12. Responsive tables
 

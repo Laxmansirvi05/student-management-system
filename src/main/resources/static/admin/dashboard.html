@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin · Campus Companion</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="/css/tokens.css" />
+    <link rel="stylesheet" href="/css/base.css" />
+    <link rel="stylesheet" href="/css/app.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="app-header">
+        <span class="app-header__brand">Campus Companion</span>
+        <span class="badge">Admin</span>
+        <span class="app-header__spacer"></span>
+        <span class="app-header__user" id="user-name"></span>
+        <button type="button" id="logout" class="button button--text">Log out</button>
+      </header>
+      <nav class="app-nav" aria-label="Main">
+        <div class="app-nav__group">
+          <a class="app-nav__item" href="/admin/dashboard.html" aria-current="page">Home</a>
+        </div>
+        <div class="app-nav__group">
+          <p class="app-nav__heading">People</p>
+          <span class="app-nav__item" aria-disabled="true">Students</span>
+        </div>
+        <div class="app-nav__group">
+          <p class="app-nav__heading">Academics</p>
+          <span class="app-nav__item" aria-disabled="true">Subjects</span>
+          <span class="app-nav__item" aria-disabled="true">Attendance</span>
+          <span class="app-nav__item" aria-disabled="true">Marks</span>
+          <span class="app-nav__item" aria-disabled="true">Results</span>
+          <span class="app-nav__item" aria-disabled="true">Timetable</span>
+        </div>
+        <div class="app-nav__group">
+          <p class="app-nav__heading">Content</p>
+          <span class="app-nav__item" aria-disabled="true">Resources</span>
+          <span class="app-nav__item" aria-disabled="true">Question bank</span>
+          <span class="app-nav__item" aria-disabled="true">Notices</span>
+        </div>
+      </nav>
+      <main class="app-main">
+        <div class="page-head">
+          <h1 id="greeting">Welcome</h1>
+          <p class="muted">Administration</p>
+        </div>
+        <div class="card empty-state">
+          <h2>Nothing to manage yet</h2>
+          <p>Students, academic records and content will be managed from here once those screens are built.</p>
+        </div>
+      </main>
+    </div>
+    <script type="module" src="/js/admin-dashboard.js"></script>
+  </body>
+</html>

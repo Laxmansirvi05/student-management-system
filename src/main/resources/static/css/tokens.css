@@ -1,0 +1,45 @@
+/* Design tokens. Defined in docs/07-ui-ux-spec.md. Components use these names, never raw values. */
+:root {
+  --color-bg: #ffffff;
+  --color-bg-subtle: #f5f5f7;
+  --color-surface: #ffffff;
+  --color-border: #d2d2d7;
+  --color-border-control: #86868b;
+  --color-text: #1d1d1f;
+  --color-text-muted: #6e6e73;
+  --color-inverse-bg: #000000;
+  --color-inverse-text: #f5f5f7;
+  --color-primary: #0071e3;
+  --color-primary-hover: #0077ed;
+  --color-primary-pressed: #006edb;
+  --color-on-primary: #ffffff;
+  --color-link: #0066cc;
+  --color-focus: #0071e3;
+  --color-info-bg: #f5f5f7;
+  --color-success: #1a7f4b;
+  --color-warning: #9a6700;
+  --color-danger: #c0262d;
+
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+  --text-display: 600 40px/44px var(--font);
+  --text-h1: 600 28px/34px var(--font);
+  --text-h2: 600 18px/26px var(--font);
+  --text-body: 400 16px/24px var(--font);
+  --text-small: 400 14px/20px var(--font);
+  --text-caption: 500 12px/16px var(--font);
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  --radius-card: 18px;
+  --radius-input: 12px;
+  --radius-pill: 999px;
+  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.06);
+  --shadow-raised: 0 24px 60px rgba(0, 0, 0, 0.18);
+  --motion: 180ms ease-out;
+}
