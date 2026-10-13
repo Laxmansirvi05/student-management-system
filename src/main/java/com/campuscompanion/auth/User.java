@@ -10,6 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import java.time.Duration;
 import java.time.Instant;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -85,9 +86,34 @@ public class User {
     updatedAt = Instant.now();
   }
 
-  /** Records a successful login. */
+  /** True while further login attempts for this account are blocked. */
+  public boolean isLocked(Instant now) {
+    return lockedUntil != null && lockedUntil.isAfter(now);
+  }
+
+  /**
+   * Counts one failed attempt. On reaching the limit the account is blocked for the given time and
+   * the counter starts again, so the next block needs the full number of failures.
+   */
+  public void recordFailedLogin(Instant now, int maxFailedAttempts, Duration lockDuration) {
+    failedLoginCount++;
+    if (failedLoginCount >= maxFailedAttempts) {
+      lockedUntil = now.plus(lockDuration);
+      failedLoginCount = 0;
+    }
+  }
+
+  /** Records a successful login and clears the failure counter and any block. */
   public void recordSuccessfulLogin(Instant now) {
     lastLoginAt = now;
+    failedLoginCount = 0;
+    lockedUntil = null;
+  }
+
+  /** Stores the hash of a password the user chose. The account no longer has to change it. */
+  public void changePassword(String newPasswordHash) {
+    passwordHash = newPasswordHash;
+    mustChangePassword = false;
   }
 
   public Long getId() {

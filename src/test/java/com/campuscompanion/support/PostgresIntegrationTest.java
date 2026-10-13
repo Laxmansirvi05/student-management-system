@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
 /**
@@ -14,7 +15,10 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
  * schema app are created first (init-roles.sql), then Flyway migrates as cc_migrator and the
  * application connects as cc_app. H2 is never used.
  */
+// Every test comes from one address, so the per-IP login limit is lifted here. LoginRateLimitIT
+// lowers it again to test it.
 @SpringBootTest
+@TestPropertySource(properties = "app.security.login.max-attempts-per-ip=100000")
 public abstract class PostgresIntegrationTest {
 
   protected static final String APP_USER = "cc_app";

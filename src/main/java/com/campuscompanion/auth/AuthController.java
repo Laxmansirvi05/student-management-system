@@ -1,5 +1,6 @@
 package com.campuscompanion.auth;
 
+import com.campuscompanion.auth.dto.ChangePasswordRequest;
 import com.campuscompanion.auth.dto.CsrfTokenResponse;
 import com.campuscompanion.auth.dto.CurrentUserResponse;
 import com.campuscompanion.auth.dto.LoginRequest;
@@ -23,10 +24,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
   private final AuthService authService;
+  private final PasswordService passwordService;
   private final SessionLogin sessionLogin;
 
-  public AuthController(AuthService authService, SessionLogin sessionLogin) {
+  public AuthController(
+      AuthService authService, PasswordService passwordService, SessionLogin sessionLogin) {
     this.authService = authService;
+    this.passwordService = passwordService;
     this.sessionLogin = sessionLogin;
   }
 
@@ -55,6 +59,17 @@ public class AuthController {
   @GetMapping("/me")
   public CurrentUserResponse me(@AuthenticationPrincipal CurrentUser currentUser) {
     return authService.describe(currentUser);
+  }
+
+  /** Changes the logged-in user's own password. Contract: docs/09-api-contract.md section 8.2. */
+  @PostMapping("/change-password")
+  public ResponseEntity<Void> changePassword(
+      @Valid @RequestBody ChangePasswordRequest body,
+      @AuthenticationPrincipal CurrentUser currentUser,
+      HttpServletRequest request) {
+    passwordService.changePassword(currentUser, body);
+    sessionLogin.renewAfterPasswordChange(currentUser, request);
+    return ResponseEntity.noContent().build();
   }
 
   @PostMapping("/logout")

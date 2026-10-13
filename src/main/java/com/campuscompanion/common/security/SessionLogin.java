@@ -22,8 +22,21 @@ public class SessionLogin {
   private final SecurityContextRepository securityContextRepository;
   private final SecurityContextLogoutHandler logoutHandler = new SecurityContextLogoutHandler();
 
-  public SessionLogin(SecurityContextRepository securityContextRepository) {
+  private final UserSessions userSessions;
+
+  public SessionLogin(
+      SecurityContextRepository securityContextRepository, UserSessions userSessions) {
     this.securityContextRepository = securityContextRepository;
+    this.userSessions = userSessions;
+  }
+
+  /**
+   * After a password change: ends the user's other sessions and gives the current one a new
+   * identifier, so nothing obtained with the old password stays usable.
+   */
+  public void renewAfterPasswordChange(CurrentUser user, HttpServletRequest request) {
+    userSessions.expireOthers(user, request.getSession().getId());
+    request.changeSessionId();
   }
 
   /**
@@ -41,6 +54,7 @@ public class SessionLogin {
     context.setAuthentication(authentication);
     SecurityContextHolder.setContext(context);
     securityContextRepository.saveContext(context, request, response);
+    userSessions.register(user, request.getSession().getId());
   }
 
   /** Invalidates the session on the server and clears the security context. */

@@ -1,5 +1,7 @@
 package com.campuscompanion.common.security;
 
+import com.campuscompanion.auth.PasswordChangeRequiredFilter;
+import com.campuscompanion.auth.UserRepository;
 import com.campuscompanion.common.config.StorageProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -8,13 +10,17 @@ import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy;
+import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.springframework.util.StringUtils;
 
 /**
@@ -31,6 +37,8 @@ public class SecurityConfig {
       HttpSecurity http,
       ApiSecurityErrorHandler errorHandler,
       SecurityContextRepository securityContextRepository,
+      SessionRegistry sessionRegistry,
+      UserRepository users,
       StorageProperties storageProperties)
       throws Exception {
     http.authorizeHttpRequests(
@@ -52,6 +60,22 @@ public class SecurityConfig {
         // header. It is required on every state-changing request, including login.
         .csrf(csrf -> csrf.spa())
         .securityContext(context -> context.securityContextRepository(securityContextRepository))
+        // Sessions are registered so the server can end them: the other sessions of a user after
+        // a password change, all of them after a reset or a deactivation. No limit on how many.
+        .sessionManagement(
+            sessions ->
+                sessions.sessionConcurrency(
+                    concurrency ->
+                        concurrency
+                            .maximumSessions(-1)
+                            .sessionRegistry(sessionRegistry)
+                            .expiredSessionStrategy(
+                                event ->
+                                    errorHandler.commence(
+                                        event.getRequest(), event.getResponse(), null))))
+        // While a password change is required, only the requests needed to change it pass.
+        .addFilterBefore(
+            new PasswordChangeRequiredFilter(users, errorHandler), AuthorizationFilter.class)
         .exceptionHandling(
             errors ->
                 errors.authenticationEntryPoint(errorHandler).accessDeniedHandler(errorHandler))
@@ -86,6 +110,18 @@ public class SecurityConfig {
     return new ProviderManager(provider);
   }
 
+  /** Spring Security's record of which sessions belong to which account. */
+  @Bean
+  public SessionRegistry sessionRegistry() {
+    return new SessionRegistryImpl();
+  }
+
+  /** Tells the session registry when a session ends or changes its identifier. */
+  @Bean
+  public HttpSessionEventPublisher httpSessionEventPublisher() {
+    return new HttpSessionEventPublisher();
+  }
+
   /** The logged-in identity is kept in the server-side HTTP session. */
   @Bean
   public SecurityContextRepository securityContextRepository() {
@@ -97,10 +133,10 @@ public class SecurityConfig {
    * storage host, for the PDF preview.
    */
   private static String contentSecurityPolicy(StorageProperties storage) {
+    String url = storage.supabaseUrl();
+    // A placeholder or malformed value must never be written into the header.
     String frameSource =
-        StringUtils.hasText(storage.supabaseUrl()) && storage.supabaseUrl().startsWith("https://")
-            ? storage.supabaseUrl()
-            : "'none'";
+        StringUtils.hasText(url) && url.matches("^https://[a-z0-9.-]+$") ? url : "'none'";
     return "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; "
         + "frame-src "
         + frameSource

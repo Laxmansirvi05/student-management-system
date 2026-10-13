@@ -5,10 +5,10 @@ import com.campuscompanion.auth.dto.LoginRequest;
 import com.campuscompanion.common.error.ApiException;
 import com.campuscompanion.common.error.ErrorCode;
 import com.campuscompanion.common.security.CurrentUser;
-import java.time.Clock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -28,31 +28,46 @@ public class AuthService {
 
   private final AuthenticationManager authenticationManager;
   private final UserRepository users;
-  private final Clock clock;
+  private final LoginAttemptService loginAttempts;
 
   public AuthService(
-      AuthenticationManager authenticationManager, UserRepository users, Clock clock) {
+      AuthenticationManager authenticationManager,
+      UserRepository users,
+      LoginAttemptService loginAttempts) {
     this.authenticationManager = authenticationManager;
     this.users = users;
-    this.clock = clock;
+    this.loginAttempts = loginAttempts;
   }
 
   /**
-   * Checks the credentials and returns the identity to keep in the session.
+   * Checks the credentials and returns the identity to keep in the session. A blocked email is
+   * refused before the password is looked at; every failure counts toward the block.
    *
-   * @throws ApiException with {@link ErrorCode#AUTH_INVALID_CREDENTIALS} for every kind of failure
+   * @throws ApiException with {@link ErrorCode#AUTH_ACCOUNT_LOCKED} while the email is blocked, or
+   *     {@link ErrorCode#AUTH_INVALID_CREDENTIALS} for every other kind of failure
    */
-  @Transactional
   public CurrentUser login(LoginRequest request) {
-    AccountPrincipal account = authenticate(request);
-    if (!account.isActive()) {
-      log.info("Login refused for a deactivated account, id {}", account.getId());
+    loginAttempts.assertNotBlocked(request.email());
+    AccountPrincipal account;
+    try {
+      account = authenticate(request);
+    } catch (InternalAuthenticationServiceException ex) {
+      // The check itself broke (for example the database is unreachable). That is our fault,
+      // not a wrong password, so it must not count toward the user's block.
+      throw ex;
+    } catch (AuthenticationException ex) {
+      log.info("Login failed: {}", ex.getClass().getSimpleName());
+      loginAttempts.recordFailure(request.email());
       throw invalidCredentials();
     }
-    User user = users.findById(account.getId()).orElseThrow(AuthService::invalidCredentials);
-    user.recordSuccessfulLogin(clock.instant());
-    log.info("Login succeeded for account id {}", user.getId());
-    return new CurrentUser(user.getId(), user.getRole());
+    if (!account.isActive()) {
+      log.info("Login refused for a deactivated account, id {}", account.getId());
+      loginAttempts.recordFailure(request.email());
+      throw invalidCredentials();
+    }
+    loginAttempts.recordSuccess(account.getId());
+    log.info("Login succeeded for account id {}", account.getId());
+    return new CurrentUser(account.getId(), account.getRole());
   }
 
   /** Describes the logged-in account. A deleted or deactivated account is treated as logged out. */
@@ -69,16 +84,11 @@ public class AuthService {
   }
 
   private AccountPrincipal authenticate(LoginRequest request) {
-    try {
-      Authentication result =
-          authenticationManager.authenticate(
-              UsernamePasswordAuthenticationToken.unauthenticated(
-                  request.email(), request.password()));
-      return (AccountPrincipal) result.getPrincipal();
-    } catch (AuthenticationException ex) {
-      log.info("Login failed: {}", ex.getClass().getSimpleName());
-      throw invalidCredentials();
-    }
+    Authentication result =
+        authenticationManager.authenticate(
+            UsernamePasswordAuthenticationToken.unauthenticated(
+                request.email(), request.password()));
+    return (AccountPrincipal) result.getPrincipal();
   }
 
   private static ApiException invalidCredentials() {

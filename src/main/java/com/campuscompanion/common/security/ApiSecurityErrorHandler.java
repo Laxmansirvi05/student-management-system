@@ -48,6 +48,12 @@ public class ApiSecurityErrorHandler implements AuthenticationEntryPoint, Access
             ? new ApiException(
                 ErrorCode.CSRF_INVALID, "Your page is out of date. Refresh it and try again.")
             : new ApiException(ErrorCode.ACCESS_DENIED, "You do not have permission to do this.");
+    write(request, response, failure);
+  }
+
+  /** Writes any deliberate failure raised in a filter, in the API's standard error format. */
+  public void write(
+      HttpServletRequest request, HttpServletResponse response, ApiException failure) {
     resolver.resolveException(request, response, null, failure);
   }
 }

@@ -29,6 +29,7 @@ class AuthFlowIT extends PostgresIntegrationTest {
   private static final String ADMIN_EMAIL = "auth.admin@university.example";
   private static final String ADMIN_PASSWORD = "a-strong-admin-password";
   private static final String INACTIVE_EMAIL = "23cse199@university.example";
+  private static final String SETTLED_STUDENT_EMAIL = "23cse102@university.example";
 
   @Value("${local.server.port}")
   private int port;
@@ -45,8 +46,14 @@ class AuthFlowIT extends PostgresIntegrationTest {
     createAccount(STUDENT_EMAIL, STUDENT_ROLL_NO, Role.STUDENT, "Demo Student One");
     createAccount(ADMIN_EMAIL, ADMIN_PASSWORD, Role.ADMIN, "Demo Admin");
     createAccount(INACTIVE_EMAIL, "23CSE199", Role.STUDENT, "Deactivated Student");
+    createAccount(SETTLED_STUDENT_EMAIL, "a-chosen-password", Role.STUDENT, "Demo Student Two");
     jdbcTemplate.update(
         "update app.users set active = false where login_email = ?", INACTIVE_EMAIL);
+    // These two have already chosen their own password, so nothing restricts them.
+    jdbcTemplate.update(
+        "update app.users set must_change_password = false where login_email in (?, ?)",
+        ADMIN_EMAIL,
+        SETTLED_STUDENT_EMAIL);
   }
 
   @Test
@@ -100,10 +107,10 @@ class AuthFlowIT extends PostgresIntegrationTest {
 
   @Test
   void loggingInAgainGivesTheSessionANewIdentifier() throws Exception {
-    client.login(STUDENT_EMAIL, STUDENT_ROLL_NO);
+    client.login(SETTLED_STUDENT_EMAIL, "a-chosen-password");
     String first = client.cookie("JSESSIONID");
 
-    client.login(STUDENT_EMAIL, STUDENT_ROLL_NO);
+    client.login(SETTLED_STUDENT_EMAIL, "a-chosen-password");
     String second = client.cookie("JSESSIONID");
 
     assertThat(first).isNotBlank();
@@ -202,7 +209,7 @@ class AuthFlowIT extends PostgresIntegrationTest {
 
   @Test
   void aStudentIsDeniedAdminPathsAndAnAdminIsNot() throws Exception {
-    client.login(STUDENT_EMAIL, STUDENT_ROLL_NO);
+    client.login(SETTLED_STUDENT_EMAIL, "a-chosen-password");
     HttpResponse<String> asStudent = client.get("/api/v1/admin/students");
     assertThat(asStudent.statusCode()).isEqualTo(403);
     assertThat(json(asStudent).get("code").asString()).isEqualTo("ACCESS_DENIED");

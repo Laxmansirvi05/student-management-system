@@ -38,6 +38,9 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     ErrorCode code = ex.getCode();
     log.info("Request failed with {}: {}", code, ex.getMessage());
     ProblemDetail problem = problem(code.status(), code.title(), ex.getMessage(), code, request);
+    if (ex instanceof ValidationException validation) {
+      problem.setProperty("errors", validation.getErrors());
+    }
     return ResponseEntity.status(code.status()).body(problem);
   }
 

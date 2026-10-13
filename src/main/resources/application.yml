@@ -56,6 +56,13 @@ logging:
     level: "%5p [%X{traceId:-}]"
 
 app:
+  security:
+    login:
+      # Fixed defaults, defined in docs/18-production-plan.md section 5.
+      max-failed-attempts: 5
+      lock-duration: 15m
+      max-attempts-per-ip: 20
+      ip-window: 10m
   identity:
     student-email-domain: ${STUDENT_EMAIL_DOMAIN}
   academic:
