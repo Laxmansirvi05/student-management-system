@@ -265,14 +265,14 @@ public class DemoAcademicSeeder {
   }
 
   /**
-   * A fixed pattern of absences: about one class in nine for everyone, and every third class of
-   * Digital Logic Design for the first student, so one subject falls below the required 75%.
+   * A fixed pattern of absences. Each subject is missed about one class in six to twelve, and the
+   * first student misses every third class of Digital Logic Design, so that one subject falls below
+   * the required 75%.
    */
   private static boolean present(int studentIndex, int daysAgo, String code) {
-    if (code.equals("EC301") && studentIndex == 0 && daysAgo % 3 == 0) {
-      return false;
-    }
-    return (studentIndex * 7 + daysAgo * 3 + code.hashCode() % 5) % 9 != 0;
+    int subjectIndex = SUBJECTS.indexOf(subjectRow(code));
+    int every = code.equals("EC301") && studentIndex == 0 ? 3 : 6 + subjectIndex * 2;
+    return (daysAgo + studentIndex * 2 + subjectIndex) % every != 0;
   }
 
   private void seedMarks(Map<String, Long> subjectIds, CurrentUser admin) {

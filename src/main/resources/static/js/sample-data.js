@@ -165,15 +165,6 @@ export const resources = resourceRows.map(([id, title, code, unitNo, resourceTyp
   originalFileName: title.toLowerCase().replace(/[^a-z0-9]+/g, "-") + ".pdf", createdAt: day(offset), bookmarked,
 }));
 
-export const resourceTypes = {
-  NOTES: { label: "Notes", kind: "primary" },
-  SYLLABUS: { label: "Syllabus", kind: "teal" },
-  LAB_MANUAL: { label: "Lab manual", kind: "purple" },
-  QUESTION_PAPER: { label: "Question paper", kind: "danger" },
-  MODEL_PAPER: { label: "Model paper", kind: "orange" },
-  IMPORTANT_QUESTIONS: { label: "Important questions", kind: "success" },
-};
-
 export const quiz = {
   subjects: subjects.filter((subject) => units[subject.code]).map((subject) => ({
     code: subject.code, name: subject.name,

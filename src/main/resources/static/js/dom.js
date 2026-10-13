@@ -109,9 +109,9 @@ const WEEKDAY_DATE = new Intl.DateTimeFormat("en-GB", {
   year: "numeric",
 });
 
-/** "14 Oct 2026" from an ISO date such as "2026-10-14". */
+/** "14 Oct 2026" from an ISO date ("2026-10-14") or an ISO timestamp ("2026-10-14T05:30:00Z"). */
 export function formatDate(isoDate) {
-  return DAY_MONTH_YEAR.format(new Date(isoDate + "T00:00:00"));
+  return DAY_MONTH_YEAR.format(new Date(isoDate.includes("T") ? isoDate : isoDate + "T00:00:00"));
 }
 
 /** "Tuesday, 14 October 2026" for today. */

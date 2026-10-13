@@ -1,11 +1,11 @@
+import { api } from "./api.js";
 import { daysUntil, fill, formatDate, formatToday, h, icon, percent, stagger, tag } from "./dom.js";
 import { countUp, enableTilt, reveal, ring } from "./motion.js";
-import { cardHead, categoryTag, dueText, empty } from "./parts.js";
-import { attendance, notices, progress, results, timetable } from "./sample-data.js";
+import { cardHead, categoryTag, dueText, empty, loadInto } from "./parts.js";
 import { currentStudent, currentUser } from "./shell.js";
 
-// The student's home page: six cards, each a summary that links to its full page.
-// The greeting and the student's details are real; the cards show sample data for now.
+// The student's home page (FR-STU-001): six cards, each a summary that links to its full page.
+// Everything comes from one request, GET /students/me/dashboard.
 
 function greeting() {
   const hour = new Date().getHours();
@@ -23,74 +23,47 @@ currentUser
   .catch(() => {});
 currentStudent
   .then((student) => {
-    if (!student) {
-      return;
+    if (student) {
+      document.getElementById("programme").textContent =
+        `${student.branch} · Semester ${student.currentSemester} · Section ${student.section}`;
+      fill(document.getElementById("hero-chips"), h("li.chip", icon("id"), "Roll no. ", h("strong.mono", student.rollNo)));
     }
-    document.getElementById("programme").textContent =
-      `${student.branch} · Semester ${student.currentSemester} · Section ${student.section}`;
-    fill(
-      document.getElementById("hero-chips"),
-      h("li.chip", icon("id"), "Roll no. ", h("strong.mono", student.rollNo)),
-      h("li.chip", icon("calendar"), `${todaysClasses().length} classes today`),
-    );
   })
   .catch(() => {});
 
-function todaysClasses() {
-  const dayOfWeek = new Date().getDay() || 7;
-  return timetable
-    .filter((entry) => entry.dayOfWeek === dayOfWeek)
-    .sort((a, b) => a.startTime.localeCompare(b.startTime));
+function attendanceCard({ overallPercent, requiredPercent, subjectsBelowRequired }) {
+  const body = [];
+  if (overallPercent === null) {
+    body.push(empty("calendar", "No classes recorded yet", "Your attendance appears once classes are held."));
+  } else {
+    const figure = h("p.figure");
+    countUp(figure, overallPercent, { decimals: 2, suffix: "%" });
+    body.push(
+      h(
+        "div.line",
+        h("div.stack.stack--tight", h("p.eyebrow", "Overall"), figure, h("p.row__meta", `Required: ${requiredPercent}%`)),
+        ring(overallPercent, { size: 104, stroke: 10, label: icon("cap"), kind: overallPercent < requiredPercent ? "danger" : "" }),
+      ),
+      subjectsBelowRequired
+        ? h("p.inset.inset--warning.inset--note", icon("alert"), h("span", h("strong", subjectsBelowRequired), ` subject${subjectsBelowRequired > 1 ? "s" : ""} below the required ${requiredPercent}%`))
+        : h("p.inset.inset--note", icon("check-circle"), `Every subject is at or above ${requiredPercent}%.`),
+    );
+  }
+  return h("section.card.card--lift.reveal", cardHead("attendance", "Attendance", "/student/attendance.html"), body);
 }
 
-function attendanceCard() {
-  const { overall, requiredPercent, subjects } = attendance;
-  const below = subjects.filter((subject) => subject.belowRequired);
-  const figure = h("p.figure");
-  countUp(figure, overall.percentage, { decimals: 2, suffix: "%" });
-  const warning = below.length
-    ? h(
-        "p.inset.inset--warning.inset--note",
-        icon("alert"),
-        h("span", `${below.length} subject${below.length > 1 ? "s" : ""} below ${requiredPercent}%: `, h("strong", below.map((subject) => `${subject.name} (${percent(subject.percentage)})`).join(", "))),
-      )
-    : h("p.inset.inset--note", icon("check-circle"), `Every subject is at or above ${requiredPercent}%.`);
-  return h(
-    "section.card.card--lift.reveal",
-    cardHead("attendance", "Attendance", "/student/attendance.html"),
-    h(
-      "div.line",
-      h("div.stack.stack--tight", h("p.eyebrow", "Overall"), figure, h("p.row__meta", `${overall.classesAttended} of ${overall.classesHeld} classes attended`)),
-      ring(overall.percentage, { size: 104, stroke: 10, label: icon("cap") }),
-    ),
-    warning,
-  );
-}
-
-function resultsCard() {
-  const latest = results.semesters[0];
-  const tile = (label, value, caption) => {
+function resultsCard({ latestSgpa, cgpa }) {
+  const tile = (label, value) => {
     const figure = h("p.figure.figure--small");
     countUp(figure, value, { decimals: 2 });
-    return h("div.inset", h("p.eyebrow", label), figure, h("p.row__meta", caption));
+    return h("div.inset", h("p.eyebrow", label), figure);
   };
-  const earned = results.semesters.reduce((sum, semester) => sum + semester.creditsEarned, 0);
-  const registered = results.semesters.reduce((sum, semester) => sum + semester.creditsRegistered, 0);
   return h(
     "section.card.card--lift.reveal",
     cardHead("results", "Results", "/student/results.html"),
-    h(
-      "div.tiles",
-      tile("Latest SGPA", latest.sgpa, `Semester ${latest.semester}`),
-      tile("CGPA", results.cgpa, `${results.semesters.length} semesters`),
-    ),
-    h(
-      "div.card__foot",
-      latest.resultStatus === "PASS"
-        ? tag("Passed semester " + latest.semester, "success", "check-circle")
-        : tag("Semester " + latest.semester + ": not passed", "danger", "x-circle"),
-      h("span.num", `Credits earned ${earned} of ${registered}`),
-    ),
+    latestSgpa === null
+      ? empty("results", "Results not published yet", "Your SGPA and CGPA appear here once results are published.")
+      : [h("div.tiles", tile("Latest SGPA", latestSgpa), tile("CGPA", cgpa)), h("p.note", icon("info"), "CGPA is weighted by the credits registered in each semester.")],
   );
 }
 
@@ -105,15 +78,14 @@ function classState(entry, now, isNext) {
   return isNext ? tag("Next", "primary") : tag("Later");
 }
 
-function classesCard() {
-  const list = todaysClasses();
+function classesCard(todayClasses) {
   const now = new Date().toTimeString().slice(0, 5);
-  const next = list.find((entry) => entry.startTime > now);
-  const rows = list.slice(0, 4).map((entry) =>
+  const next = todayClasses.find((entry) => entry.startTime > now);
+  const rows = todayClasses.map((entry) =>
     h(
       "li.row",
       h("div.row__top", h("span.row__title.clip", entry.subjectName), h("span.mono.num", `${entry.startTime} – ${entry.endTime}`)),
-      h("div.row__top", h("span.row__meta.clip", `${entry.room} · ${entry.facultyName}`), classState(entry, now, entry === next)),
+      h("div.row__top", h("span.row__meta.clip", [entry.room, entry.facultyName].filter(Boolean).join(" · ")), classState(entry, now, entry === next)),
     ),
   );
   return h(
@@ -123,12 +95,8 @@ function classesCard() {
   );
 }
 
-function deadlinesCard() {
-  const upcoming = notices
-    .filter((notice) => notice.dueDate && daysUntil(notice.dueDate) >= 0)
-    .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
-    .slice(0, 3);
-  const rows = upcoming.map((notice) =>
+function deadlinesCard(upcomingDeadlines) {
+  const rows = upcomingDeadlines.slice(0, 4).map((notice) =>
     h(
       "li.row",
       h("div.row__top", categoryTag(notice.category), h("span.row__meta.num", formatDate(notice.dueDate))),
@@ -139,12 +107,12 @@ function deadlinesCard() {
   return h(
     "section.card.card--lift.reveal",
     cardHead("check-circle", "Upcoming deadlines", "/student/notices.html"),
-    rows.length ? h("ul.rows", rows) : empty("check-circle", "Nothing due", "You have no upcoming deadlines."),
+    rows.length ? h("ul.rows", rows) : empty("check-circle", "Nothing due", "No deadlines in the next 14 days."),
   );
 }
 
-function noticesCard() {
-  const rows = notices.slice(0, 3).map((notice) =>
+function noticesCard(recentNotices) {
+  const rows = recentNotices.slice(0, 4).map((notice) =>
     h(
       "li.row",
       h("div.row__top", categoryTag(notice.category), h("span.row__meta.num", formatDate(notice.publishedAt))),
@@ -159,29 +127,36 @@ function noticesCard() {
   );
 }
 
-function recommendationsCard() {
-  const rows = progress.recommendations.slice(0, 2).map((item) =>
+function recommendationsCard(recommendations) {
+  const rows = recommendations.slice(0, 3).map((item) =>
     h(
       "a.inset.inset--link",
       { href: "/student/progress.html" },
       h("div.line", h("span.row__title", `Revise Unit ${item.unitNo}: ${item.unitTitle}`), icon("arrow-right")),
-      h("p.row__meta", `${item.subjectName} · ${item.subjectCode}`),
-      h("p.reason", icon("alert"), `Average ${item.averagePercent}% over ${item.attempts} tests`),
+      h("p.row__meta.mono", item.subjectCode),
+      h("p.reason", icon("alert"), `Accuracy ${percent(item.accuracyPercent)} in your tests`),
     ),
   );
   return h(
     "section.card.card--lift.reveal",
     cardHead("target", "Revise next", "/student/progress.html"),
-    rows.length
-      ? h("div.stack", rows)
-      : empty("target", "No suggestions yet", "Take a quick test to see what to revise."),
+    rows.length ? h("div.stack", rows) : empty("target", "No suggestions yet", "Take a quick test to see what to revise."),
   );
 }
 
 const content = document.getElementById("content");
-fill(
-  content,
-  stagger([attendanceCard(), resultsCard(), classesCard(), deadlinesCard(), noticesCard(), recommendationsCard()]),
-);
-reveal();
+loadInto(content, () => api.get("/students/me/dashboard"), (data) => {
+  fill(
+    content,
+    stagger([
+      attendanceCard(data.attendance),
+      resultsCard(data.results),
+      classesCard(data.todayClasses),
+      deadlinesCard(data.upcomingDeadlines),
+      noticesCard(data.recentNotices),
+      recommendationsCard(data.recommendations),
+    ]),
+  );
+  reveal();
+});
 enableTilt();

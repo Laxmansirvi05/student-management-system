@@ -1,16 +1,18 @@
+import { api } from "./api.js";
 import { fill, formatDate, h, icon, stagger } from "./dom.js";
 import { reveal, swap } from "./motion.js";
-import { categoryLabels, categoryTag, dueTag, dueText, empty, isWide, openSheet } from "./parts.js";
-import { notices } from "./sample-data.js";
+import { categoryLabels, categoryTag, dueTag, dueText, empty, isWide, loadInto, openSheet } from "./parts.js";
 import "./shell.js";
 
 // Notices (FR-NOT-001): published notices, newest first, with a filter by category, a search box
-// and the full text of the chosen notice. Read-only.
+// and the full text of the chosen notice. The server sends only notices this student may see.
 
+const PAGE_SIZE = 100;
 const content = document.getElementById("content");
+let notices = [];
 let category = "ALL";
 let query = "";
-let chosen = notices.find((notice) => String(notice.id) === new URLSearchParams(location.search).get("id")) || notices[0];
+let chosen = null;
 
 function matches(notice) {
   const text = (notice.title + " " + notice.body).toLowerCase();
@@ -24,7 +26,7 @@ function detail(notice) {
     notice.dueDate
       ? h("div.inset.inset--row", h("span.line.line--start", icon("calendar"), h("strong.num", "Due " + formatDate(notice.dueDate))), h("span.eyebrow", dueText(notice.dueDate)))
       : null,
-    h("div.notice__body", notice.body.split("\n\n").map((paragraph) => h("p", paragraph))),
+    h("div.notice__body", notice.body.split(/\n\s*\n/).map((paragraph) => h("p", paragraph))),
     h("p.note", icon("clock"), "Published " + formatDate(notice.publishedAt)),
   ];
 }
@@ -35,7 +37,7 @@ function card(notice) {
     { type: "button", "aria-pressed": String(notice === chosen && isWide()) },
     h("div.line", h("span.line.line--start", categoryTag(notice.category), h("span.eyebrow.num", formatDate(notice.publishedAt))), dueTag(notice.dueDate)),
     h("h3.subject__name", notice.title),
-    h("p.row__meta.clamp-2", notice.body.split("\n\n")[0]),
+    h("p.row__meta.clamp-2", notice.body.split(/\n\s*\n/)[0]),
     notice.dueDate ? h("p.row__meta.line.line--start", icon("clock"), dueText(notice.dueDate)) : null,
   );
   element.addEventListener("click", () => {
@@ -57,9 +59,7 @@ function renderList() {
   const list = notices.filter(matches);
   fill(
     document.getElementById("list"),
-    list.length
-      ? stagger(list.map(card))
-      : h("div.card", empty("bell", notices.length ? "No notices match" : "No notices yet", notices.length ? "Try another category or search." : "")),
+    list.length ? stagger(list.map(card)) : h("div.card", empty("bell", "No notices match", "Try another category or search.")),
   );
 }
 
@@ -87,21 +87,26 @@ function toolbar() {
     renderList();
     reveal();
   });
-  return h(
-    "div.toolbar.reveal",
-    pills,
-    h("label.search.toolbar__search", { for: "notice-search" }, h("span.visually-hidden", "Search notices"), icon("search"), input),
-  );
+  return h("div.toolbar.reveal", pills, h("label.search.toolbar__search", { for: "notice-search" }, h("span.visually-hidden", "Search notices"), icon("search"), input));
 }
 
-fill(
-  content,
-  toolbar(),
-  h(
-    "div.grid.grid--split",
-    h("div.stack.stack--loose", { id: "list" }),
-    h("aside.card.sticky.reveal.only-wide", { id: "detail", "aria-live": "polite" }, detail(chosen)),
-  ),
-);
-renderList();
-reveal();
+loadInto(content, () => api.get("/notices?size=" + PAGE_SIZE), (page) => {
+  notices = page.content;
+  if (!notices.length) {
+    fill(content, h("div.card", empty("bell", "No notices yet", "Announcements from the college appear here.")));
+    return;
+  }
+  const wanted = new URLSearchParams(location.search).get("id");
+  chosen = notices.find((notice) => String(notice.id) === wanted) || notices[0];
+  fill(
+    content,
+    toolbar(),
+    h("div.grid.grid--split", h("div.stack.stack--loose", { id: "list" }), h("aside.card.sticky.reveal.only-wide", { id: "detail", "aria-live": "polite" }, detail(chosen))),
+  );
+  renderList();
+  reveal();
+  // Opened from the dashboard on a phone: show the notice that was asked for.
+  if (wanted && !isWide() && String(chosen.id) === wanted) {
+    openSheet(detail(chosen));
+  }
+});

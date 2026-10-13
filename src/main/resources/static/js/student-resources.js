@@ -1,7 +1,7 @@
 import { fill, h, icon, stagger } from "./dom.js";
 import { reveal, swap } from "./motion.js";
-import { bookmarkStore, empty, resourceCard } from "./parts.js";
-import { resources, resourceTypes, subjects } from "./sample-data.js";
+import { bookmarkStore, empty, resourceCard, resourceTypes } from "./parts.js";
+import { resources, subjects } from "./sample-data.js";
 import "./shell.js";
 
 // The resource hub (FR-LIB-001, FR-LIB-002): search, three filters, and pages of resource cards.
