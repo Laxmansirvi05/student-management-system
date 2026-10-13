@@ -81,7 +81,7 @@ Until GSD is installed, `campus-companion-workflow` plus `docs/16-implementation
 | n8n-mcp | npm `n8n-mcp` | stdio through `npx` | Global | Not used by this project | Left untouched at the owner's instruction |
 | GitHub MCP | https://github.com/github/github-mcp-server | | | | DEFERRED. The MCP Store cannot be operated from outside Antigravity, and no token was placed in any file. The GitHub CLI covers repository, issue, pull-request and CI work for now |
 | Chrome DevTools MCP | https://github.com/ChromeDevTools/chrome-devtools-mcp, npm `chrome-devtools-mcp` 1.10.1 | | | | DEFERRED until there is a UI to debug |
-| Supabase MCP | https://github.com/supabase/mcp | | | | **BLOCKED** until the owner creates a dedicated Campus Companion project and approves its exact project reference. Then read-only first |
+| Supabase MCP | https://github.com/supabase/mcp | Connected account | | On demand, read-only checks | VERIFIED 2026-10-13 against the dedicated project `campus-companion` (reference `gunvnfxhjbttfjufuswx`, Mumbai, free plan), created with the owner's approval. Used only for read-only inspection. Schema changes go through Flyway, never through this tool. `opportunity-radar` must never be used |
 | Graphify | | | | | DEFERRED until the codebase is large enough to need it |
 | Reticle, Ponytail, Memory MCP, Filesystem MCP, Fetch MCP, a general database MCP | | | | | Not installed; no demonstrated need |
 | OmniRoute | npm `omniroute` 3.8.50, already installed globally before this pass | | | | Not configured for this project and not removed |

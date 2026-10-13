@@ -90,7 +90,7 @@ Still off, as recorded in the implementation plan task `T0-04`: secret scanning,
 
 ### Supabase
 
-Create a dedicated Campus Companion project and give its exact project reference. Until then no Supabase tool is configured. The `opportunity-radar` project must never be used for this project.
+Done on 2026-10-13. The dedicated project `campus-companion` exists, the Data API is switched off, the roles `cc_migrator` and `cc_app` and the schema `app` are created, and the application has started against it. The `opportunity-radar` project must never be used for this project. Supabase's GitHub integration must stay off: the database is changed only by Flyway.
 
 ## 4. Using the tools day to day
 
