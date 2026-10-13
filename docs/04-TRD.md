@@ -1,6 +1,6 @@
 # 04. Technical Requirements Document
 
-> Status: Draft v0.2 · Owner: Laxman Sirvi · Last updated: 2026-10-11
+> Status: Draft v0.3 · Owner: Laxman Sirvi · Last updated: 2026-10-13
 
 This document sets the technical constraints every implementation must satisfy. Requirement IDs here start with `TR-`.
 
@@ -9,8 +9,8 @@ This document sets the technical constraints every implementation must satisfy. 
 | Area | Technology | Version | Notes |
 | --- | --- | --- | --- |
 | Language | Java | 21 (LTS) | Fixed. |
-| Framework | Spring Boot | **TBD in `T1-01`** | The current stable release line that supports Java 21. |
-| Web | Spring Web (MVC) | from Boot | REST controllers. |
+| Framework | Spring Boot | 4.1.1 | Verified in `T1-01` on Java 21. It manages Spring Framework 7.0.9, Spring Security 7.1.1, Hibernate 7.4.5, Flyway 12.4.0 and the PostgreSQL driver 42.7.13. |
+| Web | Spring Web MVC (`spring-boot-starter-webmvc`) | from Boot | REST controllers. |
 | Security | Spring Security | from Boot | Session-based login. |
 | Persistence | Spring Data JPA with Hibernate | from Boot | |
 | Validation | Jakarta Bean Validation | from Boot | |
@@ -21,10 +21,10 @@ This document sets the technical constraints every implementation must satisfy. 
 | File storage | Supabase Storage | Supabase-managed | Called over HTTPS from Java. |
 | PDF text | Apache PDFBox | **TBD in `T3-03`** | Validation in R1, text extraction in P1. |
 | HTTP client | Spring `RestClient` | from Boot | For storage and the AI provider. |
-| Build | Maven with the Maven Wrapper | wrapper pinned | |
-| Formatting | Spotless with google-java-format | **TBD in `T1-01`** | |
-| Tests | JUnit 5, Mockito, Spring Boot Test, Spring Security Test | from Boot | |
-| Database tests | Testcontainers for PostgreSQL | **TBD in `T1-01`** | Needs Docker. |
+| Build | Maven with the Maven Wrapper | Maven 3.9.11, wrapper 3.3.4 | `./mvnw` is the only supported way to build. The build refuses any Java other than 21. |
+| Formatting | Spotless with google-java-format | Spotless 3.10.4, google-java-format 1.36.1 | google-java-format 1.37.0 fails under Spotless 3.10.4, so 1.36.1 is pinned. |
+| Tests | JUnit Jupiter, Mockito, Spring Boot Test, Spring Security Test | from Boot: JUnit Jupiter 6.0.3, Mockito 5.23.0 | Spring Boot 4.1 manages JUnit 6, the successor of JUnit 5. Earlier documents say "JUnit 5"; the annotations and style are the same. |
+| Database tests | Testcontainers for PostgreSQL | 2.0.5, from Boot | Needs Docker. Tests run on the `postgres:17-alpine` image. |
 | Frontend | HTML5, CSS3, JavaScript (ES modules) | browser-native | No framework, no bundler. |
 | Diagrams (P1) | Mermaid | **TBD** | Vendored into `static/`, not loaded from a CDN. |
 | Hosting | Heroku | | One web dyno. |

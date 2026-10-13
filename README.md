@@ -2,7 +2,7 @@
 
 A Java-first student management and learning platform. It combines a student's academic records with study resources, practice tests and an AI study assistant in one web application.
 
-> **Project status: documentation phase.** The specifications below are drafted and awaiting owner review. No application code exists yet. Commands in "Getting started" become available after task `T1-01` in the [implementation plan](docs/16-implementation-plan.md).
+> **Project status: Phase 1 in progress.** The project skeleton, configuration, first database migration, core entities and error handling are built and tested (tasks `T1-01` to `T1-05` in the [implementation plan](docs/16-implementation-plan.md)). There is no login, page or feature yet. The specifications below are drafts awaiting owner review.
 >
 > **Revised on 2026-10-11:** a consistency audit of the documents, and a change to login. Students now log in with an institutional email address, and a new student's first password is the roll number, which must be changed at first login. That first-password rule is a recorded security exception for demonstration with synthetic data only: see [decision 0008](docs/decisions/0008-institutional-email-login.md). The database access model is in [decision 0007](docs/decisions/0007-database-roles-and-rls.md).
 

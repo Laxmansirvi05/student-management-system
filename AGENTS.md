@@ -8,7 +8,7 @@ Instructions for any coding agent working in this repository. Human contributors
 
 The owner must be able to explain the Java code in a viva. Prefer clear, conventional Java over clever or generated code.
 
-**Current state:** documentation phase. Check [docs/16-implementation-plan.md](docs/16-implementation-plan.md) for what has been built before assuming anything exists.
+**Current state:** Phase 1 in progress. Tasks `T1-01` to `T1-05` are built (project skeleton, configuration, first migration, core entities, error handling). There is no login, no page and no feature yet. Check [docs/16-implementation-plan.md](docs/16-implementation-plan.md) and the Git history before assuming anything else exists.
 
 ## 2. Approved stack
 
@@ -125,6 +125,8 @@ Available once task `T1-01` is complete.
 | Build the JAR | `./mvnw -DskipTests package` |
 
 Integration tests need Docker running. If Docker is unavailable, say so in your report; do not skip the tests silently.
+
+Every command needs Java 21: `export JAVA_HOME=$(/usr/libexec/java_home -v 21)`. With Colima as the Docker engine, start it with `colima start` and also set `DOCKER_HOST="unix://$HOME/.colima/default/docker.sock"` and `TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock` before `./mvnw verify`.
 
 ## 9. Rules for schema changes
 

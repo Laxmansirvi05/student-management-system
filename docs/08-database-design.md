@@ -625,7 +625,7 @@ revoke all on schema app from anon, authenticated, service_role;
 | The exact statements `postgres` needs to create a schema owned by another role on Supabase | `T0-03` |
 | Supabase's `postgres` role bypasses RLS (Supabase's documentation describes it as an administrative role and refers to it as a superuser when discussing `bypassrls`) | `T0-03` |
 | Storage keeps working with the Data API switched off | `T3-01` |
-| Whether inserting into identity columns as `cc_app` needs any sequence privilege | `T1-03`, by the role test |
+| ~~Whether inserting into identity columns as `cc_app` needs any sequence privilege~~ | **Verified in `T1-03` on PostgreSQL 17:** no. `INSERT` on the table is enough |
 | Current names of Supabase's API keys. The documentation now calls the public key "publishable"; this project's documents say "service key" for the server-side key | `T3-01` |
 
 If custom roles cannot be used through the pooler, stop and report it. Do not fall back to running the application as `postgres` without a new decision record.

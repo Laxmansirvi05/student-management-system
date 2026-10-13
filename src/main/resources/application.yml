@@ -1,0 +1,79 @@
+# Configuration names are documented in .env.example and docs/18-production-plan.md section 5.
+# No secret value belongs in this file.
+spring:
+  application:
+    name: campus-companion
+  config:
+    import: "optional:file:.env[.properties]"
+  datasource:
+    # The running application connects as the runtime role (cc_app).
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 5
+  flyway:
+    # Migrations run as the migration role (cc_migrator), which owns schema app.
+    user: ${DB_MIGRATION_USERNAME}
+    password: ${DB_MIGRATION_PASSWORD}
+    default-schema: app
+    schemas: app
+    create-schemas: false
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_schema: app
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 11MB
+
+server:
+  servlet:
+    session:
+      timeout: 30m
+      cookie:
+        http-only: true
+        same-site: lax
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+logging:
+  pattern:
+    level: "%5p [%X{traceId:-}]"
+
+app:
+  identity:
+    student-email-domain: ${STUDENT_EMAIL_DOMAIN}
+  academic:
+    attendance-required-percent: ${ATTENDANCE_REQUIRED_PERCENT:75}
+  storage:
+    supabase-url: ${SUPABASE_URL:}
+    service-key: ${SUPABASE_SERVICE_KEY:}
+    bucket: ${SUPABASE_STORAGE_BUCKET:learning-resources}
+  ai:
+    enabled: ${AI_ENABLED:true}
+    provider: ${AI_PROVIDER:mock}
+    api-key: ${AI_API_KEY:}
+    model: ${AI_MODEL:}
+    daily-limit-per-user: ${AI_DAILY_LIMIT_PER_USER:30}
+    daily-limit-global: ${AI_DAILY_LIMIT_GLOBAL:500}
+    max-output-tokens: ${AI_MAX_OUTPUT_TOKENS:1200}
+  bootstrap:
+    admin-email: ${ADMIN_BOOTSTRAP_EMAIL:}
+    admin-password: ${ADMIN_BOOTSTRAP_PASSWORD:}
+  seed:
+    demo-enabled: ${DEMO_SEED_ENABLED:false}
