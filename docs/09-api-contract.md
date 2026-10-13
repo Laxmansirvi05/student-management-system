@@ -420,7 +420,9 @@ Validation: `questionCount` is 5, 10 or 20.
 }
 ```
 
-The response never contains the correct option or the explanation.
+The response never contains the correct option or the explanation. The options are in random order; `key` is the option's own letter and is what the browser sends back.
+
+`expiresAt` is `startedAt` plus 60 seconds for each question. The server keeps this limit; nothing the browser sends can move it.
 
 `409 QUIZ_NOT_ENOUGH_QUESTIONS` adds `"available": 7` to the problem detail.
 
@@ -437,7 +439,9 @@ The response never contains the correct option or the explanation.
 }
 ```
 
-Questions left out or sent as `null` count as wrong. A `questionId` that is not part of the attempt gives `400`.
+Questions left out or sent as `null` count as wrong. A `questionId` that is not part of the attempt gives `400`, and so does a second answer for the same question. The request has no field for a score.
+
+An attempt is submitted once: a second submission gives `409 QUIZ_ALREADY_SUBMITTED`. A submission that arrives more than 15 seconds after `expiresAt` gives `409 QUIZ_ATTEMPT_EXPIRED` and closes the attempt as `EXPIRED` with a score of 0.
 
 `200 OK`
 

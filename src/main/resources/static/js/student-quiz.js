@@ -1,145 +1,200 @@
-import { fill, formatDate, h, icon, stagger, tag } from "./dom.js";
+import { api, messageFor } from "./api.js";
+import { fill, formatDate, h, icon, stagger, tag, toast } from "./dom.js";
 import { bar, countUp, enableTilt, reveal, ring, swap } from "./motion.js";
-import { cardHead, scoreKind } from "./parts.js";
-import { progress, quiz } from "./sample-data.js";
+import { cardHead, empty, loadInto, scoreKind } from "./parts.js";
 import "./shell.js";
 
 // Quick Exam (FR-QZ-001 to FR-QZ-003): set up a test, take it against the clock, read the result.
-// In the finished feature the server picks the questions, keeps the time and marks the test.
-// Here the three screens run on sample questions so the design can be seen and tried.
+// The server picks the questions, sets when the test ends and marks it. The correct answers are
+// not in the page until the test has been submitted: they arrive only with the result.
 
 const content = document.getElementById("content");
 const pageHead = document.getElementById("quiz-head");
 const dialog = document.getElementById("submit-dialog");
 const params = new URLSearchParams(location.search);
 const LETTERS = ["A", "B", "C", "D"];
+const LENGTHS = [5, 10, 20];
 const SECONDS_PER_QUESTION = 60;
+// A running test is remembered in this tab, so reloading the page continues it with the same
+// questions and the same end time. It holds no answers key: only what the student chose.
+const SAVED = "quick-exam";
 
-const setup = {
-  subject: quiz.subjects.find((subject) => subject.code === params.get("subject")) || quiz.subjects[0],
-  unitNo: Number(params.get("unit")) || 2,
-  count: 10,
-};
+const setup = { subjects: [], subjectId: Number(params.get("subjectId")) || 0, unitId: Number(params.get("unitId")) || 0, count: 10 };
 let test = null;
 
 const clock = (seconds) => `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
-const unitOf = () => setup.subject.units.find((unit) => unit.unitNo === setup.unitNo) || setup.subject.units[0];
+const subjectOf = (id) => setup.subjects.find((subject) => subject.id === id);
 
 // ---------------------------------------------------------------- Set up
-function setupView() {
-  const subjectSelect = h("select.select", { id: "quiz-subject" }, quiz.subjects.map((subject) => h("option", { value: subject.code, selected: subject === setup.subject }, `${subject.name} (${subject.code})`)));
+function setupView(progress, recent) {
+  const subjectSelect = h("select.select", { id: "quiz-subject" }, setup.subjects.map((subject) => h("option", { value: subject.id, selected: subject.id === setup.subjectId }, `${subject.name} (${subject.code})`)));
   const unitSelect = h("select.select", { id: "quiz-unit" });
-  const ready = h("span.row__meta.num", { "aria-live": "polite" });
   const time = h("strong.mono.num.time-pill");
-  const problem = h("p.inset.inset--warning.inset--note", { hidden: true }, icon("alert"), "Not enough questions for this unit yet.");
+  const problem = h("div.inset.inset--warning.inset--note", { hidden: true, role: "alert" });
   const start = h("button.button.button--primary.button--block.button--large", { type: "button" }, "Start test", icon("arrow-right"));
+  let pills = [];
 
-  function fillUnits() {
-    fill(unitSelect, setup.subject.units.map((unit) => h("option", { value: unit.unitNo, selected: unit.unitNo === setup.unitNo }, `Unit ${unit.unitNo}: ${unit.title}`)));
-  }
-  function update() {
-    const available = unitOf().questionsAvailable;
-    ready.textContent = `${available} questions ready`;
+  function showCount() {
     time.textContent = clock(setup.count * SECONDS_PER_QUESTION);
-    const enough = available >= setup.count;
-    problem.hidden = enough;
-    start.disabled = !enough;
+    for (const pill of pills) {
+      pill.setAttribute("aria-pressed", String(Number(pill.textContent) === setup.count));
+    }
+    problem.hidden = true;
   }
 
-  const counts = h(
-    "div.count-pills",
-    { role: "group", "aria-label": "Number of questions" },
-    [5, 10, 15, 20].map((number) => {
-      const pill = h("button.count-pill.num", { type: "button", "aria-pressed": String(number === setup.count) }, number);
-      pill.addEventListener("click", () => {
-        setup.count = number;
-        for (const other of pill.parentElement.children) {
-          other.setAttribute("aria-pressed", String(other === pill));
-        }
-        update();
-      });
-      return pill;
-    }),
-  );
+  async function fillUnits() {
+    fill(unitSelect, h("option", { value: "" }, "Loading units"));
+    start.disabled = true;
+    try {
+      const units = await api.get(`/subjects/${setup.subjectId}/units`);
+      if (!units.some((unit) => unit.id === setup.unitId)) {
+        setup.unitId = units[0]?.id || 0;
+      }
+      fill(unitSelect, units.length ? units.map((unit) => h("option", { value: unit.id, selected: unit.id === setup.unitId }, `Unit ${unit.unitNo}: ${unit.title}`)) : h("option", { value: "" }, "This subject has no units yet"));
+      start.disabled = !units.length;
+    } catch (failure) {
+      fill(unitSelect, h("option", { value: "" }, "The units could not be loaded"));
+      toast(messageFor(failure));
+    }
+  }
+
+  /** The unit has too few questions. Says how many, and offers the longest test that fits. */
+  function notEnough(available) {
+    const fits = LENGTHS.filter((length) => length <= available).pop();
+    const offer = fits ? h("button.button.button--secondary.button--small", { type: "button" }, `Start with ${fits} questions`) : null;
+    offer?.addEventListener("click", () => {
+      setup.count = fits;
+      showCount();
+      begin();
+    });
+    const text =
+      available === 0
+        ? "This unit has no questions yet. Try another unit."
+        : `This unit has only ${available} question${available === 1 ? "" : "s"} so far.` + (fits ? "" : " A test needs at least 5.");
+    fill(problem, h("span.line.line--start", icon("alert"), h("span", text)), offer);
+    problem.hidden = false;
+  }
+
+  async function begin() {
+    start.disabled = true;
+    try {
+      const started = await api.post("/quiz-attempts", { subjectId: setup.subjectId, unitId: setup.unitId, questionCount: setup.count });
+      const subject = subjectOf(setup.subjectId);
+      startTest(started, `${subject.name} · ${unitSelect.selectedOptions[0].textContent}`);
+    } catch (failure) {
+      if (failure.code === "QUIZ_NOT_ENOUGH_QUESTIONS") {
+        notEnough(Number.isInteger(failure.available) ? failure.available : 0);
+      } else {
+        fill(problem, h("span.line.line--start", icon("alert"), h("span", messageFor(failure))));
+        problem.hidden = false;
+      }
+      start.disabled = false;
+    }
+  }
+
+  pills = LENGTHS.map((number) => {
+    const pill = h("button.count-pill.num", { type: "button" }, number);
+    pill.addEventListener("click", () => {
+      setup.count = number;
+      showCount();
+    });
+    return pill;
+  });
   subjectSelect.addEventListener("change", () => {
-    setup.subject = quiz.subjects.find((subject) => subject.code === subjectSelect.value);
-    setup.unitNo = setup.subject.units[0].unitNo;
+    setup.subjectId = Number(subjectSelect.value);
+    setup.unitId = 0;
+    problem.hidden = true;
     fillUnits();
-    update();
   });
   unitSelect.addEventListener("change", () => {
-    setup.unitNo = Number(unitSelect.value);
-    update();
+    setup.unitId = Number(unitSelect.value);
+    problem.hidden = true;
   });
-  start.addEventListener("click", startTest);
+  start.addEventListener("click", begin);
+  showCount();
   fillUnits();
-  update();
 
   const form = h(
     "section.card.reveal",
     { "aria-labelledby": "setup-title" },
     h("div.line.line--start", h("span.badge-icon.badge-icon--round", icon("play")), h("div.stack.stack--tight", h("h2.card__title", { id: "setup-title" }, "Start a quick test"), h("p.row__meta", "Choose a unit and how many questions."))),
     h("div.field", h("label.field__label", { for: "quiz-subject" }, "Subject"), subjectSelect),
-    h("div.field", h("div.line", h("label.field__label", { for: "quiz-unit" }, "Unit"), ready), unitSelect),
-    h("div.field", h("span.field__label", "Number of questions"), counts),
+    h("div.field", h("label.field__label", { for: "quiz-unit" }, "Unit"), unitSelect),
+    h("div.field", h("span.field__label", "Number of questions"), h("div.count-pills", { role: "group", "aria-label": "Number of questions" }, pills)),
     h("div.inset.inset--row", h("span.line.line--start", icon("timer"), h("span.stack.stack--tight", h("strong", "Time allowed"), h("span.row__meta", "1 minute per question. The test ends when the time runs out."))), time),
     problem,
     start,
   );
+  return h("div.grid.grid--aside", form, h("div.stack.stack--loose", practiceCard(progress), recentCard(recent)));
+}
 
-  const practice = h(
+function practiceCard(progress) {
+  const figure = h("p.hero__figure");
+  if (progress.averagePercent === null) {
+    figure.textContent = "—";
+  } else {
+    countUp(figure, Math.round(progress.averagePercent), { suffix: "%" });
+  }
+  return h(
     "section.hero.reveal",
     { "data-tilt": true, "aria-label": "Your practice so far" },
-    h("div.line", h("p.hero__eyebrow", "Your practice"), h("span.chip", `${progress.testsTaken} tests`)),
-    h("div.stack.stack--tight", figureOf(progress.averagePercent, "%"), h("p.hero__sub", "Average score")),
+    h("div.line", h("p.hero__eyebrow", "Your practice"), h("span.chip", progress.testsTaken === 1 ? "1 test" : progress.testsTaken + " tests")),
+    h("div.stack.stack--tight", figure, h("p.hero__sub", progress.testsTaken ? "Average score" : "Take your first test to see your average")),
     h(
       "div.stack",
-      progress.subjects.slice(0, 3).map((subject) =>
-        h("div.stack.stack--tight", h("div.line", h("span.small", subject.name), h("span.mono.num", subject.averagePercent + "%")), bar(subject.averagePercent)),
+      progress.units.slice(0, 3).map((unit) =>
+        h("div.stack.stack--tight", h("div.line", h("span.small.clip", `${unit.subjectCode} · Unit ${unit.unitNo}`), h("span.mono.num", Math.round(unit.accuracyPercent) + "%")), bar(unit.accuracyPercent)),
       ),
     ),
   );
-
-  const recent = h(
-    "section.card.reveal",
-    cardHead("history", "Recent tests", "/student/quiz-history.html"),
-    h(
-      "ul.rows",
-      quiz.attempts.slice(0, 3).map((attempt) => {
-        const kind = scoreKind((attempt.score / attempt.total) * 100);
-        return h(
-          "li.row.attempt",
-          h("span.badge-icon.badge-icon--round" + (kind ? ".badge-icon--" + kind : ".badge-icon--neutral"), icon(kind === "danger" ? "alert" : "check")),
-          h("div.stack.stack--tight", h("span.row__title.clip", `${attempt.subjectName} · Unit ${attempt.unitNo}`), h("span.row__meta.num", formatDate(attempt.takenAt))),
-          h("strong.num.attempt__score" + (kind ? ".attempt__score--" + kind : ""), `${attempt.score}/${attempt.total}`),
-        );
-      }),
-    ),
-  );
-
-  return h("div.grid.grid--aside", form, h("div.stack.stack--loose", practice, recent));
 }
 
-function figureOf(value, suffix) {
-  const figure = h("p.hero__figure");
-  countUp(figure, value, { suffix });
-  return figure;
+function recentCard(attempts) {
+  const closed = attempts.filter((attempt) => attempt.status !== "IN_PROGRESS");
+  return h(
+    "section.card.reveal",
+    cardHead("history", "Recent tests", "/student/quiz-history.html"),
+    closed.length
+      ? h(
+          "ul.rows",
+          closed.map((attempt) => {
+            const kind = scoreKind((attempt.score / attempt.questionCount) * 100);
+            return h(
+              "li.row.attempt",
+              h("span.badge-icon.badge-icon--round" + (kind ? ".badge-icon--" + kind : ".badge-icon--neutral"), icon(kind === "danger" ? "alert" : "check")),
+              h("div.stack.stack--tight", h("span.row__title.clip", `${attempt.subjectName} · Unit ${attempt.unitNo}`), h("span.row__meta.num", formatDate(attempt.startedAt))),
+              h("strong.num.attempt__score" + (kind ? ".attempt__score--" + kind : ""), `${attempt.score}/${attempt.questionCount}`),
+            );
+          }),
+        )
+      : empty("history", "No tests yet", "Your tests appear here once you take one."),
+  );
 }
 
 // ---------------------------------------------------------------- Taking the test
-function startTest() {
-  const questions = quiz.questions.slice(0, Math.min(setup.count, quiz.questions.length));
-  test = {
-    subject: setup.subject,
-    unit: unitOf(),
-    questions,
-    answers: questions.map(() => -1),
+/** Keeps the running test in this tab, so a reload continues it. */
+function remember() {
+  const { attemptId, title, questions, answers, current, endsAt, total } = test;
+  sessionStorage.setItem(SAVED, JSON.stringify({ attemptId, title, questions, answers, current, endsAt, total }));
+}
+
+function startTest(started, title) {
+  // The end is counted from this device's own clock and the length the server gave, so a wrong
+  // clock on the device cannot shorten or lengthen the test. The server keeps the real limit.
+  runTest({
+    attemptId: started.attemptId,
+    title,
+    questions: started.questions,
+    answers: {},
     current: 0,
-    total: questions.length * SECONDS_PER_QUESTION,
-    left: questions.length * SECONDS_PER_QUESTION,
-    timer: null,
-    warned: false,
-  };
+    total: started.durationSeconds,
+    endsAt: Date.now() + started.durationSeconds * 1000,
+  });
+}
+
+function runTest(saved) {
+  test = { ...saved, timer: null, warned: false, sending: false };
+  remember();
   pageHead.hidden = true;
   swap(content, () => {
     fill(content, testView());
@@ -150,29 +205,30 @@ function startTest() {
   });
 }
 
+const secondsLeft = () => Math.max(0, Math.ceil((test.endsAt - Date.now()) / 1000));
+
 function tick() {
   const pill = document.getElementById("timer");
-  if (!pill) {
+  if (!pill || !test) {
     return;
   }
-  document.getElementById("timer-text").textContent = clock(test.left);
-  if (test.left <= 60 && !test.warned) {
+  const left = secondsLeft();
+  document.getElementById("timer-text").textContent = clock(left);
+  if (left <= 60 && !test.warned) {
     test.warned = true;
     pill.classList.add("timer--warning");
     document.getElementById("timer-alert").textContent = "One minute left.";
   }
-  if (test.left <= 0) {
+  if (left <= 0) {
     finish();
-    return;
   }
-  test.left -= 1;
 }
 
 function testView() {
   return [
     h(
       "section.card.testbar",
-      h("div.stack.stack--tight", h("p.eyebrow", `${test.subject.name} · Unit ${test.unit.unitNo}`), h("p.testbar__where", { id: "where", "aria-live": "polite" })),
+      h("div.stack.stack--tight", h("p.eyebrow", test.title), h("p.testbar__where", { id: "where", "aria-live": "polite" })),
       h("div.testbar__progress", h("div.bar", h("div.bar__fill.bar__fill--live", { id: "progress-fill" }))),
       h("div.timer", { id: "timer" }, icon("timer"), h("span.mono.num", { id: "timer-text" }), h("span.visually-hidden", { id: "timer-alert", role: "status" })),
     ),
@@ -191,28 +247,31 @@ function testView() {
   ];
 }
 
+const answeredCount = () => test.questions.filter((question) => test.answers[question.questionId]).length;
+
 function renderQuestion() {
   const index = test.current;
   const question = test.questions[index];
-  const answered = test.answers.filter((answer) => answer >= 0).length;
+  const answered = answeredCount();
+  const chosenKey = test.answers[question.questionId];
   document.getElementById("where").textContent = `Question ${index + 1} of ${test.questions.length}`;
   document.getElementById("answered-text").textContent = `${answered} of ${test.questions.length} answered`;
   document.getElementById("progress-fill").style.setProperty("--value", String((answered / test.questions.length) * 100));
 
-  const options = question.options.map((text, optionIndex) => {
-    const chosen = test.answers[index] === optionIndex;
-    return h(
+  // The letters name the places on the screen. What is sent to the server is the option's own key.
+  const options = question.options.map((option, place) =>
+    h(
       "button.option",
-      { type: "button", "aria-pressed": String(chosen), onclick: () => answer(optionIndex) },
-      h("span.option__letter", LETTERS[optionIndex]),
-      h("span.option__text", text),
+      { type: "button", "aria-pressed": String(option.key === chosenKey), onclick: () => answer(option.key) },
+      h("span.option__letter", LETTERS[place]),
+      h("span.option__text", option.text),
       h("span.option__check", icon("check")),
-    );
-  });
+    ),
+  );
   const previous = h("button.button.button--quiet", { type: "button", disabled: index === 0, onclick: () => go(index - 1) }, icon("arrow-left"), "Previous");
   const last = index === test.questions.length - 1;
   const next = h("button.button.button--primary", { type: "button", onclick: () => (last ? askToSubmit() : go(index + 1)) }, last ? "Finish" : "Next", icon(last ? "check" : "arrow-right"));
-  const clear = h("button.button.button--text", { type: "button", hidden: test.answers[index] < 0, onclick: () => answer(-1) }, "Clear answer");
+  const clear = h("button.button.button--text", { type: "button", hidden: !chosenKey, onclick: () => answer(null) }, "Clear answer");
   fill(
     document.getElementById("question"),
     h("p.eyebrow", `Question ${index + 1}`),
@@ -223,34 +282,41 @@ function renderQuestion() {
 
   fill(
     document.getElementById("qgrid"),
-    test.questions.map((_, number) =>
-      h(
-        "button.qdot.num" + (test.answers[number] >= 0 ? ".qdot--answered" : "") + (number === index ? ".qdot--current" : ""),
-        { type: "button", "aria-label": `Question ${number + 1}` + (test.answers[number] >= 0 ? ", answered" : ", not answered"), onclick: () => go(number) },
+    test.questions.map((entry, number) => {
+      const done = Boolean(test.answers[entry.questionId]);
+      return h(
+        "button.qdot.num" + (done ? ".qdot--answered" : "") + (number === index ? ".qdot--current" : ""),
+        { type: "button", "aria-label": `Question ${number + 1}` + (done ? ", answered" : ", not answered"), onclick: () => go(number) },
         number + 1,
-      ),
-    ),
+      );
+    }),
   );
 }
 
-function answer(optionIndex) {
-  test.answers[test.current] = optionIndex;
+function answer(key) {
+  const questionId = test.questions[test.current].questionId;
+  if (key) {
+    test.answers[questionId] = key;
+  } else {
+    delete test.answers[questionId];
+  }
+  remember();
   renderQuestion();
 }
 
 function go(index) {
   test.current = Math.max(0, Math.min(test.questions.length - 1, index));
-  const card = document.getElementById("question");
-  swap(card, renderQuestion);
+  remember();
+  swap(document.getElementById("question"), renderQuestion);
 }
 
 function askToSubmit() {
-  const open = test.answers.map((answer, index) => (answer < 0 ? index + 1 : 0)).filter(Boolean);
+  const open = test.questions.map((question, index) => (test.answers[question.questionId] ? 0 : index + 1)).filter(Boolean);
   document.getElementById("submit-text").textContent = open.length
     ? `${open.length} question${open.length > 1 ? "s are" : " is"} unanswered (${open.join(", ")}). You cannot change your answers after submitting.`
     : "You have answered every question. You cannot change your answers after submitting.";
   document.getElementById("submit-done").textContent = `${test.questions.length - open.length} / ${test.questions.length}`;
-  document.getElementById("submit-time").textContent = clock(Math.max(0, test.left));
+  document.getElementById("submit-time").textContent = clock(secondsLeft());
   dialog.showModal();
 }
 
@@ -265,12 +331,13 @@ document.getElementById("submit-confirm").addEventListener("click", () => {
 });
 
 document.addEventListener("keydown", (event) => {
-  if (!test || test.timer === null || dialog.open || event.target.closest("select, input, textarea")) {
+  if (!test || test.timer === null || dialog.open || event.target.closest?.("select, input, textarea")) {
     return;
   }
-  const letter = LETTERS.indexOf(event.key.toUpperCase());
-  if (letter >= 0 && letter < test.questions[test.current].options.length) {
-    answer(letter);
+  const place = LETTERS.indexOf(event.key.toUpperCase());
+  const options = test.questions[test.current].options;
+  if (place >= 0 && place < options.length) {
+    answer(options[place].key);
   } else if (event.key === "ArrowRight") {
     go(test.current + 1);
   } else if (event.key === "ArrowLeft") {
@@ -278,18 +345,40 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
-function finish() {
+/** Sends the answers. The server marks them and answers with the result. */
+async function finish() {
+  if (!test || test.sending) {
+    return;
+  }
+  test.sending = true;
   clearInterval(test.timer);
   test.timer = null;
   if (dialog.open) {
     dialog.close();
   }
-  showResult({
-    title: `${test.subject.name} · Unit ${test.unit.unitNo}`,
-    questions: test.questions,
-    answers: test.answers,
-    secondsTaken: test.total - Math.max(0, test.left),
-  });
+  const attemptId = test.attemptId;
+  const answers = test.questions.map((question) => ({ questionId: question.questionId, selectedOption: test.answers[question.questionId] || null }));
+  try {
+    const result = await api.post(`/quiz-attempts/${attemptId}/submit`, { answers });
+    forget();
+    showResult(result);
+  } catch (failure) {
+    if (failure.code === "QUIZ_ATTEMPT_EXPIRED" || failure.code === "QUIZ_ALREADY_SUBMITTED") {
+      // The test is closed on the server. Show what the server has for it.
+      forget();
+      openResult(attemptId);
+    } else {
+      // Most likely the connection. The answers are still here, so the student can try again.
+      test.sending = false;
+      test.timer = setInterval(tick, 1000);
+      toast(messageFor(failure) + " Your answers are kept. Try submitting again.");
+    }
+  }
+}
+
+function forget() {
+  sessionStorage.removeItem(SAVED);
+  test = null;
 }
 
 // ---------------------------------------------------------------- Result
@@ -303,11 +392,11 @@ function showResult(result) {
   });
 }
 
-function stateOf(result, index) {
-  if (result.answers[index] < 0) {
+function stateOf(item) {
+  if (!item.selectedOption) {
     return "open";
   }
-  return result.answers[index] === result.questions[index].correct ? "right" : "wrong";
+  return item.correct ? "right" : "wrong";
 }
 
 const STATES = {
@@ -316,47 +405,45 @@ const STATES = {
   open: ["Not answered", "", "minus"],
 };
 
+const textOf = (item, key) => item.options.find((option) => option.key === key)?.text || "";
+
 function resultView(result) {
-  const states = result.questions.map((_, index) => stateOf(result, index));
-  const countOf = (state) => states.filter((entry) => entry === state).length;
-  const score = countOf("right");
-  const percentage = Math.round((score / result.questions.length) * 100);
-  const figure = h("p.hero__figure", h("span", { id: "score" }, "0"), h("small", ` / ${result.questions.length}`));
-  countUp(figure.firstChild, score);
+  const items = result.items.map((item) => ({ ...item, state: stateOf(item) }));
+  const countOf = (state) => items.filter((item) => item.state === state).length;
+  const percentage = Math.round(result.percent);
+  const expired = result.status === "EXPIRED";
+  const figure = h("p.hero__figure", h("span", { id: "score" }, "0"), h("small", ` / ${result.questionCount}`));
+  countUp(figure.firstChild, result.score);
+  const seconds = result.submittedAt ? Math.round((new Date(result.submittedAt) - new Date(result.startedAt)) / 1000) : null;
   let filter = "all";
 
   const list = h("div.stack.stack--loose", { id: "review" });
   function renderReview() {
-    fill(
-      list,
-      stagger(
-        result.questions
-          .map((question, index) => ({ question, index, state: states[index] }))
-          .filter((item) => filter === "all" || item.state === filter)
-          .map(reviewCard),
-      ),
-    );
+    fill(list, stagger(items.filter((item) => filter === "all" || item.state === filter).map(reviewCard)));
   }
-  function reviewCard({ question, index, state }) {
-    const [label, kind, iconName] = STATES[state];
-    const chosen = result.answers[index];
+  function reviewCard(item) {
+    const [label, kind, iconName] = STATES[item.state];
     return h(
       "article.card.reveal",
-      h("div.line", h("span.line.line--start", h("span.eyebrow.num", "Q" + (index + 1)), tag(label, kind, iconName))),
-      h("h3.question__text.question__text--small", question.text),
+      h("div.line", h("span.line.line--start", h("span.eyebrow.num", "Q" + item.position), tag(label, kind, iconName))),
+      h("h3.question__text.question__text--small", item.text),
       h(
         "div.tiles.tiles--answers",
-        h("div.inset.answer" + (state === "wrong" ? ".answer--wrong" : state === "right" ? ".answer--right" : ""), h("p.eyebrow", "Your answer"), h("p.line", h("span", chosen < 0 ? "None selected" : question.options[chosen]), icon(state === "right" ? "check-circle" : state === "wrong" ? "x-circle" : "minus-circle"))),
-        h("div.inset.answer.answer--right", h("p.eyebrow", "Correct answer"), h("p.line", h("strong", question.options[question.correct]), icon("check-circle"))),
+        h(
+          "div.inset.answer" + (item.state === "wrong" ? ".answer--wrong" : item.state === "right" ? ".answer--right" : ""),
+          h("p.eyebrow", "Your answer"),
+          h("p.line", h("span", item.selectedOption ? textOf(item, item.selectedOption) : "None selected"), icon(item.state === "right" ? "check-circle" : item.state === "wrong" ? "x-circle" : "minus-circle")),
+        ),
+        h("div.inset.answer.answer--right", h("p.eyebrow", "Correct answer"), h("p.line", h("strong", textOf(item, item.correctOption)), icon("check-circle"))),
       ),
-      h("p.note", icon("info"), h("span", h("strong", "Explanation: "), question.explanation)),
+      h("p.note", icon("info"), h("span", h("strong", "Explanation: "), item.explanation)),
     );
   }
 
   const filters = h(
     "div.pills",
     { role: "group", "aria-label": "Show" },
-    [["all", "All", result.questions.length], ["right", "Correct", countOf("right")], ["wrong", "Incorrect", countOf("wrong")], ["open", "Not answered", countOf("open")]].map(([value, label, count]) => {
+    [["all", "All", items.length], ["right", "Correct", countOf("right")], ["wrong", "Incorrect", countOf("wrong")], ["open", "Not answered", countOf("open")]].map(([value, label, count]) => {
       const pill = h("button.pill", { type: "button", "aria-pressed": String(value === filter) }, label, h("span.pill__count", count));
       pill.addEventListener("click", () => {
         filter = value;
@@ -370,23 +457,27 @@ function resultView(result) {
   );
 
   renderReview();
+  const retake = `/student/quiz.html?subjectId=${result.subjectId}&unitId=${result.unitId}`;
   return [
+    expired
+      ? h("p.inset.inset--warning.inset--note.reveal", { role: "status" }, icon("timer"), "The time ran out before this test was submitted, so no answers were counted. The correct answers are below.")
+      : null,
     h(
       "section.hero.hero--split.reveal",
       { "data-tilt": true, "aria-label": "Your score" },
       h(
         "div.hero__main",
-        h("p.hero__eyebrow", "Test completed"),
-        h("h2.hero__title.hero__title--small", result.title),
+        h("p.hero__eyebrow", expired ? "Test not submitted in time" : `Test completed · ${formatDate(result.startedAt)}`),
+        h("h2.hero__title.hero__title--small", `${result.subjectName} · Unit ${result.unitNo}: ${result.unitTitle}`),
         figure,
         h(
           "ul.chips",
           h("li.chip.chip--good", icon("check"), "Correct ", h("strong", countOf("right"))),
           h("li.chip.chip--bad", icon("x"), "Incorrect ", h("strong", countOf("wrong"))),
           h("li.chip", icon("minus"), "Not answered ", h("strong", countOf("open"))),
-          result.secondsTaken === null ? null : h("li.chip", icon("timer"), "Time ", h("strong", clock(result.secondsTaken))),
+          seconds === null ? null : h("li.chip", icon("timer"), "Time ", h("strong", clock(seconds))),
         ),
-        h("div.line.line--start.line--wrap", h("a.button.button--primary", { href: "/student/quiz.html" }, icon("refresh"), "Take another test"), h("a.button.button--glass", { href: "/student/progress.html" }, icon("progress"), "See your progress")),
+        h("div.line.line--start.line--wrap", h("a.button.button--primary", { href: retake }, icon("refresh"), "Retake this unit"), h("a.button.button--glass", { href: "/student/progress.html" }, icon("progress"), "See your progress")),
       ),
       h("div.hero__aside", ring(percentage, { size: 168, stroke: 14, label: [h("strong.ring__big", percentage + "%"), h("span.eyebrow.eyebrow--inverse", "Score")] })),
     ),
@@ -395,14 +486,54 @@ function resultView(result) {
   ];
 }
 
-// ---------------------------------------------------------------- Start
-const attempt = quiz.attempts.find((entry) => String(entry.id) === params.get("attempt"));
-if (attempt) {
-  // Opened from the history page: show the result of a past test.
-  fill(content, resultView({ title: `${attempt.subjectName} · Unit ${attempt.unitNo}`, questions: quiz.questions, answers: quiz.sampleAnswers, secondsTaken: null }));
+/** Opens the result of a closed test, for example from the history page. */
+function openResult(attemptId) {
   pageHead.hidden = true;
-} else {
-  fill(content, setupView());
+  loadInto(content, () => api.get("/quiz-attempts/" + attemptId), (result) => {
+    fill(content, resultView(result));
+    reveal();
+    enableTilt();
+  });
 }
-reveal();
-enableTilt();
+
+// ---------------------------------------------------------------- Start
+function openSetup() {
+  loadInto(
+    content,
+    () => Promise.all([api.get("/subjects"), api.get("/progress/me"), api.get("/quiz-attempts/me?size=4")]),
+    ([subjects, progress, history]) => {
+      setup.subjects = subjects;
+      if (!subjects.length) {
+        fill(content, h("div.card", empty("quiz", "No subjects yet", "Quick tests appear here once your subjects are set up.")));
+        return;
+      }
+      if (!subjectOf(setup.subjectId)) {
+        setup.subjectId = subjects[0].id;
+      }
+      fill(content, setupView(progress, history.content));
+      reveal();
+      enableTilt();
+    },
+  );
+}
+
+/** A test that was running when the page was reloaded, or null. */
+function savedTest() {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(SAVED));
+    return saved && saved.attemptId && Array.isArray(saved.questions) ? saved : null;
+  } catch {
+    return null;
+  }
+}
+
+const saved = savedTest();
+const attemptId = Number(params.get("attempt"));
+if (saved) {
+  // Reloading the page does not restart the timer: the test carries on towards the same end.
+  runTest(saved);
+} else if (attemptId > 0) {
+  openResult(attemptId);
+} else {
+  openSetup();
+}

@@ -1,77 +1,97 @@
+import { api } from "./api.js";
 import { fill, formatDate, h, icon, stagger, tag } from "./dom.js";
-import { countUp, enableTilt, reveal, swap } from "./motion.js";
-import { empty, scoreKind } from "./parts.js";
-import { quiz } from "./sample-data.js";
+import { countUp, enableTilt, reveal } from "./motion.js";
+import { empty, loadInto, scoreKind } from "./parts.js";
 import "./shell.js";
 
-// Attempt history (FR-QZ-004): every test the student has taken, newest first.
+// Attempt history (FR-QZ-004): every test the student has taken, newest first. The server sends
+// only this student's tests, and a result can be opened again from here.
 
-const attempts = quiz.attempts;
+const PAGE_SIZE = 20;
 const content = document.getElementById("content");
-const percentOf = (attempt) => (attempt.score / attempt.total) * 100;
-let subject = "";
+let pageNumber = 0;
 
 function stat(label, value, suffix = "") {
   const figure = h("p.stat__value");
-  countUp(figure, value, { suffix });
+  if (value === null) {
+    figure.textContent = "—";
+  } else {
+    countUp(figure, value, { suffix });
+  }
   return h("div.stat.reveal", { "data-tilt": true }, figure, h("p.stat__label", label));
 }
 
 function row(attempt) {
-  const percentage = percentOf(attempt);
+  const what = h("div.stack.stack--tight.hrow__what", h("span.row__title", attempt.subjectName), h("span.row__meta", `Unit ${attempt.unitNo}: ${attempt.unitTitle}`));
+  const date = h("span.row__meta.num.hrow__date", formatDate(attempt.startedAt));
+  if (attempt.status === "IN_PROGRESS") {
+    return h("li.row.hrow.reveal", date, what, h("strong.mono.num.hrow__score", "—"), h("span.hrow__pct", tag("In progress", "primary", "timer")), h("span.hrow__view"));
+  }
+  const percentage = (attempt.score / attempt.questionCount) * 100;
   const kind = scoreKind(percentage);
+  const result = attempt.status === "EXPIRED" ? tag("Ran out of time", "warning", "timer") : tag(Math.round(percentage) + "%", kind, kind === "success" ? "check" : kind === "danger" ? "alert" : "");
   return h(
     "li.row.hrow.reveal",
-    h("span.row__meta.num.hrow__date", formatDate(attempt.takenAt)),
-    h("div.stack.stack--tight.hrow__what", h("span.row__title", attempt.subjectName), h("span.row__meta", `Unit ${attempt.unitNo}: ${attempt.unitTitle}`)),
-    h("strong.mono.num.hrow__score", `${attempt.score} / ${attempt.total}`),
-    h("span.hrow__pct", tag(Math.round(percentage) + "%", kind, kind === "success" ? "check" : kind === "danger" ? "alert" : "")),
-    h("a.more.hrow__view", { href: "/student/quiz.html?attempt=" + attempt.id, "aria-label": `View the ${attempt.subjectName} test of ${formatDate(attempt.takenAt)}` }, "View", icon("chevron-right")),
+    date,
+    what,
+    h("strong.mono.num.hrow__score", `${attempt.score} / ${attempt.questionCount}`),
+    h("span.hrow__pct", result),
+    h("a.more.hrow__view", { href: "/student/quiz.html?attempt=" + attempt.attemptId, "aria-label": `View the ${attempt.subjectName} test of ${formatDate(attempt.startedAt)}` }, "View", icon("chevron-right")),
   );
 }
 
-function renderRows() {
-  const list = attempts.filter((attempt) => !subject || attempt.subjectName === subject);
-  fill(document.getElementById("rows"), stagger(list.map(row)));
+function pager(page) {
+  if (page.totalPages <= 1) {
+    return null;
+  }
+  const button = (label, iconName, target, before) => {
+    const element = h("button.button.button--secondary.button--small", { type: "button", disabled: target < 0 || target >= page.totalPages }, before ? icon(iconName) : null, label, before ? null : icon(iconName));
+    element.addEventListener("click", () => {
+      pageNumber = target;
+      loadRows();
+    });
+    return element;
+  };
+  return h("nav.pager", { "aria-label": "Pages" }, button("Newer", "arrow-left", page.page - 1, true), h("span.row__meta.num", "Page ", h("strong", page.page + 1), " of " + page.totalPages), button("Older", "arrow-right", page.page + 1, false));
 }
 
-function filters() {
-  const names = [...new Set(attempts.map((attempt) => attempt.subjectName))];
-  return h(
-    "div.pills",
-    { role: "group", "aria-label": "Subject" },
-    [["", "All"], ...names.map((name) => [name, name])].map(([value, label]) => {
-      const pill = h("button.pill", { type: "button", "aria-pressed": String(value === subject) }, label);
-      pill.addEventListener("click", () => {
-        subject = value;
-        for (const other of pill.parentElement.children) {
-          other.setAttribute("aria-pressed", String(other === pill));
-        }
-        swap(document.getElementById("rows"), renderRows);
-      });
-      return pill;
-    }),
-  );
+function loadRows() {
+  const holder = document.getElementById("tests");
+  loadInto(holder, () => api.get(`/quiz-attempts/me?size=${PAGE_SIZE}&page=${pageNumber}`), (page) => {
+    fill(
+      holder,
+      h("div.hrow.hrow--head", h("span.eyebrow", "Date"), h("span.eyebrow", "Subject and unit"), h("span.eyebrow", "Score"), h("span.eyebrow", "Result"), h("span")),
+      h("ul.rows", stagger(page.content.map(row))),
+      pager(page),
+    );
+    reveal();
+  });
 }
 
-if (attempts.length) {
-  const average = attempts.reduce((sum, attempt) => sum + percentOf(attempt), 0) / attempts.length;
-  const best = Math.max(...attempts.map(percentOf));
-  fill(
-    content,
-    h("section.stats.stats--3", { "aria-label": "Summary" }, stagger([stat("Tests taken", attempts.length), stat("Average score", Math.round(average), "%"), stat("Best score", Math.round(best), "%")])),
-    h("div.reveal", filters()),
-    h(
-      "section.card.reveal",
-      { "aria-label": "Tests" },
-      h("div.hrow.hrow--head", h("span.eyebrow", "Date"), h("span.eyebrow", "Subject and unit"), h("span.eyebrow", "Score"), h("span.eyebrow", "Percentage"), h("span")),
-      h("ul.rows", { id: "rows" }),
-    ),
-  );
-  renderRows();
-} else {
-  const start = h("a.button.button--primary.button--small", { href: "/student/quiz.html" }, "Start a quick test");
-  fill(content, h("div.card", empty("history", "You have not taken a test yet", "Your tests appear here once you take one.", start)));
-}
-reveal();
-enableTilt();
+loadInto(
+  content,
+  () => Promise.all([api.get("/progress/me"), api.get(`/quiz-attempts/me?size=1`)]),
+  ([progress, history]) => {
+    if (!history.totalElements) {
+      const start = h("a.button.button--primary.button--small", { href: "/student/quiz.html" }, "Start a quick test");
+      fill(content, h("div.card", empty("history", "You have not taken a test yet", "Your tests appear here once you take one.", start)));
+      return;
+    }
+    fill(
+      content,
+      h(
+        "section.stats.stats--3",
+        { "aria-label": "Summary" },
+        stagger([
+          stat("Tests submitted", progress.testsTaken),
+          stat("Average score", progress.averagePercent === null ? null : Math.round(progress.averagePercent), "%"),
+          stat("Units practised", progress.units.length),
+        ]),
+      ),
+      h("section.card.reveal", { id: "tests", "aria-label": "Tests" }, h("div.skeleton")),
+    );
+    loadRows();
+    reveal();
+    enableTilt();
+  },
+);

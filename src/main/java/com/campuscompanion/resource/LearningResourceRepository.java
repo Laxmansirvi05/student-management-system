@@ -1,6 +1,7 @@
 package com.campuscompanion.resource;
 
 import java.util.Collection;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -53,6 +54,18 @@ public interface LearningResourceRepository extends JpaRepository<LearningResour
       @Param("examType") ExamType examType,
       @Param("search") String search,
       Pageable pageable);
+
+  /** The published resources of a unit, notes first and then the newest first. */
+  @Query(
+      """
+      select r from LearningResource r
+      where r.unitId = :unitId
+        and r.status = com.campuscompanion.resource.ResourceStatus.PUBLISHED
+      order by case when r.resourceType = com.campuscompanion.resource.ResourceType.NOTES
+                    then 0 else 1 end,
+               r.createdAt desc, r.id desc
+      """)
+  List<LearningResource> findForRevision(@Param("unitId") Long unitId, Pageable pageable);
 
   /** The published resources a student has bookmarked. A hidden resource drops out by itself. */
   @Query(

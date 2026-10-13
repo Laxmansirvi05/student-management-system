@@ -21,6 +21,7 @@ class DevDataSeederTest {
   private final StudentProfileService studentProfiles = mock(StudentProfileService.class);
   private final StudentProvisioningService provisioning = mock(StudentProvisioningService.class);
   private final DemoAcademicSeeder academics = mock(DemoAcademicSeeder.class);
+  private final DemoQuizSeeder quiz = mock(DemoQuizSeeder.class);
 
   @Test
   void doesNothingOutsideTheDevProfileUnlessItIsSwitchedOn() {
@@ -30,6 +31,7 @@ class DevDataSeederTest {
 
     verify(provisioning, never()).provision(any());
     verify(academics, never()).seedIfEmpty();
+    verify(quiz, never()).seedIfEmpty();
   }
 
   @Test
@@ -54,6 +56,7 @@ class DevDataSeederTest {
 
     verify(provisioning, never()).provision(any());
     verify(academics).seedIfEmpty();
+    verify(quiz).seedIfEmpty();
   }
 
   @Test
@@ -76,6 +79,11 @@ class DevDataSeederTest {
     MockEnvironment environment = new MockEnvironment();
     environment.setActiveProfiles(activeProfiles);
     return new DevDataSeeder(
-        new SeedProperties(demoEnabled), environment, studentProfiles, provisioning, academics);
+        new SeedProperties(demoEnabled),
+        environment,
+        studentProfiles,
+        provisioning,
+        academics,
+        quiz);
   }
 }

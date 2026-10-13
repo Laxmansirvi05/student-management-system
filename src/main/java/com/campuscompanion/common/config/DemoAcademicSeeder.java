@@ -188,7 +188,7 @@ public class DemoAcademicSeeder {
   }
 
   /** The admin services check the role, so the seeder works as the first administrator. */
-  private static void actAs(CurrentUser admin) {
+  static void actAs(CurrentUser admin) {
     SecurityContext context = SecurityContextHolder.createEmptyContext();
     context.setAuthentication(
         UsernamePasswordAuthenticationToken.authenticated(

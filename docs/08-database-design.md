@@ -329,7 +329,7 @@ Index: (`subject_id`, `unit_id`, `status`).
 | status | VARCHAR(15) | NOT NULL, CHECK in (`IN_PROGRESS`, `SUBMITTED`, `EXPIRED`) | |
 | score | SMALLINT | NULL, CHECK >= 0 | Number correct. |
 
-Index: (`student_id`, `started_at` DESC).
+Check: `expires_at` is after `started_at`. Index: (`student_id`, `started_at` DESC).
 
 ### 4.16 `quiz_attempt_answers`
 
@@ -340,7 +340,7 @@ The questions served in an attempt and the student's answers.
 | id | BIGINT | PK |
 | attempt_id | BIGINT | NOT NULL, FK → quiz_attempts ON DELETE CASCADE |
 | question_id | BIGINT | NOT NULL, FK → quiz_questions |
-| position | SMALLINT | NOT NULL |
+| position | SMALLINT | NOT NULL, CHECK 1 to 20 |
 | selected_option | CHAR(1) | NULL, CHECK in (`A`, `B`, `C`, `D`) |
 | is_correct | BOOLEAN | NULL until submitted |
 

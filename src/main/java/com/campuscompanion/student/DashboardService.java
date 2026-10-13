@@ -8,6 +8,7 @@ import com.campuscompanion.attendance.dto.AttendanceSummaryResponse;
 import com.campuscompanion.common.config.CampusTime;
 import com.campuscompanion.common.security.CurrentUser;
 import com.campuscompanion.notice.NoticeService;
+import com.campuscompanion.progress.ProgressService;
 import com.campuscompanion.student.dto.DashboardResponse;
 import com.campuscompanion.student.dto.DashboardResponse.AttendanceCard;
 import com.campuscompanion.student.dto.DashboardResponse.ResultsCard;
@@ -29,12 +30,14 @@ public class DashboardService {
 
   private static final int RECENT_NOTICES = 5;
   private static final int DEADLINE_DAYS = 14;
+  private static final int RECOMMENDATIONS = 3;
 
   private final StudentProfileService students;
   private final AttendanceService attendance;
   private final ResultService results;
   private final TimetableService timetable;
   private final NoticeService notices;
+  private final ProgressService progress;
   private final Clock clock;
 
   public DashboardService(
@@ -43,12 +46,14 @@ public class DashboardService {
       ResultService results,
       TimetableService timetable,
       NoticeService notices,
+      ProgressService progress,
       Clock clock) {
     this.students = students;
     this.attendance = attendance;
     this.results = results;
     this.timetable = timetable;
     this.notices = notices;
+    this.progress = progress;
     this.clock = clock;
   }
 
@@ -61,8 +66,7 @@ public class DashboardService {
         timetable.timetableFor(currentUser, today),
         notices.deadlinesFor(student, DEADLINE_DAYS),
         notices.recentFor(student, RECENT_NOTICES),
-        // Filled by the progress feature once Quick Exam exists (milestone M4).
-        List.of());
+        progress.recommendationsFor(student.studentId()).stream().limit(RECOMMENDATIONS).toList());
   }
 
   private static AttendanceCard attendanceCard(AttendanceSummaryResponse summary) {

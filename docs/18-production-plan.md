@@ -115,7 +115,7 @@ These are set in `application.yml`, not by environment variables. Changing one i
 | Upload limit | 10 MB, PDF only | [09-api-contract.md](09-api-contract.md) §6 |
 | Signed link lifetime | 5 minutes at most | [04-TRD.md](04-TRD.md) TR-STO-3 |
 | Quiz time per question | 60 seconds | [02-PRD.md](02-PRD.md) FR-QZ-002 |
-| Quiz submission grace period | 15 seconds | **Proposed here.** The PRD says only "a short grace period"; the owner may change the value |
+| Quiz submission grace period | 15 seconds | **Proposed here** and built as `QuizService.GRACE`. The PRD says only "a short grace period"; the owner may change the value |
 | Progress thresholds | At least 5 answers; latest 20 answers; 60% and 80% | [02-PRD.md](02-PRD.md) FR-PRG-001 |
 | AI per-minute limit, concurrency, time budget | 5; 2; 25 seconds | [12-AI-features-spec.md](12-AI-features-spec.md) §2 |
 | Database pool size | 5 connections | [04-TRD.md](04-TRD.md) TR-DB-2 |

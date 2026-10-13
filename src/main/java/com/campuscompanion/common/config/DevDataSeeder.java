@@ -16,7 +16,8 @@ import org.springframework.stereotype.Component;
 /**
  * Loads synthetic demo data when the application starts. It runs in the {@code dev} profile, or in
  * any profile when DEMO_SEED_ENABLED is true. Students are loaded only when no student exists, and
- * the academic records ({@link DemoAcademicSeeder}) only when no subject exists. It runs after the
+ * the academic records ({@link DemoAcademicSeeder}) only when no subject exists, and the practice
+ * questions ({@link DemoQuizSeeder}) only when the question bank is empty. It runs after the
  * first-admin bootstrap, because the academic records need an admin as their author.
  *
  * <p>Students are created through {@link StudentProvisioningService}, exactly like students an
@@ -43,18 +44,21 @@ public class DevDataSeeder implements ApplicationRunner {
   private final StudentProfileService studentProfiles;
   private final StudentProvisioningService provisioning;
   private final DemoAcademicSeeder academics;
+  private final DemoQuizSeeder quiz;
 
   public DevDataSeeder(
       SeedProperties properties,
       Environment environment,
       StudentProfileService studentProfiles,
       StudentProvisioningService provisioning,
-      DemoAcademicSeeder academics) {
+      DemoAcademicSeeder academics,
+      DemoQuizSeeder quiz) {
     this.properties = properties;
     this.environment = environment;
     this.studentProfiles = studentProfiles;
     this.provisioning = provisioning;
     this.academics = academics;
+    this.quiz = quiz;
   }
 
   @Override
@@ -69,6 +73,7 @@ public class DevDataSeeder implements ApplicationRunner {
       log.info("Loaded synthetic demo data: {} students.", DEMO_STUDENTS.size());
     }
     academics.seedIfEmpty();
+    quiz.seedIfEmpty();
   }
 
   private boolean seedingRequested() {

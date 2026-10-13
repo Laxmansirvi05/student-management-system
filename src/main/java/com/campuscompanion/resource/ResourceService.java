@@ -93,6 +93,12 @@ public class ResourceService {
         currentUser);
   }
 
+  /** A few published resources of a unit to revise from: notes first, then the newest. */
+  public List<ResourceResponse> forRevision(Long unitId, int limit) {
+    return assembler.toResponses(
+        resources.findForRevision(unitId, PageRequest.of(0, limit)), null, false);
+  }
+
   public ResourceResponse get(CurrentUser currentUser, Long id) {
     boolean admin = currentUser.role() == Role.ADMIN;
     return assembler.toResponse(readable(currentUser, id), studentIdOf(currentUser), admin);

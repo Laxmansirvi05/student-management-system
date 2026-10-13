@@ -10,13 +10,15 @@ export const CHANGE_PASSWORD_PAGE = "/change-password.html";
 
 /** A failed request, in a form the pages can show. `code` is the stable code from the API. */
 export class ApiError extends Error {
-  constructor({ status, code, detail, errors, traceId, retryAfter }) {
+  constructor({ status, code, detail, errors, traceId, retryAfter, available }) {
     super(detail || "Something went wrong.");
     this.status = status;
     this.code = code;
     this.fieldErrors = errors || [];
     this.traceId = traceId;
     this.retryAfter = retryAfter;
+    // Sent with QUIZ_NOT_ENOUGH_QUESTIONS: how many questions the unit has.
+    this.available = available;
   }
 }
 
@@ -66,6 +68,7 @@ async function request(method, path, body, { redirectOnAuthFailure = true } = {}
     errors: problem.errors,
     traceId: problem.traceId,
     retryAfter: response.headers.get("Retry-After"),
+    available: problem.available,
   });
 
   if (redirectOnAuthFailure) {

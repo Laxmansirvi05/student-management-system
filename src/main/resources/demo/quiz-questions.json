@@ -1,0 +1,534 @@
+[
+  {
+    "subject": "CS301",
+    "unit": 1,
+    "difficulty": "EASY",
+    "text": "What is the time complexity of reading the element at a given index of an array?",
+    "options": [
+      "O(1)",
+      "O(log n)",
+      "O(n)",
+      "O(n²)"
+    ],
+    "correct": "A",
+    "explanation": "An array stores its elements side by side, so the place of any index is worked out directly."
+  },
+  {
+    "subject": "CS301",
+    "unit": 1,
+    "difficulty": "EASY",
+    "text": "What is the worst-case time complexity of linear search in an array of n elements?",
+    "options": [
+      "O(1)",
+      "O(log n)",
+      "O(n)",
+      "O(n log n)"
+    ],
+    "correct": "C",
+    "explanation": "In the worst case the element is last or missing, so all n elements are checked."
+  },
+  {
+    "subject": "CS301",
+    "unit": 1,
+    "difficulty": "EASY",
+    "text": "Binary search can be used on an array only when the array is…",
+    "options": [
+      "of even length",
+      "sorted",
+      "completely full",
+      "made of whole numbers"
+    ],
+    "correct": "B",
+    "explanation": "Binary search halves the range by comparing with the middle element, which only works on sorted data."
+  },
+  {
+    "subject": "CS301",
+    "unit": 1,
+    "difficulty": "MEDIUM",
+    "text": "What is the worst-case time complexity of binary search on n sorted elements?",
+    "options": [
+      "O(1)",
+      "O(log n)",
+      "O(n)",
+      "O(n²)"
+    ],
+    "correct": "B",
+    "explanation": "Each comparison halves the remaining range, so about log₂ n comparisons are needed."
+  },
+  {
+    "subject": "CS301",
+    "unit": 1,
+    "difficulty": "MEDIUM",
+    "text": "How long does it take to insert an element at the start of an array that holds n elements?",
+    "options": [
+      "O(1)",
+      "O(log n)",
+      "O(n)",
+      "O(n²)"
+    ],
+    "correct": "C",
+    "explanation": "Every existing element must move one place to the right to make room."
+  },
+  {
+    "subject": "CS301",
+    "unit": 1,
+    "difficulty": "MEDIUM",
+    "text": "Which notation gives an upper bound on how fast an algorithm's running time grows?",
+    "options": [
+      "Big Omega",
+      "Big Theta",
+      "Little omega",
+      "Big O"
+    ],
+    "correct": "D",
+    "explanation": "Big O gives an upper bound. Big Omega gives a lower bound, and Big Theta a bound from both sides."
+  },
+  {
+    "subject": "CS301",
+    "unit": 2,
+    "difficulty": "EASY",
+    "text": "Which data structure works on the first in, first out principle?",
+    "options": [
+      "Stack",
+      "Queue",
+      "Binary tree",
+      "Hash table"
+    ],
+    "correct": "B",
+    "explanation": "A queue removes items in the order they were added: the first one in is the first one out."
+  },
+  {
+    "subject": "CS301",
+    "unit": 2,
+    "difficulty": "EASY",
+    "text": "Which operation removes the top element of a stack?",
+    "options": [
+      "Push",
+      "Peek",
+      "Pop",
+      "Enqueue"
+    ],
+    "correct": "C",
+    "explanation": "Pop removes and returns the top element. Peek only looks at it, and push adds one."
+  },
+  {
+    "subject": "CS301",
+    "unit": 2,
+    "difficulty": "MEDIUM",
+    "text": "Which data structure does breadth-first search use to remember the vertices to visit next?",
+    "options": [
+      "Stack",
+      "Queue",
+      "Priority queue",
+      "Binary search tree"
+    ],
+    "correct": "B",
+    "explanation": "Breadth-first search visits vertices level by level, so it needs a queue: vertices found first are explored first."
+  },
+  {
+    "subject": "CS301",
+    "unit": 2,
+    "difficulty": "EASY",
+    "text": "How long does it take to insert a node at the head of a singly linked list?",
+    "options": [
+      "O(1)",
+      "O(log n)",
+      "O(n)",
+      "O(n log n)"
+    ],
+    "correct": "A",
+    "explanation": "Only the new node's pointer and the head pointer change, whatever the length of the list."
+  },
+  {
+    "subject": "CS301",
+    "unit": 2,
+    "difficulty": "MEDIUM",
+    "text": "Which data structure is used to evaluate a postfix expression?",
+    "options": [
+      "Queue",
+      "Stack",
+      "Linked list",
+      "Graph"
+    ],
+    "correct": "B",
+    "explanation": "Operands are pushed on a stack. Each operator pops its operands and pushes the result back."
+  },
+  {
+    "subject": "CS301",
+    "unit": 2,
+    "difficulty": "HARD",
+    "text": "In a circular queue stored in an array of size n, with one slot kept empty, when is the queue full?",
+    "options": [
+      "front == rear",
+      "rear == n - 1",
+      "(rear + 1) % n == front",
+      "front == 0"
+    ],
+    "correct": "C",
+    "explanation": "One slot is kept empty, so the queue is full when the slot after rear is front."
+  },
+  {
+    "subject": "CS301",
+    "unit": 2,
+    "difficulty": "EASY",
+    "text": "Which structure allows insertion and deletion at both ends?",
+    "options": [
+      "Stack",
+      "Queue",
+      "Deque",
+      "Heap"
+    ],
+    "correct": "C",
+    "explanation": "A deque, or double-ended queue, allows adding and removing at the front and at the back."
+  },
+  {
+    "subject": "CS301",
+    "unit": 2,
+    "difficulty": "MEDIUM",
+    "text": "Reversing a singly linked list in place takes how much time and extra space?",
+    "options": [
+      "O(n) time, O(1) space",
+      "O(n) time, O(n) space",
+      "O(n²) time, O(1) space",
+      "O(log n) time, O(1) space"
+    ],
+    "correct": "A",
+    "explanation": "One pass re-points every node at the node before it, using three pointers and no extra list."
+  },
+  {
+    "subject": "CS301",
+    "unit": 2,
+    "difficulty": "MEDIUM",
+    "text": "Which of these is not a typical use of a stack?",
+    "options": [
+      "Function calls",
+      "Undo in an editor",
+      "Breadth-first search",
+      "Checking balanced brackets"
+    ],
+    "correct": "C",
+    "explanation": "Breadth-first search needs a queue. The other three all rely on last in, first out."
+  },
+  {
+    "subject": "CS301",
+    "unit": 2,
+    "difficulty": "EASY",
+    "text": "How long does it take to reach the k-th node of a singly linked list?",
+    "options": [
+      "O(1)",
+      "O(log k)",
+      "O(k)",
+      "O(k²)"
+    ],
+    "correct": "C",
+    "explanation": "A linked list has no index. You must follow k pointers from the head."
+  },
+  {
+    "subject": "CS301",
+    "unit": 3,
+    "difficulty": "EASY",
+    "text": "What is the largest number of children a node of a binary tree can have?",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "Any number"
+    ],
+    "correct": "B",
+    "explanation": "By definition each node of a binary tree has at most two children: a left one and a right one."
+  },
+  {
+    "subject": "CS301",
+    "unit": 3,
+    "difficulty": "MEDIUM",
+    "text": "Which traversal of a binary search tree visits the keys in ascending order?",
+    "options": [
+      "Preorder",
+      "Inorder",
+      "Postorder",
+      "Level order"
+    ],
+    "correct": "B",
+    "explanation": "Inorder visits the left subtree, then the node, then the right subtree. In a binary search tree that is ascending order."
+  },
+  {
+    "subject": "CS301",
+    "unit": 3,
+    "difficulty": "EASY",
+    "text": "In a binary search tree, where are the keys that are smaller than a node's key?",
+    "options": [
+      "In its right subtree",
+      "In its parent",
+      "In its left subtree",
+      "Anywhere below it"
+    ],
+    "correct": "C",
+    "explanation": "Smaller keys go to the left and larger keys to the right. That rule is what makes searching fast."
+  },
+  {
+    "subject": "CS301",
+    "unit": 3,
+    "difficulty": "HARD",
+    "text": "What is the worst-case time to search a binary search tree of n nodes that is not balanced?",
+    "options": [
+      "O(1)",
+      "O(log n)",
+      "O(n)",
+      "O(n log n)"
+    ],
+    "correct": "C",
+    "explanation": "A tree built from keys that arrive in sorted order becomes a chain, and searching a chain can check all n nodes."
+  },
+  {
+    "subject": "CS301",
+    "unit": 3,
+    "difficulty": "MEDIUM",
+    "text": "How many edges does a tree with n nodes have?",
+    "options": [
+      "n",
+      "n − 1",
+      "n + 1",
+      "2n"
+    ],
+    "correct": "B",
+    "explanation": "Every node except the root has exactly one edge to its parent, which gives n − 1 edges."
+  },
+  {
+    "subject": "CS301",
+    "unit": 3,
+    "difficulty": "EASY",
+    "text": "Which traversal visits a node before both of its subtrees?",
+    "options": [
+      "Preorder",
+      "Inorder",
+      "Postorder",
+      "None of them"
+    ],
+    "correct": "A",
+    "explanation": "Preorder means node first, then the left subtree, then the right subtree."
+  },
+  {
+    "subject": "MA301",
+    "unit": 1,
+    "difficulty": "EASY",
+    "text": "The statement “p AND q” is true when…",
+    "options": [
+      "at least one of them is true",
+      "exactly one of them is true",
+      "both p and q are true",
+      "both are false"
+    ],
+    "correct": "C",
+    "explanation": "A conjunction is true only when every part of it is true."
+  },
+  {
+    "subject": "MA301",
+    "unit": 1,
+    "difficulty": "MEDIUM",
+    "text": "The implication “if p then q” is false only when…",
+    "options": [
+      "p is false and q is true",
+      "p is true and q is false",
+      "both are true",
+      "both are false"
+    ],
+    "correct": "B",
+    "explanation": "A promise is broken only when its condition holds and its result does not."
+  },
+  {
+    "subject": "MA301",
+    "unit": 1,
+    "difficulty": "EASY",
+    "text": "How many subsets does a set with 3 elements have?",
+    "options": [
+      "3",
+      "6",
+      "8",
+      "9"
+    ],
+    "correct": "C",
+    "explanation": "A set with n elements has 2ⁿ subsets, and 2³ is 8. The empty set and the set itself are both counted."
+  },
+  {
+    "subject": "MA301",
+    "unit": 1,
+    "difficulty": "EASY",
+    "text": "For A = {1, 2, 3} and B = {3, 4}, what is the intersection of A and B?",
+    "options": [
+      "{1, 2}",
+      "{3}",
+      "{1, 2, 3, 4}",
+      "The empty set"
+    ],
+    "correct": "B",
+    "explanation": "The intersection holds the elements that are in both sets. Only 3 is in both."
+  },
+  {
+    "subject": "MA301",
+    "unit": 1,
+    "difficulty": "MEDIUM",
+    "text": "Which law says that NOT (p AND q) is the same as (NOT p) OR (NOT q)?",
+    "options": [
+      "The distributive law",
+      "The associative law",
+      "De Morgan's law",
+      "The identity law"
+    ],
+    "correct": "C",
+    "explanation": "De Morgan's laws turn the negation of an AND into an OR of negations, and the other way round."
+  },
+  {
+    "subject": "MA301",
+    "unit": 1,
+    "difficulty": "MEDIUM",
+    "text": "A statement that is true whatever the truth values of its parts is called a…",
+    "options": [
+      "contradiction",
+      "tautology",
+      "contingency",
+      "predicate"
+    ],
+    "correct": "B",
+    "explanation": "A tautology is always true, a contradiction is always false, and a contingency can be either."
+  },
+  {
+    "subject": "EC301",
+    "unit": 1,
+    "difficulty": "EASY",
+    "text": "In Boolean algebra, what is A OR (NOT A)?",
+    "options": [
+      "0",
+      "1",
+      "A",
+      "NOT A"
+    ],
+    "correct": "B",
+    "explanation": "One of A and NOT A is always 1, and OR needs only one input to be 1."
+  },
+  {
+    "subject": "EC301",
+    "unit": 1,
+    "difficulty": "EASY",
+    "text": "In Boolean algebra, what is A AND 0?",
+    "options": [
+      "0",
+      "1",
+      "A",
+      "NOT A"
+    ],
+    "correct": "A",
+    "explanation": "AND gives 1 only when every input is 1, and here one input is always 0."
+  },
+  {
+    "subject": "EC301",
+    "unit": 1,
+    "difficulty": "EASY",
+    "text": "Which gate gives 1 only when both of its inputs are 1?",
+    "options": [
+      "OR",
+      "AND",
+      "XOR",
+      "NOR"
+    ],
+    "correct": "B",
+    "explanation": "That is the definition of the AND gate."
+  },
+  {
+    "subject": "EC301",
+    "unit": 1,
+    "difficulty": "MEDIUM",
+    "text": "Which gate is called a universal gate, because any circuit can be built from it alone?",
+    "options": [
+      "AND",
+      "OR",
+      "NAND",
+      "XOR"
+    ],
+    "correct": "C",
+    "explanation": "NOT, AND and OR can each be built from NAND gates, so NAND alone is enough. NOR is universal as well."
+  },
+  {
+    "subject": "EC301",
+    "unit": 1,
+    "difficulty": "MEDIUM",
+    "text": "What is the output of an XOR gate when both of its inputs are 1?",
+    "options": [
+      "0",
+      "1",
+      "It is not defined",
+      "The same as the first input"
+    ],
+    "correct": "A",
+    "explanation": "XOR gives 1 when its inputs differ. Two equal inputs give 0."
+  },
+  {
+    "subject": "CS302",
+    "unit": 1,
+    "difficulty": "EASY",
+    "text": "In object oriented programming, an object is…",
+    "options": [
+      "a kind of loop",
+      "an instance of a class",
+      "a file on disk",
+      "a reserved word"
+    ],
+    "correct": "B",
+    "explanation": "A class describes what its objects hold and can do. An object is one thing made from that description."
+  },
+  {
+    "subject": "CS302",
+    "unit": 1,
+    "difficulty": "EASY",
+    "text": "Which special method runs when an object is created?",
+    "options": [
+      "The destructor",
+      "The main method",
+      "The constructor",
+      "A getter"
+    ],
+    "correct": "C",
+    "explanation": "The constructor sets up a new object, usually by giving its fields their first values."
+  },
+  {
+    "subject": "CS302",
+    "unit": 1,
+    "difficulty": "MEDIUM",
+    "text": "Keeping an object's data private and reaching it only through its methods is called…",
+    "options": [
+      "inheritance",
+      "encapsulation",
+      "polymorphism",
+      "recursion"
+    ],
+    "correct": "B",
+    "explanation": "Encapsulation keeps the data and the code that works on it together, and hides the data from outside."
+  },
+  {
+    "subject": "CS302",
+    "unit": 1,
+    "difficulty": "EASY",
+    "text": "In Java, which keyword makes a member visible only inside its own class?",
+    "options": [
+      "public",
+      "protected",
+      "private",
+      "static"
+    ],
+    "correct": "C",
+    "explanation": "A private member can be used only by code in the same class."
+  },
+  {
+    "subject": "CS302",
+    "unit": 1,
+    "difficulty": "MEDIUM",
+    "text": "In Java, what does the keyword “this” refer to?",
+    "options": [
+      "The parent class",
+      "The current object",
+      "The class as a type",
+      "The method that called this one"
+    ],
+    "correct": "B",
+    "explanation": "Inside an instance method or a constructor, “this” is the object the method was called on."
+  }
+]
