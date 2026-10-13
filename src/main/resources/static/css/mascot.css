@@ -1,0 +1,51 @@
+/* How the robot mascot moves. Shared by the sign-in pages and the profile page; each page sets
+   the robot's size itself. The movement is driven by js/mascot.js. */
+.mascot {
+  transition: transform 260ms ease-out;
+  will-change: transform;
+}
+
+.mascot__face {
+  transition: transform 180ms ease-out;
+}
+
+.mascot__antenna {
+  transform-box: fill-box;
+  transform-origin: 80% 100%;
+  transition: transform 320ms ease-out;
+}
+
+.mascot__lid {
+  opacity: 0;
+  transition: opacity 140ms ease-out;
+}
+
+.mascot__eye {
+  transition: opacity 140ms ease-out;
+}
+
+/* While a password is being typed, the mascot shuts its eyes. */
+.mascot--shy .mascot__eye {
+  opacity: 0;
+}
+
+.mascot--shy .mascot__lid {
+  opacity: 1;
+}
+
+.mascot__blink {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: blink 5.5s infinite;
+}
+
+@keyframes blink {
+  0%,
+  94%,
+  100% {
+    transform: scaleY(1);
+  }
+  97% {
+    transform: scaleY(0.1);
+  }
+}

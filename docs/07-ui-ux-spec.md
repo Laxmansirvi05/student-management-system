@@ -212,6 +212,17 @@ Built in task `T1-09`, following a reference video supplied by the owner on 2026
 - **Deliberately absent**, because the requirements forbid them: sign in with Google, Apple or any other provider; "Sign up"; "Remember me"; a self-service "Forgot password?" link. In their place is one line: "Forgot your password? Ask your college administrator to reset it."
 - The login form has two labelled fields, "Institutional email" and "Password", with a show-password button.
 
+### Student profile page
+
+Redesigned on 2026-10-13 at the owner's request, after a reference screenshot. It shows only the fields of FR-STU-002 and stays read-only.
+
+- **Hero card:** black, with rounded 28 px corners, slow blue light drifting behind it, the student's initials inside a slowly turning ring, the name, one line with branch, semester and section, and chips for roll number, admission year and "Managed by your college". The email chip copies the address when pressed.
+- **Figures:** four tiles (semester, year of study, section, admission year). Numbers count up once when the page opens. Year of study is the semester divided by two, rounded up.
+- **Details:** "Academic details" beside "Contact" and a short "Official record" note. One column below 1024 px.
+- **Depth and motion:** the hero and the tiles lean a few degrees toward the pointer with a moving highlight and sections rise into place in sequence. There is no mascot on this page. This page is the one place where motion longer than the 200 ms rule in section 5 is allowed, and only as decoration. All of it stops under reduced motion, and the tilt is off on touch screens.
+- **Built without libraries.** The 3D effect is CSS `perspective` and transforms with a few lines of JavaScript in `js/motion.js`. An animation or 3D library would need an accepted decision record first (TRD: no frameworks, bundlers or CDN-loaded libraries).
+- **Not included,** because they are not in the PRD: profile photo, editing, skills, interests, career goal, résumé and achievements.
+
 ## 12. Responsive tables
 
 On phones a table becomes a list of stacked cards, one per row, with each cell shown as "label: value". Wide admin sheets (attendance, marks) scroll horizontally inside their container with the student name column fixed. The page itself never scrolls sideways.
