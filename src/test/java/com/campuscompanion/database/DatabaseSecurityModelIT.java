@@ -17,18 +17,25 @@ import java.util.TreeSet;
 import org.junit.jupiter.api.Test;
 
 /**
- * Task T1-03: the database matches the security model in docs/08-database-design.md section 11, and
- * the database itself enforces email and roll-number uniqueness (scenario PV4).
+ * Tasks T1-03 and T2-01: the database matches the security model in docs/08-database-design.md
+ * section 11, and the database itself enforces email and roll-number uniqueness (scenario PV4).
  */
 class DatabaseSecurityModelIT extends PostgresIntegrationTest {
 
   /** The exact privileges of cc_app, copied from docs/08-database-design.md section 11.3. */
   private static final Map<String, Set<String>> EXPECTED_PRIVILEGES =
-      Map.of(
-          "users", Set.of("SELECT", "INSERT", "UPDATE"),
-          "student_profiles", Set.of("SELECT", "INSERT", "UPDATE"),
-          "subjects", Set.of("SELECT", "INSERT", "UPDATE"),
-          "subject_units", Set.of("SELECT", "INSERT", "UPDATE", "DELETE"));
+      Map.ofEntries(
+          Map.entry("users", Set.of("SELECT", "INSERT", "UPDATE")),
+          Map.entry("student_profiles", Set.of("SELECT", "INSERT", "UPDATE")),
+          Map.entry("subjects", Set.of("SELECT", "INSERT", "UPDATE")),
+          Map.entry("subject_units", Set.of("SELECT", "INSERT", "UPDATE", "DELETE")),
+          Map.entry("attendance_records", Set.of("SELECT", "INSERT", "UPDATE")),
+          Map.entry("assessments", Set.of("SELECT", "INSERT", "UPDATE")),
+          Map.entry("marks", Set.of("SELECT", "INSERT", "UPDATE")),
+          Map.entry("semester_results", Set.of("SELECT", "INSERT", "UPDATE")),
+          Map.entry("timetable_entries", Set.of("SELECT", "INSERT", "UPDATE", "DELETE")),
+          Map.entry("notices", Set.of("SELECT", "INSERT", "UPDATE", "DELETE")),
+          Map.entry("audit_logs", Set.of("SELECT", "INSERT")));
 
   @Test
   void flywayRanAsTheMigrationRole() throws SQLException {
@@ -58,9 +65,16 @@ class DatabaseSecurityModelIT extends PostgresIntegrationTest {
 
     assertThat(tables)
         .containsExactly(
+            "assessments,cc_migrator,true",
+            "attendance_records,cc_migrator,true",
+            "audit_logs,cc_migrator,true",
+            "marks,cc_migrator,true",
+            "notices,cc_migrator,true",
+            "semester_results,cc_migrator,true",
             "student_profiles,cc_migrator,true",
             "subject_units,cc_migrator,true",
             "subjects,cc_migrator,true",
+            "timetable_entries,cc_migrator,true",
             "users,cc_migrator,true");
   }
 
