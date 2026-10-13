@@ -41,6 +41,15 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     return ResponseEntity.status(code.status()).body(problem);
   }
 
+  /** A role check failed inside a controller or service, after the security filters. */
+  @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+  public ResponseEntity<ProblemDetail> handleAccessDenied(
+      org.springframework.security.access.AccessDeniedException ex, WebRequest request) {
+    return handleApiException(
+        new ApiException(ErrorCode.ACCESS_DENIED, "You do not have permission to do this."),
+        request);
+  }
+
   /** Invalid request parameters, for example a page size above the maximum. */
   @ExceptionHandler(ConstraintViolationException.class)
   public ResponseEntity<ProblemDetail> handleConstraintViolation(

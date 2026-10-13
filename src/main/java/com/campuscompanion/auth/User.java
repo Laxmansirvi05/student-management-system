@@ -85,6 +85,11 @@ public class User {
     updatedAt = Instant.now();
   }
 
+  /** Records a successful login. */
+  public void recordSuccessfulLogin(Instant now) {
+    lastLoginAt = now;
+  }
+
   public Long getId() {
     return id;
   }
