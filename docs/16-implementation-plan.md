@@ -1,6 +1,6 @@
 # 16. Implementation Plan
 
-> Status: Draft v0.2 · Owner: Laxman Sirvi · Last updated: 2026-10-11
+> Status: Draft v0.3 · Owner: Laxman Sirvi · Last updated: 2026-10-13
 
 This plan breaks the work into ordered, verifiable tasks. One task is one small change, verified before the next begins. Milestones are defined in [03-scope-and-roadmap.md](03-scope-and-roadmap.md).
 
@@ -12,6 +12,29 @@ This plan breaks the work into ordered, verifiable tasks. One task is one small 
 - Each task ends with the report format in [AGENTS.md](../AGENTS.md#13-how-to-report).
 - Track status in GitHub Issues, one issue per task, titled with the task ID. This file defines the tasks; the issue tracker records progress.
 - Every task implicitly requires: tests written and passing, `./mvnw verify` green, documents updated, security rules respected.
+
+## Build order: student side first
+
+Decided by the owner on 2026-10-13: every student-facing feature is built before the admin screens. The task definitions below are unchanged; only the order is.
+
+**How it works without the admin screens.** Student pages only read data. The data they read (accounts, attendance, marks, results, timetable, notices, resources, questions) is put in place by the synthetic seeder, which is extended as each feature arrives. Each migration, service and student endpoint is built and tested with seeded data; the matching admin endpoint and screen come later and write to the same tables.
+
+| Stage | Tasks | Result |
+| --- | --- | --- |
+| A. Finish the foundation | T1-09, T1-10, T1-11 | Login and change-password pages, page layout, student provisioning and seeded accounts |
+| B. Student academics | T2-01, then the student parts of T2-05, T2-07, T2-09, T2-10, T2-11, T2-12, T2-13, T2-14 | Profile, attendance, marks, results, timetable, notices and dashboard, on seeded data |
+| C. Student resources | T3-01 to T3-03, T3-05, T3-06, T3-07 | Browse, search, preview and bookmark, with seeded resources |
+| D. Student Quick Exam and progress | T4-01, T4-03 to T4-08 | Tests, scoring, history, progress, on a seeded question bank |
+| E. Student AI assistant | T5-01 to T5-08 | Explain, summarize, practice questions |
+| F. Admin side | T2-02, T2-03, T2-04, T2-06, T2-08, the admin parts of T2-10 to T2-12, T3-04, T3-08, T4-02 | Every admin screen, plus the audit log |
+| G. Access-control suites and release | T2-15, T3-09, T4-09, Phase 6 | The full denied-access tests, deployment |
+
+Consequences to keep in mind:
+
+- **Gates G2 to G4 cannot be passed until stage F**, because each needs an admin edit to appear for the student. Stages B to E are checked against their student-side acceptance tests only.
+- **The audit log (T2-02) arrives in stage F.** Until then, password changes are not audited. Nothing is deployed before stage G.
+- **The seeder becomes more important.** Its data must stay obviously synthetic, and it must never run in production unless the owner enables it for one start.
+- **Access control is not postponed.** Every student endpoint gets its own "not logged in" and "someone else's record" tests when it is built; only the generated all-endpoint suites wait for stage G.
 
 ## Phase 0: Decisions
 
