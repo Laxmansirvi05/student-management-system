@@ -92,21 +92,18 @@ class StaticFrontendRulesTest {
   }
 
   /**
-   * The student pages were designed before their features were built. Until a page is connected to
-   * its API it reads from js/sample-data.js, and it must say so on the page.
+   * The student pages were first designed on sample data. Every page now reads the server, so no
+   * page may show invented records again: no sample file, no import of one, and no page that says
+   * it shows sample data.
    */
   @Test
-  void aPageThatShowsSampleDataSaysSo() throws IOException {
-    Pattern script = Pattern.compile("<script type=\"module\" src=\"/js/([a-z-]+\\.js)\"");
+  void noPageShowsSampleData() throws IOException {
+    assertThat(STATIC.resolve("js").resolve("sample-data.js")).doesNotExist();
+    for (Path script : filesEndingWith(".js")) {
+      assertThat(Files.readString(script)).as("%s", script).doesNotContain("sample-data");
+    }
     for (Path page : filesEndingWith(".html")) {
-      String html = Files.readString(page);
-      var matcher = script.matcher(html);
-      while (matcher.find()) {
-        String source = Files.readString(STATIC.resolve("js").resolve(matcher.group(1)));
-        if (source.contains("sample-data.js")) {
-          assertThat(html).as("sample data label in %s", page).contains(">Sample data<");
-        }
-      }
+      assertThat(Files.readString(page)).as("%s", page).doesNotContain("Sample data");
     }
   }
 

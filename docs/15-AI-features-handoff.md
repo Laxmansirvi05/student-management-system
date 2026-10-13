@@ -306,3 +306,19 @@ A feature is done when all of these are true:
 | OQ-11: application-wide daily ceiling (`AI_DAILY_LIMIT_GLOBAL`, default 500) | Nothing; `T5-02` uses the default |
 | OQ-9: whether mock-only acceptance is allowed | Release acceptance |
 | Mermaid version to vendor | `T7-05` |
+
+## 16. As built (steps 1 to 5 and 7)
+
+Steps 1 to 5, the assistant page (step 7) and the automated part of step 8 are built and tested against the mock provider. Step 6, the adapter for a real provider, is not built: it waits for OQ-1 and the owner's key. The code follows this handoff with these differences:
+
+| Handoff | As built | Why |
+| --- | --- | --- |
+| `AiRequest(systemInstructions, userContent, maxOutputTokens, timeout)` | It also carries `promptVersion` as its first field. | The mock chooses its reply by the version, and the usage log needs it. Nothing about the user is added. |
+| `AiUsageService.checkAllowed(userId)` | `begin(userId)` and `end(userId)`. | The limit on requests running at once needs to know when a request is over. `begin` makes the same checks in the same order. |
+| The provider bean is chosen with `@ConditionalOnProperty` | `AiProviderConfig` has one factory method that returns the mock for `AI_PROVIDER=mock` and stops the start with a clear message for any other value. | One place to add the real adapter, and a wrong value fails at start instead of at a student's first request. |
+| `AiStudyService` and `AiUsageService` as interfaces | Plain classes. | There is one implementation of each. `AiProvider` stays an interface, because that is the part that is swapped. |
+| Class-level constraint for "exactly one of topic or sourceText" | Checked in `AiStudyService.generateQuiz`, as a field error on `topic`. | The same response, with less code to explain. |
+
+The per-minute limit and the running-requests limit are kept in memory, so a restart resets them. The two daily limits are counted from `ai_request_logs` and survive a restart, as section 2 of [12-AI-features-spec.md](12-AI-features-spec.md) requires.
+
+The usage endpoint has one extra field, `demo`, which is `true` while the mock provider answers. The assistant page shows a "Demo mode" note in that case, so nobody takes a placeholder for the work of an AI model.

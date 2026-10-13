@@ -1,38 +1,61 @@
+import { api, messageFor } from "./api.js";
 import { fill, h, icon, tag, toast } from "./dom.js";
 import { reveal, ring, segmented, swap } from "./motion.js";
-import { assistant, quiz } from "./sample-data.js";
+import { loadInto } from "./parts.js";
 import "./shell.js";
 
-// The AI study assistant (FR-AI-001 to FR-AI-004): three small forms, not a chat. Every answer is
-// labelled as AI-generated and is shown as plain text. In the finished feature the request goes
-// to the server, which calls the AI provider; here a sample answer stands in for it.
+// The AI study assistant (FR-AI-001 to FR-AI-004): three small forms, not a chat. Each request
+// stands alone and nothing is remembered. The server calls the AI provider; the browser never
+// does, and never holds a key. Every answer is labelled as AI-generated and is put on the page as
+// plain text, so nothing the AI writes can run as markup.
 
 const content = document.getElementById("content");
-const LIMITS = { topic: 200, notes: 6000 };
-let tool = "explain";
-let remaining = assistant.remainingToday;
+const PREFILL = "assistant-prefill";
+const LIMITS = { topic: 200, context: 2000, text: 12000, sourceText: 8000 };
+const BASIS = {
+  GENERAL_KNOWLEDGE: "Based on general knowledge",
+  PROVIDED_TEXT: "Based on the text you provided",
+  MIXED: "Based on the text you provided and general knowledge",
+};
+const state = { tool: "explain", usage: null, subjects: [], prefill: readPrefill() };
 
-const subjectOptions = () => quiz.subjects.map((subject) => h("option", { value: subject.code }, `${subject.name} (${subject.code})`));
+/** A topic handed over by the quiz result page ("Ask AI to explain"). It is used once. */
+function readPrefill() {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(PREFILL));
+    sessionStorage.removeItem(PREFILL);
+    return saved && typeof saved.topic === "string" ? saved : null;
+  } catch {
+    return null;
+  }
+}
 
+// ---------------------------------------------------------------- Form pieces
 /** A text field with its label, a live character counter and a place for an error. */
-function textField({ id, label, limit, area = false, placeholder = "" }) {
+function textField({ name, label, limit, area = false, placeholder = "", value = "", hint = "" }) {
+  const id = "f-" + name;
   const input = area
-    ? h("textarea.textbox.textbox--area", { id, maxlength: limit, placeholder, "aria-describedby": id + "-error" })
-    : h("input.textbox", { id, type: "text", maxlength: limit, placeholder, autocomplete: "off", "aria-describedby": id + "-error" });
-  const counter = h("span.row__meta.num", `0 / ${limit}`);
+    ? h("textarea.textbox.textbox--area", { id, name, maxlength: limit, placeholder, "aria-describedby": id + "-error" })
+    : h("input.textbox", { id, name, type: "text", maxlength: limit, placeholder, autocomplete: "off", "aria-describedby": id + "-error" });
+  input.value = value;
+  const counter = h("span.row__meta.num", `${value.length} / ${limit.toLocaleString("en-IN")}`);
   const error = h("p.field__error", { id: id + "-error", hidden: true });
   input.addEventListener("input", () => {
-    counter.textContent = `${input.value.length} / ${limit}`;
+    counter.textContent = `${input.value.length.toLocaleString("en-IN")} / ${limit.toLocaleString("en-IN")}`;
     input.removeAttribute("aria-invalid");
     error.hidden = true;
   });
-  const fail = (message) => {
-    input.setAttribute("aria-invalid", "true");
-    error.textContent = message;
-    error.hidden = false;
-    input.focus();
+  return {
+    name,
+    input,
+    value: () => input.value.trim(),
+    fail(message) {
+      input.setAttribute("aria-invalid", "true");
+      error.textContent = message;
+      error.hidden = false;
+    },
+    element: h("div.field", h("div.line", h("label.field__label", { for: id }, label), counter), input, hint ? h("p.field__help", hint) : null, error),
   };
-  return { input, fail, element: h("div.field", h("div.line", h("label.field__label", { for: id }, label), counter), input, error) };
 }
 
 function choice(label, options, chosen) {
@@ -54,70 +77,154 @@ function choice(label, options, chosen) {
   return { element: h("div.field", h("span.field__label", label), group), value: () => value };
 }
 
-const FORMS = {
+/** Subject and unit, both optional. The unit list follows the subject. */
+function subjectAndUnit(withUnit, chosenSubject = "", chosenUnit = "") {
+  const subject = h(
+    "select.select",
+    { id: "f-subjectId" },
+    h("option", { value: "" }, "No particular subject"),
+    state.subjects.map((entry) => h("option", { value: entry.id, selected: String(entry.id) === String(chosenSubject) }, `${entry.name} (${entry.code})`)),
+  );
+  const unit = h("select.select", { id: "f-unitId", disabled: true }, h("option", { value: "" }, "Whole subject"));
+  async function fillUnits(chosen = "") {
+    fill(unit, h("option", { value: "" }, "Whole subject"));
+    unit.disabled = !subject.value;
+    if (!subject.value) {
+      return;
+    }
+    try {
+      const units = await api.get(`/subjects/${subject.value}/units`);
+      fill(unit, h("option", { value: "" }, "Whole subject"), units.map((entry) => h("option", { value: entry.id, selected: String(entry.id) === String(chosen) }, `Unit ${entry.unitNo}: ${entry.title}`)));
+    } catch {
+      unit.disabled = true;
+    }
+  }
+  subject.addEventListener("change", () => fillUnits());
+  fillUnits(chosenUnit);
+  return {
+    elements: [
+      h("div.field", h("label.field__label", { for: "f-subjectId" }, "Subject (optional)"), subject),
+      withUnit ? h("div.field", h("label.field__label", { for: "f-unitId" }, "Unit (optional)"), unit) : null,
+    ],
+    subjectId: () => (subject.value ? Number(subject.value) : null),
+    unitId: () => (withUnit && unit.value ? Number(unit.value) : null),
+  };
+}
+
+// ---------------------------------------------------------------- The three tools
+const TOOLS = {
   explain() {
-    const topic = textField({ id: "topic", label: "Topic", limit: LIMITS.topic, placeholder: "For example: stacks and queues" });
+    const prefill = state.prefill;
+    state.prefill = null;
+    const topic = textField({ name: "topic", label: "Topic", limit: LIMITS.topic, placeholder: "For example: stacks and queues", value: prefill?.topic || "" });
+    const context = textField({ name: "context", label: "Your own material (optional)", limit: LIMITS.context, area: true, placeholder: "Paste a paragraph from your notes if the answer should follow it", hint: "When you paste material, the answer is based on it." });
+    const place = subjectAndUnit(true, prefill?.subjectId, prefill?.unitId);
+    const format = choice("Answer format", [["SIMPLE", "Simple"], ["FIVE_MARK", "5-mark answer"], ["TEN_MARK", "10-mark answer"]], "SIMPLE");
     return {
       title: "Explain a topic",
       button: "Explain",
-      fields: [
-        h("div.field", h("label.field__label", { for: "explain-subject" }, "Subject"), h("select.select", { id: "explain-subject" }, subjectOptions())),
-        choice("Level", [["simple", "Simple"], ["detailed", "Detailed"]], "simple").element,
-        topic.element,
-      ],
-      check: () => (topic.input.value.trim() ? true : (topic.fail("Enter a topic to explain."), false)),
-      sample: assistant.explain,
+      path: "/ai/explain",
+      fields: [topic, context],
+      elements: [topic.element, format.element, ...place.elements, context.element],
+      body: () => ({ topic: topic.value(), subjectId: place.subjectId(), unitId: place.unitId(), answerFormat: format.value(), context: context.value() || null }),
+      check: () => (topic.value().length >= 3 ? true : (topic.fail("Enter a topic of at least 3 characters."), false)),
+      render: explanationBody,
     };
   },
   summarize() {
-    const notes = textField({ id: "notes", label: "Your notes", limit: LIMITS.notes, area: true, placeholder: "Paste the text you want summarized" });
+    const text = textField({ name: "text", label: "Your notes", limit: LIMITS.text, area: true, placeholder: "Paste the text you want summarized", hint: "Between 200 and 12,000 characters." });
+    const place = subjectAndUnit(false);
+    const style = choice("Style", [["SHORT", "Short summary"], ["REVISION_NOTES", "Revision notes"]], "SHORT");
     return {
       title: "Summarize your notes",
       button: "Summarize",
-      fields: [notes.element],
-      check: () => (notes.input.value.trim().length >= 40 ? true : (notes.fail("Paste at least a few sentences to summarize."), false)),
-      sample: assistant.summary,
+      path: "/ai/summarize",
+      fields: [text],
+      elements: [text.element, style.element, ...place.elements],
+      body: () => ({ text: text.value(), style: style.value(), subjectId: place.subjectId() }),
+      check: () => (text.value().length >= 200 ? true : (text.fail("Paste at least 200 characters to summarize."), false)),
+      render: summaryBody,
     };
   },
   questions() {
-    const unit = h("select.select", { id: "questions-unit" });
-    const subject = h("select.select", { id: "questions-subject" }, subjectOptions());
-    const fillUnits = () => fill(unit, quiz.subjects.find((entry) => entry.code === subject.value).units.map((entry) => h("option", { value: entry.unitNo }, `Unit ${entry.unitNo}: ${entry.title}`)));
-    subject.addEventListener("change", fillUnits);
-    fillUnits();
+    const topic = textField({ name: "topic", label: "Topic", limit: LIMITS.topic, placeholder: "For example: TCP and UDP" });
+    const sourceText = textField({ name: "sourceText", label: "Or your own text", limit: LIMITS.sourceText, area: true, placeholder: "Paste text to get questions that it answers", hint: "Give a topic or paste text, not both. Text needs 200 to 8,000 characters." });
+    const place = subjectAndUnit(true);
+    const type = choice("Question type", [["MCQ", "Multiple choice"], ["SHORT", "Short answer"], ["LONG", "Long answer"]], "MCQ");
+    const count = choice("How many", [["3", "3"], ["5", "5"], ["10", "10"]], "5");
     return {
       title: "Generate practice questions",
       button: "Generate questions",
-      fields: [
-        h("div.field", h("label.field__label", { for: "questions-subject" }, "Subject"), subject),
-        h("div.field", h("label.field__label", { for: "questions-unit" }, "Unit"), unit),
-        choice("How many", [["5", "5 questions"], ["10", "10 questions"]], "5").element,
-      ],
-      check: () => true,
-      sample: assistant.questions,
+      path: "/ai/generate-quiz",
+      fields: [topic, sourceText],
+      elements: [topic.element, sourceText.element, type.element, count.element, ...place.elements],
+      body: () => ({ topic: topic.value() || null, sourceText: sourceText.value() || null, subjectId: place.subjectId(), unitId: place.unitId(), questionType: type.value(), count: Number(count.value()) }),
+      check() {
+        if (Boolean(topic.value()) === Boolean(sourceText.value())) {
+          topic.fail("Give a topic or paste text, but not both.");
+          return false;
+        }
+        return true;
+      },
+      render: questionsBody,
     };
   },
 };
 
-function quotaText() {
-  return `${remaining} of ${assistant.dailyLimit} requests left today`;
+// ---------------------------------------------------------------- Results, as plain text
+function paragraphs(text) {
+  return text.split(/\n\s*\n|\n/).filter((part) => part.trim()).map((part) => h("p", part));
 }
 
-function resultCard(sample) {
-  const copy = h("button.button.button--quiet.button--small", { type: "button" }, icon("copy"), "Copy");
-  const body = h(
+function part(heading, ...children) {
+  return h("section.answer-text__part", h("h3", heading), children);
+}
+
+function explanationBody(answer) {
+  return h(
     "div.answer-text",
-    h("h2.answer-text__title", sample.title),
-    sample.sections.map((section) =>
-      h(
-        "section.answer-text__part",
-        h("h3", section.heading),
-        (section.paragraphs || []).map((paragraph) => h("p", paragraph)),
-        section.bullets ? h("ul", section.bullets.map((item) => h("li", item))) : null,
-        section.numbered ? h("ol", section.numbered.map((item) => h("li", item))) : null,
+    h("h2.answer-text__title", answer.topic),
+    part("Explanation", paragraphs(answer.explanation)),
+    part("Key points", h("ul", answer.keyPoints.map((point) => h("li", point)))),
+    answer.example ? part("Example", paragraphs(answer.example)) : null,
+  );
+}
+
+function summaryBody(answer) {
+  return h(
+    "div.answer-text",
+    h("h2.answer-text__title", "Summary"),
+    part("Summary", paragraphs(answer.summary)),
+    answer.keyPoints.length ? part("Key points", h("ul", answer.keyPoints.map((point) => h("li", point)))) : null,
+    answer.definitions.length ? part("Terms the text defines", h("ul", answer.definitions.map((entry) => h("li", h("strong", entry.term + ": "), entry.meaning)))) : null,
+  );
+}
+
+function questionsBody(answer) {
+  const short = answer.returned < answer.requested ? h("p.row__meta", `${answer.returned} of the ${answer.requested} questions passed the checks and are shown.`) : null;
+  return h(
+    "div.answer-text",
+    h("h2.answer-text__title", "Practice questions"),
+    short,
+    answer.questions.map((question, index) =>
+      part(
+        "Question " + (index + 1),
+        h("p", question.question),
+        question.options ? h("ol.options-list", question.options.map((option) => h("li", option))) : null,
+        h(
+          "details.reveal-answer",
+          h("summary", "Show the answer"),
+          h("p", h("strong", "Answer: "), (question.correctOption ? question.correctOption + ". " : "") + question.answer),
+          h("p", h("strong", "Why: "), question.explanation),
+        ),
       ),
     ),
   );
+}
+
+function resultCard(tool, answer) {
+  const body = tool.render(answer);
+  const copy = h("button.button.button--quiet.button--small", { type: "button" }, icon("copy"), "Copy");
   copy.addEventListener("click", async () => {
     try {
       await navigator.clipboard.writeText(body.innerText);
@@ -129,9 +236,10 @@ function resultCard(sample) {
   return h(
     "section.card.reveal",
     { "aria-label": "Answer" },
-    h("div.ai-label", tag("AI-generated", "purple", "sparkles"), h("span", "Check it against your course material."), h("span.row__meta", sample.basis)),
+    // The notice is the server's own fixed text, not something the AI wrote.
+    h("div.ai-label", tag("AI-generated", "purple", "sparkles"), h("span", answer.notice.replace(/^AI-generated\.?\s*/, "")), h("span.row__meta", BASIS[answer.basis] || "")),
     body,
-    h("div.card__foot", h("span", "Sample answer shown for the design."), copy),
+    h("div.card__foot", h("span", "Not saved. Copy it if you want to keep it."), copy),
   );
 }
 
@@ -144,64 +252,121 @@ function waitingCard() {
   );
 }
 
-function errorCard(retry) {
-  const again = h("button.button.button--secondary.button--small", { type: "button" }, icon("refresh"), "Retry");
-  again.addEventListener("click", retry);
-  return h("section.card", { role: "alert" }, h("div.line.line--start", h("span.badge-icon.badge-icon--round.badge-icon--danger", icon("alert")), h("div.stack.stack--tight", h("strong", "The assistant is unavailable right now"), h("span.row__meta", "Please try again."))), again);
+/** What to say for each way a request can fail, and whether trying again can help. */
+function failureOf(failure) {
+  switch (failure.code) {
+    case "AI_REQUEST_DECLINED":
+      return { title: "The assistant did not answer this", text: failure.message, retry: false, kind: "warning", iconName: "info" };
+    case "AI_QUOTA_EXCEEDED":
+      return { title: "You have used today's AI requests", text: "Try again tomorrow.", retry: false, kind: "warning", iconName: "clock" };
+    case "RATE_LIMITED":
+      return { title: "Please wait a moment", text: "You can send a few requests each minute.", retry: true, kind: "warning", iconName: "clock" };
+    case "AI_UNAVAILABLE":
+      // The server says which: switched off or a provider failure (Retry), or everyone's limit.
+      return { title: "The assistant is unavailable right now", text: failure.message.includes("everyone") ? failure.message : "Please try again.", retry: !failure.message.includes("everyone"), kind: "danger", iconName: "alert" };
+    case "AI_TIMEOUT":
+    case "AI_INVALID_RESPONSE":
+      return { title: "The assistant is unavailable right now", text: "Please try again.", retry: true, kind: "danger", iconName: "alert" };
+    default:
+      return { title: "This did not work", text: messageFor(failure), retry: true, kind: "danger", iconName: "alert" };
+  }
 }
 
-function limitNote() {
-  return h("p.inset.inset--warning.inset--note", icon("alert"), `You have used all ${assistant.dailyLimit} requests for today. They reset at midnight.`);
+function failureCard(failure, retry) {
+  const info = failureOf(failure);
+  const again = info.retry ? h("button.button.button--secondary.button--small", { type: "button" }, icon("refresh"), "Retry") : null;
+  again?.addEventListener("click", retry);
+  return h(
+    "section.card",
+    { role: "alert" },
+    h("div.line.line--start", h("span.badge-icon.badge-icon--round.badge-icon--" + info.kind, icon(info.iconName)), h("div.stack.stack--tight", h("strong", info.title), h("span.row__meta", info.text))),
+    again,
+  );
+}
+
+// ---------------------------------------------------------------- The form
+function quotaText() {
+  const usage = state.usage;
+  return `${usage.remainingToday} of ${usage.dailyLimit} requests left today`;
+}
+
+function blockedNote() {
+  if (!state.usage.enabled) {
+    return h("p.inset.inset--warning.inset--note", icon("alert"), "The assistant is unavailable right now. Please try again later.");
+  }
+  if (state.usage.remainingToday <= 0) {
+    return h("p.inset.inset--warning.inset--note", icon("clock"), `You have used all ${state.usage.dailyLimit} requests for today. They reset at midnight.`);
+  }
+  return null;
 }
 
 function formCard() {
-  const form = FORMS[tool]();
+  const tool = TOOLS[state.tool]();
+  const blocked = blockedNote();
   const quota = h("span.row__meta.num", { id: "quota" }, quotaText());
-  const submit = h("button.button.button--primary", { type: "submit", disabled: remaining <= 0 }, icon("sparkles"), form.button);
-  const element = h(
-    "form.card.reveal",
-    { novalidate: true, "aria-labelledby": "form-title" },
-    h("h2.card__title", { id: "form-title" }, form.title),
-    form.fields,
-    remaining <= 0 ? limitNote() : null,
-    h("div.line.line--wrap", submit, quota),
-  );
-  element.addEventListener("submit", (event) => {
-    event.preventDefault();
-    if (!form.check() || remaining <= 0) {
-      return;
+  const submit = h("button.button.button--primary", { type: "submit", disabled: Boolean(blocked) }, icon("sparkles"), tool.button);
+  const fieldset = h("fieldset.form-lock", tool.elements);
+  const form = h("form.card.reveal", { novalidate: true, "aria-labelledby": "form-title" }, h("h2.card__title", { id: "form-title" }, tool.title), fieldset, blocked, h("div.line.line--wrap", submit, quota));
+
+  async function ask() {
+    const result = document.getElementById("result");
+    // While the request runs the whole form is locked, so it cannot be sent twice.
+    fieldset.disabled = true;
+    submit.disabled = true;
+    fill(result, waitingCard());
+    result.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    try {
+      const answer = await api.post(tool.path, tool.body());
+      swap(result, () => {
+        fill(result, resultCard(tool, answer));
+        reveal();
+      });
+    } catch (failure) {
+      if (failure.fieldErrors?.length) {
+        fill(result);
+        for (const { field, message } of failure.fieldErrors) {
+          (tool.fields.find((entry) => entry.name === field) || tool.fields[0]).fail(message);
+        }
+        form.querySelector("[aria-invalid]")?.focus();
+      } else {
+        fill(result, failureCard(failure, ask));
+      }
+    } finally {
+      fieldset.disabled = false;
+      await refreshUsage();
+      submit.disabled = !state.usage.enabled || state.usage.remainingToday <= 0;
+      quota.textContent = quotaText();
     }
-    ask(form, submit);
+  }
+
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (!submit.disabled && tool.check()) {
+      ask();
+    } else {
+      form.querySelector("[aria-invalid]")?.focus();
+    }
   });
-  return element;
+  return form;
 }
 
-/** Shows the waiting state, then the answer. The real page waits for the server here. */
-function ask(form, submit) {
-  const result = document.getElementById("result");
-  if (!navigator.onLine) {
-    fill(result, errorCard(() => ask(form, submit)));
-    return;
+async function refreshUsage() {
+  try {
+    state.usage = await api.get("/ai/usage/me");
+  } catch {
+    // The last known numbers stay on the page.
   }
-  submit.disabled = true;
-  fill(result, waitingCard());
-  result.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  setTimeout(() => {
-    remaining -= 1;
-    document.getElementById("quota").textContent = quotaText();
-    renderSide();
-    submit.disabled = remaining <= 0;
-    swap(result, () => fill(result, resultCard(form.sample)));
-  }, 1500);
+  renderSide();
 }
 
 function renderSide() {
+  const usage = state.usage;
   fill(
     document.getElementById("side"),
     h(
       "section.card",
       h("h2.card__title", icon("bolt"), "Requests today"),
-      h("div.line", ring((remaining / assistant.dailyLimit) * 100, { size: 96, stroke: 9, label: h("strong.num", remaining) }), h("p.row__meta", `You can ask ${assistant.dailyLimit} times a day. The count resets at midnight.`)),
+      h("div.line", ring((usage.remainingToday / Math.max(1, usage.dailyLimit)) * 100, { size: 96, stroke: 9, label: h("strong.num", usage.remainingToday) }), h("p.row__meta", `You can ask ${usage.dailyLimit} times a day. The count resets at midnight.`)),
     ),
     h(
       "section.card.card--tinted",
@@ -210,7 +375,8 @@ function renderSide() {
         "ul.tips",
         h("li", "The assistant can be wrong. Check answers against your notes and textbook."),
         h("li", "It does not see your marks, attendance or any other record."),
-        h("li", "It is a study aid, not a chat. Each request is answered on its own."),
+        h("li", "It is a study aid, not a chat. Each request is answered on its own, and nothing is saved."),
+        h("li", "It cannot tell you what will be in an exam."),
       ),
     ),
   );
@@ -219,7 +385,10 @@ function renderSide() {
 function render() {
   fill(
     content,
-    h("p.strip.reveal", icon("shield"), h("span", h("strong", "Privacy: "), "Do not paste personal details. Text you send is processed by an AI provider.")),
+    h("p.strip.reveal", icon("shield"), h("span", h("strong", "Privacy: "), "Do not paste personal information. Text you submit is sent to an AI service.")),
+    state.usage.demo
+      ? h("p.inset.inset--warning.inset--note.reveal", icon("info"), h("span", h("strong", "Demo mode: "), "no AI provider is connected yet, so the answers below are placeholders. The limits, labels and messages already work as they will."))
+      : null,
     h("div.grid.grid--aside", h("div.stack.stack--loose", formCard(), h("div.stack.stack--loose", { id: "result", "aria-live": "polite" })), h("aside.stack.stack--loose.sticky.reveal", { id: "side" })),
   );
   renderSide();
@@ -227,7 +396,13 @@ function render() {
 }
 
 segmented(document.getElementById("tool-tabs"), (value) => {
-  tool = value;
+  state.tool = value;
   swap(content, render);
 });
-render();
+
+loadInto(content, () => Promise.all([api.get("/ai/usage/me"), api.get("/subjects")]), ([usage, subjects]) => {
+  state.usage = usage;
+  state.subjects = subjects;
+  // The page opens on Explain, which is also where a question handed over by a quiz result goes.
+  render();
+});

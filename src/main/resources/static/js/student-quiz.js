@@ -437,7 +437,18 @@ function resultView(result) {
         h("div.inset.answer.answer--right", h("p.eyebrow", "Correct answer"), h("p.line", h("strong", textOf(item, item.correctOption)), icon("check-circle"))),
       ),
       h("p.note", icon("info"), h("span", h("strong", "Explanation: "), item.explanation)),
+      h("div.line.line--start", askAi(item)),
     );
+  }
+
+  /** Opens the assistant with this question as the topic. The official explanation stays above. */
+  function askAi(item) {
+    const button = h("button.button.button--quiet.button--small", { type: "button" }, icon("sparkles"), "Ask AI to explain");
+    button.addEventListener("click", () => {
+      sessionStorage.setItem("assistant-prefill", JSON.stringify({ topic: item.text.slice(0, 200), subjectId: result.subjectId, unitId: result.unitId }));
+      window.location.assign("/student/assistant.html");
+    });
+    return button;
   }
 
   const filters = h(

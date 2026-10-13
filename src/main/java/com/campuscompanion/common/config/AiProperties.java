@@ -2,6 +2,8 @@ package com.campuscompanion.common.config;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import java.time.Duration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
@@ -15,7 +17,12 @@ public record AiProperties(
     String model,
     @Min(0) int dailyLimitPerUser,
     @Min(0) int dailyLimitGlobal,
-    @Min(1) int maxOutputTokens) {
+    @Min(1) int maxOutputTokens,
+    @Min(1) int perMinuteLimit,
+    @Min(1) int maxConcurrentPerUser,
+    @NotNull Duration connectTimeout,
+    @NotNull Duration responseTimeout,
+    @NotNull Duration totalBudget) {
 
   @Override
   public String toString() {

@@ -709,8 +709,10 @@ For `SHORT` and `LONG`, `options` and `correctOption` are `null`. `returned` can
 `GET /api/v1/ai/usage/me`
 
 ```json
-{ "dailyLimit": 30, "usedToday": 4, "remainingToday": 26, "resetsAt": "2026-10-10T18:30:00Z", "enabled": true }
+{ "dailyLimit": 30, "usedToday": 4, "remainingToday": 26, "resetsAt": "2026-10-10T18:30:00Z", "enabled": true, "demo": false }
 ```
+
+`demo` is `true` while the built-in mock provider answers (`AI_PROVIDER=mock`). The assistant page then shows a "Demo mode" note, because the answers are placeholders and not the work of an AI model.
 
 The day resets at midnight in `Asia/Kolkata`. `enabled` is `false` when AI is switched off (`AI_ENABLED=false`) or when the application-wide daily ceiling has been reached. In both cases the AI endpoints return `503 AI_UNAVAILABLE`.
 

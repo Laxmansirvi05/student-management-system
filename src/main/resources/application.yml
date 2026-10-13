@@ -79,6 +79,13 @@ app:
     daily-limit-per-user: ${AI_DAILY_LIMIT_PER_USER:30}
     daily-limit-global: ${AI_DAILY_LIMIT_GLOBAL:500}
     max-output-tokens: ${AI_MAX_OUTPUT_TOKENS:1200}
+    # Fixed defaults, defined in docs/12-AI-features-spec.md section 2. Changed only by a reviewed
+    # code change, not by an environment variable.
+    per-minute-limit: 5
+    max-concurrent-per-user: 2
+    connect-timeout: 5s
+    response-timeout: 20s
+    total-budget: 25s
   bootstrap:
     admin-email: ${ADMIN_BOOTSTRAP_EMAIL:}
     admin-password: ${ADMIN_BOOTSTRAP_PASSWORD:}

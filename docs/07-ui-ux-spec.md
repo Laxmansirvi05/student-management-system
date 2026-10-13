@@ -158,7 +158,7 @@ Body text is never smaller than 14 px. Figures in tables use tabular numerals. H
 
 **Admin:** a left sidebar grouped as People (Students), Academics (Subjects, Attendance, Marks, Results, Timetable), Content (Resources, Question bank, Notices). On phones it collapses behind a menu button.
 
-The top bar is frosted white. It shows the section name, a "Sample data" label on pages that are not yet connected (see section 18), the student's branch, semester, section and roll number, and the avatar. The page title is large in the page itself and appears small in the top bar only after the page is scrolled. Administrators see a small "Admin" label so the two portals are never confused.
+The top bar is frosted white. It shows the section name, the student's branch, semester, section and roll number, and the avatar. The page title is large in the page itself and appears small in the top bar only after the page is scrolled. Administrators see a small "Admin" label so the two portals are never confused.
 
 ## 8. Breakpoints
 
@@ -299,11 +299,9 @@ All motion is decoration: nothing is conveyed by motion alone, and all of it sto
 | Dialogs and sheets | Scale or slide in over a dimmed, blurred page |
 | Small confirmations | A bookmark icon pops; a toast appears at the bottom and leaves by itself |
 
-### Sample data
+### No sample data
 
-The student pages were designed before their server features were built. A page that is not yet connected reads from `js/sample-data.js` and **must** show the "Sample data" label in the top bar; a test enforces this. Each export of that file has the shape of the matching API response, so connecting a page means replacing one import with one `api.get` call and removing the label. The file holds invented data only.
-
-Connected today: login, change password, profile, and the name, email and student details in the shell. Everything else shows sample data.
+The student pages were first designed on a file of invented records, `js/sample-data.js`, behind a "Sample data" label. Every page now reads the server through `js/api.js`, and that file is gone. A test keeps it that way: no sample file, no import of one, and no page that says it shows sample data. A page whose feature has nothing to show yet uses an empty state instead.
 
 ### Left out of the Stitch designs, and why
 

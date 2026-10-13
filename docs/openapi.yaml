@@ -1978,6 +1978,9 @@ components:
         enabled:
           type: boolean
           description: False when AI is switched off or the application-wide daily ceiling has been reached.
+        demo:
+          type: boolean
+          description: True when the built-in mock provider answers (AI_PROVIDER=mock). The page then says that the answers are placeholders.
 
     StudentCreateRequest:
       type: object

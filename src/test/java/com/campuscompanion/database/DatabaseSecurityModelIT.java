@@ -17,7 +17,7 @@ import java.util.TreeSet;
 import org.junit.jupiter.api.Test;
 
 /**
- * Tasks T1-03, T2-01, T3-02 and T4-01: the database matches the security model in
+ * Tasks T1-03, T2-01, T3-02, T4-01 and T5-01: the database matches the security model in
  * docs/08-database-design.md section 11, and the database itself enforces email and roll-number
  * uniqueness (scenario PV4).
  */
@@ -42,7 +42,8 @@ class DatabaseSecurityModelIT extends PostgresIntegrationTest {
           Map.entry("quiz_questions", Set.of("SELECT", "INSERT", "UPDATE")),
           Map.entry("quiz_attempts", Set.of("SELECT", "INSERT", "UPDATE")),
           Map.entry("quiz_attempt_answers", Set.of("SELECT", "INSERT", "UPDATE")),
-          Map.entry("audit_logs", Set.of("SELECT", "INSERT")));
+          Map.entry("audit_logs", Set.of("SELECT", "INSERT")),
+          Map.entry("ai_request_logs", Set.of("SELECT", "INSERT")));
 
   @Test
   void flywayRanAsTheMigrationRole() throws SQLException {
@@ -72,6 +73,7 @@ class DatabaseSecurityModelIT extends PostgresIntegrationTest {
 
     assertThat(tables)
         .containsExactly(
+            "ai_request_logs,cc_migrator,true",
             "assessments,cc_migrator,true",
             "attendance_records,cc_migrator,true",
             "audit_logs,cc_migrator,true",
