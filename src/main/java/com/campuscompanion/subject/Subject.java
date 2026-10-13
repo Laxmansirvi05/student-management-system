@@ -49,6 +49,17 @@ public class Subject {
     this.credits = credits;
   }
 
+  /** Replaces the editable fields. A subject in use is deactivated, never deleted. */
+  public void update(
+      String code, String name, String branch, int semester, int credits, boolean active) {
+    this.code = code;
+    this.name = name;
+    this.branch = branch;
+    this.semester = semester;
+    this.credits = credits;
+    this.active = active;
+  }
+
   public Long getId() {
     return id;
   }

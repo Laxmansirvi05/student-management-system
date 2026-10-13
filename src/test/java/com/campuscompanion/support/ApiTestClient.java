@@ -40,6 +40,31 @@ public class ApiTestClient {
     return send(postBuilder(path, json).header("X-XSRF-TOKEN", cookie("XSRF-TOKEN")));
   }
 
+  /** PUT with the CSRF header. */
+  public HttpResponse<String> put(String path, String json)
+      throws IOException, InterruptedException {
+    return send(
+        HttpRequest.newBuilder(URI.create(baseUrl + path))
+            .header("Content-Type", "application/json")
+            .header("X-XSRF-TOKEN", csrfToken())
+            .PUT(HttpRequest.BodyPublishers.ofString(json)));
+  }
+
+  /** DELETE with the CSRF header. */
+  public HttpResponse<String> delete(String path) throws IOException, InterruptedException {
+    return send(
+        HttpRequest.newBuilder(URI.create(baseUrl + path))
+            .header("X-XSRF-TOKEN", csrfToken())
+            .DELETE());
+  }
+
+  private String csrfToken() throws IOException, InterruptedException {
+    if (cookie("XSRF-TOKEN") == null) {
+      get("/api/v1/auth/csrf");
+    }
+    return cookie("XSRF-TOKEN");
+  }
+
   public HttpResponse<String> postWithoutCsrf(String path, String json)
       throws IOException, InterruptedException {
     return send(postBuilder(path, json));

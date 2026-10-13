@@ -201,7 +201,7 @@ All paths start with `/admin` and require the `ADMIN` role.
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| GET, POST | `/admin/students` | Search and provision students. |
+| GET, POST | `/admin/students` | Search (filters `branch`, `semester`, `section`; free text `q` on roll number, name or email) and provision students. |
 | GET, PUT | `/admin/students/{id}` | Read and update a student. |
 | POST | `/admin/students/{id}/deactivate`, `/admin/students/{id}/activate` | Change account status. Deactivating ends the student's sessions. |
 | POST | `/admin/students/{id}/reset-password` | Issue a random temporary password (returned once) and end the student's sessions. |
@@ -214,7 +214,7 @@ All paths start with `/admin` and require the `ADMIN` role.
 | GET, POST | `/admin/assessments` | List and create assessments. |
 | PUT | `/admin/assessments/{id}` | Update an assessment, including `published`. |
 | GET, PUT | `/admin/assessments/{id}/marks` | Read and save the marks sheet. |
-| PUT | `/admin/semester-results` | Create or update one student's semester result. |
+| GET, PUT | `/admin/semester-results` | Read every result of one student (`studentId`), published or not; create or update one result. |
 | GET, POST | `/admin/timetable` | List and create timetable entries. |
 | PUT, DELETE | `/admin/timetable/{id}` | Update or delete an entry. |
 | GET, POST | `/admin/notices` | List all notices (including drafts) and create. |

@@ -20,6 +20,7 @@ class DevDataSeederTest {
 
   private final StudentProfileService studentProfiles = mock(StudentProfileService.class);
   private final StudentProvisioningService provisioning = mock(StudentProvisioningService.class);
+  private final DemoAcademicSeeder academics = mock(DemoAcademicSeeder.class);
 
   @Test
   void doesNothingOutsideTheDevProfileUnlessItIsSwitchedOn() {
@@ -28,6 +29,7 @@ class DevDataSeederTest {
     seeder(false, "test").run(null);
 
     verify(provisioning, never()).provision(any());
+    verify(academics, never()).seedIfEmpty();
   }
 
   @Test
@@ -45,12 +47,13 @@ class DevDataSeederTest {
   }
 
   @Test
-  void doesNothingWhenStudentDataAlreadyExists() {
+  void addsNoStudentsWhenStudentDataAlreadyExistsButStillOffersTheAcademicData() {
     when(studentProfiles.anyStudentExists()).thenReturn(true);
 
     seeder(true, "dev").run(null);
 
     verify(provisioning, never()).provision(any());
+    verify(academics).seedIfEmpty();
   }
 
   @Test
@@ -73,6 +76,6 @@ class DevDataSeederTest {
     MockEnvironment environment = new MockEnvironment();
     environment.setActiveProfiles(activeProfiles);
     return new DevDataSeeder(
-        new SeedProperties(demoEnabled), environment, studentProfiles, provisioning);
+        new SeedProperties(demoEnabled), environment, studentProfiles, provisioning, academics);
   }
 }

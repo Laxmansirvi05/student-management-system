@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.core.session.SessionRegistry;
@@ -26,11 +27,25 @@ import org.springframework.util.StringUtils;
 /**
  * Security for the whole application: deny by default, server-side sessions, CSRF protection and
  * security headers. The rules come from docs/10-authorization-matrix.md and
- * docs/11-security-plan.md. Lockout and rate limits are added in task T1-07, and the
- * password-change restriction in task T1-08.
+ * docs/11-security-plan.md. URL rules are the first check; admin services and controllers repeat
+ * the role check with @PreAuthorize, so a wrongly mapped URL cannot expose them.
  */
 @Configuration
+@EnableMethodSecurity
 public class SecurityConfig {
+
+  /** API groups that hold a student's own records. An admin has no use for them. */
+  private static final String[] STUDENT_ONLY_API = {
+    "/api/v1/students/**",
+    "/api/v1/attendance/**",
+    "/api/v1/marks/**",
+    "/api/v1/results/**",
+    "/api/v1/timetable/**",
+    "/api/v1/bookmarks/**",
+    "/api/v1/quiz-attempts/**",
+    "/api/v1/progress/**",
+    "/api/v1/ai/**"
+  };
 
   @Bean
   public SecurityFilterChain securityFilterChain(
@@ -52,7 +67,9 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers("/api/v1/admin/**", "/admin/**")
                     .hasRole("ADMIN")
-                    .requestMatchers("/api/v1/students/**", "/student/**")
+                    .requestMatchers(STUDENT_ONLY_API)
+                    .hasRole("STUDENT")
+                    .requestMatchers("/student/**")
                     .hasRole("STUDENT")
                     .anyRequest()
                     .authenticated())

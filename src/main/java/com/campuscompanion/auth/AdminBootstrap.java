@@ -1,11 +1,15 @@
 package com.campuscompanion.auth;
 
+import com.campuscompanion.audit.AuditAction;
+import com.campuscompanion.audit.AuditService;
+import com.campuscompanion.audit.AuditSnapshot;
 import com.campuscompanion.common.config.BootstrapProperties;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +22,7 @@ import org.springframework.util.StringUtils;
  * password, and the bootstrap password must be changed at first login.
  */
 @Component
+@Order(1)
 public class AdminBootstrap implements ApplicationRunner {
 
   private static final Logger log = LoggerFactory.getLogger(AdminBootstrap.class);
@@ -26,16 +31,19 @@ public class AdminBootstrap implements ApplicationRunner {
   private final UserRepository users;
   private final PasswordEncoder passwordEncoder;
   private final PasswordPolicy passwordPolicy;
+  private final AuditService audit;
 
   public AdminBootstrap(
       BootstrapProperties properties,
       UserRepository users,
       PasswordEncoder passwordEncoder,
-      PasswordPolicy passwordPolicy) {
+      PasswordPolicy passwordPolicy,
+      AuditService audit) {
     this.properties = properties;
     this.users = users;
     this.passwordEncoder = passwordEncoder;
     this.passwordPolicy = passwordPolicy;
+    this.audit = audit;
   }
 
   @Override
@@ -65,6 +73,13 @@ public class AdminBootstrap implements ApplicationRunner {
     }
     User admin =
         users.save(new User(email, passwordEncoder.encode(password), Role.ADMIN, "Administrator"));
+    // No logged-in user creates the first admin, so the entry has no actor.
+    audit.record(
+        AuditAction.ACCOUNT_CREATED,
+        "USER",
+        admin.getId(),
+        null,
+        new AuditSnapshot.Account(Role.ADMIN.name(), admin.getLoginEmail(), admin.isActive()));
     log.info(
         "Created the first administrator, account id {}. The password must be changed at first login.",
         admin.getId());

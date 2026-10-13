@@ -1,5 +1,8 @@
 package com.campuscompanion.student;
 
+import com.campuscompanion.audit.AuditAction;
+import com.campuscompanion.audit.AuditService;
+import com.campuscompanion.audit.AuditSnapshot;
 import com.campuscompanion.auth.StudentAccountService;
 import com.campuscompanion.auth.User;
 import com.campuscompanion.common.config.IdentityProperties;
@@ -34,6 +37,7 @@ public class StudentProvisioningService {
   private final StudentProfileRepository profiles;
   private final StudentAccountService accounts;
   private final IdentityProperties identity;
+  private final AuditService audit;
   private final Clock clock;
 
   public StudentProvisioningService(
@@ -41,11 +45,13 @@ public class StudentProvisioningService {
       StudentProfileRepository profiles,
       StudentAccountService accounts,
       IdentityProperties identity,
+      AuditService audit,
       Clock clock) {
     this.validator = validator;
     this.profiles = profiles;
     this.accounts = accounts;
     this.identity = identity;
+    this.audit = audit;
     this.clock = clock;
   }
 
@@ -78,8 +84,16 @@ public class StudentProvisioningService {
                 request.section().strip(),
                 request.admissionYear(),
                 blankToNull(request.phone())));
+    // The entry names the role, the email and the active flag. Never the temporary password.
+    audit.record(
+        AuditAction.ACCOUNT_CREATED,
+        "USER",
+        account.getId(),
+        null,
+        new AuditSnapshot.Account(
+            account.getRole().name(), account.getLoginEmail(), account.isActive()));
     log.info("Provisioned a student, student id {}.", profile.getId());
-    return toResponse(profile, account);
+    return StudentResponses.forAdmin(profile, clock.instant());
   }
 
   /** The institutional email: the roll number in lower case, an at sign, the configured domain. */
@@ -89,22 +103,5 @@ public class StudentProvisioningService {
 
   private static String blankToNull(String text) {
     return text == null || text.isBlank() ? null : text.strip();
-  }
-
-  private AdminStudentResponse toResponse(StudentProfile profile, User account) {
-    return new AdminStudentResponse(
-        profile.getId(),
-        profile.getRollNo(),
-        account.getLoginEmail(),
-        profile.getFullName(),
-        profile.getBranch(),
-        profile.getCurrentSemester(),
-        profile.getSection(),
-        profile.getAdmissionYear(),
-        profile.getPhone(),
-        account.isActive(),
-        account.isMustChangePassword(),
-        account.isLocked(clock.instant()),
-        account.getLastLoginAt());
   }
 }

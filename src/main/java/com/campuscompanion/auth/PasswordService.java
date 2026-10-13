@@ -1,5 +1,7 @@
 package com.campuscompanion.auth;
 
+import com.campuscompanion.audit.AuditAction;
+import com.campuscompanion.audit.AuditService;
 import com.campuscompanion.auth.dto.ChangePasswordRequest;
 import com.campuscompanion.common.error.ApiException;
 import com.campuscompanion.common.error.ErrorCode;
@@ -30,18 +32,21 @@ public class PasswordService {
   private final PasswordPolicy passwordPolicy;
   private final LoginAttemptService loginAttempts;
   private final StudentProfileService studentProfiles;
+  private final AuditService audit;
 
   public PasswordService(
       UserRepository users,
       PasswordEncoder passwordEncoder,
       PasswordPolicy passwordPolicy,
       LoginAttemptService loginAttempts,
-      StudentProfileService studentProfiles) {
+      StudentProfileService studentProfiles,
+      AuditService audit) {
     this.users = users;
     this.passwordEncoder = passwordEncoder;
     this.passwordPolicy = passwordPolicy;
     this.loginAttempts = loginAttempts;
     this.studentProfiles = studentProfiles;
+    this.audit = audit;
   }
 
   /**
@@ -82,6 +87,7 @@ public class PasswordService {
     }
 
     user.changePassword(passwordEncoder.encode(request.newPassword()));
+    audit.recordPasswordEvent(AuditAction.PASSWORD_CHANGED, user.getId());
     log.info("Password changed for account id {}", user.getId());
   }
 }

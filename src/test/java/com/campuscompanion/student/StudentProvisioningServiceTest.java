@@ -8,6 +8,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.campuscompanion.audit.AuditService;
 import com.campuscompanion.auth.Role;
 import com.campuscompanion.auth.StudentAccountService;
 import com.campuscompanion.auth.User;
@@ -15,6 +16,7 @@ import com.campuscompanion.auth.UserRepository;
 import com.campuscompanion.common.config.IdentityProperties;
 import com.campuscompanion.common.error.ConflictException;
 import com.campuscompanion.common.error.ValidationException;
+import com.campuscompanion.common.security.UserSessions;
 import com.campuscompanion.student.dto.AdminStudentResponse;
 import com.campuscompanion.student.dto.StudentCreateRequest;
 import java.time.Clock;
@@ -121,8 +123,9 @@ class StudentProvisioningServiceTest {
     return new StudentProvisioningService(
         new StudentRosterValidator(),
         profiles,
-        new StudentAccountService(users, encoder),
+        new StudentAccountService(users, encoder, mock(UserSessions.class)),
         new IdentityProperties(domain),
+        mock(AuditService.class),
         Clock.fixed(Instant.parse("2026-10-13T06:00:00Z"), ZoneOffset.UTC));
   }
 

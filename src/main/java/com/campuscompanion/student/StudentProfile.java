@@ -84,6 +84,22 @@ public class StudentProfile {
     this.phone = phone;
   }
 
+  /** Replaces the fields an admin may edit. The roll number and the account never change. */
+  public void update(
+      String fullName,
+      String branch,
+      int currentSemester,
+      String section,
+      int admissionYear,
+      String phone) {
+    this.fullName = fullName;
+    this.branch = branch;
+    this.currentSemester = currentSemester;
+    this.section = section;
+    this.admissionYear = admissionYear;
+    this.phone = phone;
+  }
+
   @PrePersist
   void onCreate() {
     Instant now = Instant.now();

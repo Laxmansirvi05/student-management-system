@@ -7,6 +7,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.campuscompanion.audit.AuditService;
 import com.campuscompanion.common.config.BootstrapProperties;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -81,6 +82,10 @@ class AdminBootstrapTest {
 
   private AdminBootstrap bootstrap(String email, String password) {
     return new AdminBootstrap(
-        new BootstrapProperties(email, password), users, encoder, new PasswordPolicy());
+        new BootstrapProperties(email, password),
+        users,
+        encoder,
+        new PasswordPolicy(),
+        mock(AuditService.class));
   }
 }

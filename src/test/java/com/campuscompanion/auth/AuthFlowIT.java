@@ -217,8 +217,7 @@ class AuthFlowIT extends PostgresIntegrationTest {
     ApiTestClient adminClient = new ApiTestClient(port);
     HttpResponse<String> adminLogin = adminClient.login(ADMIN_EMAIL, ADMIN_PASSWORD);
     assertThat(json(adminLogin).get("role").asString()).isEqualTo("ADMIN");
-    // No admin endpoint exists yet, so "allowed" shows as not found, not as forbidden.
-    assertThat(adminClient.get("/api/v1/admin/students").statusCode()).isEqualTo(404);
+    assertThat(adminClient.get("/api/v1/admin/students").statusCode()).isEqualTo(200);
   }
 
   @Test

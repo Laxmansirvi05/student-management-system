@@ -116,6 +116,30 @@ public class User {
     mustChangePassword = false;
   }
 
+  /**
+   * Stores the hash of a temporary password issued by an admin. The account must change it at the
+   * next login, and any block from failed attempts is cleared.
+   */
+  public void setTemporaryPassword(String temporaryPasswordHash) {
+    passwordHash = temporaryPasswordHash;
+    mustChangePassword = true;
+    failedLoginCount = 0;
+    lockedUntil = null;
+  }
+
+  /** Blocks login. The password is kept, so the account can be reactivated as it was. */
+  public void deactivate() {
+    active = false;
+  }
+
+  public void activate() {
+    active = true;
+  }
+
+  public void rename(String newDisplayName) {
+    displayName = newDisplayName;
+  }
+
   public Long getId() {
     return id;
   }

@@ -41,6 +41,11 @@ public class SubjectUnit {
     this.title = title;
   }
 
+  public void update(int unitNo, String title) {
+    this.unitNo = unitNo;
+    this.title = title;
+  }
+
   public Long getId() {
     return id;
   }

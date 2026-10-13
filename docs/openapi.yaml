@@ -573,6 +573,10 @@ paths:
         - { name: branch, in: query, schema: { type: string } }
         - { name: semester, in: query, schema: { type: integer, minimum: 1, maximum: 8 } }
         - { name: section, in: query, schema: { type: string } }
+        - name: q
+          in: query
+          description: Free text. Matches the roll number, the name or the login email.
+          schema: { type: string, minLength: 2, maxLength: 100 }
         - { $ref: "#/components/parameters/Page" }
         - { $ref: "#/components/parameters/Size" }
       responses:
@@ -795,6 +799,21 @@ paths:
         "404": { $ref: "#/components/responses/Problem" }
 
   /admin/semester-results:
+    get:
+      tags: [Admin]
+      summary: Every semester result of one student, published or not
+      parameters:
+        - { name: studentId, in: query, required: true, schema: { type: integer, format: int64 } }
+      responses:
+        "200":
+          description: Results in semester order.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AdminSemesterResult" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
     put:
       tags: [Admin]
       summary: Create or update one student's semester result
@@ -808,7 +827,7 @@ paths:
           description: Saved and audited.
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/SemesterResult" }
+              schema: { $ref: "#/components/schemas/AdminSemesterResult" }
         "400": { $ref: "#/components/responses/Problem" }
         "404": { $ref: "#/components/responses/Problem" }
 
@@ -1525,6 +1544,16 @@ components:
           minimum: 0
           description: Credits of courses passed. Not more than creditsRegistered.
         resultStatus: { $ref: "#/components/schemas/ResultStatus" }
+
+    AdminSemesterResult:
+      description: A semester result as an admin sees it, including one that is not published yet.
+      allOf:
+        - { $ref: "#/components/schemas/SemesterResult" }
+        - type: object
+          required: [studentId, published]
+          properties:
+            studentId: { type: integer, format: int64 }
+            published: { type: boolean }
 
     SemesterResultWriteRequest:
       allOf:
