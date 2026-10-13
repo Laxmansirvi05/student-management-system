@@ -1,6 +1,6 @@
 # 07. UI/UX Specification
 
-> Status: Draft v0.1 · Owner: Laxman Sirvi · Last updated: 2026-10-10
+> Status: Draft v0.2 · Owner: Laxman Sirvi · Last updated: 2026-10-13
 
 This document fixes the interface rules before any page is built. Screens are listed in [06-app-flow.md](06-app-flow.md).
 
@@ -8,37 +8,82 @@ This document fixes the interface rules before any page is built. Screens are li
 
 1. **Answer first.** The number a student came for (attendance, score, CGPA) is the largest thing on the screen.
 2. **Phone first.** Students use phones. Every student screen works at 360 px wide before it is widened.
-3. **Calm and plain.** One accent colour, generous spacing, no decoration that carries no meaning.
+3. **Calm and premium.** Black, white and greys do almost all the work. Blue is the one accent. Generous white space, large clear type, and no decoration that carries no meaning.
 4. **Honest states.** Loading, empty and error always look different from each other and from real data.
 5. **Same thing, same place.** Navigation, page titles, primary buttons and messages sit in the same position on every screen.
 
 ## 2. Visual direction
 
-Clean academic look: white surfaces on a light grey background, a deep blue accent, rounded cards with a hairline border. The admin portal uses the same components with a denser layout.
+Decided by the owner on 2026-10-13: a premium, minimal look in the spirit of Apple's interfaces. Mostly black and white, with blue as the single complementary colour.
+
+What that means in practice:
+
+- **Monochrome first.** Pages are white with near-black text. Hierarchy comes from size, weight and spacing, not from colour.
+- **Blue is rare, so it means something.** It marks the one primary action on a screen, links, the active navigation item and the focus ring. Nothing decorative is blue.
+- **Black for emphasis.** Headline figures and page titles are near-black and large. Secondary actions are black outlines or plain text, never a second colour.
+- **Space instead of boxes.** Sections are separated by white space and a pale grey band, not by heavy borders. Cards have a hairline border or a very soft shadow, never both.
+- **Soft, large corners** and unhurried, short transitions (150 to 200 ms) on hover, focus and page elements appearing.
+- **Clean type.** The system font, which is San Francisco on Apple devices, with tight headings and comfortable body text.
+- **No clutter.** No gradients, no patterned backgrounds, no coloured section headers, no icons used as decoration.
+
+This is a look and feel, not a copy. The interface must not use Apple's logo, product imagery, icons or wording, or present itself as an Apple product.
+
+The admin portal uses the same components with a denser layout.
 
 ## 3. Colour tokens
 
 Defined once as CSS custom properties in `css/tokens.css`. Components use tokens, never raw colour values.
 
+### Light theme (default)
+
 | Token | Value | Use |
 | --- | --- | --- |
-| `--color-bg` | `#F5F7FA` | Page background |
-| `--color-surface` | `#FFFFFF` | Cards, tables, dialogs |
-| `--color-border` | `#D9DEE7` | Borders and dividers |
-| `--color-text` | `#1B2430` | Main text |
-| `--color-text-muted` | `#5B6676` | Secondary text |
-| `--color-primary` | `#1F4FD8` | Primary buttons, links, active navigation |
-| `--color-primary-hover` | `#183FB0` | Hover and pressed |
-| `--color-on-primary` | `#FFFFFF` | Text on primary |
+| `--color-bg` | `#FFFFFF` | Page background |
+| `--color-bg-subtle` | `#F5F5F7` | Alternating section bands, table header, input background |
+| `--color-surface` | `#FFFFFF` | Cards, dialogs |
+| `--color-border` | `#D2D2D7` | Hairline borders and dividers |
+| `--color-text` | `#1D1D1F` | Main text, headings, headline figures |
+| `--color-text-muted` | `#6E6E73` | Secondary text, captions |
+| `--color-inverse-bg` | `#000000` | The footer, and the header on the login page |
+| `--color-inverse-text` | `#F5F5F7` | Text on black |
+| `--color-primary` | `#0071E3` | Primary button, active navigation |
+| `--color-primary-hover` | `#0077ED` | Hover |
+| `--color-primary-pressed` | `#006EDB` | Pressed |
+| `--color-on-primary` | `#FFFFFF` | Text on a primary button |
+| `--color-link` | `#0066CC` | Text links |
+| `--color-focus` | `#0071E3` | Focus ring |
+| `--color-info-bg` | `#F5F5F7` | Informational banners, the AI-generated label |
+
+### Status colours
+
+Black, white and blue cannot signal success or danger, so three muted status colours are kept. They are used only for status, in small amounts: a badge, an icon, a thin left edge on a banner.
+
+| Token | Value | Use |
+| --- | --- | --- |
 | `--color-success` | `#1A7F4B` | Success, "Strong" |
 | `--color-warning` | `#9A6700` | Warnings, "Improving" |
 | `--color-danger` | `#C0262D` | Errors, "Below required", "Needs revision" |
-| `--color-info-bg` | `#EAF0FE` | Informational banners, AI label |
-| `--color-focus` | `#1F4FD8` | Focus ring |
-
-Every text and background pair MUST meet WCAG AA contrast (4.5:1 for body text, 3:1 for large text and control borders). Check each pair with a contrast tool when the stylesheet is written; adjust the value, not the rule, if one fails.
 
 Status is never shown by colour alone. It always has a text label, and an icon where space allows.
+
+### Dark theme (P1)
+
+A black theme that follows the device setting (`prefers-color-scheme`). The token names stay the same; only the values change, so no component is rewritten. It is built after the first release.
+
+| Token | Value |
+| --- | --- |
+| `--color-bg` | `#000000` |
+| `--color-bg-subtle` | `#1D1D1F` |
+| `--color-surface` | `#1D1D1F` |
+| `--color-border` | `#424245` |
+| `--color-text` | `#F5F5F7` |
+| `--color-text-muted` | `#A1A1A6` |
+| `--color-primary` | `#0A84FF` |
+| `--color-link` | `#2997FF` |
+
+### Contrast
+
+Every text and background pair MUST meet WCAG AA contrast (4.5:1 for body text, 3:1 for large text and control borders). These values have not yet been measured. Check each pair with a contrast tool when the stylesheet is written (task `T1-09`); if one fails, adjust the value, not the rule. White text on `--color-primary` and muted text on `--color-bg-subtle` are the two pairs most likely to be close to the limit.
 
 ## 4. Typography
 
@@ -50,30 +95,32 @@ font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-ser
 
 | Token | Size / line height | Weight | Use |
 | --- | --- | --- | --- |
-| `--text-display` | 32 / 40 px | 700 | Headline figures on cards |
-| `--text-h1` | 24 / 32 px | 700 | Page title |
+| `--text-display` | 40 / 44 px | 600 | Headline figures on cards |
+| `--text-h1` | 28 / 34 px | 600 | Page title |
 | `--text-h2` | 18 / 26 px | 600 | Section and card titles |
 | `--text-body` | 16 / 24 px | 400 | Body text, inputs |
 | `--text-small` | 14 / 20 px | 400 | Table cells, helper text |
 | `--text-caption` | 12 / 16 px | 500 | Labels, badges |
 
-Body text is never smaller than 14 px. Figures in tables use tabular numerals.
+Body text is never smaller than 14 px. Figures in tables use tabular numerals. Headings use slightly tightened letter spacing (about -0.01em); body text uses the default. Weight 600, not 700, keeps large headings refined instead of heavy.
 
 ## 5. Spacing, sizing and shape
 
 - Spacing scale: 4, 8, 12, 16, 24, 32, 48 px (`--space-1` to `--space-7`).
-- Corner radius: 8 px for cards and dialogs, 6 px for inputs and buttons, 999 px for badges.
+- Corner radius: 18 px for cards and dialogs, 12 px for inputs, 999 px (a full pill) for buttons and badges.
+- Elevation: cards use either a hairline border or one soft shadow (`0 2px 12px rgba(0, 0, 0, 0.06)`), never both. Dialogs use a stronger shadow.
+- Motion: 150 to 200 ms ease-out on hover, focus and appearing elements. No motion when the device asks for reduced motion.
 - Touch targets are at least 44 × 44 px.
 - Content width is capped at 1120 px and centred.
-- Cards have 16 px padding on phones and 24 px from tablet width.
+- Cards have 20 px padding on phones and 32 px from tablet width. Sections are separated by at least 48 px.
 
 ## 6. Reusable components
 
 | Component | Rules |
 | --- | --- |
-| Button | Primary (filled), secondary (outline), danger (filled red), text. One primary button per screen. Shows a spinner and is disabled while its request runs. |
+| Button | Pill-shaped. Primary (filled blue), secondary (black outline on white), danger (filled red), text (blue, no border). One primary button per screen. Shows a spinner and is disabled while its request runs. |
 | Card | Title, optional action link, body. Has its own loading, empty and error state. |
-| Stat card | Label, one large figure, one line of context ("3 subjects below 75%"). |
+| Stat card | Small muted label, one large near-black figure in the display size, one line of muted context ("3 subjects below 75%"). No coloured background. |
 | Badge | Short status text with colour: Strong, Improving, Needs revision, Below required, Draft, Published. |
 | Form field | Visible label above the input, optional helper text below, error text below in danger colour. |
 | Table | Header row, zebra-free rows with dividers, right-aligned numbers. See responsive rules. |
