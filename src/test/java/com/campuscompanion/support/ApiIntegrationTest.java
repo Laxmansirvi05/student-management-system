@@ -1,12 +1,9 @@
-package com.campuscompanion.academics;
+package com.campuscompanion.support;
 
 import static com.campuscompanion.support.ApiTestClient.json;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.campuscompanion.common.config.CampusTime;
-import com.campuscompanion.support.ApiTestClient;
-import com.campuscompanion.support.PostgresIntegrationTest;
-import com.campuscompanion.support.TestAccounts;
 import java.net.http.HttpResponse;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -18,11 +15,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import tools.jackson.databind.JsonNode;
 
 /**
- * What the academic API tests share: logged-in clients, short ways to create subjects and read the
- * audit log, and the checks every endpoint needs (visitor 401, wrong role 403).
+ * What the API tests share: logged-in clients, short ways to create subjects and read the audit
+ * log, and the checks every endpoint needs (visitor 401, wrong role 403).
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-abstract class AcademicApiTest extends PostgresIntegrationTest {
+public abstract class ApiIntegrationTest extends PostgresIntegrationTest {
 
   @Value("${local.server.port}")
   protected int port;

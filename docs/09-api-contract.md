@@ -354,8 +354,10 @@ A subject with no classes has `classesHeld: 0` and `percent: null`.
       "description": "1NF to BCNF with worked examples.",
       "subjectId": 12,
       "subjectCode": "CS301",
+      "subjectName": "Database Management Systems",
       "unitId": 31,
       "unitNo": 3,
+      "unitTitle": "Normalization",
       "type": "NOTES",
       "fileSizeBytes": 1482291,
       "createdAt": "2026-09-14T06:10:00Z",
@@ -379,6 +381,8 @@ For a question paper, `questionPaper` is `{ "examYear": 2025, "examType": "SEMES
 ```json
 { "url": "https://<project>.supabase.co/storage/v1/object/sign/...", "expiresAt": "2026-10-10T08:35:00Z" }
 ```
+
+The link shows the file in the page. With `?download=true` the link makes the browser save the file under the name it was uploaded with. Both kinds last five minutes.
 
 Failures: `404 NOT_FOUND` (missing or hidden), `503 STORAGE_UNAVAILABLE`.
 

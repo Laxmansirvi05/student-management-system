@@ -1,14 +1,15 @@
+import { api } from "./api.js";
 import { fill, h, stagger } from "./dom.js";
 import { leave, reveal } from "./motion.js";
-import { bookmarkStore, empty, resourceCard } from "./parts.js";
-import { resources } from "./sample-data.js";
+import { empty, loadInto, resourceCard } from "./parts.js";
 import "./shell.js";
 
 // Bookmarks (FR-LIB-004): the resources the student saved. Removing one takes it off the page.
+// A resource that was hidden or deleted is simply no longer in the list the server sends.
 
-const store = bookmarkStore(resources);
+const PAGE_SIZE = 100;
 const content = document.getElementById("content");
-const savedResources = () => resources.filter((resource) => store.has(resource.id));
+let shown = 0;
 
 function countText(number) {
   return number === 1 ? "1 saved resource" : number + " saved resources";
@@ -23,27 +24,31 @@ function emptyState() {
 function remove(card) {
   leave(card, () => {
     card.remove();
-    const left = savedResources().length;
-    if (left) {
-      document.getElementById("count").textContent = countText(left);
+    shown -= 1;
+    if (shown > 0) {
+      document.getElementById("count").textContent = countText(shown);
     } else {
       fill(content, emptyState());
     }
   });
 }
 
-function render() {
-  const saved = savedResources();
-  if (!saved.length) {
+function render(page) {
+  shown = page.totalElements;
+  if (!page.content.length) {
     fill(content, emptyState());
     return;
   }
-  const cards = saved.map((resource) => {
-    const card = resourceCard(resource, store, () => remove(card));
+  const cards = page.content.map((resource) => {
+    const card = resourceCard(resource, (saved) => {
+      if (!saved) {
+        remove(card);
+      }
+    });
     return card;
   });
-  fill(content, h("p.row__meta.num", { id: "count" }, countText(saved.length)), h("div.grid.grid--3", stagger(cards)));
+  fill(content, h("p.row__meta.num", { id: "count" }, countText(shown)), h("div.grid.grid--3", stagger(cards)));
   reveal();
 }
 
-render();
+loadInto(content, () => api.get("/bookmarks/me?size=" + PAGE_SIZE), render);

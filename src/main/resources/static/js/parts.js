@@ -1,7 +1,7 @@
 // Pieces of page that several student pages share: card headings, empty states, the chips for
 // notice categories and due dates, the resource card, and the phone sheet for details.
 
-import { messageFor } from "./api.js";
+import { api, messageFor } from "./api.js";
 import { daysUntil, fill, formatDate, formatSize, h, icon, tag, toast } from "./dom.js";
 
 /** How each kind of resource is named and coloured. */
@@ -113,59 +113,42 @@ export function scoreKind(percentage) {
   return percentage < 50 ? "danger" : "";
 }
 
-// ---- Bookmarks ----
-// Until the bookmark API exists, the choice is kept for this browser tab only.
-const BOOKMARK_KEY = "sample-bookmarks";
+// ---- Resources and bookmarks ----
 
-function readBookmarks(resources) {
-  const saved = sessionStorage.getItem(BOOKMARK_KEY);
-  if (saved) {
-    return new Set(saved.split(",").filter(Boolean).map(Number));
-  }
-  return new Set(resources.filter((resource) => resource.bookmarked).map((resource) => resource.id));
-}
-
-export function bookmarkStore(resources) {
-  const ids = readBookmarks(resources);
-  return {
-    has: (id) => ids.has(id),
-    toggle(id) {
-      if (ids.has(id)) {
-        ids.delete(id);
-      } else {
-        ids.add(id);
-      }
-      sessionStorage.setItem(BOOKMARK_KEY, [...ids].join(","));
-      return ids.has(id);
-    },
-  };
+/** Saves or removes the bookmark of a resource on the server. Returns the new state. */
+export async function toggleBookmark(resource) {
+  const saved = !resource.bookmarked;
+  await (saved ? api.put("/bookmarks/" + resource.id) : api.delete("/bookmarks/" + resource.id));
+  resource.bookmarked = saved;
+  return saved;
 }
 
 /** The round bookmark button of a resource. onChange is told the new state. */
-export function bookmarkButton(resource, store, onChange = () => {}) {
-  const button = h(
-    "button.icon-button.icon-button--bare",
-    { type: "button", "aria-pressed": String(store.has(resource.id)) },
-    icon("bookmark"),
-  );
-  const label = () =>
-    button.setAttribute(
-      "aria-label",
-      (store.has(resource.id) ? "Remove bookmark: " : "Bookmark: ") + resource.title,
-    );
-  label();
-  button.addEventListener("click", () => {
-    const saved = store.toggle(resource.id);
-    button.setAttribute("aria-pressed", String(saved));
-    label();
-    toast(saved ? "Saved to bookmarks" : "Removed from bookmarks");
-    onChange(saved);
+export function bookmarkButton(resource, onChange = () => {}) {
+  const button = h("button.icon-button.icon-button--bare", { type: "button" }, icon("bookmark"));
+  const show = () => {
+    button.setAttribute("aria-pressed", String(resource.bookmarked));
+    button.setAttribute("aria-label", (resource.bookmarked ? "Remove bookmark: " : "Bookmark: ") + resource.title);
+  };
+  show();
+  button.addEventListener("click", async () => {
+    button.disabled = true;
+    try {
+      const saved = await toggleBookmark(resource);
+      show();
+      toast(saved ? "Saved to bookmarks" : "Removed from bookmarks");
+      onChange(saved);
+    } catch (failure) {
+      toast(messageFor(failure));
+    } finally {
+      button.disabled = false;
+    }
   });
   return button;
 }
 
-export function typeTag(resourceType) {
-  const entry = resourceTypes[resourceType];
+export function typeTag(type) {
+  const entry = resourceTypes[type] || { label: "Resource", kind: "" };
   return tag(entry.label, entry.kind);
 }
 
@@ -173,17 +156,35 @@ export function resourcePlace(resource) {
   return resource.unitNo ? `${resource.subjectName} · Unit ${resource.unitNo}` : resource.subjectName;
 }
 
+const EXAM_TYPES = { INTERNAL: "Internal exam", SEMESTER: "Semester exam", SUPPLEMENTARY: "Supplementary exam", MODEL: "Model paper" };
+
+export const examTypeLabels = EXAM_TYPES;
+
+/** "Semester exam 2025 · 70 marks" for a question paper, or an empty text for anything else. */
+export function examText(resource) {
+  const paper = resource.questionPaper;
+  if (!paper) {
+    return "";
+  }
+  return `${EXAM_TYPES[paper.examType] || "Exam"} ${paper.examYear}` + (paper.maxMarks ? ` · ${paper.maxMarks} marks` : "");
+}
+
 /** One resource in a grid: type, title, subject and unit, size and date, bookmark and open. */
-export function resourceCard(resource, store, onBookmarkChange) {
+export function resourceCard(resource, onBookmarkChange) {
   const href = "/student/resource.html?id=" + resource.id;
   return h(
     "article.card.card--lift.reveal.resource",
     h(
       "div.line",
-      h("div.line.line--start", h("span.badge-icon.badge-icon--danger", icon("file")), typeTag(resource.resourceType)),
-      bookmarkButton(resource, store, onBookmarkChange),
+      h("div.line.line--start", h("span.badge-icon.badge-icon--danger", icon("file")), typeTag(resource.type)),
+      bookmarkButton(resource, onBookmarkChange),
     ),
-    h("div.stack", h("h3.resource__title", h("a", { href }, resource.title)), h("p.row__meta", resourcePlace(resource))),
+    h(
+      "div.stack",
+      h("h3.resource__title", h("a", { href }, resource.title)),
+      h("p.row__meta", resourcePlace(resource)),
+      resource.questionPaper ? h("p.row__meta.num", examText(resource)) : null,
+    ),
     h(
       "div.card__foot",
       h("span.num", `${formatSize(resource.fileSizeBytes)} · ${formatDate(resource.createdAt)}`),

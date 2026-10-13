@@ -3,6 +3,7 @@ package com.campuscompanion.academics;
 import static com.campuscompanion.support.ApiTestClient.json;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.campuscompanion.support.ApiIntegrationTest;
 import com.campuscompanion.support.ApiTestClient;
 import java.net.http.HttpResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,7 +15,7 @@ import tools.jackson.databind.JsonNode;
  * (FR-ADM-003, FR-ADM-004, FR-MRK-001, FR-MRK-002). Covers scenarios Z6 and Z8. All data is
  * synthetic.
  */
-class MarksAndResultsApiIT extends AcademicApiTest {
+class MarksAndResultsApiIT extends ApiIntegrationTest {
 
   private ApiTestClient admin;
   private long first;

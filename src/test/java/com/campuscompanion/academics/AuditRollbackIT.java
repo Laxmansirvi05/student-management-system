@@ -7,6 +7,7 @@ import static org.mockito.Mockito.doThrow;
 
 import com.campuscompanion.audit.AuditLog;
 import com.campuscompanion.audit.AuditLogRepository;
+import com.campuscompanion.support.ApiIntegrationTest;
 import com.campuscompanion.support.ApiTestClient;
 import java.math.BigDecimal;
 import java.net.http.HttpResponse;
@@ -18,7 +19,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
  * Task T2-02, scenario Z19: a change and its audit entry are saved together or not at all. When the
  * audit entry cannot be written, the marks change is rolled back as well.
  */
-class AuditRollbackIT extends AcademicApiTest {
+class AuditRollbackIT extends ApiIntegrationTest {
 
   @MockitoSpyBean private AuditLogRepository auditLogs;
 

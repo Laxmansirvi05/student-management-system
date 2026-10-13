@@ -140,10 +140,30 @@
 .form-grid {
   display: grid;
   gap: var(--space-4);
+  /* A field with a hint is taller than its neighbour; the shorter one must not stretch. */
+  align-items: start;
 }
 
 .form-grid .field--wide {
   grid-column: 1 / -1;
+}
+
+/* The file chooser, dressed like the other fields. */
+.textbox[type="file"] {
+  height: auto;
+  padding: var(--space-2);
+  cursor: pointer;
+}
+
+.textbox[type="file"]::file-selector-button {
+  margin-right: var(--space-3);
+  padding: 6px 14px;
+  background: var(--color-bg-subtle);
+  border: 0;
+  border-radius: var(--radius-pill);
+  color: var(--color-text);
+  cursor: pointer;
+  font: 600 13px/20px var(--font);
 }
 
 .check {

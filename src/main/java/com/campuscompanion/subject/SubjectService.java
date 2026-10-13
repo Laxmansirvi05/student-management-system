@@ -63,6 +63,11 @@ public class SubjectService {
         .toList();
   }
 
+  /** The IDs of the active subjects of a semester, in every branch. */
+  public List<Long> activeIdsOfSemester(int semester) {
+    return subjects.findActive(null, semester).stream().map(Subject::getId).toList();
+  }
+
   /** True once at least one subject exists. */
   public boolean anySubjectExists() {
     return subjects.count() > 0;

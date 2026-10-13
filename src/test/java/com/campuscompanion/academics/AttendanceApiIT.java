@@ -3,6 +3,7 @@ package com.campuscompanion.academics;
 import static com.campuscompanion.support.ApiTestClient.json;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.campuscompanion.support.ApiIntegrationTest;
 import com.campuscompanion.support.ApiTestClient;
 import java.math.BigDecimal;
 import java.net.http.HttpResponse;
@@ -16,7 +17,7 @@ import tools.jackson.databind.JsonNode;
  * attendance (FR-ADM-002, FR-ATT-001, FR-ATT-002). Covers scenarios Z6 and Z11. All data is
  * synthetic.
  */
-class AttendanceApiIT extends AcademicApiTest {
+class AttendanceApiIT extends ApiIntegrationTest {
 
   private ApiTestClient admin;
   private long first;

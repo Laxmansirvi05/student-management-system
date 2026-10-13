@@ -17,8 +17,9 @@ import java.util.TreeSet;
 import org.junit.jupiter.api.Test;
 
 /**
- * Tasks T1-03 and T2-01: the database matches the security model in docs/08-database-design.md
- * section 11, and the database itself enforces email and roll-number uniqueness (scenario PV4).
+ * Tasks T1-03, T2-01 and T3-01: the database matches the security model in
+ * docs/08-database-design.md section 11, and the database itself enforces email and roll-number
+ * uniqueness (scenario PV4).
  */
 class DatabaseSecurityModelIT extends PostgresIntegrationTest {
 
@@ -35,6 +36,9 @@ class DatabaseSecurityModelIT extends PostgresIntegrationTest {
           Map.entry("semester_results", Set.of("SELECT", "INSERT", "UPDATE")),
           Map.entry("timetable_entries", Set.of("SELECT", "INSERT", "UPDATE", "DELETE")),
           Map.entry("notices", Set.of("SELECT", "INSERT", "UPDATE", "DELETE")),
+          Map.entry("learning_resources", Set.of("SELECT", "INSERT", "UPDATE", "DELETE")),
+          Map.entry("question_papers", Set.of("SELECT", "INSERT", "UPDATE", "DELETE")),
+          Map.entry("bookmarks", Set.of("SELECT", "INSERT", "DELETE")),
           Map.entry("audit_logs", Set.of("SELECT", "INSERT")));
 
   @Test
@@ -68,8 +72,11 @@ class DatabaseSecurityModelIT extends PostgresIntegrationTest {
             "assessments,cc_migrator,true",
             "attendance_records,cc_migrator,true",
             "audit_logs,cc_migrator,true",
+            "bookmarks,cc_migrator,true",
+            "learning_resources,cc_migrator,true",
             "marks,cc_migrator,true",
             "notices,cc_migrator,true",
+            "question_papers,cc_migrator,true",
             "semester_results,cc_migrator,true",
             "student_profiles,cc_migrator,true",
             "subject_units,cc_migrator,true",

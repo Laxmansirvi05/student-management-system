@@ -3,6 +3,7 @@ package com.campuscompanion.academics;
 import static com.campuscompanion.support.ApiTestClient.json;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.campuscompanion.support.ApiIntegrationTest;
 import com.campuscompanion.support.ApiTestClient;
 import java.net.http.HttpResponse;
 import java.time.LocalDate;
@@ -15,7 +16,7 @@ import tools.jackson.databind.JsonNode;
  * (FR-TT-001, FR-NOT-001, FR-ADM-005, FR-ADM-006, FR-STU-001). Covers scenario Z8. All data is
  * synthetic.
  */
-class TimetableNoticesDashboardIT extends AcademicApiTest {
+class TimetableNoticesDashboardIT extends ApiIntegrationTest {
 
   private ApiTestClient admin;
 

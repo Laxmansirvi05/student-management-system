@@ -40,7 +40,10 @@ async function request(method, path, body, { redirectOnAuthFailure = true } = {}
   if (method !== "GET") {
     headers[CSRF_HEADER] = await csrfToken();
   }
-  if (body !== undefined) {
+  if (body instanceof FormData) {
+    // The browser writes the multipart content type itself, with the boundary it chose.
+    options.body = body;
+  } else if (body !== undefined) {
     headers["Content-Type"] = "application/json";
     options.body = JSON.stringify(body);
   }
@@ -82,6 +85,13 @@ export const api = {
   post: (path, body, options) => request("POST", path, body, options),
   put: (path, body, options) => request("PUT", path, body, options),
   delete: (path, options) => request("DELETE", path, undefined, options),
+  /** Sends a file with its details: a "metadata" part holding JSON and a "file" part. */
+  upload(path, metadata, file) {
+    const form = new FormData();
+    form.append("metadata", new Blob([JSON.stringify(metadata)], { type: "application/json" }));
+    form.append("file", file);
+    return request("POST", path, form);
+  },
 };
 
 /** Where a signed-in user belongs. A temporary password always leads to the change page. */
@@ -92,10 +102,14 @@ export function homeFor(user) {
   return user.role === "ADMIN" ? "/admin/dashboard.html" : "/student/dashboard.html";
 }
 
+// One part of the system is down for now. The server's own words say which part, so they are
+// shown. Any other server failure gets the general message with its reference.
+const UNAVAILABLE = new Set(["STORAGE_UNAVAILABLE", "AI_UNAVAILABLE", "AI_TIMEOUT", "AI_INVALID_RESPONSE"]);
+
 /** A message for the user for any failure, in plain language. */
 export function messageFor(error) {
   if (error instanceof ApiError) {
-    if (error.status >= 500 || !error.message) {
+    if (!error.message || (error.status >= 500 && !UNAVAILABLE.has(error.code))) {
       const reference = error.traceId ? " Reference: " + error.traceId : "";
       return "Something went wrong on our side. Please try again." + reference;
     }

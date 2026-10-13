@@ -335,6 +335,10 @@ paths:
       summary: Short-lived signed link to the file
       parameters:
         - { $ref: "#/components/parameters/IdPath" }
+        - name: download
+          in: query
+          description: true for a link that saves the file under its original name; false (the default) for a link that shows it in the page.
+          schema: { type: boolean, default: false }
       responses:
         "200":
           description: Signed link valid for at most five minutes.
@@ -1671,8 +1675,10 @@ components:
         description: { type: string, nullable: true }
         subjectId: { type: integer, format: int64 }
         subjectCode: { type: string }
+        subjectName: { type: string }
         unitId: { type: integer, format: int64, nullable: true }
         unitNo: { type: integer, nullable: true }
+        unitTitle: { type: string, nullable: true }
         type: { $ref: "#/components/schemas/ResourceType" }
         fileSizeBytes: { type: integer, format: int64 }
         createdAt: { type: string, format: date-time }

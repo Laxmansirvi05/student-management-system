@@ -153,6 +153,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     return switch (status) {
       case BAD_REQUEST -> ErrorCode.VALIDATION_FAILED;
       case NOT_FOUND -> ErrorCode.NOT_FOUND;
+      case CONTENT_TOO_LARGE -> ErrorCode.UPLOAD_TOO_LARGE;
       case INTERNAL_SERVER_ERROR -> ErrorCode.INTERNAL_ERROR;
       default -> null;
     };
@@ -163,6 +164,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
       case BAD_REQUEST -> "The request could not be understood. Check the values and try again.";
       case NOT_FOUND -> "We could not find that.";
       case METHOD_NOT_ALLOWED -> "That action is not available here.";
+      case CONTENT_TOO_LARGE -> "The file is larger than 10 MB.";
       case NOT_ACCEPTABLE, UNSUPPORTED_MEDIA_TYPE -> "That format is not supported.";
       default ->
           status.is5xxServerError()

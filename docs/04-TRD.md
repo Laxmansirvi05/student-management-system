@@ -19,7 +19,7 @@ This document sets the technical constraints every implementation must satisfy. 
 | JDBC driver | PostgreSQL JDBC | from Boot | |
 | Migrations | Flyway | from Boot | See [ADR 0006](decisions/0006-flyway-database-migrations.md). |
 | File storage | Supabase Storage | Supabase-managed | Called over HTTPS from Java. |
-| PDF text | Apache PDFBox | **TBD in `T3-03`** | Validation in R1, text extraction in P1. |
+| PDF text | Apache PDFBox | 3.0.5 (chosen in `T3-03`) | Validation in R1, text extraction in P1. |
 | HTTP client | Spring `RestClient` | from Boot | For storage and the AI provider. |
 | Build | Maven with the Maven Wrapper | Maven 3.9.11, wrapper 3.3.4 | `./mvnw` is the only supported way to build. The build refuses any Java other than 21. |
 | Formatting | Spotless with google-java-format | Spotless 3.10.4, google-java-format 1.36.1 | google-java-format 1.37.0 fails under Spotless 3.10.4, so 1.36.1 is pinned. |

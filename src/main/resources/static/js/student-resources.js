@@ -1,25 +1,16 @@
+import { api } from "./api.js";
 import { fill, h, icon, stagger } from "./dom.js";
-import { reveal, swap } from "./motion.js";
-import { bookmarkStore, empty, resourceCard, resourceTypes } from "./parts.js";
-import { resources, subjects } from "./sample-data.js";
+import { reveal } from "./motion.js";
+import { empty, loadInto, resourceCard, resourceTypes } from "./parts.js";
 import "./shell.js";
 
 // The resource hub (FR-LIB-001, FR-LIB-002): search, three filters, and pages of resource cards.
+// The server does the searching; this page only sends the filters and draws what comes back.
 // Students can read and bookmark; uploading belongs to the admin side.
 
-const PAGE_SIZE = 6;
-const store = bookmarkStore(resources);
-const state = { query: "", subject: "", unit: "", type: "", page: 1 };
-
-function matches(resource) {
-  const text = (resource.title + " " + resource.subjectName + " " + (resource.unitTitle || "")).toLowerCase();
-  return (
-    text.includes(state.query.toLowerCase()) &&
-    (!state.subject || resource.subjectCode === state.subject) &&
-    (!state.unit || String(resource.unitNo) === state.unit) &&
-    (!state.type || resource.resourceType === state.type)
-  );
-}
+const PAGE_SIZE = 12;
+const SEARCH_DELAY = 300;
+const state = { query: "", subjectId: "", unitId: "", type: "", page: 0 };
 
 function option(value, label) {
   return h("option", { value }, label);
@@ -30,82 +21,124 @@ function field(id, label, options) {
   return { select, element: h("label.filter", { for: id }, h("span.visually-hidden", label), select) };
 }
 
-const search = h("input.search__input", { type: "search", id: "resource-search", placeholder: "Search notes, papers and manuals", autocomplete: "off" });
-const subjectField = field("filter-subject", "Subject", [option("", "All subjects"), ...subjects.map((subject) => option(subject.code, subject.name))]);
+const search = h("input.search__input", { type: "search", id: "resource-search", placeholder: "Search notes, papers and manuals", autocomplete: "off", maxlength: 100 });
+const subjectField = field("filter-subject", "Subject", [option("", "All subjects")]);
 const unitField = field("filter-unit", "Unit", [option("", "All units")]);
 const typeField = field("filter-type", "Type", [option("", "All types"), ...Object.entries(resourceTypes).map(([value, entry]) => option(value, entry.label))]);
 const count = h("p.row__meta.num", { "aria-live": "polite" });
 const reset = h("button.button.button--quiet.button--small", { type: "button" }, icon("refresh"), "Clear filters");
+const list = h("div.stack.stack--loose", { id: "list" }, h("div.skeleton.skeleton--card"));
 
-function fillUnits() {
-  const units = [...new Set(resources.filter((resource) => resource.subjectCode === state.subject && resource.unitNo).map((resource) => resource.unitNo))].sort();
-  fill(unitField.select, option("", "All units"), units.map((unit) => option(String(unit), "Unit " + unit)));
-  unitField.select.disabled = !state.subject;
+/** The filters as a query string. A search of one letter is left out, as the server asks for two. */
+function query() {
+  const params = new URLSearchParams({ page: state.page, size: PAGE_SIZE });
+  if (state.query.length >= 2) {
+    params.set("q", state.query);
+  }
+  for (const [name, value] of [["subjectId", state.subjectId], ["unitId", state.unitId], ["type", state.type]]) {
+    if (value) {
+      params.set(name, value);
+    }
+  }
+  return params.toString();
 }
 
-function pager(pages) {
+function filtered() {
+  return state.query.length >= 2 || state.subjectId || state.unitId || state.type;
+}
+
+function pager(page) {
   const button = (label, iconName, target, before) => {
-    const element = h("button.button.button--secondary.button--small", { type: "button", disabled: target < 1 || target > pages }, before ? icon(iconName) : null, label, before ? null : icon(iconName));
+    const element = h("button.button.button--secondary.button--small", { type: "button", disabled: target < 0 || target >= page.totalPages }, before ? icon(iconName) : null, label, before ? null : icon(iconName));
     element.addEventListener("click", () => {
       state.page = target;
-      swap(document.getElementById("list"), renderList);
-      document.getElementById("list").scrollIntoView({ behavior: "smooth", block: "start" });
+      load();
+      list.scrollIntoView({ behavior: "smooth", block: "start" });
     });
     return element;
   };
   return h(
     "nav.pager",
     { "aria-label": "Pages" },
-    button("Previous", "arrow-left", state.page - 1, true),
-    h("span.row__meta.num", "Page ", h("strong", state.page), " of " + pages),
-    button("Next", "arrow-right", state.page + 1, false),
+    button("Previous", "arrow-left", page.page - 1, true),
+    h("span.row__meta.num", "Page ", h("strong", page.page + 1), " of " + page.totalPages),
+    button("Next", "arrow-right", page.page + 1, false),
   );
 }
 
-function renderList() {
-  const found = resources.filter(matches);
-  const pages = Math.max(1, Math.ceil(found.length / PAGE_SIZE));
-  state.page = Math.min(state.page, pages);
-  const shown = found.slice((state.page - 1) * PAGE_SIZE, state.page * PAGE_SIZE);
-  count.textContent = found.length === 1 ? "1 resource" : found.length + " resources";
+function nothingFound() {
+  if (!filtered()) {
+    return h("div.card", empty("resources", "No resources yet", "Notes, papers and manuals appear here once they are uploaded."));
+  }
   const clear = h("button.button.button--primary.button--small", { type: "button" }, "Clear filters");
   clear.addEventListener("click", clearFilters);
-  fill(
-    document.getElementById("list"),
-    shown.length
-      ? [h("div.grid.grid--3", stagger(shown.map((resource) => resourceCard(resource, store)))), pages > 1 ? pager(pages) : null]
-      : h("div.card", empty("search", "No resources match your filters", "Try a different search or fewer filters.", clear)),
-  );
+  return h("div.card", empty("search", "No resources match your filters", "Try a different search or fewer filters.", clear));
+}
+
+// Each load gets a number. An answer that arrives after a newer request was sent is dropped, so
+// fast typing can never show the results of an older search.
+let latest = 0;
+
+function load() {
+  const mine = ++latest;
+  loadInto(list, () => api.get("/resources?" + query()), (page) => {
+    if (mine !== latest) {
+      return;
+    }
+    count.textContent = page.totalElements === 1 ? "1 resource" : page.totalElements + " resources";
+    fill(
+      list,
+      page.content.length
+        ? [h("div.grid.grid--3", stagger(page.content.map((resource) => resourceCard(resource)))), page.totalPages > 1 ? pager(page) : null]
+        : nothingFound(),
+    );
+    reveal();
+  });
 }
 
 function refresh() {
-  state.page = 1;
-  swap(document.getElementById("list"), renderList);
+  state.page = 0;
+  load();
+}
+
+async function fillUnits() {
+  fill(unitField.select, option("", "All units"));
+  unitField.select.disabled = !state.subjectId;
+  if (!state.subjectId) {
+    return;
+  }
+  try {
+    const units = await api.get(`/subjects/${state.subjectId}/units`);
+    fill(unitField.select, option("", "All units"), units.map((unit) => option(unit.id, `Unit ${unit.unitNo}: ${unit.title}`)));
+  } catch {
+    // The page still works without the unit filter.
+    unitField.select.disabled = true;
+  }
 }
 
 function clearFilters() {
-  Object.assign(state, { query: "", subject: "", unit: "", type: "", page: 1 });
+  Object.assign(state, { query: "", subjectId: "", unitId: "", type: "", page: 0 });
   search.value = "";
   subjectField.select.value = "";
   typeField.select.value = "";
   fillUnits();
-  refresh();
+  load();
 }
 
+let waiting = 0;
 search.addEventListener("input", () => {
   state.query = search.value.trim();
-  state.page = 1;
-  renderList();
-  reveal();
+  clearTimeout(waiting);
+  waiting = setTimeout(refresh, SEARCH_DELAY);
 });
 subjectField.select.addEventListener("change", () => {
-  state.subject = subjectField.select.value;
-  state.unit = "";
+  state.subjectId = subjectField.select.value;
+  state.unitId = "";
   fillUnits();
   refresh();
 });
 unitField.select.addEventListener("change", () => {
-  state.unit = unitField.select.value;
+  state.unitId = unitField.select.value;
   refresh();
 });
 typeField.select.addEventListener("change", () => {
@@ -122,8 +155,19 @@ fill(
     h("label.search.search--large", { for: "resource-search" }, h("span.visually-hidden", "Search resources"), icon("search"), search),
     h("div.filters", subjectField.element, unitField.element, typeField.element, reset, count),
   ),
-  h("div.stack.stack--loose", { id: "list" }),
+  list,
 );
 fillUnits();
-renderList();
 reveal();
+load();
+
+// The subject filter lists the subjects of the student's own branch. Without a filter, the list
+// shows the resources of every subject.
+api
+  .get("/subjects")
+  .then((subjects) => {
+    fill(subjectField.select, option("", "All subjects"), subjects.map((subject) => option(subject.id, `${subject.code} · ${subject.name}`)));
+  })
+  .catch(() => {
+    subjectField.select.disabled = true;
+  });
