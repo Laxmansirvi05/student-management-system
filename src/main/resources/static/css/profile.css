@@ -1,118 +1,19 @@
-/* The student profile page. A dark hero card with depth, a row of figures and two columns of
-   read-only details. Motion is decoration only and stops when reduced motion is requested. */
-.profile__content {
-  display: grid;
-  gap: var(--space-5);
-}
-
-.icon {
-  width: 18px;
-  height: 18px;
-  flex: none;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.7;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-/* Sections rise into place one after another when the profile appears. */
-.rise {
-  animation: rise 620ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
-}
-
-.stats .rise:nth-child(1) { animation-delay: 80ms; }
-.stats .rise:nth-child(2) { animation-delay: 140ms; }
-.stats .rise:nth-child(3) { animation-delay: 200ms; }
-.stats .rise:nth-child(4) { animation-delay: 260ms; }
-.profile__columns > .rise { animation-delay: 320ms; }
-.profile__side .rise:nth-child(1) { animation-delay: 380ms; }
-.profile__side .rise:nth-child(2) { animation-delay: 440ms; }
-
-@keyframes rise {
-  from {
-    opacity: 0;
-    transform: translateY(18px) scale(0.985);
-  }
-}
-
-/* An element with data-tilt leans toward the pointer. js/motion.js sets the four variables. */
-[data-tilt] {
-  --tilt-x: 0deg;
-  --tilt-y: 0deg;
-  --shine-x: 50%;
-  --shine-y: 0%;
-  position: relative;
-  transform: perspective(1100px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
-  transform-style: preserve-3d;
-  transition: transform 260ms ease-out, box-shadow 260ms ease-out;
-}
-
-[data-tilt]::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: radial-gradient(
-    420px circle at var(--shine-x) var(--shine-y),
-    rgba(255, 255, 255, 0.16),
-    transparent 60%
-  );
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 260ms ease-out;
-}
-
-[data-tilt].is-tilting::after {
-  opacity: 1;
-}
-
-/* ---- Hero ---- */
-.hero {
-  display: grid;
-  gap: var(--space-5);
-  grid-template-columns: minmax(0, 1fr);
+/* The student profile page: the avatar with its turning ring, and the stacked contact list.
+   The hero, chips, figure tiles and cards come from app.css. */
+.profile-hero {
   justify-items: start;
-  padding: var(--space-6) var(--space-5);
-  overflow: hidden;
-  background: var(--color-inverse-bg);
-  border-radius: 28px;
-  box-shadow: var(--shadow-raised);
-  color: var(--color-inverse-text);
 }
 
-/* Slow blue light drifting behind the hero. */
-.hero__aurora {
-  position: absolute;
-  inset: -40%;
-  background:
-    radial-gradient(38% 42% at 22% 30%, rgba(0, 113, 227, 0.55), transparent 70%),
-    radial-gradient(30% 36% at 78% 20%, rgba(120, 180, 255, 0.28), transparent 70%),
-    radial-gradient(34% 40% at 65% 82%, rgba(0, 80, 190, 0.4), transparent 70%);
-  filter: blur(18px);
-  animation: drift 18s ease-in-out infinite alternate;
-}
-
-@keyframes drift {
-  from {
-    transform: translate3d(-4%, -3%, 0) rotate(0deg);
-  }
-  to {
-    transform: translate3d(4%, 3%, 0) rotate(14deg);
-  }
-}
-
-.hero__avatar {
+.profile-hero__avatar {
   position: relative;
   display: grid;
   width: 104px;
   height: 104px;
   place-items: center;
-  transform: translateZ(46px);
 }
 
 /* A ring of light that turns slowly around the initials. */
-.hero__ring {
+.profile-hero__ring {
   position: absolute;
   inset: 0;
   border-radius: 50%;
@@ -120,7 +21,7 @@
   animation: turn 7s linear infinite;
 }
 
-.hero__ring::after {
+.profile-hero__ring::after {
   content: "";
   position: absolute;
   inset: 3px;
@@ -134,186 +35,10 @@
   }
 }
 
-.hero__initials {
+.profile-hero__initials {
   position: relative;
   font: 600 36px/1 var(--font);
   letter-spacing: 0.02em;
-}
-
-.hero__body {
-  position: relative;
-  display: grid;
-  gap: var(--space-3);
-  justify-items: start;
-  min-width: 0;
-  transform: translateZ(28px);
-}
-
-.hero__eyebrow {
-  color: #a1a1a6;
-  font: var(--text-caption);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.hero__name {
-  font: 600 32px/38px var(--font);
-  letter-spacing: -0.02em;
-  overflow-wrap: anywhere;
-}
-
-.hero__line {
-  display: flex;
-  gap: var(--space-2);
-  align-items: center;
-  color: #d2d2d7;
-}
-
-.hero__line .icon {
-  color: #6cb4ff;
-}
-
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.chip {
-  display: inline-flex;
-  gap: var(--space-2);
-  align-items: center;
-  min-height: 36px;
-  padding: 0 var(--space-3);
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: var(--radius-pill);
-  color: var(--color-inverse-text);
-  font: var(--text-small);
-  backdrop-filter: blur(12px);
-}
-
-.chip strong {
-  font-weight: 600;
-}
-
-.chip--action {
-  min-height: 44px;
-  max-width: 100%;
-  cursor: pointer;
-  transition: background var(--motion), border-color var(--motion), transform var(--motion);
-}
-
-.chip--action:hover {
-  background: rgba(255, 255, 255, 0.16);
-  border-color: rgba(255, 255, 255, 0.4);
-  transform: translateY(-1px);
-}
-
-.chip--action:focus-visible {
-  outline: 2px solid #6cb4ff;
-  outline-offset: 2px;
-}
-
-.chip--action #email-chip {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.chip__hint {
-  padding-left: var(--space-2);
-  border-left: 1px solid rgba(255, 255, 255, 0.24);
-  color: #6cb4ff;
-  font: var(--text-caption);
-}
-
-/* ---- Figures ---- */
-.stats {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--space-3);
-}
-
-.stat {
-  display: grid;
-  gap: var(--space-1);
-  padding: var(--space-4);
-  background: var(--color-surface);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-card);
-}
-
-.stat:hover {
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.12);
-}
-
-.stat[data-tilt]::after {
-  background: radial-gradient(
-    260px circle at var(--shine-x) var(--shine-y),
-    rgba(0, 113, 227, 0.1),
-    transparent 60%
-  );
-}
-
-.stat__value {
-  font: var(--text-display);
-  letter-spacing: -0.02em;
-  font-variant-numeric: tabular-nums;
-  transform: translateZ(22px);
-}
-
-.stat__label {
-  color: var(--color-text-muted);
-  font: var(--text-caption);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-/* ---- Details ---- */
-.profile__columns,
-.profile__side {
-  display: grid;
-  gap: var(--space-5);
-  align-content: start;
-}
-
-.panel {
-  display: grid;
-  gap: var(--space-3);
-  border: 0;
-  box-shadow: var(--shadow-card);
-  transition: box-shadow var(--motion), transform var(--motion);
-}
-
-.panel:hover {
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.1);
-  transform: translateY(-2px);
-}
-
-.panel__head {
-  display: flex;
-  gap: var(--space-3);
-  align-items: center;
-}
-
-.panel__icon {
-  display: grid;
-  width: 40px;
-  height: 40px;
-  place-items: center;
-  background: #e8f2fd;
-  border-radius: var(--radius-input);
-  color: var(--color-link);
-}
-
-.panel--note {
-  background: var(--color-bg-subtle);
-  box-shadow: none;
 }
 
 .detail-list--stacked .detail-list__row {
@@ -321,45 +46,35 @@
   gap: var(--space-1);
 }
 
+.stats .rise:nth-child(1) { animation-delay: 80ms; }
+.stats .rise:nth-child(2) { animation-delay: 140ms; }
+.stats .rise:nth-child(3) { animation-delay: 200ms; }
+.stats .rise:nth-child(4) { animation-delay: 260ms; }
+.grid--aside .rise { animation-delay: 320ms; }
+
+.profile-logout {
+  justify-self: start;
+}
+
 @media (min-width: 600px) {
-  .hero {
+  .profile-hero {
     grid-template-columns: auto minmax(0, 1fr);
     align-items: center;
-    padding: var(--space-7) var(--space-6);
   }
 
-  .hero__avatar {
+  .profile-hero__avatar {
     width: 132px;
     height: 132px;
   }
 
-  .hero__initials {
+  .profile-hero__initials {
     font-size: 46px;
   }
-
-  .hero__name {
-    font: var(--text-display);
-    letter-spacing: -0.02em;
-  }
-
-  .stats {
-    grid-template-columns: repeat(4, 1fr);
-    gap: var(--space-4);
-  }
-
-  .stat {
-    padding: var(--space-5);
-  }
 }
 
-@media (min-width: 1024px) {
-  .profile__columns {
-    grid-template-columns: 3fr 2fr;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  [data-tilt] {
-    transform: none;
+/* Logging out is in the sidebar on wide screens. */
+@media (min-width: 900px) {
+  .profile-logout {
+    display: none;
   }
 }

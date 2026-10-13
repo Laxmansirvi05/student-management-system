@@ -19,6 +19,8 @@ Decided by the owner on 2026-10-13: every student-facing feature is built before
 
 **How it works without the admin screens.** Student pages only read data. The data they read (accounts, attendance, marks, results, timetable, notices, resources, questions) is put in place by the synthetic seeder, which is extended as each feature arrives. Each migration, service and student endpoint is built and tested with seeded data; the matching admin endpoint and screen come later and write to the same tables.
 
+**Design pass before the features (owner decision, 2026-10-13).** The owner asked for the user interface of every student page to be designed and built first, from Google Stitch designs, and for the features to follow. All thirteen student pages now exist as finished designs that read from `js/sample-data.js` and show a "Sample data" label ([07-ui-ux-spec.md](07-ui-ux-spec.md) section 18). The tasks in stages B to E are unchanged, but each one now ends by connecting an existing page to its new endpoint and removing its label, instead of building the page from nothing. A task is not complete while its page still shows sample data.
+
 | Stage | Tasks | Result |
 | --- | --- | --- |
 | A. Finish the foundation | T1-09, T1-10, T1-11 | Login and change-password pages, page layout, student provisioning and seeded accounts |

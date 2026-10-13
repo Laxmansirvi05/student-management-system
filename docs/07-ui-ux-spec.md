@@ -129,11 +129,12 @@ Body text is never smaller than 14 px. Figures in tables use tabular numerals. H
 
 - Spacing scale: 4, 8, 12, 16, 24, 32, 48 px (`--space-1` to `--space-7`).
 - Corner radius: 18 px for cards and dialogs, 12 px for inputs, 999 px (a full pill) for buttons and badges.
-- Elevation: cards use either a hairline border or one soft shadow (`0 2px 12px rgba(0, 0, 0, 0.06)`), never both. Dialogs use a stronger shadow.
-- Motion: 150 to 200 ms ease-out on hover, focus and appearing elements. No motion when the device asks for reduced motion.
-- Touch targets are at least 44 × 44 px.
-- Content width is capped at 1120 px and centred.
-- Cards have 20 px padding on phones and 32 px from tablet width. Sections are separated by at least 48 px.
+- Corner radius of the hero card: 28 px. Blocks set inside a card: 12 px.
+- Elevation: cards have one soft shadow and no border (`--shadow-card`). The hero card, dialogs and things that float use the stronger shadows defined beside it.
+- Motion: 150 to 200 ms ease-out on hover and focus. Content that arrives (a page, a list after a filter, a dialog) may take up to 650 ms on the `--ease` curve. The complete motion rules are in [section 18](#18-student-pages-design-system). No motion when the device asks for reduced motion.
+- Touch targets are at least 44 × 44 px. Filter pills and small buttons may be 36 px tall where they sit in a row with 8 px gaps.
+- Content width is capped at 1280 px and centred.
+- Cards have 20 px padding on phones and 24 px from tablet width. Sections are separated by 24 to 32 px.
 
 ## 6. Reusable components
 
@@ -153,19 +154,20 @@ Body text is never smaller than 14 px. Figures in tables use tabular numerals. H
 
 ## 7. Navigation
 
-**Student:** a bottom tab bar on phones with five items: Home, Academics, Resources, Quiz, Assistant. "Academics" opens Attendance, Results, Timetable and Notices. Profile, Bookmarks, Progress and Log out are in a menu from the header. From tablet width the same items become a left sidebar.
+**Student:** a bottom tab bar below 900 px with five items: Home, Academics, Resources, Quiz, Assistant. "Academics" opens a sheet with Attendance, Results, Timetable and Notices, and under "More" Bookmarks, Test history, Progress, Profile and Log out. From 900 px the navigation is a left sidebar, 264 px wide, with every page listed under the headings Academics and Learn, and a card at the bottom with the student's name, email and Log out. That card and the round avatar in the top bar open the Profile page.
 
 **Admin:** a left sidebar grouped as People (Students), Academics (Subjects, Attendance, Marks, Results, Timetable), Content (Resources, Question bank, Notices). On phones it collapses behind a menu button.
 
-The header shows the product name, the page title, the user's name, and a small "Admin" label for administrators so the two portals are never confused.
+The top bar is frosted white. It shows the section name, a "Sample data" label on pages that are not yet connected (see section 18), the student's branch, semester, section and roll number, and the avatar. The page title is large in the page itself and appears small in the top bar only after the page is scrolled. Administrators see a small "Admin" label so the two portals are never confused.
 
 ## 8. Breakpoints
 
 | Name | Width | Layout |
 | --- | --- | --- |
 | Phone | under 600 px | One column, bottom tabs |
-| Tablet | 600 to 1023 px | Two-column card grid, sidebar |
-| Desktop | 1024 px and up | Three-column card grid, sidebar |
+| Tablet | 600 to 899 px | Two-column card grid, bottom tabs |
+| Small desktop | 900 to 1099 px | Sidebar, two-column card grid |
+| Desktop | 1100 px and up | Sidebar, three-column card grid, a list beside its detail panel |
 
 ## 9. Dashboard layout
 
@@ -264,3 +266,51 @@ Target: WCAG 2.1 level AA.
 - Toasts and inline results use `aria-live="polite"`. Errors use `role="alert"`.
 - Dialogs trap focus and return it to the trigger on close.
 - Pages remain usable at 200% zoom and respect `prefers-reduced-motion`.
+
+## 18. Student pages design system
+
+Built on 2026-10-13 from designs the owner made in Google Stitch (the prompts are in [design-prompts-stitch.md](design-prompts-stitch.md)). The designs were followed for layout and feel, and adjusted where they conflicted with this project's rules.
+
+### What every page shares
+
+- **Shell:** sidebar, frosted top bar and phone tab bar, as in section 7. The HTML of the shell is identical on every page.
+- **Hero card:** each main page may open with one dark card: charcoal to black, 28 px corners, white text, a blue glow that drifts slowly, and a few glass chips. It carries the one figure or sentence the page is about.
+- **Cards:** white, 18 px corners, one soft shadow, no border. A block set inside a card is one shade darker (`#F5F5F7`) with 12 px corners.
+- **Chips:** a status or category is a small pill with a word and a dot or an icon. Colour supports the word and never replaces it. Notice categories and subjects in the timetable each keep one colour.
+- **Icons:** one set of line icons, drawn for this project, in `img/icons.svg`. No icon font.
+- **Type:** the system font (San Francisco on Apple devices). Fixed identifiers such as roll numbers, subject codes and times use the system monospace font. No web fonts are loaded.
+- **States:** grey skeleton shapes while loading; an icon, a short sentence and one action when empty; a banner or card with Retry on failure.
+
+### Extra colours
+
+Blue stays the only accent for actions. Five more colours exist only to tell categories apart, each with a pale background and a text colour that reaches 4.5:1 on it: purple, orange, teal, and the existing green and red. They are defined in `css/tokens.css` as `--color-*`, `--tint-*` and `--on-tint-*`.
+
+### Motion
+
+All motion is decoration: nothing is conveyed by motion alone, and all of it stops under `prefers-reduced-motion`.
+
+| Where | What moves |
+| --- | --- |
+| Between pages | The old content fades up and out and the new content rises in, while the sidebar stays still and its highlight glides to the new item (CSS view transitions; browsers without them simply load the page) |
+| Arriving content | Cards rise in one after another as they come into view |
+| Figures | Headline numbers count up once; gauges and bars fill |
+| Filters and tabs | The list cross-fades; the thumb of a tab control slides to the chosen tab |
+| Hover | Cards lift a few pixels; the hero leans a few degrees toward the pointer (not on touch screens) |
+| Dialogs and sheets | Scale or slide in over a dimmed, blurred page |
+| Small confirmations | A bookmark icon pops; a toast appears at the bottom and leaves by itself |
+
+### Sample data
+
+The student pages were designed before their server features were built. A page that is not yet connected reads from `js/sample-data.js` and **must** show the "Sample data" label in the top bar; a test enforces this. Each export of that file has the shape of the matching API response, so connecting a page means replacing one import with one `api.get` call and removing the label. The file holds invented data only.
+
+Connected today: login, change password, profile, and the name, email and student details in the shell. Everything else shows sample data.
+
+### Left out of the Stitch designs, and why
+
+- Statements the system cannot back up: "verified", "biometric", "cryptographically signed", session tokens, engine version numbers.
+- Comparisons with other students (rank, percentile, class average): the PRD shows a student only their own data.
+- Features that are not in the PRD: grade projection, flagging questions, pausing a test, exporting reports, saving AI answers, facility listings. The attendance "classes needed" hint is the P1 calculator (FR-ATT-003) and waits for it.
+- Class types in the timetable: the timetable table has no type column, so blocks are coloured by subject instead.
+- Web fonts and the icon font loaded from other sites: the security policy allows only this site's own files.
+- The states panel on the AI page: waiting, limit reached and unavailable are real states of the form, not a side panel.
+

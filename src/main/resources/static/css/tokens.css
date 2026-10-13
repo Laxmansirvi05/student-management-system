@@ -4,6 +4,7 @@
   --color-bg-subtle: #f5f5f7;
   --color-surface: #ffffff;
   --color-border: #d2d2d7;
+  --color-hairline: #e5e5ea;
   --color-border-control: #86868b;
   --color-text: #1d1d1f;
   --color-text-muted: #6e6e73;
@@ -19,14 +20,47 @@
   --color-success: #1a7f4b;
   --color-warning: #9a6700;
   --color-danger: #c0262d;
+  --color-purple: #6b3fc4;
+  --color-orange: #b4500a;
+  --color-teal: #0b7285;
+  /* Pale backgrounds that go with the colours above, for chips and highlighted rows. */
+  --tint-primary: #e8f2fd;
+  --tint-success: #e6f3ec;
+  --tint-warning: #f8f0dc;
+  --tint-danger: #fbeaeb;
+  --tint-purple: #efe9fb;
+  --tint-orange: #fbeee2;
+  --tint-teal: #e2f3f6;
+  --tint-neutral: #f0f0f3;
+  /* Text colours dark enough to read on the matching tint (at least 4.5:1). */
+  --on-tint-primary: #0058b0;
+  --on-tint-success: #136b3d;
+  --on-tint-warning: #7a5200;
+  --on-tint-danger: #a81f26;
+  --on-tint-purple: #5a31ad;
+  --on-tint-orange: #8f3f07;
+  --on-tint-teal: #075c6b;
+  /* The dark hero card: charcoal to black with a blue glow in the upper right. */
+  --hero-bg:
+    radial-gradient(circle at 85% 12%, rgba(0, 113, 227, 0.42) 0%, rgba(0, 113, 227, 0) 58%),
+    radial-gradient(circle at 8% 110%, rgba(64, 156, 255, 0.2) 0%, rgba(0, 0, 0, 0) 55%),
+    linear-gradient(160deg, #1d1d1f 0%, #0b0b0d 100%);
+  --color-inverse-muted: #a1a1a6;
+  --color-inverse-line: rgba(255, 255, 255, 0.14);
+  --color-inverse-accent: #6cb4ff;
 
   --font: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
   --text-display: 600 40px/44px var(--font);
   --text-h1: 600 28px/34px var(--font);
   --text-h2: 600 18px/26px var(--font);
   --text-body: 400 16px/24px var(--font);
   --text-small: 400 14px/20px var(--font);
   --text-caption: 500 12px/16px var(--font);
+  --text-title: 600 22px/28px var(--font);
+  --text-label: 600 11px/16px var(--font);
+  --text-figure: 600 56px/60px var(--font);
+  --text-mono: 500 13px/18px var(--font-mono);
 
   --space-1: 4px;
   --space-2: 8px;
@@ -36,10 +70,18 @@
   --space-6: 32px;
   --space-7: 48px;
 
+  --radius-hero: 28px;
   --radius-card: 18px;
   --radius-input: 12px;
   --radius-pill: 999px;
-  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.06);
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-hover: 0 14px 34px rgba(0, 0, 0, 0.09), 0 2px 6px rgba(0, 0, 0, 0.04);
+  --shadow-hero: 0 18px 40px rgba(0, 0, 0, 0.16);
+  --shadow-float: 0 24px 56px rgba(0, 0, 0, 0.16), 0 4px 12px rgba(0, 0, 0, 0.06);
   --shadow-raised: 0 24px 60px rgba(0, 0, 0, 0.18);
   --motion: 180ms ease-out;
+  /* A soft landing curve for things that move into place. */
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --sidebar-width: 264px;
+  --topbar-height: 60px;
 }

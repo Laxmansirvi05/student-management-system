@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Attendance · Campus Companion</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="/css/tokens.css" />
+    <link rel="stylesheet" href="/css/base.css" />
+    <link rel="stylesheet" href="/css/app.css" />
+    <link rel="stylesheet" href="/css/student.css" />
+  </head>
+  <body class="app">
+    <div class="shell">
+      <aside class="sidebar">
+        <a class="brand" href="/student/dashboard.html">
+          <span class="brand__mark"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#cap" /></svg></span>
+          Campus Companion
+        </a>
+        <nav class="nav" aria-label="Main">
+          <a class="nav__item" href="/student/dashboard.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#grid" /></svg>Home</a>
+          <p class="eyebrow nav__heading">Academics</p>
+          <a class="nav__item" href="/student/attendance.html" aria-current="page"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#attendance" /></svg>Attendance</a>
+          <a class="nav__item" href="/student/results.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#results" /></svg>Results</a>
+          <a class="nav__item" href="/student/timetable.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#calendar" /></svg>Timetable</a>
+          <a class="nav__item" href="/student/notices.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#notices" /></svg>Notices</a>
+          <p class="eyebrow nav__heading">Learn</p>
+          <a class="nav__item" href="/student/resources.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#resources" /></svg>Resources</a>
+          <a class="nav__item" href="/student/bookmarks.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#bookmark" /></svg>Bookmarks</a>
+          <a class="nav__item" href="/student/quiz.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#quiz" /></svg>Quick Exam</a>
+          <a class="nav__item" href="/student/progress.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#progress" /></svg>Progress</a>
+          <a class="nav__item" href="/student/assistant.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#sparkles" /></svg>AI Assistant</a>
+        </nav>
+        <div class="usercard">
+          <a class="usercard__who" href="/student/profile.html" title="Your profile">
+            <span class="avatar" id="user-initials" aria-hidden="true"></span>
+            <span class="usercard__text">
+              <span class="usercard__name" id="user-name"></span>
+              <span class="usercard__mail" id="user-email"></span>
+            </span>
+          </a>
+          <button type="button" class="usercard__out" id="logout" data-logout>Log out</button>
+        </div>
+      </aside>
+      <header class="topbar">
+        <div class="topbar__where">
+          <p class="eyebrow">Academics</p>
+          <p class="topbar__title" aria-hidden="true">Attendance</p>
+        </div>
+        <span class="topbar__spacer"></span>
+      <span class="tag tag--warning" title="This page shows sample data until its feature is connected.">Sample data</span>
+        <span class="student-chip" id="student-chip" hidden></span>
+        <a class="avatar avatar--link" id="top-initials" href="/student/profile.html" aria-label="Your profile"></a>
+      </header>
+      <main class="page">
+        <header class="page-head rise">
+          <div class="page-head__text">
+            <p class="eyebrow crumb">Academics <svg class="icon crumb__sep" aria-hidden="true" focusable="false"><use href="/img/icons.svg#chevron-right" /></svg> <span class="crumb__here">Attendance</span></p>
+            <h1>Attendance</h1>
+            <p class="page-head__sub">Your attendance in each subject this semester.</p>
+          </div>
+        </header>
+        <div class="stack stack--loose" id="content" aria-live="polite">
+          <div class="skeleton skeleton--hero"></div>
+          <div class="grid grid--3"><div class="skeleton skeleton--card"></div><div class="skeleton skeleton--card"></div><div class="skeleton skeleton--card"></div></div>
+        </div>
+      </main>
+      <nav class="tabbar" aria-label="Main">
+        <a class="tabbar__item" href="/student/dashboard.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#grid" /></svg>Home</a>
+        <button type="button" class="tabbar__item is-active" id="menu-open" aria-haspopup="dialog"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#cap" /></svg>Academics</button>
+        <a class="tabbar__item" href="/student/resources.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#resources" /></svg>Resources</a>
+        <a class="tabbar__item" href="/student/quiz.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#quiz" /></svg>Quiz</a>
+        <a class="tabbar__item" href="/student/assistant.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#sparkles" /></svg>Assistant</a>
+      </nav>
+    </div>
+    <dialog class="dialog dialog--sheet" id="menu-sheet" aria-labelledby="menu-title">
+      <div class="sheet__grab" aria-hidden="true"></div>
+      <p class="eyebrow" id="menu-title">Academics</p>
+      <div class="sheet__links">
+        <a class="sheet__link" href="/student/attendance.html" aria-current="page"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#attendance" /></svg>Attendance</a>
+        <a class="sheet__link" href="/student/results.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#results" /></svg>Results</a>
+        <a class="sheet__link" href="/student/timetable.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#calendar" /></svg>Timetable</a>
+        <a class="sheet__link" href="/student/notices.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#notices" /></svg>Notices</a>
+      </div>
+      <p class="eyebrow">More</p>
+      <div class="sheet__links">
+        <a class="sheet__link" href="/student/bookmarks.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#bookmark" /></svg>Bookmarks</a>
+        <a class="sheet__link" href="/student/quiz-history.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#history" /></svg>Test history</a>
+        <a class="sheet__link" href="/student/progress.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#progress" /></svg>Progress</a>
+        <a class="sheet__link" href="/student/profile.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#user" /></svg>Profile</a>
+      </div>
+      <div class="line">
+        <button type="button" class="button button--quiet" data-logout>Log out</button>
+        <button type="button" class="button button--secondary" data-close>Close</button>
+      </div>
+    </dialog>
+    <dialog class="dialog dialog--sheet" id="detail-sheet" aria-label="Details">
+      <div class="sheet__grab" aria-hidden="true"></div>
+      <button type="button" class="icon-button sheet__close" data-close aria-label="Close"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#x" /></svg></button>
+      <div class="stack stack--loose" id="detail-sheet-body"></div>
+    </dialog>
+    <script type="module" src="/js/student-attendance.js"></script>
+  </body>
+</html>

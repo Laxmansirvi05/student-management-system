@@ -10,24 +10,48 @@
     <link rel="stylesheet" href="/css/app.css" />
     <link rel="stylesheet" href="/css/profile.css" />
   </head>
-  <body>
-    <div class="app">
-      <header class="app-header">
-        <span class="app-header__brand">Campus Companion</span>
-        <span class="app-header__spacer"></span>
-        <a class="app-header__user app-header__user--link" id="user-name" href="/student/profile.html" title="Your profile" aria-current="page"></a>
-        <button type="button" id="logout" class="button button--text">Log out</button>
-      </header>
-      <nav class="app-nav" aria-label="Main">
-        <div class="app-nav__group">
-          <a class="app-nav__item" href="/student/dashboard.html">Home</a>
-          <span class="app-nav__item" aria-disabled="true">Academics</span>
-          <span class="app-nav__item" aria-disabled="true">Resources</span>
-          <span class="app-nav__item" aria-disabled="true">Quiz</span>
-          <span class="app-nav__item" aria-disabled="true">Assistant</span>
+  <body class="app">
+    <div class="shell">
+      <aside class="sidebar">
+        <a class="brand" href="/student/dashboard.html">
+          <span class="brand__mark"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#cap" /></svg></span>
+          Campus Companion
+        </a>
+        <nav class="nav" aria-label="Main">
+          <a class="nav__item" href="/student/dashboard.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#grid" /></svg>Home</a>
+          <p class="eyebrow nav__heading">Academics</p>
+          <a class="nav__item" href="/student/attendance.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#attendance" /></svg>Attendance</a>
+          <a class="nav__item" href="/student/results.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#results" /></svg>Results</a>
+          <a class="nav__item" href="/student/timetable.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#calendar" /></svg>Timetable</a>
+          <a class="nav__item" href="/student/notices.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#notices" /></svg>Notices</a>
+          <p class="eyebrow nav__heading">Learn</p>
+          <a class="nav__item" href="/student/resources.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#resources" /></svg>Resources</a>
+          <a class="nav__item" href="/student/bookmarks.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#bookmark" /></svg>Bookmarks</a>
+          <a class="nav__item" href="/student/quiz.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#quiz" /></svg>Quick Exam</a>
+          <a class="nav__item" href="/student/progress.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#progress" /></svg>Progress</a>
+          <a class="nav__item" href="/student/assistant.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#sparkles" /></svg>AI Assistant</a>
+        </nav>
+        <div class="usercard">
+          <a class="usercard__who" href="/student/profile.html" title="Your profile">
+            <span class="avatar" id="user-initials" aria-hidden="true"></span>
+            <span class="usercard__text">
+              <span class="usercard__name" id="user-name"></span>
+              <span class="usercard__mail" id="user-email"></span>
+            </span>
+          </a>
+          <button type="button" class="usercard__out" id="logout" data-logout>Log out</button>
         </div>
-      </nav>
-      <main class="app-main profile">
+      </aside>
+      <header class="topbar">
+        <div class="topbar__where">
+          <p class="eyebrow">Account</p>
+          <p class="topbar__title" aria-hidden="true">Profile</p>
+        </div>
+        <span class="topbar__spacer"></span>
+        <span class="student-chip" id="student-chip" hidden></span>
+        <a class="avatar avatar--link" id="top-initials" href="/student/profile.html" aria-label="Your profile"></a>
+      </header>
+      <main class="page">
         <p id="loading" class="muted" role="status">Loading your profile…</p>
         <div id="error" class="page-state" hidden>
           <div id="banner" class="banner banner--error" hidden>
@@ -36,89 +60,40 @@
           </div>
           <button type="button" id="retry" class="button button--secondary">Retry</button>
         </div>
-
-        <div id="profile" class="profile__content" hidden>
-          <section class="hero rise" data-tilt aria-labelledby="hero-name">
-            <div class="hero__aurora" aria-hidden="true"></div>
-            <div class="hero__avatar" aria-hidden="true">
-              <span class="hero__ring"></span>
-              <span class="hero__initials" id="initials"></span>
+        <div id="profile" class="stack stack--loose" hidden>
+          <section class="hero profile-hero rise" data-tilt aria-labelledby="hero-name">
+            <div class="profile-hero__avatar" aria-hidden="true">
+              <span class="profile-hero__ring"></span>
+              <span class="profile-hero__initials" id="initials"></span>
             </div>
-            <div class="hero__body">
+            <div class="hero__main">
               <p class="hero__eyebrow">Student profile</p>
-              <h1 class="hero__name" id="hero-name"></h1>
-              <p class="hero__line">
-                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                  <path d="M12 4 2 9l10 5 10-5-10-5Z" />
-                  <path d="M6 11.5V16c0 1.4 2.7 3 6 3s6-1.6 6-3v-4.5" />
-                  <path d="M22 9v6" />
-                </svg>
-                <span id="programme"></span>
-              </p>
+              <h1 class="hero__title" id="hero-name"></h1>
+              <p class="hero__sub" id="programme"></p>
               <ul class="chips">
-                <li class="chip">
-                  <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                    <rect x="3" y="5" width="18" height="14" rx="3" />
-                    <path d="M7 10h4M7 14h7" />
-                  </svg>
-                  Roll no. <strong id="roll-chip"></strong>
-                </li>
-                <li class="chip">
-                  <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                    <rect x="3" y="5" width="18" height="16" rx="3" />
-                    <path d="M3 10h18M8 3v4M16 3v4" />
-                  </svg>
-                  Admitted <strong id="admitted-chip"></strong>
-                </li>
-                <li class="chip">
-                  <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                    <rect x="5" y="11" width="14" height="10" rx="3" />
-                    <path d="M8 11V8a4 4 0 0 1 8 0v3" />
-                  </svg>
-                  Managed by your college
-                </li>
+                <li class="chip"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#id" /></svg>Roll no. <strong class="mono" id="roll-chip"></strong></li>
+                <li class="chip"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#calendar" /></svg>Admitted <strong id="admitted-chip"></strong></li>
+                <li class="chip"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#lock" /></svg>Managed by your college</li>
               </ul>
               <button type="button" class="chip chip--action" id="copy-email">
-                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                  <rect x="3" y="5" width="18" height="14" rx="3" />
-                  <path d="m4 7 8 6 8-6" />
-                </svg>
-                <span id="email-chip"></span>
+                <svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#mail" /></svg>
+                <span class="clip" id="email-chip"></span>
                 <span class="chip__hint" id="copy-hint" aria-live="polite">Copy</span>
               </button>
             </div>
           </section>
 
           <section class="stats" aria-label="At a glance">
-            <div class="stat rise" data-tilt>
-              <p class="stat__value" id="stat-semester"></p>
-              <p class="stat__label">Semester</p>
-            </div>
-            <div class="stat rise" data-tilt>
-              <p class="stat__value" id="stat-year"></p>
-              <p class="stat__label">Year of study</p>
-            </div>
-            <div class="stat rise" data-tilt>
-              <p class="stat__value" id="stat-section"></p>
-              <p class="stat__label">Section</p>
-            </div>
-            <div class="stat rise" data-tilt>
-              <p class="stat__value" id="stat-admission"></p>
-              <p class="stat__label">Admission year</p>
-            </div>
+            <div class="stat rise" data-tilt><p class="stat__value" id="stat-semester"></p><p class="stat__label">Semester</p></div>
+            <div class="stat rise" data-tilt><p class="stat__value" id="stat-year"></p><p class="stat__label">Year of study</p></div>
+            <div class="stat rise" data-tilt><p class="stat__value" id="stat-section"></p><p class="stat__label">Section</p></div>
+            <div class="stat rise" data-tilt><p class="stat__value" id="stat-admission"></p><p class="stat__label">Admission year</p></div>
           </section>
 
-          <div class="profile__columns">
-            <section class="card panel rise" aria-labelledby="academic-title">
-              <div class="panel__head">
-                <span class="panel__icon" aria-hidden="true">
-                  <svg class="icon" viewBox="0 0 24 24" focusable="false">
-                    <path d="M4 5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2V5Z" />
-                    <path d="M4 21a2 2 0 0 1 2-2h12v2H6" />
-                    <path d="M9 8h5" />
-                  </svg>
-                </span>
-                <h2 id="academic-title">Academic details</h2>
+          <div class="grid grid--aside">
+            <section class="card rise" aria-labelledby="academic-title">
+              <div class="card__head">
+                <h2 class="card__title" id="academic-title"><span class="badge-icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#resources" /></svg></span>Academic details</h2>
               </div>
               <dl class="detail-list">
                 <div class="detail-list__row"><dt>Name</dt><dd id="full-name"></dd></div>
@@ -129,42 +104,56 @@
                 <div class="detail-list__row"><dt>Admission year</dt><dd id="admission-year"></dd></div>
               </dl>
             </section>
-
-            <div class="profile__side">
-              <section class="card panel rise" aria-labelledby="contact-title">
-                <div class="panel__head">
-                  <span class="panel__icon" aria-hidden="true">
-                    <svg class="icon" viewBox="0 0 24 24" focusable="false">
-                      <rect x="3" y="5" width="18" height="14" rx="3" />
-                      <path d="m4 7 8 6 8-6" />
-                    </svg>
-                  </span>
-                  <h2 id="contact-title">Contact</h2>
-                </div>
+            <div class="stack stack--loose">
+              <section class="card rise" aria-labelledby="contact-title">
+              <div class="card__head">
+                <h2 class="card__title" id="contact-title"><span class="badge-icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#mail" /></svg></span>Contact</h2>
+              </div>
                 <dl class="detail-list detail-list--stacked">
-                  <div class="detail-list__row"><dt>Institutional email</dt><dd id="email"></dd></div>
-                  <div class="detail-list__row"><dt>Phone</dt><dd id="phone"></dd></div>
+                <div class="detail-list__row"><dt>Institutional email</dt><dd id="email"></dd></div>
+                <div class="detail-list__row"><dt>Phone</dt><dd id="phone"></dd></div>
                 </dl>
               </section>
-
-              <section class="card panel panel--note rise" aria-labelledby="note-title">
-                <div class="panel__head">
-                  <span class="panel__icon" aria-hidden="true">
-                    <svg class="icon" viewBox="0 0 24 24" focusable="false">
-                      <path d="M12 3 4 6v6c0 4.5 3.2 7.8 8 9 4.8-1.2 8-4.5 8-9V6l-8-3Z" />
-                      <path d="m9 12 2 2 4-4" />
-                    </svg>
-                  </span>
-                  <h2 id="note-title">Official record</h2>
-                </div>
+              <section class="card card--tinted rise" aria-labelledby="note-title">
+              <div class="card__head">
+                <h2 class="card__title" id="note-title"><span class="badge-icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#shield" /></svg></span>Official record</h2>
+              </div>
                 <p class="muted">These details come from the college's records and cannot be edited here. If something is wrong, ask your college administrator to correct it.</p>
               </section>
+              <button type="button" class="button button--secondary profile-logout" data-logout>Log out</button>
             </div>
           </div>
         </div>
       </main>
+      <nav class="tabbar" aria-label="Main">
+        <a class="tabbar__item" href="/student/dashboard.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#grid" /></svg>Home</a>
+        <button type="button" class="tabbar__item" id="menu-open" aria-haspopup="dialog"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#cap" /></svg>Academics</button>
+        <a class="tabbar__item" href="/student/resources.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#resources" /></svg>Resources</a>
+        <a class="tabbar__item" href="/student/quiz.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#quiz" /></svg>Quiz</a>
+        <a class="tabbar__item" href="/student/assistant.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#sparkles" /></svg>Assistant</a>
+      </nav>
     </div>
-
+    <dialog class="dialog dialog--sheet" id="menu-sheet" aria-labelledby="menu-title">
+      <div class="sheet__grab" aria-hidden="true"></div>
+      <p class="eyebrow" id="menu-title">Academics</p>
+      <div class="sheet__links">
+        <a class="sheet__link" href="/student/attendance.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#attendance" /></svg>Attendance</a>
+        <a class="sheet__link" href="/student/results.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#results" /></svg>Results</a>
+        <a class="sheet__link" href="/student/timetable.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#calendar" /></svg>Timetable</a>
+        <a class="sheet__link" href="/student/notices.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#notices" /></svg>Notices</a>
+      </div>
+      <p class="eyebrow">More</p>
+      <div class="sheet__links">
+        <a class="sheet__link" href="/student/bookmarks.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#bookmark" /></svg>Bookmarks</a>
+        <a class="sheet__link" href="/student/quiz-history.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#history" /></svg>Test history</a>
+        <a class="sheet__link" href="/student/progress.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#progress" /></svg>Progress</a>
+        <a class="sheet__link" href="/student/profile.html" aria-current="page"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#user" /></svg>Profile</a>
+      </div>
+      <div class="line">
+        <button type="button" class="button button--quiet" data-logout>Log out</button>
+        <button type="button" class="button button--secondary" data-close>Close</button>
+      </div>
+    </dialog>
     <script type="module" src="/js/student-profile.js"></script>
   </body>
 </html>

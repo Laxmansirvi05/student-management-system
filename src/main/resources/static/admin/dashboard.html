@@ -3,52 +3,69 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Admin · Campus Companion</title>
+    <title>Dashboard · Campus Companion</title>
     <link rel="icon" href="data:," />
     <link rel="stylesheet" href="/css/tokens.css" />
     <link rel="stylesheet" href="/css/base.css" />
     <link rel="stylesheet" href="/css/app.css" />
   </head>
-  <body>
-    <div class="app">
-      <header class="app-header">
-        <span class="app-header__brand">Campus Companion</span>
+  <body class="app">
+    <div class="shell">
+      <aside class="sidebar">
+        <a class="brand" href="/admin/dashboard.html">
+          <span class="brand__mark"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#cap" /></svg></span>
+          Campus Companion
+        </a>
+        <nav class="nav" aria-label="Main">
+          <a class="nav__item" href="/admin/dashboard.html" aria-current="page"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#grid" /></svg>Home</a>
+          <p class="eyebrow nav__heading">People</p>
+          <span class="nav__item" aria-disabled="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#users" /></svg>Students</span>
+          <p class="eyebrow nav__heading">Academics</p>
+          <span class="nav__item" aria-disabled="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#resources" /></svg>Subjects</span>
+          <span class="nav__item" aria-disabled="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#attendance" /></svg>Attendance</span>
+          <span class="nav__item" aria-disabled="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#table" /></svg>Marks</span>
+          <span class="nav__item" aria-disabled="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#results" /></svg>Results</span>
+          <span class="nav__item" aria-disabled="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#calendar" /></svg>Timetable</span>
+          <p class="eyebrow nav__heading">Content</p>
+          <span class="nav__item" aria-disabled="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#file" /></svg>Resources</span>
+          <span class="nav__item" aria-disabled="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#quiz" /></svg>Question bank</span>
+          <span class="nav__item" aria-disabled="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#notices" /></svg>Notices</span>
+        </nav>
+        <div class="usercard">
+          <span class="usercard__who">
+            <span class="avatar" id="user-initials" aria-hidden="true"></span>
+            <span class="usercard__text">
+              <span class="usercard__name" id="user-name"></span>
+              <span class="usercard__mail" id="user-email"></span>
+            </span>
+          </span>
+          <button type="button" class="usercard__out" id="logout" data-logout>Log out</button>
+        </div>
+      </aside>
+      <header class="topbar">
+        <div class="topbar__where">
+          <p class="eyebrow">Administration</p>
+          <p class="topbar__title" aria-hidden="true">Dashboard</p>
+        </div>
+        <span class="topbar__spacer"></span>
         <span class="badge">Admin</span>
-        <span class="app-header__spacer"></span>
-        <span class="app-header__user" id="user-name"></span>
-        <button type="button" id="logout" class="button button--text">Log out</button>
+        <span class="avatar" id="top-initials" aria-hidden="true"></span>
       </header>
-      <nav class="app-nav" aria-label="Main">
-        <div class="app-nav__group">
-          <a class="app-nav__item" href="/admin/dashboard.html" aria-current="page">Home</a>
-        </div>
-        <div class="app-nav__group">
-          <p class="app-nav__heading">People</p>
-          <span class="app-nav__item" aria-disabled="true">Students</span>
-        </div>
-        <div class="app-nav__group">
-          <p class="app-nav__heading">Academics</p>
-          <span class="app-nav__item" aria-disabled="true">Subjects</span>
-          <span class="app-nav__item" aria-disabled="true">Attendance</span>
-          <span class="app-nav__item" aria-disabled="true">Marks</span>
-          <span class="app-nav__item" aria-disabled="true">Results</span>
-          <span class="app-nav__item" aria-disabled="true">Timetable</span>
-        </div>
-        <div class="app-nav__group">
-          <p class="app-nav__heading">Content</p>
-          <span class="app-nav__item" aria-disabled="true">Resources</span>
-          <span class="app-nav__item" aria-disabled="true">Question bank</span>
-          <span class="app-nav__item" aria-disabled="true">Notices</span>
-        </div>
-      </nav>
-      <main class="app-main">
-        <div class="page-head">
-          <h1 id="greeting">Welcome</h1>
-          <p class="muted">Administration</p>
-        </div>
-        <div class="card empty-state">
-          <h2>Nothing to manage yet</h2>
-          <p>Students, academic records and content will be managed from here once those screens are built.</p>
+      <main class="page">
+        <section class="hero rise" aria-labelledby="greeting">
+          <div class="hero__main">
+            <p class="hero__eyebrow">Administration</p>
+            <h1 class="hero__title" id="greeting">Welcome</h1>
+            <p class="hero__sub">Manage students, academic records and learning content.</p>
+          </div>
+        </section>
+        <div class="card rise">
+          <div class="empty">
+            <span class="badge-icon badge-icon--round badge-icon--neutral"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#users" /></svg></span>
+            <h2>The admin tools are built next</h2>
+            <p>The student side is being finished first. Each admin screen appears in the menu when it is ready.</p>
+            <button type="button" class="button button--secondary button--small" data-logout>Log out</button>
+          </div>
         </div>
       </main>
     </div>

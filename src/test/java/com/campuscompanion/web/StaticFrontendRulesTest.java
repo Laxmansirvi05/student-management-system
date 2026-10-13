@@ -88,6 +88,43 @@ class StaticFrontendRulesTest {
     }
   }
 
+  /**
+   * The student pages were designed before their features were built. Until a page is connected to
+   * its API it reads from js/sample-data.js, and it must say so on the page.
+   */
+  @Test
+  void aPageThatShowsSampleDataSaysSo() throws IOException {
+    Pattern script = Pattern.compile("<script type=\"module\" src=\"/js/([a-z-]+\\.js)\"");
+    for (Path page : filesEndingWith(".html")) {
+      String html = Files.readString(page);
+      var matcher = script.matcher(html);
+      while (matcher.find()) {
+        String source = Files.readString(STATIC.resolve("js").resolve(matcher.group(1)));
+        if (source.contains("sample-data.js")) {
+          assertThat(html).as("sample data label in %s", page).contains(">Sample data<");
+        }
+      }
+    }
+  }
+
+  @Test
+  void everyIconUsedOnAPageExistsInTheIconFile() throws IOException {
+    String sprite = Files.readString(STATIC.resolve("img/icons.svg"));
+    Pattern use = Pattern.compile("/img/icons\\.svg#([a-z-]+)");
+    Pattern scripted = Pattern.compile("icon\\(\"([a-z-]+)\"");
+    for (Path file : filesEndingWith(".html", ".js")) {
+      String text = Files.readString(file);
+      for (Pattern pattern : List.of(use, scripted)) {
+        var matcher = pattern.matcher(text);
+        while (matcher.find()) {
+          assertThat(sprite)
+              .as("icon %s used in %s", matcher.group(1), file)
+              .contains("<symbol id=\"" + matcher.group(1) + "\"");
+        }
+      }
+    }
+  }
+
   private static List<Path> filesEndingWith(String... suffixes) throws IOException {
     try (Stream<Path> files = Files.walk(STATIC)) {
       List<Path> found =

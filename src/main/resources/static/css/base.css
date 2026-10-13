@@ -18,8 +18,16 @@ body {
 
 h1,
 h2,
-p {
+h3,
+p,
+dl,
+dd {
   margin: 0;
+}
+
+h3 {
+  font: 600 16px/22px var(--font);
+  letter-spacing: -0.01em;
 }
 
 h1 {
@@ -115,8 +123,34 @@ a {
 
 .button--secondary {
   background: var(--color-surface);
-  border-color: var(--color-text);
+  border-color: var(--color-border);
   color: var(--color-text);
+}
+
+.button--secondary:hover:not([disabled]) {
+  background: var(--color-bg-subtle);
+}
+
+/* A soft grey button for the second choice beside a primary one. */
+.button--quiet {
+  background: var(--tint-neutral);
+  color: var(--color-text);
+}
+
+.button--quiet:hover:not([disabled]) {
+  background: var(--color-hairline);
+}
+
+.button--small {
+  min-height: 36px;
+  padding: 0 var(--space-4);
+  font: var(--text-small);
+  font-weight: 500;
+}
+
+.button .icon {
+  width: 18px;
+  height: 18px;
 }
 
 .button--text {
@@ -258,8 +292,8 @@ a {
 .card {
   padding: 20px;
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
   border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
 }
 
 .empty-state {
@@ -277,9 +311,617 @@ a {
   font: var(--text-caption);
 }
 
+/* ---------------------------------------------------------------------------
+   Components added with the student pages (docs/07-ui-ux-spec.md section 6).
+   --------------------------------------------------------------------------- */
+
+/* Line icons come from /img/icons.svg and take the colour of the text around them. */
+.icon {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.icon--fill {
+  fill: currentColor;
+}
+
+.eyebrow {
+  color: var(--color-text-muted);
+  font: var(--text-label);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+/* Fixed identifiers such as roll numbers and subject codes. */
+.mono {
+  font: var(--text-mono);
+  letter-spacing: -0.01em;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* A small labelled status or category. The word carries the meaning; colour only supports it. */
+.tag {
+  display: inline-flex;
+  flex: none;
+  gap: 6px;
+  align-items: center;
+  min-height: 24px;
+  padding: 2px 10px;
+  background: var(--tint-neutral);
+  border-radius: var(--radius-pill);
+  /* A little darker than the muted text colour, to keep 4.5:1 on the grey fill. */
+  color: #5c5c61;
+  font: var(--text-caption);
+  white-space: nowrap;
+}
+
+.tag .icon {
+  width: 14px;
+  height: 14px;
+  stroke-width: 2;
+}
+
+.tag--dot::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  background: currentColor;
+  border-radius: 50%;
+}
+
+.tag--primary {
+  background: var(--tint-primary);
+  color: var(--on-tint-primary);
+}
+
+.tag--success {
+  background: var(--tint-success);
+  color: var(--on-tint-success);
+}
+
+.tag--warning {
+  background: var(--tint-warning);
+  color: var(--on-tint-warning);
+}
+
+.tag--danger {
+  background: var(--tint-danger);
+  color: var(--on-tint-danger);
+}
+
+.tag--purple {
+  background: var(--tint-purple);
+  color: var(--on-tint-purple);
+}
+
+.tag--orange {
+  background: var(--tint-orange);
+  color: var(--on-tint-orange);
+}
+
+.tag--teal {
+  background: var(--tint-teal);
+  color: var(--on-tint-teal);
+}
+
+.tag--solid {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+/* A choice in a row of filters. The chosen one turns black. */
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.pill {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 14px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-pill);
+  color: var(--color-text);
+  font: var(--text-small);
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color var(--motion),
+    border-color var(--motion),
+    color var(--motion),
+    transform var(--motion);
+}
+
+.pill:hover {
+  border-color: var(--color-border-control);
+}
+
+.pill:active {
+  transform: scale(0.97);
+}
+
+.pill[aria-pressed="true"] {
+  background: var(--color-text);
+  border-color: var(--color-text);
+  color: var(--color-surface);
+}
+
+.pill__count {
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.pill[aria-pressed="true"] .pill__count {
+  color: #c7c7cc;
+}
+
+/* Two or three views of one page. A white thumb slides under the chosen one. */
+.segmented {
+  position: relative;
+  display: inline-grid;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
+  max-width: 100%;
+  padding: 4px;
+  background: #e8e8ed;
+  border-radius: var(--radius-pill);
+}
+
+.segmented__thumb {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 0;
+  width: 0;
+  background: var(--color-surface);
+  border-radius: var(--radius-pill);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  transition:
+    transform 320ms var(--ease),
+    width 320ms var(--ease);
+}
+
+.segmented__option {
+  position: relative;
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 var(--space-4);
+  background: none;
+  border: 0;
+  border-radius: var(--radius-pill);
+  color: var(--color-text-muted);
+  font: var(--text-small);
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--motion);
+}
+
+.segmented__option[aria-selected="true"] {
+  color: var(--color-text);
+}
+
+/* Pill-shaped fields used in filter bars and short forms. */
+.select,
+.search__input,
+.textbox {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 var(--space-4);
+  background-color: var(--color-bg-subtle);
+  /* The edge of a field needs 3:1 contrast, so it uses the control border colour. */
+  border: 1px solid var(--color-border-control);
+  border-radius: var(--radius-pill);
+  color: var(--color-text);
+  font: var(--text-body);
+  transition:
+    border-color var(--motion),
+    background-color var(--motion),
+    box-shadow var(--motion);
+}
+
+.select {
+  padding-right: 40px;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231d1d1f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 16px;
+  cursor: pointer;
+}
+
+.textbox--area {
+  min-height: 160px;
+  padding: var(--space-4);
+  border-radius: var(--radius-card);
+  resize: vertical;
+}
+
+.select:hover,
+.search__input:hover,
+.textbox:hover {
+  border-color: var(--color-text);
+}
+
+.select:focus-visible,
+.search__input:focus-visible,
+.textbox:focus-visible {
+  background-color: var(--color-surface);
+  border-color: var(--color-focus);
+  outline: 0;
+  box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.16);
+}
+
+.search {
+  position: relative;
+  display: block;
+}
+
+.search .icon {
+  position: absolute;
+  top: 50%;
+  left: 16px;
+  color: var(--color-text-muted);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.search__input {
+  padding-left: 46px;
+}
+
+.search--large .search__input {
+  min-height: 56px;
+  font-size: 17px;
+}
+
+/* A thin track with a coloured fill. Set --value from 0 to 100. */
+.bar {
+  height: 6px;
+  overflow: hidden;
+  background: var(--color-hairline);
+  border-radius: var(--radius-pill);
+}
+
+.bar__fill {
+  width: calc(var(--value, 0) * 1%);
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: inherit;
+  transform-origin: left center;
+  animation: bar-grow 900ms var(--ease) both;
+  animation-delay: calc(var(--i, 0) * 60ms + 180ms);
+}
+
+.bar--success .bar__fill {
+  background: var(--color-success);
+}
+
+.bar--warning .bar__fill {
+  background: #c98a00;
+}
+
+.bar--danger .bar__fill {
+  background: var(--color-danger);
+}
+
+.bar--neutral .bar__fill {
+  background: var(--color-border-control);
+}
+
+@keyframes bar-grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+/* A circular gauge drawn by js/motion.js. */
+.ring {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+}
+
+.ring svg {
+  display: block;
+  transform: rotate(-90deg);
+}
+
+.ring__track {
+  fill: none;
+  stroke: var(--color-hairline);
+}
+
+.ring__value {
+  fill: none;
+  stroke: var(--color-primary);
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1200ms var(--ease);
+}
+
+.ring--success .ring__value {
+  stroke: var(--color-success);
+}
+
+.ring--danger .ring__value {
+  stroke: var(--color-danger);
+}
+
+.ring__label {
+  position: absolute;
+  display: grid;
+  justify-items: center;
+  text-align: center;
+}
+
+/* Grey shapes shown while content is loading. */
+.skeleton {
+  min-height: 16px;
+  background: linear-gradient(90deg, #ececf0 25%, #f6f6f8 37%, #ececf0 63%);
+  background-size: 400% 100%;
+  border-radius: var(--radius-input);
+  animation: shimmer 1400ms ease infinite;
+}
+
+.skeleton--card {
+  min-height: 180px;
+  border-radius: var(--radius-card);
+}
+
+.skeleton--hero {
+  min-height: 220px;
+  border-radius: var(--radius-hero);
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 100% 50%;
+  }
+  to {
+    background-position: 0 50%;
+  }
+}
+
+/* Content rises into place when it comes into view. js/motion.js adds .is-in. */
+.reveal {
+  opacity: 0;
+  transform: translateY(18px) scale(0.985);
+}
+
+.reveal.is-in {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 620ms var(--ease),
+    transform 620ms var(--ease);
+  transition-delay: calc(var(--i, 0) * 55ms);
+}
+
+/* A round button that holds one icon. */
+.icon-button {
+  display: inline-grid;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  background: var(--color-bg-subtle);
+  border: 0;
+  border-radius: 50%;
+  color: var(--color-text);
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    background-color var(--motion),
+    color var(--motion),
+    transform var(--motion);
+}
+
+.icon-button:hover {
+  background: var(--color-hairline);
+}
+
+.icon-button:active {
+  transform: scale(0.92);
+}
+
+.icon-button--bare {
+  background: none;
+  color: var(--color-text-muted);
+}
+
+.icon-button[aria-pressed="true"] {
+  background: var(--tint-primary);
+  color: var(--color-primary);
+}
+
+.icon-button[aria-pressed="true"] .icon {
+  fill: currentColor;
+  animation: pop 360ms var(--ease);
+}
+
+@keyframes pop {
+  40% {
+    transform: scale(1.3);
+  }
+}
+
+/* "View all" style links: the arrow moves a little on hover. */
+.more {
+  display: inline-flex;
+  gap: 2px;
+  align-items: center;
+  color: var(--color-link);
+  font: var(--text-small);
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.more .icon {
+  width: 16px;
+  height: 16px;
+  transition: transform var(--motion);
+}
+
+.more:hover .icon {
+  transform: translateX(3px);
+}
+
+/* Dialogs use the native <dialog> element. The page behind is dimmed and blurred. */
+.dialog {
+  width: min(520px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  padding: var(--space-6) var(--space-5) var(--space-5);
+  overflow-y: auto;
+  background: var(--color-surface);
+  border: 0;
+  border-radius: 24px;
+  box-shadow: var(--shadow-float);
+  color: var(--color-text);
+}
+
+.dialog::backdrop {
+  background: rgba(0, 0, 0, 0.32);
+  backdrop-filter: blur(10px);
+}
+
+.dialog[open] {
+  animation: dialog-in 320ms var(--ease);
+}
+
+.dialog[open]::backdrop {
+  animation: fade-in 320ms ease-out;
+}
+
+/* A sheet slides up from the bottom edge on phones. */
+.dialog--sheet {
+  width: 100%;
+  max-width: 640px;
+  max-height: 86dvh;
+  margin: auto auto 0;
+  padding-bottom: calc(var(--space-5) + env(safe-area-inset-bottom));
+  border-radius: 24px 24px 0 0;
+}
+
+.dialog--sheet[open] {
+  animation: sheet-in 380ms var(--ease);
+}
+
+.sheet__close {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  float: right;
+  margin: -8px -4px 0 var(--space-3);
+}
+
+.sheet__grab {
+  width: 40px;
+  height: 5px;
+  margin: calc(var(--space-4) * -1) auto var(--space-4);
+  background: var(--color-border);
+  border-radius: var(--radius-pill);
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.96);
+  }
+}
+
+@keyframes sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* A short confirmation that appears at the bottom and leaves by itself. */
+.toast {
+  position: fixed;
+  bottom: calc(88px + env(safe-area-inset-bottom));
+  left: 50%;
+  z-index: 20;
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+  padding: 10px 18px;
+  background: rgba(29, 29, 31, 0.94);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-float);
+  color: #ffffff;
+  font: var(--text-small);
+  font-weight: 500;
+  opacity: 0;
+  transform: translate(-50%, 16px);
+  transition:
+    opacity 260ms var(--ease),
+    transform 260ms var(--ease);
+  pointer-events: none;
+  backdrop-filter: blur(12px);
+}
+
+.toast.is-in {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* Moving from one page to the next: the old content fades up and out, the new one rises in.
+   Browsers without view transitions simply load the next page. */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
+
+  ::view-transition-old(root) {
+    animation: 160ms ease-out both page-out;
+  }
+
+  ::view-transition-new(root) {
+    animation: 360ms var(--ease) both page-in;
+  }
+}
+
+@keyframes page-out {
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
 @media (min-width: 600px) {
   .card {
-    padding: var(--space-6);
+    padding: var(--space-5);
   }
 }
 
@@ -288,7 +930,9 @@ a {
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
   }
 }

@@ -26,3 +26,6 @@ logs/
 
 # Local agent tooling
 .claude/
+
+# Design exports from Google Stitch: reference only, not part of the application
+stitch_file_based_generator*

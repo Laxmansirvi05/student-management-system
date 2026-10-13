@@ -1,7 +1,7 @@
 import { api, messageFor } from "./api.js";
 import { showBanner } from "./forms.js";
 import { countUp, enableTilt } from "./motion.js";
-import "./shell.js";
+import { initialsOf } from "./shell.js";
 
 // The student's own profile (FR-STU-002). Everything here is read-only.
 const loading = document.getElementById("loading");
@@ -13,13 +13,6 @@ const copyHint = document.getElementById("copy-hint");
 
 function show(id, text) {
   document.getElementById(id).textContent = text;
-}
-
-/** The first letters of the first and last name, for the avatar. */
-function initialsOf(fullName) {
-  const words = fullName.trim().split(/\s+/);
-  const letters = words.length > 1 ? words[0][0] + words[words.length - 1][0] : words[0].slice(0, 2);
-  return letters.toUpperCase();
 }
 
 function render(student) {
