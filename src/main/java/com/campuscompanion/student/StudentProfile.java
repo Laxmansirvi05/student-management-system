@@ -56,6 +56,14 @@ public class StudentProfile {
   @Column(length = 20)
   private String phone;
 
+  /** A few lines the student wrote about themselves. Optional. */
+  @Column(length = 280)
+  private String bio;
+
+  /** Where the student's photo is kept in file storage, or null when there is none. */
+  @Column(name = "photo_path", length = 300)
+  private String photoPath;
+
   @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt;
 
@@ -98,6 +106,19 @@ public class StudentProfile {
     this.section = section;
     this.admissionYear = admissionYear;
     this.phone = phone;
+  }
+
+  /**
+   * Replaces the personal details a student may edit themselves. Everything the college decides
+   * (name, roll number, branch, semester, section, admission year) is not touched.
+   */
+  public void updateOwnDetails(String phone, String bio) {
+    this.phone = phone;
+    this.bio = bio;
+  }
+
+  public void setPhotoPath(String photoPath) {
+    this.photoPath = photoPath;
   }
 
   @PrePersist
@@ -154,5 +175,13 @@ public class StudentProfile {
 
   public Instant getUpdatedAt() {
     return updatedAt;
+  }
+
+  public String getBio() {
+    return bio;
+  }
+
+  public String getPhotoPath() {
+    return photoPath;
   }
 }

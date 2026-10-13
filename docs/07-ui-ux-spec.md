@@ -216,14 +216,14 @@ Built in task `T1-09`, following a reference video supplied by the owner on 2026
 
 ### Student profile page
 
-Redesigned on 2026-10-13 at the owner's request, after a reference screenshot. It shows only the fields of FR-STU-002 and stays read-only.
+Redesigned on 2026-10-13 at the owner's request, after a reference screenshot. It shows the fields of FR-STU-002. Since 2026-10-14 the student can also change their photo, phone number and a short text about themselves (FR-STU-003): the photo buttons sit under the avatar, and an "Edit" button on the "About me" card opens a small dialog. Everything the college manages stays read-only and says so.
 
 - **Hero card:** black, with rounded 28 px corners, slow blue light drifting behind it, the student's initials inside a slowly turning ring, the name, one line with branch, semester and section, and chips for roll number, admission year and "Managed by your college". The email chip copies the address when pressed.
 - **Figures:** four tiles (semester, year of study, section, admission year). Numbers count up once when the page opens. Year of study is the semester divided by two, rounded up.
 - **Details:** "Academic details" beside "Contact" and a short "Official record" note. One column below 1024 px.
 - **Depth and motion:** the hero and the tiles lean a few degrees toward the pointer with a moving highlight and sections rise into place in sequence. There is no mascot on this page. This page is the one place where motion longer than the 200 ms rule in section 5 is allowed, and only as decoration. All of it stops under reduced motion, and the tilt is off on touch screens.
 - **Built without libraries.** The 3D effect is CSS `perspective` and transforms with a few lines of JavaScript in `js/motion.js`. An animation or 3D library would need an accepted decision record first (TRD: no frameworks, bundlers or CDN-loaded libraries).
-- **Not included,** because they are not in the PRD: profile photo, editing, skills, interests, career goal, résumé and achievements.
+- **Not included,** because they are not in the PRD: skills, interests, career goal, résumé and achievements.
 
 ## 12. Responsive tables
 

@@ -1,4 +1,4 @@
-package com.campuscompanion.resource;
+package com.campuscompanion.common.storage;
 
 import com.campuscompanion.common.error.ApiException;
 import com.campuscompanion.common.error.ErrorCode;

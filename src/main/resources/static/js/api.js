@@ -95,6 +95,12 @@ export const api = {
     form.append("file", file);
     return request("POST", path, form);
   },
+  /** Replaces something with one file, sent as the part "file". */
+  putFile(path, file) {
+    const form = new FormData();
+    form.append("file", file);
+    return request("PUT", path, form);
+  },
 };
 
 /** Where a signed-in user belongs. A temporary password always leads to the change page. */

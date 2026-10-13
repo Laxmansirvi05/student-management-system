@@ -7,6 +7,11 @@ import { h } from "./dom.js";
 
 const SVG = "http://www.w3.org/2000/svg";
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+/** True when the device, or the person in Settings, asks for less movement on the page. */
+export function motionReduced() {
+  return reduceMotion.matches || document.documentElement.hasAttribute("data-reduce-motion");
+}
 const canHover = window.matchMedia("(hover: hover) and (pointer: fine)");
 
 const revealer =
@@ -39,7 +44,7 @@ export function reveal(root = document) {
 export function enableTilt(root = document, maxDegrees = 4) {
   for (const element of root.querySelectorAll("[data-tilt]")) {
     element.addEventListener("pointermove", (event) => {
-      if (reduceMotion.matches || !canHover.matches) {
+      if (motionReduced() || !canHover.matches) {
         return;
       }
       const box = element.getBoundingClientRect();
@@ -67,7 +72,7 @@ export function countUp(element, target, { decimals = 0, suffix = "" } = {}) {
   const show = (value) => {
     element.textContent = value.toFixed(decimals) + suffix;
   };
-  if (reduceMotion.matches || !Number.isFinite(target)) {
+  if (motionReduced() || !Number.isFinite(target)) {
     show(target);
     return;
   }
@@ -180,7 +185,7 @@ export function segmented(control, onChange) {
  * render must put the new content in place.
  */
 export function swap(container, render) {
-  if (reduceMotion.matches || !container.animate) {
+  if (motionReduced() || !container.animate) {
     render();
     reveal(container);
     return;
@@ -213,7 +218,7 @@ export function swap(container, render) {
  * background and the browser does not finish the animation.
  */
 export function leave(element, done) {
-  if (reduceMotion.matches || !element.animate) {
+  if (motionReduced() || !element.animate) {
     done();
     return;
   }

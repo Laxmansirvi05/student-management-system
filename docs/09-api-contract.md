@@ -150,6 +150,10 @@ Access: **Public**, **Any** (any logged-in user), **Student**, **Admin**. Detail
 | Method | Path | Access | Purpose |
 | --- | --- | --- | --- |
 | GET | `/students/me` | Student | Own profile. |
+| PUT | `/students/me` | Student | Change own phone number and the text about themselves. No other field is accepted. |
+| PUT | `/students/me/photo` | Student | Add or replace own photo: multipart part `file`, JPEG or PNG, at most 2 MB. The server stores a redrawn 512 by 512 JPEG. |
+| DELETE | `/students/me/photo` | Student | Remove own photo. Idempotent. |
+| GET | `/students/me/photo-url` | Student | Signed link to own photo, valid five minutes. `404` when there is none. |
 | GET | `/students/me/dashboard` | Student | Dashboard summary. |
 | GET | `/attendance/me` | Student | Subject-wise attendance. |
 | GET | `/attendance/me/subjects/{subjectId}` | Student | Dated history for one subject (paginated). |

@@ -13,6 +13,8 @@ import static org.mockito.Mockito.when;
 
 import com.campuscompanion.auth.Role;
 import com.campuscompanion.common.security.CurrentUser;
+import com.campuscompanion.common.storage.StorageClient;
+import com.campuscompanion.common.storage.StorageUnavailableException;
 import com.campuscompanion.resource.dto.ResourceMetadata;
 import com.campuscompanion.subject.SubjectService;
 import com.campuscompanion.subject.dto.SubjectResponse;

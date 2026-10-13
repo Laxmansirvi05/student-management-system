@@ -1,4 +1,4 @@
-package com.campuscompanion.resource;
+package com.campuscompanion.common.storage;
 
 import java.time.Duration;
 import java.time.Instant;

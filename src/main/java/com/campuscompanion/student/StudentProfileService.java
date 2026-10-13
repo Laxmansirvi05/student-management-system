@@ -50,7 +50,9 @@ public class StudentProfileService {
         profile.getCurrentSemester(),
         profile.getSection(),
         profile.getAdmissionYear(),
-        profile.getPhone());
+        profile.getPhone(),
+        profile.getBio(),
+        profile.getPhotoPath() != null);
   }
 
   /**

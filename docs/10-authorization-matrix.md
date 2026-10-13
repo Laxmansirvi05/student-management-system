@@ -54,7 +54,9 @@ A denied Visitor gets `401`. A denied Student gets `403` for admin functions and
 | Student account | Deactivate, activate, reset password | ❌ | ❌ | ✅ | — |
 | Admin account | Create, change role | ❌ | ❌ | ❌ | Bootstrap only |
 | Student profile | Read | ❌ | 🔒 own | ✅ | — |
-| Student profile | Update | ❌ | ❌ | ✅ | — |
+| Student profile | Update the college's fields (name, branch, semester, section, admission year) | ❌ | ❌ | ✅ | — |
+| Own personal details (phone, text about themselves) | Update | ❌ | 🔒 own | ❌ | — |
+| Own profile photo | Add, replace, remove, get a signed link | ❌ | 🔒 own | ❌ | Issues the link |
 | Student list and search | Read | ❌ | ❌ | ✅ | — |
 | Password hashes | Read through any API | ❌ | ❌ | ❌ | Internal comparison only |
 | Login email, roll number | Change after the account exists | ❌ | ❌ | ❌ | ❌ |

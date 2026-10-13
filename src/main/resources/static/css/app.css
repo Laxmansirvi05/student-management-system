@@ -1208,3 +1208,7 @@ body.app {
     transform: none;
   }
 }
+
+:root[data-reduce-motion] [data-tilt] {
+  transform: none;
+}

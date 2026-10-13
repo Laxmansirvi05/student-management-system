@@ -41,6 +41,43 @@
   letter-spacing: 0.02em;
 }
 
+/* The photo covers the initials. It sits inside the turning ring. */
+.profile-hero__photo {
+  position: absolute;
+  inset: 5px;
+  width: calc(100% - 10px);
+  height: calc(100% - 10px);
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profile-hero__who {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: center;
+}
+
+.profile-hero__photo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  justify-content: center;
+}
+
+.profile-bio {
+  max-width: 60ch;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+.profile-bio--empty {
+  color: var(--color-text-muted);
+}
+
+.settings-logout {
+  justify-self: start;
+}
+
 .detail-list--stacked .detail-list__row {
   grid-template-columns: 1fr;
   gap: var(--space-1);

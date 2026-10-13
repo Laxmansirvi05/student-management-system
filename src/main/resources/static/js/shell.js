@@ -1,4 +1,5 @@
 import { api, LOGIN_PAGE } from "./api.js";
+import "./preferences.js";
 
 // Shared behaviour of every signed-in page: who is signed in, logging out, the phone menu,
 // and the small page title that appears in the top bar once the page is scrolled.

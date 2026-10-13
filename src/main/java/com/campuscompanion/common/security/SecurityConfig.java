@@ -65,6 +65,10 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers("/login.html", "/css/**", "/js/**", "/favicon.ico")
                     .permitAll()
+                    // The privacy policy and the terms can be read before logging in. They are
+                    // plain pages with no script, and show nothing about any person.
+                    .requestMatchers("/privacy.html", "/terms.html")
+                    .permitAll()
                     .requestMatchers("/api/v1/admin/**", "/admin/**")
                     .hasRole("ADMIN")
                     .requestMatchers(STUDENT_ONLY_API)
@@ -146,17 +150,18 @@ public class SecurityConfig {
   }
 
   /**
-   * Only our own scripts, styles and images are allowed. Frames are allowed only from the project's
-   * storage host, for the PDF preview.
+   * Only our own scripts and styles are allowed. Besides our own origin, two things may come from
+   * the project's storage host and from nowhere else: a frame, for the PDF preview, and an image,
+   * for a profile photo. Both are reached through short-lived signed links.
    */
-  private static String contentSecurityPolicy(StorageProperties storage) {
+  static String contentSecurityPolicy(StorageProperties storage) {
     String url = storage.supabaseUrl();
     // A placeholder or malformed value must never be written into the header.
-    String frameSource =
-        StringUtils.hasText(url) && url.matches("^https://[a-z0-9.-]+$") ? url : "'none'";
-    return "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; "
-        + "frame-src "
-        + frameSource
+    boolean configured = StringUtils.hasText(url) && url.matches("^https://[a-z0-9.-]+$");
+    return "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:"
+        + (configured ? " " + url : "")
+        + "; frame-src "
+        + (configured ? url : "'none'")
         + "; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'";
   }
 }

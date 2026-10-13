@@ -1,7 +1,7 @@
 package com.campuscompanion.support;
 
-import com.campuscompanion.resource.StorageClient;
-import com.campuscompanion.resource.StorageUnavailableException;
+import com.campuscompanion.common.storage.StorageClient;
+import com.campuscompanion.common.storage.StorageUnavailableException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;

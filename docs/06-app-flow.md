@@ -11,7 +11,9 @@ This document describes how users move through the application and what happens 
 | Public | `/login.html` | Login |
 | Shared | `/change-password.html` | Change password |
 | Student | `/student/dashboard.html` | Dashboard |
-| Student | `/student/profile.html` | Profile |
+| Public | `/privacy.html`, `/terms.html` | Privacy policy and terms of use. Static pages with no script |
+| Student | `/student/profile.html` | Profile, with the student's own photo, phone and text |
+| Student | `/student/settings.html` | Settings: password, reduce motion, legal pages |
 | Student | `/student/attendance.html` | Attendance |
 | Student | `/student/results.html` | Marks and results |
 | Student | `/student/timetable.html` | Timetable |
@@ -24,6 +26,7 @@ This document describes how users move through the application and what happens 
 | Student | `/student/progress.html` | Progress and recommendations |
 | Student | `/student/assistant.html` | AI study assistant |
 | Admin | `/admin/dashboard.html` | Admin home |
+| Admin | `/admin/settings.html` | Settings: password, reduce motion, legal pages |
 | Admin | `/admin/students.html` | Students |
 | Admin | `/admin/subjects.html` | Subjects and units |
 | Admin | `/admin/attendance.html` | Attendance entry |

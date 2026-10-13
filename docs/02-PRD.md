@@ -33,6 +33,9 @@ A priority is changed only by editing this document, stating the reason, with th
 | FR-AUTH-006 | Institutional email identity | P0 |
 | FR-STU-001 | Student dashboard | P0 |
 | FR-STU-002 | Student profile | P0 |
+| FR-STU-003 | Edit own personal details and photo | P0 |
+| FR-STU-004 | Settings | P0 |
+| FR-LEG-001 | Privacy policy and terms of use | P0 |
 | FR-ATT-001 | View own attendance | P0 |
 | FR-ATT-002 | Low-attendance flag | P0 |
 | FR-ATT-003 | Attendance calculator | P1 |
@@ -187,8 +190,41 @@ A priority is changed only by editing this document, stating the reason, with th
 ### FR-STU-002 Profile (P0)
 
 - **Story:** As a student, I want to check that the college has my details right.
-- **Acceptance criteria:** Shows name, roll number, institutional email, branch, semester, section, admission year and phone. All fields are read-only for the student.
+- **Acceptance criteria:** Shows name, roll number, institutional email, branch, semester, section, admission year and phone. The name, roll number, email, branch, semester, section and admission year are read-only for the student.
 - **Edge cases:** A missing phone number shows "Not provided".
+
+> **Changed on 2026-10-14 at the owner's request.** The profile was fully read-only. A student may now change their phone number, a short text about themselves and a photo (FR-STU-003). A settings page (FR-STU-004) and two legal pages (FR-LEG-001) were added. The decision and its security controls are in [ADR 0009](decisions/0009-student-personal-details-and-photo.md), and the change is logged in [03-scope-and-roadmap.md](03-scope-and-roadmap.md) §9.
+
+### FR-STU-003 Edit own personal details and photo (P0)
+
+- **Story:** As a student, I want to keep my own contact number, a few lines about myself and my photo up to date.
+- **Acceptance criteria:**
+  1. A student can change their phone number and a text of up to 280 characters about themselves. Both are optional and can be cleared.
+  2. A student can add, replace and remove a profile photo: JPEG or PNG, at most 2 MB.
+  3. The stored photo is a new picture drawn by the server. The uploaded file, and anything hidden in it such as the place it was taken, is not kept.
+  4. A student cannot change their name, roll number, email, branch, semester, section or admission year, by the page or by a direct request.
+  5. Every change applies to the student who is logged in. No request names a student.
+  6. The photo is shown through a link that lasts at most five minutes and is given only to its owner.
+- **Edge cases:** A file that is not a picture is refused with a clear message. If file storage is unavailable, the page says so and the rest of the profile still works.
+- **Depends on:** FR-STU-002, the storage bucket of FR-LIB-003.
+
+### FR-STU-004 Settings (P0)
+
+- **Story:** As a user, I want one place to change my password and adjust how the pages behave.
+- **Acceptance criteria:**
+  1. Students and administrators each have a Settings page.
+  2. It offers the password change of FR-AUTH-003, with the same rules and messages.
+  3. A "Reduce motion" choice turns the page animations off. It is remembered in the browser, not in the account.
+  4. It shows the account's name, login email and role, and links to the privacy policy and the terms.
+- **Depends on:** FR-AUTH-003.
+
+### FR-LEG-001 Privacy policy and terms of use (P0)
+
+- **Acceptance criteria:**
+  1. A privacy policy and the terms of use can be read without logging in, and are linked from the login page and from Settings.
+  2. Each describes what the application actually does. The privacy policy names what is kept, what is not, who can see it, where it is stored, how long, and what the user can do.
+  3. Each states that the project is a demonstration on invented students, and that the college must review and adopt the text before real records are used.
+  4. The pages contain no script.
 
 ### FR-ATT-001 View own attendance (P0)
 

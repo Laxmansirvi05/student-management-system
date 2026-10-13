@@ -3,6 +3,8 @@ package com.campuscompanion.resource;
 import com.campuscompanion.common.error.ResourceNotFoundException;
 import com.campuscompanion.common.error.ValidationException;
 import com.campuscompanion.common.security.CurrentUser;
+import com.campuscompanion.common.storage.StorageClient;
+import com.campuscompanion.common.storage.StorageUnavailableException;
 import com.campuscompanion.common.web.PageResponse;
 import com.campuscompanion.resource.dto.QuestionPaperDetails;
 import com.campuscompanion.resource.dto.ResourceMetadata;

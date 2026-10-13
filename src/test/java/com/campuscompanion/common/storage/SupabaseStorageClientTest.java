@@ -1,4 +1,4 @@
-package com.campuscompanion.resource;
+package com.campuscompanion.common.storage;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;

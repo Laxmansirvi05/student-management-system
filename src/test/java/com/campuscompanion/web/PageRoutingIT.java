@@ -84,6 +84,32 @@ class PageRoutingIT extends PostgresIntegrationTest {
   }
 
   @Test
+  void thePrivacyPolicyAndTheTermsCanBeReadWithoutLoggingIn() throws Exception {
+    ApiTestClient visitor = new ApiTestClient(port);
+
+    HttpResponse<String> privacy = visitor.get("/privacy.html");
+    HttpResponse<String> terms = visitor.get("/terms.html");
+
+    assertThat(privacy.statusCode()).isEqualTo(200);
+    assertThat(privacy.body())
+        .contains("<h1>Privacy policy</h1>")
+        .contains("The text you send to the AI assistant and the answer it gives are not stored.")
+        .contains("invented students only");
+    assertThat(terms.statusCode()).isEqualTo(200);
+    assertThat(terms.body())
+        .contains("<h1>Terms of use</h1>")
+        .contains("can be wrong or incomplete");
+    assertThat(visitor.get("/css/legal.css").statusCode()).isEqualTo(200);
+    // They are reading pages only: no script at all, so nothing on them can act for a visitor.
+    assertThat(privacy.body() + terms.body()).doesNotContain("<script");
+    // The login page links to both.
+    assertThat(visitor.get("/login.html").body()).contains("/privacy.html").contains("/terms.html");
+    // Being public does not open anything else.
+    assertThat(visitor.get("/student/settings.html").statusCode()).isEqualTo(302);
+    assertThat(visitor.get("/admin/settings.html").statusCode()).isEqualTo(302);
+  }
+
+  @Test
   void theLoginPageOffersNothingTheProjectForbids() throws Exception {
     String html = new ApiTestClient(port).get("/login.html").body().toLowerCase();
 

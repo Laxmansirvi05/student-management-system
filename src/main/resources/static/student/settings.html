@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Settings · Campus Companion</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="/css/tokens.css" />
+    <link rel="stylesheet" href="/css/base.css" />
+    <link rel="stylesheet" href="/css/app.css" />
+    <link rel="stylesheet" href="/css/student.css" />
+    <link rel="stylesheet" href="/css/profile.css" />
+  </head>
+  <body class="app">
+    <div class="shell">
+      <aside class="sidebar">
+        <a class="brand" href="/student/dashboard.html">
+          <span class="brand__mark"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#cap" /></svg></span>
+          Campus Companion
+        </a>
+        <nav class="nav" aria-label="Main">
+          <a class="nav__item" href="/student/dashboard.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#grid" /></svg>Home</a>
+          <p class="eyebrow nav__heading">Academics</p>
+          <a class="nav__item" href="/student/attendance.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#attendance" /></svg>Attendance</a>
+          <a class="nav__item" href="/student/results.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#results" /></svg>Results</a>
+          <a class="nav__item" href="/student/timetable.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#calendar" /></svg>Timetable</a>
+          <a class="nav__item" href="/student/notices.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#notices" /></svg>Notices</a>
+          <p class="eyebrow nav__heading">Learn</p>
+          <a class="nav__item" href="/student/resources.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#resources" /></svg>Resources</a>
+          <a class="nav__item" href="/student/bookmarks.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#bookmark" /></svg>Bookmarks</a>
+          <a class="nav__item" href="/student/quiz.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#quiz" /></svg>Quick Exam</a>
+          <a class="nav__item" href="/student/progress.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#progress" /></svg>Progress</a>
+          <a class="nav__item" href="/student/assistant.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#sparkles" /></svg>AI Assistant</a>
+          <p class="eyebrow nav__heading">Account</p>
+          <a class="nav__item" href="/student/settings.html" aria-current="page"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#settings" /></svg>Settings</a>
+        </nav>
+        <div class="usercard">
+          <a class="usercard__who" href="/student/profile.html" title="Your profile">
+            <span class="avatar" id="user-initials" aria-hidden="true"></span>
+            <span class="usercard__text">
+              <span class="usercard__name" id="user-name"></span>
+              <span class="usercard__mail" id="user-email"></span>
+            </span>
+          </a>
+          <button type="button" class="usercard__out" id="logout" data-logout>Log out</button>
+        </div>
+      </aside>
+      <header class="topbar">
+        <div class="topbar__where">
+          <p class="eyebrow">Account</p>
+          <p class="topbar__title" aria-hidden="true">Settings</p>
+        </div>
+        <span class="topbar__spacer"></span>
+        <span class="student-chip" id="student-chip" hidden></span>
+        <a class="avatar avatar--link" id="top-initials" href="/student/profile.html" aria-label="Your profile"></a>
+      </header>
+      <main class="page">
+        <header class="page-head page-head--split rise">
+          <div class="page-head__text">
+            <p class="eyebrow crumb">Account <svg class="icon crumb__sep" aria-hidden="true" focusable="false"><use href="/img/icons.svg#chevron-right" /></svg> <span class="crumb__here">Settings</span></p>
+            <h1>Settings</h1>
+            <p class="page-head__sub">Your password, how the pages look, and the rules of this service.</p>
+          </div>
+          <div class="page-head__side"><a class="button button--secondary button--small" href="/student/profile.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#user" /></svg>Your profile</a></div>
+        </header>
+        <div class="grid grid--aside">
+          <div class="stack stack--loose">
+            <section class="card rise" aria-labelledby="password-title">
+              <div class="card__head"><h2 class="card__title" id="password-title"><span class="badge-icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#key" /></svg></span>Change password</h2></div>
+              <p class="muted">After a change, every other device that was logged in to your account is logged out.</p>
+              <form class="stack stack--loose" id="password-form" novalidate>
+                <p class="inset inset--danger inset--note" id="password-error" role="alert" hidden></p>
+            <div class="field">
+              <label class="field__label" for="currentPassword">Current password</label>
+              <input class="textbox" id="currentPassword" name="currentPassword" type="password" autocomplete="current-password" maxlength="72" aria-describedby="currentPassword-error" required />
+              <p class="field__error" id="currentPassword-error" hidden></p>
+            </div>
+            <div class="field">
+              <label class="field__label" for="newPassword">New password</label>
+              <input class="textbox" id="newPassword" name="newPassword" type="password" autocomplete="new-password" maxlength="72" aria-describedby="newPassword-error newPassword-help" required />
+              <p class="field__help" id="newPassword-help">8 to 72 characters. Not your roll number or your email address.</p>
+              <p class="field__error" id="newPassword-error" hidden></p>
+            </div>
+            <div class="field">
+              <label class="field__label" for="confirmNewPassword">New password again</label>
+              <input class="textbox" id="confirmNewPassword" name="confirmNewPassword" type="password" autocomplete="new-password" maxlength="72" aria-describedby="confirmNewPassword-error" required />
+              <p class="field__error" id="confirmNewPassword-error" hidden></p>
+            </div>
+                <div class="line line--start line--wrap">
+                  <button type="submit" class="button button--primary" id="password-save">Change password</button>
+                  <label class="check" for="show-passwords"><input class="checkbox" type="checkbox" id="show-passwords" /><span>Show passwords</span></label>
+                </div>
+              </form>
+            </section>
+            <section class="card rise" aria-labelledby="display-title">
+              <div class="card__head"><h2 class="card__title" id="display-title"><span class="badge-icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#sparkles" /></svg></span>Display</h2></div>
+              <label class="check" for="reduce-motion"><input class="checkbox" type="checkbox" id="reduce-motion" /><span><strong>Reduce motion</strong></span></label>
+              <p class="muted">Turns off the page animations on this device. It is remembered in this browser only.</p>
+            </section>
+          </div>
+          <div class="stack stack--loose">
+            <section class="card rise" aria-labelledby="account-title">
+              <div class="card__head"><h2 class="card__title" id="account-title"><span class="badge-icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#user" /></svg></span>Account</h2></div>
+              <dl class="detail-list detail-list--stacked">
+                <div class="detail-list__row"><dt>Name</dt><dd id="account-name"></dd></div>
+                <div class="detail-list__row"><dt>Login email</dt><dd id="account-email"></dd></div>
+                <div class="detail-list__row"><dt>Role</dt><dd id="account-role"></dd></div>
+              </dl>
+              <p class="muted">Your login email is made from your roll number and cannot be changed. Your photo, phone number and the text about you are on <a href="/student/profile.html">your profile</a>.</p>
+            </section>
+            <section class="card card--tinted rise" aria-labelledby="legal-title">
+              <div class="card__head"><h2 class="card__title" id="legal-title"><span class="badge-icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#shield" /></svg></span>Privacy and terms</h2></div>
+              <a class="more" href="/privacy.html">Privacy policy <svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#chevron-right" /></svg></a>
+              <a class="more" href="/terms.html">Terms of use <svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#chevron-right" /></svg></a>
+            </section>
+            <button type="button" class="button button--secondary settings-logout" data-logout><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#logout" /></svg>Log out</button>
+          </div>
+        </div>
+      </main>
+      <nav class="tabbar" aria-label="Main">
+        <a class="tabbar__item" href="/student/dashboard.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#grid" /></svg>Home</a>
+        <button type="button" class="tabbar__item" id="menu-open" aria-haspopup="dialog"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#cap" /></svg>Academics</button>
+        <a class="tabbar__item" href="/student/resources.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#resources" /></svg>Resources</a>
+        <a class="tabbar__item" href="/student/quiz.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#quiz" /></svg>Quiz</a>
+        <a class="tabbar__item" href="/student/assistant.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#sparkles" /></svg>Assistant</a>
+      </nav>
+    </div>
+    <dialog class="dialog dialog--sheet" id="menu-sheet" aria-labelledby="menu-title">
+      <div class="sheet__grab" aria-hidden="true"></div>
+      <p class="eyebrow" id="menu-title">Academics</p>
+      <div class="sheet__links">
+        <a class="sheet__link" href="/student/attendance.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#attendance" /></svg>Attendance</a>
+        <a class="sheet__link" href="/student/results.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#results" /></svg>Results</a>
+        <a class="sheet__link" href="/student/timetable.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#calendar" /></svg>Timetable</a>
+        <a class="sheet__link" href="/student/notices.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#notices" /></svg>Notices</a>
+      </div>
+      <p class="eyebrow">More</p>
+      <div class="sheet__links">
+        <a class="sheet__link" href="/student/bookmarks.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#bookmark" /></svg>Bookmarks</a>
+        <a class="sheet__link" href="/student/quiz-history.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#history" /></svg>Test history</a>
+        <a class="sheet__link" href="/student/progress.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#progress" /></svg>Progress</a>
+        <a class="sheet__link" href="/student/profile.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#user" /></svg>Profile</a>
+        <a class="sheet__link" href="/student/settings.html" aria-current="page"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#settings" /></svg>Settings</a>
+      </div>
+      <div class="line">
+        <button type="button" class="button button--quiet" data-logout>Log out</button>
+        <button type="button" class="button button--secondary" data-close>Close</button>
+      </div>
+    </dialog>
+    <script type="module" src="/js/settings.js"></script>
+  </body>
+</html>

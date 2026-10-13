@@ -30,6 +30,8 @@
           <a class="nav__item" href="/student/quiz.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#quiz" /></svg>Quick Exam</a>
           <a class="nav__item" href="/student/progress.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#progress" /></svg>Progress</a>
           <a class="nav__item" href="/student/assistant.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#sparkles" /></svg>AI Assistant</a>
+          <p class="eyebrow nav__heading">Account</p>
+          <a class="nav__item" href="/student/settings.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#settings" /></svg>Settings</a>
         </nav>
         <div class="usercard">
           <a class="usercard__who" href="/student/profile.html" title="Your profile">
@@ -62,9 +64,18 @@
         </div>
         <div id="profile" class="stack stack--loose" hidden>
           <section class="hero profile-hero rise" data-tilt aria-labelledby="hero-name">
-            <div class="profile-hero__avatar" aria-hidden="true">
-              <span class="profile-hero__ring"></span>
-              <span class="profile-hero__initials" id="initials"></span>
+            <div class="profile-hero__who">
+              <div class="profile-hero__avatar">
+                <span class="profile-hero__ring" aria-hidden="true"></span>
+                <span class="profile-hero__initials" id="initials" aria-hidden="true"></span>
+                <img class="profile-hero__photo" id="photo" alt="Your profile photo" hidden />
+              </div>
+              <div class="profile-hero__photo-actions">
+                <button type="button" class="button button--glass button--small" id="photo-choose"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#camera" /></svg><span id="photo-choose-text">Add photo</span></button>
+                <button type="button" class="button button--glass button--small" id="photo-remove" hidden><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#trash" /></svg>Remove</button>
+                <label class="visually-hidden" for="photo-file">Choose a photo, JPEG or PNG, up to 2 MB</label>
+                <input class="visually-hidden" type="file" id="photo-file" accept="image/jpeg,image/png" tabindex="-1" />
+              </div>
             </div>
             <div class="hero__main">
               <p class="hero__eyebrow">Student profile</p>
@@ -105,20 +116,23 @@
               </dl>
             </section>
             <div class="stack stack--loose">
-              <section class="card rise" aria-labelledby="contact-title">
-              <div class="card__head">
-                <h2 class="card__title" id="contact-title"><span class="badge-icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#mail" /></svg></span>Contact</h2>
-              </div>
+              <section class="card rise" aria-labelledby="about-title">
+                <div class="card__head">
+                  <h2 class="card__title" id="about-title"><span class="badge-icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#user" /></svg></span>About me</h2>
+                  <button type="button" class="button button--secondary button--small" id="edit-details"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#edit" /></svg>Edit</button>
+                </div>
+                <p class="profile-bio" id="bio"></p>
                 <dl class="detail-list detail-list--stacked">
-                <div class="detail-list__row"><dt>Institutional email</dt><dd id="email"></dd></div>
                 <div class="detail-list__row"><dt>Phone</dt><dd id="phone"></dd></div>
+                <div class="detail-list__row"><dt>Institutional email</dt><dd id="email"></dd></div>
                 </dl>
               </section>
               <section class="card card--tinted rise" aria-labelledby="note-title">
               <div class="card__head">
                 <h2 class="card__title" id="note-title"><span class="badge-icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#shield" /></svg></span>Official record</h2>
               </div>
-                <p class="muted">These details come from the college's records and cannot be edited here. If something is wrong, ask your college administrator to correct it.</p>
+                <p class="muted">Your name, roll number, branch, semester and section come from the college's records and cannot be edited here. If something is wrong, ask your college administrator to correct it. Your photo, your phone number and the text about you are yours to change.</p>
+                <a class="more" href="/student/settings.html">Password and settings <svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#chevron-right" /></svg></a>
               </section>
               <button type="button" class="button button--secondary profile-logout" data-logout>Log out</button>
             </div>
@@ -148,11 +162,35 @@
         <a class="sheet__link" href="/student/quiz-history.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#history" /></svg>Test history</a>
         <a class="sheet__link" href="/student/progress.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#progress" /></svg>Progress</a>
         <a class="sheet__link" href="/student/profile.html" aria-current="page"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#user" /></svg>Profile</a>
+        <a class="sheet__link" href="/student/settings.html"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#settings" /></svg>Settings</a>
       </div>
       <div class="line">
         <button type="button" class="button button--quiet" data-logout>Log out</button>
         <button type="button" class="button button--secondary" data-close>Close</button>
       </div>
+    </dialog>
+    <dialog class="dialog" id="details-dialog" aria-labelledby="details-title">
+      <form class="stack stack--loose" id="details-form" novalidate>
+        <div class="stack stack--tight">
+          <h2 id="details-title">Edit your details</h2>
+          <p class="muted">Both are optional. Your name, roll number, branch and section are managed by your college.</p>
+        </div>
+        <p class="inset inset--danger inset--note" id="details-error" role="alert" hidden></p>
+        <div class="field">
+          <label class="field__label" for="f-phone">Phone</label>
+          <input class="textbox" id="f-phone" name="phone" type="tel" maxlength="20" autocomplete="tel" aria-describedby="f-phone-error" />
+          <p class="field__error" id="f-phone-error" hidden></p>
+        </div>
+        <div class="field">
+          <div class="line"><label class="field__label" for="f-bio">About me</label><span class="row__meta num" id="bio-count"></span></div>
+          <textarea class="textbox textbox--area" id="f-bio" name="bio" maxlength="280" aria-describedby="f-bio-error"></textarea>
+          <p class="field__error" id="f-bio-error" hidden></p>
+        </div>
+        <div class="dialog__actions">
+          <button type="button" class="button button--quiet" data-close>Cancel</button>
+          <button type="submit" class="button button--primary" id="details-save">Save</button>
+        </div>
+      </form>
     </dialog>
     <script type="module" src="/js/student-profile.js"></script>
   </body>

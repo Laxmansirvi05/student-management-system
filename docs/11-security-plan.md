@@ -171,13 +171,13 @@ Enabled for all state-changing requests, using a cookie-to-header token (`XSRF-T
 
 | Header | Value |
 | --- | --- |
-| `Content-Security-Policy` | `default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; frame-src https://<project>.supabase.co; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'` |
+| `Content-Security-Policy` | `default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https://<project>.supabase.co; frame-src https://<project>.supabase.co; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'` |
 | `Strict-Transport-Security` | `max-age=31536000; includeSubDomains` (production) |
 | `X-Content-Type-Options` | `nosniff` |
 | `Referrer-Policy` | `no-referrer` |
 | `Permissions-Policy` | camera, microphone and geolocation disabled |
 
-`frame-src` allows only the project's storage host, for the PDF preview. No CORS configuration is needed because the frontend and API share one origin; cross-origin requests are not allowed.
+`frame-src` allows only the project's storage host, for the PDF preview. `img-src` allows the same single host, for a student's own profile photo ([ADR 0009](decisions/0009-student-personal-details-and-photo.md)). The host is written into the header only when `SUPABASE_URL` is a plain `https://` host name; otherwise frames are not allowed at all and images come from the application only. No CORS configuration is needed because the frontend and API share one origin; cross-origin requests are not allowed.
 
 Mermaid (P1, task `T7-05`) inserts inline styles, which `style-src 'self'` blocks. That task must propose the smallest policy change that works and get the owner's approval. The policy above is not loosened before then.
 
@@ -213,6 +213,17 @@ Only administrators upload. Even so, each file is treated as hostile:
 8. Files are served with `Content-Type: application/pdf` from the storage host, so a malicious file cannot run script in the application's origin.
 
 There is no virus scanning in the first release. This is an accepted risk because uploaders are trusted staff and only PDFs are accepted.
+
+### Profile photos
+
+Since 2026-10-14 a student may upload one kind of file: their own profile photo ([ADR 0009](decisions/0009-student-personal-details-and-photo.md)). It is treated as hostile in the same way:
+
+1. Size limit of 2 MB, checked from the request before the file is read.
+2. The declared content type must be JPEG or PNG, and the first bytes must be the signature of that format. Anything else, including GIF and SVG, is refused.
+3. The picture's width and height are read before it is decoded. A picture under 64 or over 6,000 pixels on a side is refused without being loaded.
+4. **The uploaded file is never stored.** The server draws the middle square of the picture at 512 by 512 pixels and writes a new JPEG. EXIF data, including the place and time a phone records, does not survive, and neither does anything else hidden in the file.
+5. The storage path is `profile-photos/` and a random UUID. The API never returns it.
+6. The photo is shown only to its owner, through a signed link that lasts five minutes.
 
 ## 10. Supabase controls
 

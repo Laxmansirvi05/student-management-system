@@ -92,7 +92,11 @@ class StudentProfileIT extends PostgresIntegrationTest {
             "currentSemester",
             "section",
             "admissionYear",
-            "phone");
+            "phone",
+            // The two personal details a student keeps themselves (FR-STU-003). "hasPhoto" says
+            // only that there is a photo, never where it is stored.
+            "bio",
+            "hasPhoto");
     assertThat(profile.get("phone").asString()).isEqualTo("0000000000");
   }
 
