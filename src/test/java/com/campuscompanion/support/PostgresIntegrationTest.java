@@ -41,6 +41,8 @@ public abstract class PostgresIntegrationTest {
     registry.add("DB_MIGRATION_USERNAME", () -> MIGRATOR_USER);
     registry.add("DB_MIGRATION_PASSWORD", () -> MIGRATOR_PASSWORD);
     registry.add("STUDENT_EMAIL_DOMAIN", () -> "university.example");
+    // Tests build their own data; the demo seeder stays off whatever the local .env says.
+    registry.add("DEMO_SEED_ENABLED", () -> "false");
   }
 
   /** A connection as the container's administrator, for inspecting what other roles may not see. */

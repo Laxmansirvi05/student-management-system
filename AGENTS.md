@@ -8,7 +8,7 @@ Instructions for any coding agent working in this repository. Human contributors
 
 The owner must be able to explain the Java code in a viva. Prefer clear, conventional Java over clever or generated code.
 
-**Current state:** Phase 1 in progress. Tasks `T1-01` to `T1-09` are built: project skeleton, configuration, first migration, core entities, error handling, login and sessions, lockout and login rate limit, password policy, forced password change and the first-admin bootstrap. The first pages exist (`T1-09`): login, change password, and empty student and admin layouts. There is no student provisioning and no feature yet. Check [docs/16-implementation-plan.md](docs/16-implementation-plan.md) and the Git history before assuming anything else exists.
+**Current state:** Phase 1 in progress. Tasks `T1-01` to `T1-10` are built: project skeleton, configuration, first migration, core entities, error handling, login and sessions, lockout and login rate limit, password policy, forced password change and the first-admin bootstrap. The first pages exist (`T1-09`): login, change password, and empty student and admin layouts. Students are created by `StudentProvisioningService`, used so far only by the synthetic `DevDataSeeder` (`T1-10`); there is no admin screen and no feature yet. Check [docs/16-implementation-plan.md](docs/16-implementation-plan.md) and the Git history before assuming anything else exists.
 
 ## 2. Approved stack
 

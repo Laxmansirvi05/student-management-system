@@ -19,4 +19,10 @@ public class StudentProfileService {
   public Optional<String> rollNoOf(Long userId) {
     return profiles.findByUserId(userId).map(StudentProfile::getRollNo);
   }
+
+  /** True once at least one student has been provisioned. */
+  @Transactional(readOnly = true)
+  public boolean anyStudentExists() {
+    return profiles.count() > 0;
+  }
 }
