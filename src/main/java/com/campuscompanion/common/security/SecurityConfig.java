@@ -52,7 +52,7 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers("/api/v1/admin/**", "/admin/**")
                     .hasRole("ADMIN")
-                    .requestMatchers("/student/**")
+                    .requestMatchers("/api/v1/students/**", "/student/**")
                     .hasRole("STUDENT")
                     .anyRequest()
                     .authenticated())

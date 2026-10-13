@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Profile · Campus Companion</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="/css/tokens.css" />
+    <link rel="stylesheet" href="/css/base.css" />
+    <link rel="stylesheet" href="/css/app.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="app-header">
+        <span class="app-header__brand">Campus Companion</span>
+        <span class="app-header__spacer"></span>
+        <a class="app-header__user app-header__user--link" id="user-name" href="/student/profile.html" title="Your profile" aria-current="page"></a>
+        <button type="button" id="logout" class="button button--text">Log out</button>
+      </header>
+      <nav class="app-nav" aria-label="Main">
+        <div class="app-nav__group">
+          <a class="app-nav__item" href="/student/dashboard.html">Home</a>
+          <span class="app-nav__item" aria-disabled="true">Academics</span>
+          <span class="app-nav__item" aria-disabled="true">Resources</span>
+          <span class="app-nav__item" aria-disabled="true">Quiz</span>
+          <span class="app-nav__item" aria-disabled="true">Assistant</span>
+        </div>
+      </nav>
+      <main class="app-main">
+        <div class="page-head">
+          <h1>Profile</h1>
+          <p class="muted">Your details as the college holds them. If something is wrong, ask your college administrator to correct it.</p>
+        </div>
+        <p id="loading" class="muted" role="status">Loading your profile…</p>
+        <div id="error" class="page-state" hidden>
+          <div id="banner" class="banner banner--error" hidden>
+            <span class="banner__label">Error</span>
+            <span class="banner__text"></span>
+          </div>
+          <button type="button" id="retry" class="button button--secondary">Retry</button>
+        </div>
+        <div id="profile" class="card" hidden>
+          <dl class="detail-list">
+            <div class="detail-list__row"><dt>Name</dt><dd id="full-name"></dd></div>
+            <div class="detail-list__row"><dt>Roll number</dt><dd id="roll-no"></dd></div>
+            <div class="detail-list__row"><dt>Institutional email</dt><dd id="email"></dd></div>
+            <div class="detail-list__row"><dt>Branch</dt><dd id="branch"></dd></div>
+            <div class="detail-list__row"><dt>Semester</dt><dd id="semester"></dd></div>
+            <div class="detail-list__row"><dt>Section</dt><dd id="section"></dd></div>
+            <div class="detail-list__row"><dt>Admission year</dt><dd id="admission-year"></dd></div>
+            <div class="detail-list__row"><dt>Phone</dt><dd id="phone"></dd></div>
+          </dl>
+        </div>
+      </main>
+    </div>
+    <script type="module" src="/js/student-profile.js"></script>
+  </body>
+</html>
