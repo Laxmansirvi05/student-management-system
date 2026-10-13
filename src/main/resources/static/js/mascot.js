@@ -1,6 +1,7 @@
-// The sign-in mascot. Its eyes follow the pointer, it leans a little toward it, a soft light
-// follows the pointer across the black panel, and it shuts its eyes while a password is typed.
-// It is decoration only: hidden from screen readers, and still when reduced motion is requested.
+// The sign-in robot. Its face turns toward the pointer, the head leans a little the same way, a
+// soft light follows the pointer across the black panel, and its eyes become two flat lines while
+// a password is typed. It is decoration only: hidden from screen readers, and still when reduced
+// motion is requested.
 
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
@@ -9,24 +10,25 @@ export function startMascot({ panel, passwordInputs = [] }) {
   if (!mascot) {
     return;
   }
-  const pupils = mascot.querySelectorAll(".mascot__pupil");
+  const face = mascot.querySelector(".mascot__face");
+  const antenna = mascot.querySelector(".mascot__antenna");
 
   function follow(event) {
     if (reduceMotion.matches) {
       return;
     }
-    const face = mascot.getBoundingClientRect();
-    const dx = event.clientX - (face.left + face.width / 2);
-    const dy = event.clientY - (face.top + face.height / 2);
+    const head = mascot.getBoundingClientRect();
+    const dx = event.clientX - (head.left + head.width / 2);
+    const dy = event.clientY - (head.top + head.height / 2);
     const distance = Math.hypot(dx, dy) || 1;
-    // The pupils move at most 5 units inside the eye; the head leans at most 6 pixels.
+    // The further away the pointer is, the further the robot looks, up to a fixed limit.
     const reach = Math.min(1, distance / 260);
-    const eyeX = (dx / distance) * 5 * reach;
-    const eyeY = (dy / distance) * 5 * reach;
-    for (const pupil of pupils) {
-      pupil.style.transform = `translate(${eyeX}px, ${eyeY}px)`;
-    }
-    mascot.style.transform = `translate(${(dx / distance) * 6 * reach}px, ${(dy / distance) * 6 * reach}px)`;
+    const lookX = (dx / distance) * reach;
+    const lookY = (dy / distance) * reach;
+    // The face slides inside the helmet; the head leans; the antenna swings the other way.
+    face.style.transform = `translate(${lookX * 16}px, ${lookY * 9}px)`;
+    mascot.style.transform = `translate(${lookX * 8}px, ${lookY * 8}px)`;
+    antenna.style.transform = `rotate(${lookX * -10}deg)`;
 
     const area = panel.getBoundingClientRect();
     panel.style.setProperty("--glow-x", `${event.clientX - area.left}px`);

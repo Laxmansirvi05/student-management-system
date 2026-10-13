@@ -208,7 +208,7 @@ Built in task `T1-09`, following a reference video supplied by the owner on 2026
 - One centred card with large rounded corners and a soft shadow, on the pale grey background. From 760 px wide it is split in two halves; below that the black half sits on top.
 - **Black half:** the Campus Companion mascot, the product name and one line of text. A soft light follows the pointer.
 - **White half:** a small person icon, the heading, the fields and one black pill button.
-- **The mascot** is an original drawing for this project (a face in a graduation cap). Its eyes follow the pointer and it shuts them while a password field has focus. It is decorative: hidden from screen readers, and it does not move when the device asks for reduced motion. Artwork from the reference video must not be copied.
+- **The mascot** is the robot from the reference video, as the owner asked on 2026-10-13: a white outline of an eight-sided helmet with two ear pieces and a bent antenna, one large eye marked with a cross and one small square eye. It is redrawn by hand as an inline SVG; no file from the video is used. Its face turns toward the pointer and its eyes become two flat lines while a password field has focus. It is decorative: hidden from screen readers, and it does not move when the device asks for reduced motion.
 - **Deliberately absent**, because the requirements forbid them: sign in with Google, Apple or any other provider; "Sign up"; "Remember me"; a self-service "Forgot password?" link. In their place is one line: "Forgot your password? Ask your college administrator to reset it."
 - The login form has two labelled fields, "Institutional email" and "Password", with a show-password button.
 

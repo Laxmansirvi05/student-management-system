@@ -64,14 +64,28 @@
 }
 
 .mascot {
-  width: 132px;
-  height: 132px;
-  transition: transform 220ms ease-out;
+  width: 170px;
+  height: 136px;
+  transition: transform 260ms ease-out;
   will-change: transform;
 }
 
-.mascot__pupil {
-  transition: transform 120ms ease-out;
+.mascot__face {
+  transition: transform 180ms ease-out;
+}
+
+.mascot__antenna {
+  transform-box: fill-box;
+  transform-origin: 80% 100%;
+  transition: transform 320ms ease-out;
+}
+
+/* The soft patch of light on the floor under the floating robot. */
+.mascot__shadow {
+  width: 170px;
+  height: 34px;
+  margin-top: var(--space-4);
+  background: radial-gradient(closest-side, rgba(255, 255, 255, 0.22), transparent);
 }
 
 .mascot__lid {
@@ -155,7 +169,11 @@
   }
 
   .mascot {
-    width: 168px;
+    width: 210px;
     height: 168px;
+  }
+
+  .mascot__shadow {
+    width: 210px;
   }
 }
