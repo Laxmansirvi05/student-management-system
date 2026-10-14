@@ -80,7 +80,8 @@ Errors use RFC 9457 problem details with media type `application/problem+json`.
 | 409 | `QUIZ_NOT_ENOUGH_QUESTIONS` | Fewer published questions than requested. Includes `available`. |
 | 409 | `QUIZ_ALREADY_SUBMITTED` | The attempt was already submitted. |
 | 409 | `QUIZ_ATTEMPT_EXPIRED` | Submitted after the time limit and grace period. |
-| 413 | `UPLOAD_TOO_LARGE` | File over 10 MB. |
+| 413 | `UPLOAD_TOO_LARGE` | File over 10 MB, or a profile photo over 2 MB. |
+| 413 | `REQUEST_TOO_LARGE` | A JSON request body over 64 KB (section 6). |
 | 415 | `UPLOAD_INVALID_TYPE` | Not a valid PDF. |
 | 422 | `AI_REQUEST_DECLINED` | The assistant declined the request (off-topic or unsafe). `detail` gives the reason. |
 | 423 | `AUTH_ACCOUNT_LOCKED` | Too many failed logins for that email address. Returned in the same way whether or not an account exists. |
@@ -122,11 +123,11 @@ Filters are query parameters named after the field (`subjectId`, `type`, `examYe
 
 | Limit | Value |
 | --- | --- |
-| JSON request body | 64 KB |
+| JSON request body | 64 KB. A larger body is refused with `413 REQUEST_TOO_LARGE` before it is read; a body sent without a length is cut off at the limit |
 | File upload | 10 MB, PDF only |
 | Login attempts | 5 consecutive failures for an email address block it for 15 minutes, whether or not an account exists; 20 attempts per IP address per 10 minutes |
 | AI requests | Per-user, per-minute and application-wide limits are defined once, in [12-AI-features-spec.md](12-AI-features-spec.md) §2 |
-| Other API calls | 120 per session per minute |
+| Other API calls | 120 per session per minute. Over the limit: `429 RATE_LIMITED` with `Retry-After`. A request without a session is refused as `401` before it is counted |
 | Search text `q` | 100 characters |
 
 AI input limits are in section 9.

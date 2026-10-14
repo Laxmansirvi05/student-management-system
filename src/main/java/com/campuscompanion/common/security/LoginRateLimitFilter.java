@@ -22,13 +22,13 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
 
   private static final String LOGIN_PATH = "/api/v1/auth/login";
 
-  private final LoginRateLimiter limiter;
+  private final SlidingWindowRateLimiter limiter;
   private final ApiSecurityErrorHandler errorHandler;
   private final Clock clock;
 
   public LoginRateLimitFilter(
       LoginProtectionProperties limits, ApiSecurityErrorHandler errorHandler, Clock clock) {
-    this.limiter = new LoginRateLimiter(limits.maxAttemptsPerIp(), limits.ipWindow());
+    this.limiter = new SlidingWindowRateLimiter(limits.maxAttemptsPerIp(), limits.ipWindow());
     this.errorHandler = errorHandler;
     this.clock = clock;
   }

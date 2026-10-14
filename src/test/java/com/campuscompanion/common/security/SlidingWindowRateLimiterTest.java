@@ -7,11 +7,12 @@ import java.time.Instant;
 import org.junit.jupiter.api.Test;
 
 /** Task T1-07: at most 20 login attempts per IP address in any 10 minutes. */
-class LoginRateLimiterTest {
+class SlidingWindowRateLimiterTest {
 
   private static final Instant START = Instant.parse("2026-10-13T06:00:00Z");
 
-  private final LoginRateLimiter limiter = new LoginRateLimiter(20, Duration.ofMinutes(10));
+  private final SlidingWindowRateLimiter limiter =
+      new SlidingWindowRateLimiter(20, Duration.ofMinutes(10));
 
   @Test
   void allowsTwentyAttemptsAndRefusesTheTwentyFirst() {

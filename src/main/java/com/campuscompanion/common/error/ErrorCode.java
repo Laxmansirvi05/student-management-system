@@ -20,6 +20,7 @@ public enum ErrorCode {
   QUIZ_ALREADY_SUBMITTED(HttpStatus.CONFLICT, "Attempt already submitted"),
   QUIZ_ATTEMPT_EXPIRED(HttpStatus.CONFLICT, "Attempt expired"),
   UPLOAD_TOO_LARGE(HttpStatus.CONTENT_TOO_LARGE, "File too large"),
+  REQUEST_TOO_LARGE(HttpStatus.CONTENT_TOO_LARGE, "Request too large"),
   UPLOAD_INVALID_TYPE(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Unsupported file type"),
   AI_REQUEST_DECLINED(HttpStatus.UNPROCESSABLE_CONTENT, "Request declined"),
   AUTH_ACCOUNT_LOCKED(HttpStatus.LOCKED, "Too many attempts"),

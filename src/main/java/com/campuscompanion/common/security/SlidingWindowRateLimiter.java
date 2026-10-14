@@ -8,19 +8,20 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Limits how many login attempts one IP address may make in a sliding time window. It is kept in
- * memory, which is enough while the application runs as a single process.
+ * Limits how many requests one key may make in a sliding time window. The login limit uses the IP
+ * address as the key, and the general API limit uses the session. It is kept in memory, which is
+ * enough while the application runs as a single process.
  */
-public class LoginRateLimiter {
+public class SlidingWindowRateLimiter {
 
-  /** Above this many tracked addresses, those with no recent attempt are forgotten. */
+  /** Above this many tracked keys, those with no recent attempt are forgotten. */
   private static final int CLEANUP_THRESHOLD = 1_000;
 
   private final int maxAttempts;
   private final Duration window;
   private final Map<String, Deque<Instant>> attemptsByKey = new HashMap<>();
 
-  public LoginRateLimiter(int maxAttempts, Duration window) {
+  public SlidingWindowRateLimiter(int maxAttempts, Duration window) {
     this.maxAttempts = maxAttempts;
     this.window = window;
   }
@@ -57,7 +58,7 @@ public class LoginRateLimiter {
     return attemptsByKey.size();
   }
 
-  /** Drops addresses with no attempt left inside the window, so the map cannot grow forever. */
+  /** Drops keys with no attempt left inside the window, so the map cannot grow forever. */
   private void forgetIdleKeys(Instant now) {
     attemptsByKey
         .values()

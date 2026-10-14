@@ -14,7 +14,7 @@ import org.springframework.test.context.TestPropertySource;
 /**
  * Task T1-07, scenario AU12: one address may make only so many login attempts in a window. The
  * limit is lowered to three here so the test stays short; the real value is 20 in 10 minutes and is
- * covered by LoginRateLimiterTest.
+ * covered by SlidingWindowRateLimiterTest.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource(properties = "app.security.login.max-attempts-per-ip=3")

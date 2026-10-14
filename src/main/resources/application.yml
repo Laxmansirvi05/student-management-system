@@ -63,6 +63,11 @@ app:
       lock-duration: 15m
       max-attempts-per-ip: 20
       ip-window: 10m
+    api:
+      # Fixed defaults, defined in docs/09-api-contract.md section 6.
+      max-requests-per-session: 120
+      window: 1m
+      max-json-body: 64KB
   identity:
     student-email-domain: ${STUDENT_EMAIL_DOMAIN}
   academic:
