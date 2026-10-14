@@ -55,10 +55,7 @@ public class BookmarkService {
         .findById(resourceId)
         .filter(LearningResource::isPublished)
         .orElseThrow(ResourceNotFoundException::new);
-    Bookmark.Key key = new Bookmark.Key(studentId, resourceId);
-    if (!bookmarks.existsById(key)) {
-      bookmarks.save(new Bookmark(studentId, resourceId));
-    }
+    bookmarks.addIfMissing(studentId, resourceId);
   }
 
   @Transactional

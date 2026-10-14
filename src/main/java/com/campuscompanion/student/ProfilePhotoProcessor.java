@@ -11,6 +11,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Iterator;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageReadParam;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 import org.springframework.stereotype.Component;
@@ -31,6 +32,9 @@ public class ProfilePhotoProcessor {
   static final int MIN_SIDE = 64;
   static final int MAX_SIDE = 6000;
   static final int SIZE = 512;
+
+  /** A picture is read with its shorter side at about this size, at least twice the stored size. */
+  static final int READ_SIDE = 1024;
 
   private static final byte[] JPEG = {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF};
   private static final byte[] PNG = {(byte) 0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A};
@@ -66,7 +70,13 @@ public class ProfilePhotoProcessor {
       if (Math.min(width, height) < MIN_SIDE || Math.max(width, height) > MAX_SIDE) {
         throw invalid();
       }
-      BufferedImage image = reader.read(0);
+      // Only 512 pixels are kept, so a large picture is read at a lower resolution straight away:
+      // every second, third or fourth pixel. A 6000 by 6000 picture would otherwise take about
+      // 144 MB of memory once decoded.
+      ImageReadParam every = reader.getDefaultReadParam();
+      int step = Math.max(1, Math.min(width, height) / READ_SIDE);
+      every.setSourceSubsampling(step, step, 0, 0);
+      BufferedImage image = reader.read(0, every);
       if (image == null) {
         throw invalid();
       }

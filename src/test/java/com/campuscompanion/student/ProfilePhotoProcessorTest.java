@@ -148,6 +148,16 @@ class ProfilePhotoProcessorTest {
   }
 
   @Test
+  void aLargePictureIsReadAtLowerResolutionAndStillComesOutRight() {
+    // 4000 by 3000 is read with every third pixel. The middle square still keeps both colours.
+    BufferedImage picture = TestImages.read(processor.process(TestImages.jpeg(4000, 3000), JPEG));
+
+    assertThat(picture.getWidth()).isEqualTo(512);
+    assertRed(picture, 60, 256);
+    assertBlue(picture, 450, 256);
+  }
+
+  @Test
   void aFileOverTwoMegabytesIsRefusedBeforeItIsOpened() {
     byte[] huge = new byte[2 * 1024 * 1024 + 1];
     huge[0] = (byte) 0xFF;

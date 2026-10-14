@@ -513,6 +513,33 @@ class ResourceApiIT extends ApiIntegrationTest {
   }
 
   @Test
+  void manyBookmarkRequestsAtOnceAllSucceedAndLeaveOneBookmark() throws Exception {
+    long subjectId = subject(admin, "RSU101", "RSU", 3);
+    long id = upload(subjectId, "Popular notes", "NOTES", null);
+    long studentId = accounts.student("23RSU001", "RSU", 3, "A");
+    ApiTestClient student = studentClient("23RSU001");
+    student.get("/api/v1/auth/csrf");
+
+    List<java.util.concurrent.CompletableFuture<Integer>> calls = new java.util.ArrayList<>();
+    for (int i = 0; i < 8; i++) {
+      calls.add(
+          java.util.concurrent.CompletableFuture.supplyAsync(
+              () -> {
+                try {
+                  return student.put("/api/v1/bookmarks/" + id, "").statusCode();
+                } catch (Exception e) {
+                  throw new IllegalStateException(e);
+                }
+              }));
+    }
+
+    for (var call : calls) {
+      assertThat(call.get()).isEqualTo(204);
+    }
+    assertThat(bookmarksOf(studentId)).isEqualTo(1);
+  }
+
+  @Test
   void aStudentCannotTouchAnotherStudentsBookmarks() throws Exception {
     long subjectId = subject(admin, "RSS101", "RSS", 3);
     long id = upload(subjectId, "Shared notes", "NOTES", null);

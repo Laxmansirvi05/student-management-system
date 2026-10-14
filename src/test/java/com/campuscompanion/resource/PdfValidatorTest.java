@@ -66,6 +66,17 @@ class PdfValidatorTest {
             failure -> assertThat(failure.getCode()).isEqualTo(ErrorCode.UPLOAD_TOO_LARGE));
   }
 
+  @Test
+  void aFileThatCannotBeOpenedInTimeIsRefused() {
+    // With no time at all, even a good file cannot be opened in time.
+    PdfValidator impatient = new PdfValidator(java.time.Duration.ZERO);
+
+    assertThatThrownBy(() -> impatient.validate(TestPdfs.valid(50), PDF, "slow.pdf"))
+        .isInstanceOfSatisfying(
+            ApiException.class,
+            failure -> assertThat(failure.getCode()).isEqualTo(ErrorCode.UPLOAD_INVALID_TYPE));
+  }
+
   private void assertInvalidType(byte[] content, String declaredType, String fileName) {
     assertThatThrownBy(() -> validator.validate(content, declaredType, fileName))
         .isInstanceOfSatisfying(
