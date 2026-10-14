@@ -351,4 +351,10 @@ Notation: `AU`, `PV`, `Z` and `UP` numbers are the scenarios in sections 6 and 8
 | AT-ADM-009 | FR-ADM-009 (the P0 part: writing entries) | Every audited action writes an entry in the same transaction; no entry holds password material; entries cannot be changed or deleted | `AuditServiceTest`; Z15, Z16, Z17, Z19; E2.9 |
 | AT-UX-001 | FR-UX-001 | Every screen has loading, empty and error states; errors are plain and placed correctly; forms keep their values | The form checklist in section 7; the checklist in section 13; the error-format cases in section 4 |
 
+P1 requirements built so far:
+
+| Test | Requirement | Passes when | Evidence |
+| --- | --- | --- | --- |
+| AT-ADM-010 | FR-ADM-010 | A valid file creates every student by the FR-ADM-001 rules; a file with any wrong, repeated or existing roll number creates nothing and lists every problem by line; a failure while creating undoes the whole file; only admins may import | `CsvReaderTest`; `StudentImportIT`; `EndpointAccessIT` |
+
 The acceptance tests for FR-AI-001 to FR-AI-003 need the real provider. All acceptance tests are run again on the deployed application before release (tasks `T6-02` and `T6-05`).

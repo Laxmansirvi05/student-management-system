@@ -225,6 +225,17 @@ Since 2026-10-14 a student may upload one kind of file: their own profile photo 
 5. The storage path is `profile-photos/` and a random UUID. The API never returns it.
 6. The photo is shown only to its owner, through a signed link that lasts five minutes.
 
+### Student CSV import
+
+An administrator may upload a CSV file of students (FR-ADM-010, [09-api-contract.md](09-api-contract.md) §8.14):
+
+1. 1 MB at most, checked before the file is read; the name must end in `.csv`.
+2. The bytes must be valid UTF-8; anything else is refused rather than guessed.
+3. At most 100 students, so the request ends well inside the platform's 30 seconds; at most 100 problems are returned.
+4. Every line goes through `StudentProvisioningService`, the same validation, email rule and audit entry as a student added by hand. Nothing is saved unless every line is valid, and all of it is one transaction.
+5. **The file is never stored**, neither in the database nor in Storage. It is read in memory and dropped.
+6. The first password of every imported student is the roll number (EX-AUTH-01), so the import is for synthetic data only until the owner answers OQ-17.
+
 ## 10. Supabase controls
 
 ### Database

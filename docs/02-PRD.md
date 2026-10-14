@@ -509,6 +509,7 @@ The permitted contents and the protections are specified in [08-database-design.
 ### FR-ADM-010 CSV bulk import (P1)
 
 - **Acceptance criteria:** Upload a CSV of students. Every row follows the same provisioning rules as FR-ADM-001. The file is validated completely first; any invalid, duplicate or ambiguous row stops the import and all problems are listed by row number.
+- **Built on 2026-10-14** (task `T7-07`). Limits chosen while building it: a `.csv` file in UTF-8, at most 1 MB and 100 students, so the request finishes inside Heroku's 30 seconds; the columns are listed in [09-api-contract.md](09-api-contract.md) §8.14. The file is read in memory and never stored. Every first password is the roll number, so the import is for synthetic data only until the owner answers OQ-17.
 
 ### FR-ADM-011 Usage statistics (P2)
 

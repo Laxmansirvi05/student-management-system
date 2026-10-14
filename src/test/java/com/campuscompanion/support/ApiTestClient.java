@@ -91,6 +91,18 @@ public class ApiTestClient {
   /** PUT of one file as the part "file", the way the profile page sends a photo. */
   public HttpResponse<String> putFile(String path, String fileName, String fileType, byte[] file)
       throws IOException, InterruptedException {
+    return sendFile("PUT", path, fileName, fileType, file);
+  }
+
+  /** POST of one file as the part "file", the way the student import sends a CSV. */
+  public HttpResponse<String> postFile(String path, String fileName, String fileType, byte[] file)
+      throws IOException, InterruptedException {
+    return sendFile("POST", path, fileName, fileType, file);
+  }
+
+  private HttpResponse<String> sendFile(
+      String method, String path, String fileName, String fileType, byte[] file)
+      throws IOException, InterruptedException {
     String boundary = "----campus-companion-test-" + System.nanoTime();
     ByteArrayOutputStream body = new ByteArrayOutputStream();
     body.write(
@@ -104,7 +116,7 @@ public class ApiTestClient {
         HttpRequest.newBuilder(URI.create(baseUrl + path))
             .header("Content-Type", "multipart/form-data; boundary=" + boundary)
             .header("X-XSRF-TOKEN", csrfToken())
-            .PUT(HttpRequest.BodyPublishers.ofByteArray(body.toByteArray())));
+            .method(method, HttpRequest.BodyPublishers.ofByteArray(body.toByteArray())));
   }
 
   private String csrfToken() throws IOException, InterruptedException {

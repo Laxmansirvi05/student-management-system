@@ -125,6 +125,7 @@ Filters are query parameters named after the field (`subjectId`, `type`, `examYe
 | --- | --- |
 | JSON request body | 64 KB. A larger body is refused with `413 REQUEST_TOO_LARGE` before it is read; a body sent without a length is cut off at the limit |
 | File upload | 10 MB, PDF only |
+| Student CSV import | 1 MB and 100 students per file. Each new account needs a password hash of about 0.1 s, and a request must finish within Heroku's 30 seconds |
 | Login attempts | 5 consecutive failures for an email address block it for 15 minutes, whether or not an account exists; 20 attempts per IP address per 10 minutes |
 | AI requests | Per-user, per-minute and application-wide limits are defined once, in [12-AI-features-spec.md](12-AI-features-spec.md) §2 |
 | Other API calls | 120 per session per minute. Over the limit: `429 RATE_LIMITED` with `Retry-After`. A request without a session is refused as `401` before it is counted |
@@ -230,7 +231,7 @@ All paths start with `/admin` and require the `ADMIN` role.
 | GET, POST | `/admin/quiz-questions` | List and create questions. |
 | PUT | `/admin/quiz-questions/{id}` | Update a question, including `status`. |
 | GET | `/admin/audit-logs` | Read the audit log (P1). |
-| POST | `/admin/imports/students` | CSV import (P1). |
+| POST | `/admin/imports/students` | Create many students from one CSV file (P1). See 8.14. |
 
 ### 7.7 Health
 
@@ -589,6 +590,43 @@ Failures: `413 UPLOAD_TOO_LARGE`, `415 UPLOAD_INVALID_TYPE`, `503 STORAGE_UNAVAI
 ```
 
 The password is random, not the roll number. The student's sessions are ended, the account is unlocked, and `mustChangePassword` becomes `true`. This is the only response in the API that contains a password, and it is never logged or audited.
+
+### 8.14 Import students from a CSV file (admin)
+
+`POST /api/v1/admin/imports/students` as `multipart/form-data` with one part, `file`:
+
+```text
+rollNo,fullName,branch,currentSemester,section,admissionYear,phone
+23CSE101,Demo Student,CSE,3,A,2023,
+23CSE102,"Demo, Second",CSE,3,A,2023,+91 90000 00000
+```
+
+`201 Created`
+
+```json
+{ "created": 2 }
+```
+
+- The columns may come in any order and any letter case; `phone` may be left out. An unknown, repeated or missing column is refused. Empty columns with no name, which spreadsheets often add after the last one, are ignored, but a value in such a column is refused.
+- Every line follows the same rules as 8.12, through the same service: the email is generated, the first password is the roll number, and nothing is returned about either.
+- The whole file is checked before anything is saved. If any line is wrong, nothing is created and the answer is `400 VALIDATION_FAILED` with every problem, at most 100. The field name carries the line number of the file:
+
+```json
+{
+  "code": "VALIDATION_FAILED",
+  "errors": [
+    { "field": "rows[3].fullName", "message": "Full name is required." },
+    { "field": "rows[4].currentSemester", "message": "\"three\" is not a whole number." },
+    { "field": "rows[7].rollNo", "message": "Roll number 23CSE101 is also on line 2." },
+    { "field": "rows[8].rollNo", "message": "A student with roll number 23CSE001 already exists." }
+  ]
+}
+```
+
+- `header` names a problem with the first line and `file` one with the whole file: empty, not UTF-8, a quote that is never closed, or more than 100 students.
+- `409 CONFLICT` if an account appears while the students are being created, for example a generated email that another account already has. The transaction is undone, so no student of the file is left behind.
+- `413 UPLOAD_TOO_LARGE` over 1 MB; `415 UPLOAD_INVALID_TYPE` when the file name does not end in `.csv`.
+- The file is read in memory and never stored.
 
 ## 9. AI endpoints
 

@@ -646,7 +646,6 @@ paths:
       tags: [Admin]
       summary: Search students
       parameters:
-        - { name: q, in: query, description: "Roll number, name or email.", schema: { type: string, maxLength: 100 } }
         - { name: branch, in: query, schema: { type: string } }
         - { name: semester, in: query, schema: { type: integer, minimum: 1, maximum: 8 } }
         - { name: section, in: query, schema: { type: string } }
@@ -762,6 +761,46 @@ paths:
                 properties:
                   temporaryPassword: { type: string }
         "404": { $ref: "#/components/responses/Problem" }
+
+  /admin/imports/students:
+    post:
+      tags: [Admin]
+      summary: Create many students from one CSV file (P1, FR-ADM-010)
+      description: >
+        The first line names the columns, in any order and any letter case: rollNo, fullName,
+        branch, currentSemester, section, admissionYear, and optionally phone. Every line follows
+        the same rules as POST /admin/students. The whole file is checked first; if any line is
+        wrong, nothing is created and every problem is listed, with its line number in the field
+        name (for example rows[4].fullName; header and file for problems with the header line or
+        the whole file). If every line is right, all students are created in one transaction.
+        The file is read in memory and never stored.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: A .csv file in UTF-8, at most 1 MB and 100 students.
+      responses:
+        "201":
+          description: Every student in the file was created.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [created]
+                properties:
+                  created: { type: integer, minimum: 1 }
+        "400": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "413": { $ref: "#/components/responses/Problem" }
+        "415": { $ref: "#/components/responses/Problem" }
 
   /admin/attendance:
     get:

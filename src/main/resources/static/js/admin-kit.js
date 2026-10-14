@@ -93,7 +93,8 @@ export function showFieldErrors(form, error) {
   return others;
 }
 
-function dialogShell(labelId) {
+/** An empty modal dialog, labelled by the element with labelId. It removes itself when closed. */
+export function dialogShell(labelId) {
   const dialog = h("dialog.dialog", { "aria-labelledby": labelId });
   dialog.addEventListener("click", (event) => {
     if (event.target === dialog || event.target.closest("[data-close]")) {

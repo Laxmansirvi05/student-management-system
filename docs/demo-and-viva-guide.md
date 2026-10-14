@@ -74,6 +74,7 @@ ER diagram and data dictionary: [08-database-design.md](08-database-design.md).
 | `AiProvider`, `MockAiProvider`, `AiProviderConfig` (`ai/provider/`) | Interface and polymorphism | One interface, one implementation chosen by configuration, the mock for tests and the demo |
 | `AiResponseParser`, `PromptBuilder` (`ai/`) | Treating outside text as untrusted | Wrapper tags removed from the student's text; the reply checked for shape and size, never trusted |
 | `PdfValidator` (`resource/`), `ProfilePhotoProcessor` (`student/`) | Safe file handling | Size, type, signature, parsing with a time limit; a photo redrawn so nothing hidden in it is kept |
+| `CsvReader`, `StudentImportService` (`student/`) | Reading a file character by character; all or nothing | Quoted fields with commas, doubled quotes and line breaks; why every line is checked before any is saved; one transaction so a late failure undoes the earlier rows; why 100 rows (BCrypt and Heroku's 30 seconds) |
 | `StartQuizRequest` (`quiz/dto/`) | Record and validation | Records as DTOs, Bean Validation annotations |
 | `V1__core.sql` (`resources/db/migration/`) | SQL | Tables, keys, check constraints, Row Level Security and the minimum grants |
 
@@ -138,8 +139,8 @@ Then, if asked: lockout after five failures; audit log for marks changes; privat
 
 ## 11. Testing and deployment
 
-- **191 unit tests** with JUnit and Mockito for the rule classes, the parsers and the file checks.
-- **161 integration tests** over real HTTP against real PostgreSQL in a container, including "not logged in", "wrong role" and "someone else's record".
+- **199 unit tests** with JUnit and Mockito for the rule classes, the parsers and the file checks.
+- **169 integration tests** over real HTTP against real PostgreSQL in a container, including "not logged in", "wrong role" and "someone else's record".
 - **`EndpointAccessIT`** reads every endpoint from the running application and checks that a visitor, a student and an admin are each refused where they must be, so a new endpoint cannot be forgotten.
 - **Database tests** check the roles, grants and Row Level Security of every table.
 - **AI tests** use the mock provider, so they cost nothing and are repeatable.

@@ -2,7 +2,7 @@
 
 A Java-first student management and learning platform. It combines a student's academic records with study resources, practice tests and an AI study assistant in one web application.
 
-> **Project status (2026-10-14): every P0 feature is built and tested; not deployed yet.** Students see their records, find and bookmark study material, take timed practice tests, follow their progress and use the AI study assistant; administrators manage accounts, subjects, attendance, marks, results, timetables, notices, resources and the question bank. 191 unit tests and 161 integration tests pass. What is still open, mostly for the owner (AI provider, storage bucket, deployment), is in the [implementation plan](docs/16-implementation-plan.md#progress-on-2026-10-14) and the [security review](docs/21-security-review.md).
+> **Project status (2026-10-14): every P0 feature is built and tested; not deployed yet.** Students see their records, find and bookmark study material, take timed practice tests, follow their progress and use the AI study assistant; administrators manage accounts, subjects, attendance, marks, results, timetables, notices, resources and the question bank. 199 unit tests and 169 integration tests pass. What is still open, mostly for the owner (AI provider, storage bucket, deployment), is in the [implementation plan](docs/16-implementation-plan.md#progress-on-2026-10-14) and the [security review](docs/21-security-review.md).
 >
 > Students log in with an institutional email address. A new student's first password is the roll number and must be changed at first login; that rule is a recorded security exception for demonstration with **synthetic data only** ([decision 0008](docs/decisions/0008-institutional-email-login.md)). The AI assistant runs on a built-in mock provider until a real one is chosen.
 
@@ -14,12 +14,12 @@ Students check attendance, marks, timetables and notices in different places. No
 
 | For students | For administrators |
 | --- | --- |
-| Dashboard, profile, attendance, marks, SGPA and CGPA | Manage student accounts |
+| Dashboard, profile, attendance, marks, SGPA and CGPA | Manage student accounts, one at a time or from a CSV file |
 | Timetable, notices and deadlines | Enter attendance, marks and results |
 | Searchable notes and previous-year papers, with bookmarks | Manage subjects, units and timetables |
 | Quick Exam: timed practice tests with instant scoring | Upload learning resources |
 | AI study assistant: explain, summarize, generate questions | Maintain the question bank |
-| Weak-topic tracking and revision recommendations | Publish notices; review the audit log |
+| Weak-topic tracking and revision recommendations | Publish notices; every change is written to an audit log |
 
 ## Technology
 

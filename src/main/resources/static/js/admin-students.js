@@ -1,10 +1,11 @@
-import { attempt, confirmAction, dataTable, field, hidePageError, input, numberSelect, openForm, pager, rowAction, semesterOptions, showOnce } from "./admin-kit.js";
-import { api } from "./api.js";
+import { attempt, confirmAction, dataTable, dialogShell, field, hidePageError, input, numberSelect, openForm, pager, rowAction, semesterOptions, showOnce } from "./admin-kit.js";
+import { ApiError, api, messageFor } from "./api.js";
 import { fill, formatDate, h, icon, tag, toast } from "./dom.js";
 import { loadInto } from "./parts.js";
 import "./shell.js";
 
-// Admin: student accounts (FR-ADM-001). Create, search, edit, deactivate, reactivate and reset.
+// Admin: student accounts (FR-ADM-001). Create, search, edit, deactivate, reactivate and reset,
+// and create many at once from a CSV file (FR-ADM-010).
 
 const content = document.getElementById("content");
 const filters = { q: "", branch: "", semester: "", section: "", page: 0 };
@@ -48,6 +49,82 @@ function addStudent() {
       load();
     },
   });
+}
+
+const IMPORT_MAX_BYTES = 1024 * 1024;
+const IMPORT_EXAMPLE = "rollNo,fullName,branch,currentSemester,section,admissionYear,phone\n23CSE101,Demo Student,CSE,3,A,2023,";
+
+/** "rows[4].fullName" becomes "Line 4"; problems with the header or the whole file say so. */
+function whereOf(field) {
+  const row = /^rows\[(\d+)\]/.exec(field || "");
+  if (row) {
+    return "Line " + row[1];
+  }
+  return field === "header" ? "First line" : "File";
+}
+
+function problemList(failure) {
+  const items = failure.fieldErrors.map(({ field: where, message }) => h("li.import__problem", h("span.import__where", whereOf(where)), h("span", message)));
+  return h(
+    "div.stack.stack--tight",
+    h("p.inset.inset--danger.inset--note", { role: "alert" }, icon("alert"), "Nothing was imported. Fix these lines in the file and choose it again."),
+    h("ul.import__problems", { "aria-label": "Problems in the file" }, items),
+  );
+}
+
+function importStudents() {
+  const dialog = dialogShell("import-title");
+  dialog.classList.add("dialog--wide");
+  const file = input("file", { type: "file", accept: ".csv,text/csv" });
+  const result = h("div", { "aria-live": "polite" });
+  const submit = h("button.button.button--primary", { type: "submit" }, icon("upload"), "Import");
+  const form = h(
+    "form.stack.stack--loose",
+    { novalidate: true },
+    h(
+      "div.stack.stack--tight",
+      h("h2", { id: "import-title" }, "Import students from a CSV file"),
+      h("p.muted", "One student per line, up to 100 in a file. The first line names the columns, in any order. The phone column may be left out."),
+    ),
+    h("pre.import__example", { "aria-label": "Example file" }, IMPORT_EXAMPLE),
+    h("p.muted", "Every line follows the same rules as Add student: the login email is made from the roll number, the first password is the roll number, and the student must change it at first login. The whole file is checked first; if any line is wrong, nothing is imported."),
+    field("CSV file", file, "Saved from a spreadsheet as CSV (UTF-8), up to 1 MB."),
+    result,
+    h("div.dialog__actions", h("button.button.button--quiet", { type: "button", "data-close": true }, "Cancel"), submit),
+  );
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const chosen = file.files[0];
+    let problem = "";
+    if (!chosen) {
+      problem = "Choose a CSV file.";
+    } else if (!chosen.name.toLowerCase().endsWith(".csv")) {
+      problem = "Choose a file whose name ends in .csv.";
+    } else if (chosen.size > IMPORT_MAX_BYTES) {
+      problem = "The file is larger than 1 MB. Split it into smaller files.";
+    }
+    if (problem) {
+      fill(result, h("p.inset.inset--danger.inset--note", { role: "alert" }, icon("alert"), problem));
+      return;
+    }
+    submit.disabled = true;
+    fill(result, h("p.muted", "Checking and creating the accounts…"));
+    try {
+      const { created } = await api.postFile("/admin/imports/students", chosen);
+      dialog.close();
+      toast(created === 1 ? "Imported 1 student" : "Imported " + created + " students");
+      filters.page = 0;
+      load();
+    } catch (failure) {
+      const listed = failure instanceof ApiError && failure.fieldErrors.length;
+      fill(result, listed ? problemList(failure) : h("p.inset.inset--danger.inset--note", { role: "alert" }, icon("alert"), messageFor(failure)));
+    } finally {
+      submit.disabled = false;
+    }
+  });
+  file.addEventListener("change", () => fill(result));
+  fill(dialog, form);
+  dialog.showModal();
 }
 
 function edit(student) {
@@ -169,6 +246,8 @@ function filterBar() {
 
 const add = h("button.button.button--primary", { type: "button" }, icon("plus"), "Add student");
 add.addEventListener("click", addStudent);
-fill(document.getElementById("actions"), add);
+const importButton = h("button.button.button--secondary", { type: "button" }, icon("upload"), "Import CSV");
+importButton.addEventListener("click", importStudents);
+fill(document.getElementById("actions"), h("div.line", importButton, add));
 fill(content, filterBar(), h("section.card", { id: "list", "aria-label": "Students" }, h("div.skeleton")));
 load();

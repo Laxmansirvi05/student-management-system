@@ -61,7 +61,7 @@ In this order, because each is small and independent:
 4. FR-AI-005 Summarize a library PDF.
 5. FR-AI-006 Flowchart generation.
 6. FR-LIB-005 Report a resource.
-7. FR-ADM-010 CSV bulk import.
+7. FR-ADM-010 CSV bulk import. Built on 2026-10-14, ahead of the others, so the owner can load the students in one step.
 8. Session storage in the database, so a restart does not log users out.
 
 ## 6. Future enhancements (P2 and beyond)

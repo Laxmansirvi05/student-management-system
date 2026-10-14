@@ -51,6 +51,7 @@ A denied Visitor gets `401`. A denied Student gets `403` for admin functions and
 | Own password | Change | ❌ | ✅ | ✅ | — |
 | Self-registration | Create an account for oneself | ❌ | — | — | — |
 | Student account | Provision (account and profile together) | ❌ | ❌ | ✅ | The demo seeder, when the owner enables it |
+| Student accounts | Import many from a CSV file (P1), each provisioned by the same rules | ❌ | ❌ | ✅ | — |
 | Student account | Deactivate, activate, reset password | ❌ | ❌ | ✅ | — |
 | Admin account | Create, change role | ❌ | ❌ | ❌ | Bootstrap only |
 | Student profile | Read | ❌ | 🔒 own | ✅ | — |

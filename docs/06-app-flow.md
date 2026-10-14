@@ -98,6 +98,8 @@ flowchart TD
 
 There is no self-registration. Admin accounts do not go through this flow: they are provisioned separately and never get a roll-number password.
 
+An admin can also provision many students at once from a CSV file (FR-ADM-010, "Import CSV" on the Students page). Every line takes the path above from "Valid and not a duplicate?" on. The whole file is checked first: if any line is wrong, nothing is saved and every problem is listed with its line number, so the admin fixes the file and chooses it again.
+
 ### Password reset and deactivation
 
 ```mermaid
