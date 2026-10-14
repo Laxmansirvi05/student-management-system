@@ -136,6 +136,7 @@ Never candidates: authentication, role and ownership enforcement, academic recor
 | --- | --- | --- | --- | --- |
 | 2026-10-11 | FR-AUTH-001, FR-AUTH-003, FR-AUTH-005, FR-ADM-001 (revised); FR-AUTH-006 (new, P0) | Students log in with an institutional email address instead of a roll number. A new student's temporary password is the roll number, which must be changed at first login. Lockout no longer reveals whether an account exists. | Owner's change request. The roll-number temporary password is a recorded security exception ([ADR 0008](decisions/0008-institutional-email-login.md)). | Owner |
 | 2026-10-14 | FR-STU-002 (revised); FR-STU-003, FR-STU-004, FR-LEG-001 (new, P0) | A student may change their phone number, a short text about themselves and a profile photo. The college's fields stay read-only. A Settings page and a public privacy policy and terms of use are added. | Owner's change request. A student-facing upload and one more host in the Content-Security-Policy are recorded in [ADR 0009](decisions/0009-student-personal-details-and-photo.md). | Owner |
+| 2026-10-14 | FR-UX-002 (new, P1) | A public landing page at the site's address. A logged-in user is sent on to their dashboard. | Owner's request; built last as asked. | Owner |
 
 ## 10. Risks of building advanced features too early
 

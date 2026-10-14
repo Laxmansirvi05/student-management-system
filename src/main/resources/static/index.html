@@ -3,15 +3,161 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Campus Companion · Campus Companion</title>
+    <title>Campus Companion</title>
+    <meta name="description" content="Your attendance, marks, timetable, study material, practice tests and an AI study assistant, in one place." />
     <link rel="icon" href="data:," />
     <link rel="stylesheet" href="/css/tokens.css" />
     <link rel="stylesheet" href="/css/base.css" />
+    <link rel="stylesheet" href="/css/app.css" />
+    <link rel="stylesheet" href="/css/landing.css" />
   </head>
-  <body>
-    <main class="auth-page">
-      <p class="muted" role="status">Opening Campus Companion…</p>
+  <body class="landing landing--checking">
+    <header class="landing-nav">
+      <a class="brand landing-nav__brand" href="/">
+        <span class="brand__mark"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#cap" /></svg></span>
+        Campus Companion
+      </a>
+      <nav class="landing-nav__links" aria-label="Sections">
+        <a href="#features">Features</a>
+        <a href="#college">For colleges</a>
+        <a href="#privacy">Privacy</a>
+      </nav>
+      <a class="button button--primary button--small" href="/login.html">Log in</a>
+    </header>
+
+    <main>
+      <section class="landing-hero" aria-labelledby="landing-title">
+        <div class="landing-hero__text">
+          <p class="hero__eyebrow">For students and their college</p>
+          <h1 id="landing-title">Your college life, <span class="landing-hero__accent">in one calm place.</span></h1>
+          <p class="landing-hero__sub">Attendance, marks, timetable and notices next to your study material, timed practice tests and a study assistant. One login, on any screen.</p>
+          <div class="landing-hero__actions">
+            <a class="button button--primary" href="/login.html">Log in <svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#arrow-right" /></svg></a>
+            <a class="button button--glass" href="#features">See what it does</a>
+          </div>
+          <p class="landing-hero__note">Accounts are created by your college. There is no sign-up.</p>
+        </div>
+        <div class="landing-preview" aria-hidden="true">
+          <div class="landing-preview__card landing-preview__card--ring">
+            <span class="landing-preview__label">Attendance</span>
+            <span class="landing-preview__ring"><span>82%</span></span>
+            <span class="landing-preview__meta">Required 75%</span>
+          </div>
+          <div class="landing-preview__card">
+            <span class="landing-preview__label">Next class · 09:00</span>
+            <strong>Data Structures</strong>
+            <span class="landing-preview__meta">Room 204</span>
+          </div>
+          <div class="landing-preview__card landing-preview__card--score">
+            <span class="landing-preview__label">Quick test</span>
+            <strong>8 <small>/ 10</small></strong>
+            <span class="landing-preview__bar"><span></span></span>
+          </div>
+          <div class="landing-preview__card">
+            <span class="landing-preview__label">Revise next</span>
+            <strong>Unit 3: Trees</strong>
+            <span class="landing-preview__meta">Notes ready</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="landing-section" id="features" aria-labelledby="features-title">
+        <div class="landing-section__head reveal">
+          <p class="eyebrow">For students</p>
+          <h2 id="features-title">Everything you check, and everything you study, together.</h2>
+        </div>
+        <div class="landing-grid">
+            <article class="landing-card reveal">
+              <span class="badge-icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#attendance" /></svg></span>
+              <h3>Attendance, marks and results</h3>
+              <p>Your attendance in every subject, the marks of each test, your SGPA and CGPA, worked out exactly and flagged before they become a problem.</p>
+            </article>
+            <article class="landing-card reveal">
+              <span class="badge-icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#calendar" /></svg></span>
+              <h3>Timetable and notices</h3>
+              <p>Today's classes at a glance, the full week, and every notice and deadline from your college in one list.</p>
+            </article>
+            <article class="landing-card reveal">
+              <span class="badge-icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#resources" /></svg></span>
+              <h3>Study material</h3>
+              <p>Notes, past papers, lab manuals and model papers for your subjects. Search them, preview them in the page and bookmark the ones you need.</p>
+            </article>
+            <article class="landing-card reveal">
+              <span class="badge-icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#quiz" /></svg></span>
+              <h3>Quick Exam</h3>
+              <p>Timed practice tests on one unit. The answers are marked on the server and explained as soon as you finish.</p>
+            </article>
+            <article class="landing-card reveal">
+              <span class="badge-icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#progress" /></svg></span>
+              <h3>Progress</h3>
+              <p>See which units are strong and which need work, judged on your own recent answers, with notes to revise from.</p>
+            </article>
+            <article class="landing-card reveal">
+              <span class="badge-icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#sparkles" /></svg></span>
+              <h3>AI study assistant</h3>
+              <p>Explanations, summaries and practice questions for your subjects. Clearly labelled, and it never sees your records.</p>
+            </article>
+        </div>
+      </section>
+
+      <section class="landing-section landing-section--split" id="college" aria-labelledby="college-title">
+        <div class="landing-section__head reveal">
+          <p class="eyebrow">For colleges</p>
+          <h2 id="college-title">The records stay with the college.</h2>
+          <p class="landing-section__sub">Administrators keep every record in one place. Students only read their own; what they may change is their phone number, a few lines about themselves and their photo.</p>
+        </div>
+        <ul class="landing-admin" role="list">
+            <li class="landing-admin__item reveal"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#users" /></svg><span><strong>Student accounts</strong> Create, find, deactivate and reset accounts.</span></li>
+            <li class="landing-admin__item reveal"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#table" /></svg><span><strong>Attendance and marks</strong> Fill a whole class sheet at once.</span></li>
+            <li class="landing-admin__item reveal"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#results" /></svg><span><strong>Results</strong> Record semester results; CGPA follows.</span></li>
+            <li class="landing-admin__item reveal"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#notices" /></svg><span><strong>Timetable and notices</strong> Plan the week and publish news.</span></li>
+            <li class="landing-admin__item reveal"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#file" /></svg><span><strong>Resources</strong> Upload PDFs that are checked first.</span></li>
+            <li class="landing-admin__item reveal"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#history" /></svg><span><strong>Audit log</strong> Changes to marks, attendance, results and accounts are kept.</span></li>
+        </ul>
+      </section>
+
+      <section class="landing-section" id="privacy" aria-labelledby="privacy-title">
+        <div class="landing-section__head reveal">
+          <p class="eyebrow">Privacy</p>
+          <h2 id="privacy-title">Built to keep your records yours.</h2>
+        </div>
+        <ul class="landing-trust" role="list">
+            <li class="landing-trust__item reveal">
+              <span class="landing-trust__icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#key" /></svg></span>
+              <div><h3>Passwords stay secret</h3><p>Stored only in a protected form that nobody can read back, not even an administrator.</p></div>
+            </li>
+            <li class="landing-trust__item reveal">
+              <span class="landing-trust__icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#lock" /></svg></span>
+              <div><h3>Your records are yours</h3><p>The server checks every request. Another student can never open your marks, attendance or tests.</p></div>
+            </li>
+            <li class="landing-trust__item reveal">
+              <span class="landing-trust__icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#shield" /></svg></span>
+              <div><h3>Files stay private</h3><p>Study material sits in private storage and opens through links that stop working after five minutes.</p></div>
+            </li>
+            <li class="landing-trust__item reveal">
+              <span class="landing-trust__icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#sparkles" /></svg></span>
+              <div><h3>AI without your data</h3><p>The assistant sees only what you type for one request. Your name and records are never sent to it.</p></div>
+            </li>
+        </ul>
+        <p class="landing-section__more reveal"><a class="more" href="/privacy.html">Read the privacy policy <svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#chevron-right" /></svg></a></p>
+      </section>
+
+      <section class="landing-cta reveal" aria-labelledby="cta-title">
+        <h2 id="cta-title">Ready when your college is.</h2>
+        <p>Log in with the institutional email your college gave you.</p>
+        <a class="button button--primary" href="/login.html">Log in <svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#arrow-right" /></svg></a>
+      </section>
     </main>
+
+    <footer class="landing-footer">
+      <span>Campus Companion</span>
+      <nav class="landing-footer__links" aria-label="About">
+        <a href="/privacy.html">Privacy</a>
+        <a href="/terms.html">Terms</a>
+        <a href="/login.html">Log in</a>
+      </nav>
+      <p class="landing-footer__note">A student project. The demonstration uses invented students only.</p>
+    </footer>
     <script type="module" src="/js/index.js"></script>
   </body>
 </html>

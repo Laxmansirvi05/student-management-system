@@ -76,6 +76,7 @@ A priority is changed only by editing this document, stating the reason, with th
 | FR-ADM-010 | CSV bulk import | P1 |
 | FR-ADM-011 | Usage statistics | P2 |
 | FR-UX-001 | Errors, empty states and loading states | P0 |
+| FR-UX-002 | Public landing page | P1 |
 
 ## 4. Authentication and accounts
 
@@ -525,6 +526,17 @@ The permitted contents and the protections are specified in [08-database-design.
   5. Field errors appear next to the field.
 
 Wording and component rules are in [07-ui-ux-spec.md](07-ui-ux-spec.md).
+
+### FR-UX-002 Public landing page (P1)
+
+Added on 2026-10-14 at the owner's request; the owner asked for it to be built last.
+
+- **Acceptance criteria:**
+  1. A visitor who opens the site's address sees what Campus Companion does for students and for the college, and how it protects their records, with a way to log in.
+  2. It offers no sign-up and says that accounts are created by the college.
+  3. A logged-in user who opens the address is sent on to their own dashboard without seeing the page.
+  4. It shows no data about any person; the small previews on it are invented and hidden from screen readers.
+  5. It links to the privacy policy and the terms, and contains no inline script.
 
 ## 12. Out of scope
 

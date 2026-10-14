@@ -155,7 +155,9 @@ The AI component can read no table except its own usage log. It cannot look up m
 
 | Path | Visitor | Student | Admin |
 | --- | --- | --- | --- |
-| `/login.html`, `/css/**`, `/js/**`, images | ✅ | ✅ | ✅ |
+| `/login.html`, `/css/**`, `/js/**`, `/img/**` | ✅ | ✅ | ✅ |
+| `/` and `/index.html` (landing page) | ✅ | ✅ sent on to the student dashboard | ✅ sent on to the admin dashboard |
+| `/privacy.html`, `/terms.html` | ✅ | ✅ | ✅ |
 | `/student/**` | ❌ redirect to login | ✅ | ❌ redirect to admin dashboard |
 | `/admin/**` | ❌ redirect to login | ❌ redirect to student dashboard | ✅ |
 | `/change-password.html` | ❌ | ✅ | ✅ |

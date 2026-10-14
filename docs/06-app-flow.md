@@ -8,6 +8,7 @@ This document describes how users move through the application and what happens 
 
 | Area | Path | Screen |
 | --- | --- | --- |
+| Public | `/`, `/index.html` | Landing page. A logged-in user is sent on to their own dashboard |
 | Public | `/login.html` | Login |
 | Shared | `/change-password.html` | Change password |
 | Student | `/student/dashboard.html` | Dashboard |
@@ -39,7 +40,7 @@ This document describes how users move through the application and what happens 
 
 ## 2. Navigation rules
 
-1. Without a session, every page except `/login.html` redirects to login.
+1. Without a session, every page except the landing page, `/login.html` and the two legal pages redirects to login.
 2. Static files under `/student/` are served only to `STUDENT`, and under `/admin/` only to `ADMIN`. The other role is redirected to its own dashboard.
 3. An account that must change its password is redirected to `/change-password.html` from every page.
 4. The root path `/` redirects to the dashboard for the user's role, or to login.

@@ -76,6 +76,10 @@ public class SecurityConfig {
                     // plain pages with no script, and show nothing about any person.
                     .requestMatchers("/privacy.html", "/terms.html")
                     .permitAll()
+                    // The landing page, and the icon file it shares with every other page. Neither
+                    // shows anything about any person; a logged-in user is sent on to their home.
+                    .requestMatchers("/", "/index.html", "/img/**")
+                    .permitAll()
                     .requestMatchers("/api/v1/admin/**", "/admin/**")
                     .hasRole("ADMIN")
                     .requestMatchers(STUDENT_ONLY_API)

@@ -69,11 +69,7 @@ class PageRoutingIT extends PostgresIntegrationTest {
 
     for (String page :
         new String[] {
-          "/",
-          "/index.html",
-          "/student/dashboard.html",
-          "/admin/dashboard.html",
-          "/change-password.html"
+          "/student/dashboard.html", "/admin/dashboard.html", "/change-password.html"
         }) {
       HttpResponse<String> response = visitor.get(page);
       assertThat(response.statusCode()).as(page).isEqualTo(302);
@@ -81,6 +77,24 @@ class PageRoutingIT extends PostgresIntegrationTest {
           .as(page)
           .endsWith("/login.html");
     }
+  }
+
+  @Test
+  void theLandingPageIsPublicAndOffersNoSignUp() throws Exception {
+    ApiTestClient visitor = new ApiTestClient(port);
+
+    for (String page : new String[] {"/", "/index.html"}) {
+      HttpResponse<String> landing = visitor.get(page);
+      assertThat(landing.statusCode()).as(page).isEqualTo(200);
+      String html = landing.body();
+      assertThat(html).contains("Your college life").contains("href=\"/login.html\"");
+      assertThat(html.toLowerCase())
+          .contains("there is no sign-up")
+          .doesNotContain("sign up now", "register", "create an account", "remember me");
+    }
+    // The icons it uses can be fetched before logging in; they are the same file as everywhere.
+    assertThat(visitor.get("/img/icons.svg").statusCode()).isEqualTo(200);
+    assertThat(visitor.get("/css/landing.css").statusCode()).isEqualTo(200);
   }
 
   @Test

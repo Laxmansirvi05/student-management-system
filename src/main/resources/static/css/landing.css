@@ -1,0 +1,461 @@
+/* The public landing page. It uses the same tokens, buttons, cards and dark hero as the rest of
+   the application, with larger type and more air, as a product page should have. */
+
+/* While the page checks whether someone is logged in, it stays hidden. If the check never
+   finishes (no script, a slow network), it appears on its own after a moment. */
+.landing--checking {
+  animation: landing-late 0s linear 1.5s forwards;
+  opacity: 0;
+}
+
+@keyframes landing-late {
+  to {
+    opacity: 1;
+  }
+}
+
+.landing {
+  display: grid;
+  gap: 0;
+  min-height: 100dvh;
+  background: var(--color-bg);
+}
+
+.landing main {
+  display: grid;
+  gap: clamp(48px, 7vw, 88px);
+  width: min(1120px, 100% - 32px);
+  margin: 0 auto;
+  padding-bottom: clamp(48px, 7vw, 80px);
+}
+
+/* ---- Navigation ---- */
+.landing-nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px max(16px, calc((100% - 1120px) / 2));
+  background: rgba(245, 245, 247, 0.78);
+  border-bottom: 1px solid var(--color-hairline);
+  backdrop-filter: saturate(180%) blur(18px);
+}
+
+.landing-nav__brand {
+  padding: 0;
+}
+
+.landing-nav__links {
+  display: none;
+  gap: var(--space-5);
+}
+
+.landing-nav__links a {
+  color: var(--color-text-muted);
+  font: var(--text-small);
+  text-decoration: none;
+}
+
+.landing-nav__links a:hover {
+  color: var(--color-text);
+}
+
+/* ---- Hero ---- */
+.landing-hero {
+  position: relative;
+  display: grid;
+  gap: var(--space-6);
+  align-items: center;
+  margin-top: var(--space-5);
+  padding: clamp(32px, 6vw, 72px) clamp(20px, 5vw, 64px);
+  overflow: hidden;
+  background: var(--hero-bg);
+  border-radius: var(--radius-hero);
+  box-shadow: var(--shadow-hero);
+  color: var(--color-inverse-text);
+  isolation: isolate;
+  animation: rise 720ms var(--ease) both;
+}
+
+.landing-hero::before {
+  content: "";
+  position: absolute;
+  inset: -40%;
+  z-index: -1;
+  background:
+    radial-gradient(34% 38% at 80% 22%, rgba(0, 113, 227, 0.45), transparent 70%),
+    radial-gradient(30% 34% at 12% 90%, rgba(90, 170, 255, 0.22), transparent 70%);
+  filter: blur(24px);
+  animation: drift 18s ease-in-out infinite alternate;
+}
+
+@keyframes drift {
+  to {
+    transform: translate(4%, -3%) rotate(6deg);
+  }
+}
+
+.landing-hero__text {
+  display: grid;
+  gap: var(--space-4);
+  justify-items: start;
+}
+
+.landing-hero h1 {
+  max-width: 14ch;
+  font: 700 clamp(38px, 6.4vw, 72px) / 1.04 var(--font);
+  letter-spacing: -0.045em;
+}
+
+.landing-hero__accent {
+  background: linear-gradient(90deg, #ffffff, #9fd0ff 60%, #5aaaff);
+  background-clip: text;
+  color: transparent;
+}
+
+.landing-hero__sub {
+  max-width: 46ch;
+  color: #d2d2d7;
+  font-size: clamp(17px, 1.6vw, 20px);
+  line-height: 1.5;
+}
+
+.landing-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.landing-hero .button--glass {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: var(--color-inverse-line);
+  color: #ffffff;
+}
+
+.landing-hero .button--glass:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.landing-hero__note {
+  color: var(--color-inverse-muted);
+  font: var(--text-small);
+}
+
+/* A few cards that hint at the app. Decoration only: invented values, hidden from screen readers. */
+.landing-preview {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.landing-preview__card {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  min-width: 0;
+  padding: var(--space-4);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  backdrop-filter: blur(12px);
+  animation: float 7s ease-in-out infinite alternate;
+}
+
+.landing-preview__card:nth-child(2) {
+  animation-delay: -2s;
+}
+
+.landing-preview__card:nth-child(3) {
+  animation-delay: -4s;
+}
+
+.landing-preview__card:nth-child(4) {
+  animation-delay: -6s;
+}
+
+@keyframes float {
+  to {
+    transform: translateY(-8px);
+  }
+}
+
+.landing-preview__card strong {
+  overflow: hidden;
+  font: 600 17px/22px var(--font);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.landing-preview__card--score strong {
+  font: 700 34px/1 var(--font);
+  letter-spacing: -0.03em;
+}
+
+.landing-preview__card--score small {
+  color: var(--color-inverse-muted);
+  font-size: 0.5em;
+}
+
+.landing-preview__label {
+  color: var(--color-inverse-muted);
+  font: var(--text-label);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.landing-preview__meta {
+  color: #d2d2d7;
+  font: var(--text-small);
+}
+
+.landing-preview__ring {
+  display: grid;
+  width: 76px;
+  height: 76px;
+  place-items: center;
+  background: conic-gradient(#2997ff 0 82%, rgba(255, 255, 255, 0.14) 82% 100%);
+  border-radius: 50%;
+}
+
+.landing-preview__ring span {
+  display: grid;
+  width: 60px;
+  height: 60px;
+  place-items: center;
+  background: #121217;
+  border-radius: 50%;
+  font: 700 17px/1 var(--font);
+}
+
+.landing-preview__bar {
+  height: 6px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: var(--radius-pill);
+}
+
+.landing-preview__bar span {
+  display: block;
+  width: 80%;
+  height: 100%;
+  background: #34d17f;
+  border-radius: inherit;
+}
+
+/* ---- Sections ---- */
+.landing-section {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.landing-section__head {
+  display: grid;
+  gap: var(--space-3);
+  max-width: 760px;
+}
+
+.landing-section__head h2,
+.landing-cta h2 {
+  font: 700 clamp(30px, 4.4vw, 48px) / 1.08 var(--font);
+  letter-spacing: -0.035em;
+}
+
+.landing-section__sub {
+  max-width: 56ch;
+  color: var(--color-text-muted);
+  font-size: 17px;
+  line-height: 1.55;
+}
+
+.landing-grid {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.landing-card {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+  padding: var(--space-6) var(--space-5);
+  background: var(--color-surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  transition:
+    box-shadow 260ms var(--ease),
+    transform 260ms var(--ease);
+}
+
+.landing-card:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-3px);
+}
+
+.landing-card h3,
+.landing-trust__item h3 {
+  font: 600 20px/26px var(--font);
+  letter-spacing: -0.02em;
+}
+
+.landing-card p,
+.landing-trust__item p {
+  color: var(--color-text-muted);
+  line-height: 1.55;
+}
+
+/* ---- For colleges ---- */
+.landing-admin {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.landing-admin__item {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border-radius: var(--radius-input);
+  box-shadow: var(--shadow-card);
+  line-height: 1.5;
+}
+
+.landing-admin__item .icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--color-primary);
+}
+
+.landing-admin__item span {
+  color: var(--color-text-muted);
+}
+
+.landing-admin__item strong {
+  color: var(--color-text);
+}
+
+/* ---- Privacy ---- */
+.landing-trust {
+  display: grid;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.landing-trust__item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-4);
+  padding: var(--space-5);
+  background: var(--color-surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+.landing-trust__icon {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  background: var(--color-inverse-bg);
+  border-radius: 14px;
+  color: #ffffff;
+}
+
+.landing-section__more {
+  margin-top: calc(var(--space-2) * -1);
+}
+
+/* ---- Last call ---- */
+.landing-cta {
+  display: grid;
+  gap: var(--space-4);
+  justify-items: center;
+  padding: clamp(40px, 7vw, 80px) var(--space-5);
+  background: var(--hero-bg);
+  border-radius: var(--radius-hero);
+  color: var(--color-inverse-text);
+  text-align: center;
+}
+
+.landing-cta p {
+  color: #d2d2d7;
+  font-size: 17px;
+}
+
+/* ---- Footer ---- */
+.landing-footer {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: center;
+  padding: var(--space-6) var(--space-4) var(--space-7);
+  border-top: 1px solid var(--color-hairline);
+  color: var(--color-text-muted);
+  font: var(--text-small);
+  text-align: center;
+}
+
+.landing-footer__links {
+  display: flex;
+  gap: var(--space-5);
+}
+
+.landing-footer__links a {
+  color: var(--color-text-muted);
+}
+
+.landing-footer__note {
+  max-width: 48ch;
+}
+
+@media (min-width: 720px) {
+  .landing-nav__links {
+    display: flex;
+  }
+
+  .landing-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .landing-trust {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .landing-admin {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1000px) {
+  .landing-hero {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  }
+
+  .landing-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .landing-section--split {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    align-items: start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-hero::before,
+  .landing-preview__card {
+    animation: none;
+  }
+}
+
+:root[data-reduce-motion] .landing-hero::before,
+:root[data-reduce-motion] .landing-preview__card {
+  animation: none;
+}
