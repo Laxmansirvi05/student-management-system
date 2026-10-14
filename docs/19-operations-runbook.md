@@ -98,6 +98,9 @@ Any manual SQL against production needs the owner's approval and a backup first.
    - `H12 Request timeout` in the log means the upload took over 30 seconds; retry on a faster connection or reduce the file size.
 6. **Preview blank but download works:** the browser may be blocking the frame. Check the browser console for a Content Security Policy error and confirm `frame-src` contains the production storage host.
 7. **Links fail after a few minutes:** expected; signed links last five minutes. Reload the resource page.
+8. **The log says "File storage is not set up: SUPABASE_URL and SUPABASE_SERVICE_KEY are needed."** One of the two is missing or empty. Every upload, preview and photo answers `503 STORAGE_UNAVAILABLE` until both are set.
+9. **The log says "A stored file was left without a database row and needs cleaning up."** (or "A stored photo was left without a profile..."). An upload reached storage, the database then refused the row, and removing the file again failed as well. Nothing is visible to users. List the bucket's `resources/` and `profile-photos/` folders, compare them with `learning_resources.storage_path` and `student_profiles.photo_path`, and delete objects that no row points to (with the owner's approval: AG-17).
+10. **Profile photos:** `413` means over 2 MB; `415` means not a JPEG or PNG, or under 64 or over 6,000 pixels on a side. The stored photo is always a redrawn 512 by 512 JPEG.
 
 ## 5. AI provider rate limits and outages
 
@@ -135,6 +138,10 @@ Any manual SQL against production needs the owner's approval and a backup first.
 | A student says their password was changed before they ever logged in | Someone else used the roll-number temporary password (security exception EX-AUTH-01) | Reset the password and hand the new one over in person. Read the `PASSWORD_CHANGED` audit row for the time and IP address. Check the other accounts still awaiting first login. Record it as an incident. |
 | Newly provisioned students have the wrong email domain | `STUDENT_EMAIL_DOMAIN` was wrong when they were provisioned | Correct the setting. That does not rewrite existing accounts; fix those with an owner-approved data migration (database design §8) and tell the students. |
 | The application will not start and the log names `STUDENT_EMAIL_DOMAIN` | The variable is missing or is not a host name | Set it and restart. |
+| The application will not start and the log names `AI_PROVIDER` | It is set to something other than `mock`, and no adapter for a real provider exists yet | Set `AI_PROVIDER=mock` until `T5-06` is done. |
+| A user gets `429 RATE_LIMITED` while clicking around | More than 120 API calls from one login in a minute | Expected protection. It clears within a minute. If normal use triggers it, look for a page that repeats a request in a loop. |
+| A request fails with `413 REQUEST_TOO_LARGE` | A JSON body over 64 KB | No form of the application sends that much; look for a script or a pasted file. |
+| After the first deploy, every page redirects to itself | Tomcat does not trust the router's forwarded protocol header, so every request looks like plain HTTP | See [18-production-plan.md](18-production-plan.md) §4: set `server.tomcat.remoteip.internal-proxies` to the router's address range. Never to "any address". |
 | Login succeeds, then every action fails with 403 | CSRF token missing | Hard-refresh the page. If it persists for everyone, check that the `XSRF-TOKEN` cookie is being set and that `api.js` sends the header. |
 | Login loops back to the login page in production only | Session cookie not stored | Confirm the site is opened over HTTPS and `server.forward-headers-strategy=native` is set, so the `Secure` cookie is accepted. |
 | The only admin is locked out | | Wait for the lock to expire. If the password is lost, the owner takes a backup, then updates that user's `password_hash` directly in the database with a newly generated BCrypt hash and sets `must_change_password` to true. Record the action. |
@@ -242,5 +249,6 @@ Storage objects are not in the database backup. If files are lost, re-upload the
 - [ ] Log in as the demo student and the demo admin, with their email addresses.
 - [ ] Keep one freshly provisioned student, never logged in, to show the first-time password change.
 - [ ] Preview one resource and run one AI request.
-- [ ] Have `AI_PROVIDER=mock` ready as a fallback if the provider is down on the day. This is a contingency for the demonstration only. It does not replace acceptance with the real provider (OQ-9).
+- [ ] Have `AI_PROVIDER=mock` ready as a fallback if the provider is down on the day. This is a contingency for the demonstration only. It does not replace acceptance with the real provider (OQ-9). While the mock answers, the assistant page says "Demo mode" itself.
+- [ ] For a local fallback, start Colima and the `cc-preview-db` container, then the `campus-companion-local-db` launch configuration. Do not start the `campus-companion` configuration by accident: it reads `.env` and migrates the hosted database ([21-security-review.md](21-security-review.md) F5).
 - [ ] Keep a recent backup and the demo PDFs at hand.

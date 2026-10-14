@@ -2,9 +2,9 @@
 
 A Java-first student management and learning platform. It combines a student's academic records with study resources, practice tests and an AI study assistant in one web application.
 
-> **Project status: Phase 1 built, Phase 2 started.** The project skeleton, configuration, first database migration, core entities, error handling, server-side login and sessions, lockout, and the forced password change are built and tested (tasks `T1-01` to `T1-11`, `T2-01` and `T2-13` in the [implementation plan](docs/16-implementation-plan.md)). The login and change-password pages and the empty page layouts exist, and a seeder can create synthetic student accounts; the student profile is the first connected feature, and the other student pages are finished designs that show sample data until their features are built. The specifications below are drafts awaiting owner review.
+> **Project status (2026-10-14): every P0 feature is built and tested; not deployed yet.** Students see their records, find and bookmark study material, take timed practice tests, follow their progress and use the AI study assistant; administrators manage accounts, subjects, attendance, marks, results, timetables, notices, resources and the question bank. 191 unit tests and 161 integration tests pass. What is still open, mostly for the owner (AI provider, storage bucket, deployment), is in the [implementation plan](docs/16-implementation-plan.md#progress-on-2026-10-14) and the [security review](docs/21-security-review.md).
 >
-> **Revised on 2026-10-11:** a consistency audit of the documents, and a change to login. Students now log in with an institutional email address, and a new student's first password is the roll number, which must be changed at first login. That first-password rule is a recorded security exception for demonstration with synthetic data only: see [decision 0008](docs/decisions/0008-institutional-email-login.md). The database access model is in [decision 0007](docs/decisions/0007-database-roles-and-rls.md).
+> Students log in with an institutional email address. A new student's first password is the roll number and must be changed at first login; that rule is a recorded security exception for demonstration with **synthetic data only** ([decision 0008](docs/decisions/0008-institutional-email-login.md)). The AI assistant runs on a built-in mock provider until a real one is chosen.
 
 ## The problem
 
@@ -29,8 +29,8 @@ Students check attendance, marks, timetables and notices in different places. No
 | Frontend | HTML, CSS and JavaScript, served by Spring Boot |
 | Database | Supabase PostgreSQL through JDBC, migrations with Flyway |
 | File storage | Supabase Storage, private bucket |
-| AI | External AI provider called from a Java service |
-| Tests | JUnit 5, Mockito, Spring Boot Test |
+| AI | An external AI provider behind a Java interface; a mock provider until one is chosen |
+| Tests | JUnit, Mockito, Spring Boot Test, Testcontainers (real PostgreSQL 17) |
 | Hosting | Heroku |
 
 There is no Node.js or Express backend. All application logic is Java.
@@ -50,9 +50,7 @@ Details are in [docs/05-architecture.md](docs/05-architecture.md).
 
 ## Getting started
 
-These steps apply once the Spring Boot project exists (task `T1-01`).
-
-**Prerequisites:** JDK 21, Git, a Supabase project, and Docker for integration tests.
+**Prerequisites:** JDK 21, Git, and Docker (Colima works on a Mac) for the tests and for a local database.
 
 1. Clone the repository.
 
@@ -66,19 +64,28 @@ These steps apply once the Spring Boot project exists (task `T1-01`).
    cp .env.example .env
    ```
 
-3. Run the application. Flyway applies the database migrations on startup.
+   For a throwaway local database instead of Supabase, start PostgreSQL in Docker with the two roles the application expects (their test passwords are in `init-roles.sql`), and point `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `DB_MIGRATION_USERNAME` and `DB_MIGRATION_PASSWORD` at it:
 
    ```bash
+   docker run -d --name cc-preview-db -e POSTGRES_PASSWORD=preview-only -p 127.0.0.1:54329:5432 -v "$PWD/src/test/resources/db/init-roles.sql:/docker-entrypoint-initdb.d/init.sql:ro" postgres:17-alpine
+   ```
+
+   Set `DEMO_SEED_ENABLED=true` for the first start to load invented students, subjects, records and practice questions. Set `ADMIN_BOOTSTRAP_EMAIL` and `ADMIN_BOOTSTRAP_PASSWORD` to create the first administrator.
+
+3. Run the application with Java 21. Flyway applies the database migrations on startup, so make sure `DB_URL` points at the database you mean.
+
+   ```bash
+   export JAVA_HOME=$(/usr/libexec/java_home -v 21)
    ./mvnw spring-boot:run
    ```
 
-4. Run the tests.
+4. Run every test. The integration tests start their own PostgreSQL in Docker.
 
    ```bash
    ./mvnw verify
    ```
 
-5. Build the executable JAR.
+5. Build the executable JAR, as Heroku does.
 
    ```bash
    ./mvnw -DskipTests package
@@ -112,6 +119,7 @@ Status values: **Draft** (written, not yet reviewed by the owner), **Approved**,
 | 18 | [Production plan](docs/18-production-plan.md) | Deployment | Draft |
 | 19 | [Operations runbook](docs/19-operations-runbook.md) | What to do when it breaks | Draft |
 | 20 | [Risk register](docs/20-risk-register.md) | Risks and mitigations | Draft |
+| 21 | [Security review](docs/21-security-review.md) | Rule-by-rule review and open findings | Review of 2026-10-14 |
 | | [Decision records](docs/decisions/README.md) | Why key choices were made | See index |
 | | [Demo and viva guide](docs/demo-and-viva-guide.md) | Presentation preparation | Draft |
 

@@ -1,6 +1,6 @@
 # 16. Implementation Plan
 
-> Status: Draft v0.3 · Owner: Laxman Sirvi · Last updated: 2026-10-13
+> Status: Draft v0.4 · Owner: Laxman Sirvi · Last updated: 2026-10-14
 
 This plan breaks the work into ordered, verifiable tasks. One task is one small change, verified before the next begins. Milestones are defined in [03-scope-and-roadmap.md](03-scope-and-roadmap.md).
 
@@ -19,7 +19,7 @@ Decided by the owner on 2026-10-13: every student-facing feature is built before
 
 **How it works without the admin screens.** Student pages only read data. The data they read (accounts, attendance, marks, results, timetable, notices, resources, questions) is put in place by the synthetic seeder, which is extended as each feature arrives. Each migration, service and student endpoint is built and tested with seeded data; the matching admin endpoint and screen come later and write to the same tables.
 
-**Design pass before the features (owner decision, 2026-10-13).** The owner asked for the user interface of every student page to be designed and built first, from Google Stitch designs, and for the features to follow. All thirteen student pages now exist as finished designs that read from `js/sample-data.js` and show a "Sample data" label ([07-ui-ux-spec.md](07-ui-ux-spec.md) section 18). The tasks in stages B to E are unchanged, but each one now ends by connecting an existing page to its new endpoint and removing its label, instead of building the page from nothing. A task is not complete while its page still shows sample data.
+**Design pass before the features (owner decision, 2026-10-13).** The owner asked for the user interface of every student page to be designed and built first, from Google Stitch designs, and for the features to follow. The pages were designed first on sample data; every one of them is now connected to its endpoint, and the sample file is gone ([07-ui-ux-spec.md](07-ui-ux-spec.md) section 18).
 
 | Stage | Tasks | Result |
 | --- | --- | --- |
@@ -37,6 +37,17 @@ Consequences to keep in mind:
 - **The audit log (T2-02) arrives in stage F.** Until then, password changes are not audited. Nothing is deployed before stage G.
 - **The seeder becomes more important.** Its data must stay obviously synthetic, and it must never run in production unless the owner enables it for one start.
 - **Access control is not postponed.** Every student endpoint gets its own "not logged in" and "someone else's record" tests when it is built; only the generated all-endpoint suites wait for stage G.
+
+## Progress on 2026-10-14
+
+| State | Tasks |
+| --- | --- |
+| **Built and tested** | T1-01 to T1-11; T2-01 to T2-15; T3-02 to T3-09; T4-01 to T4-09; T5-01 to T5-05, T5-07, and the automated part of T5-08; T6-01, T6-02 (automated and scripted checks), T6-03, T6-07 (as far as possible before deployment) |
+| **Added at the owner's request** | Students edit their phone, text and photo; Settings pages; privacy policy and terms (FR-STU-003, FR-STU-004, FR-LEG-001, [ADR 0009](decisions/0009-student-personal-details-and-photo.md)) |
+| **Waiting for the owner** 👤 | T0-01, T0-02, T0-04, T0-05 (reviews, open decisions, GitHub security settings); T3-01 (storage bucket and service key); T5-06 and the manual half of T5-08 (AI provider, key, behaviour run B1 to B20); T6-04 to T6-06 (Heroku app, first deployment, demo data) |
+| **Not started** | The landing page; the P1 backlog of Phase 7 |
+
+The last full run of `./mvnw verify` passed with 191 unit tests and 161 integration tests. What is open for the owner is listed in [21-security-review.md](21-security-review.md) §3.
 
 ## Phase 0: Decisions
 

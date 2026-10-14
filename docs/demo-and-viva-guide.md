@@ -1,10 +1,10 @@
 # Demo and Viva Guide
 
-> Status: Draft v0.2 · Owner: Laxman Sirvi · Last updated: 2026-10-11
+> Status: Draft v0.3 · Owner: Laxman Sirvi · Last updated: 2026-10-14
 
 This guide prepares you to present Campus Companion as a Java assignment and to answer questions about it yourself.
 
-> **Written before the code exists.** The class names, endpoints and answers below describe the planned design. In task `T6-07`, go through this guide against the real code: fix anything that changed, and replace each "show this class" note with the actual file and line you will open. Do not present an answer here that you have not confirmed in your own code.
+> **Checked against the code on 2026-10-14.** Class names, files, endpoints and numbers below are those of the built application. Read each class yourself before the viva; do not present an answer you have not confirmed in your own code.
 
 ## 1. Opening (one minute)
 
@@ -50,7 +50,7 @@ Diagrams: [05-architecture.md](05-architecture.md).
 
 ## 5. Database
 
-- About 18 tables in the first release. The core chain: `users` → `student_profiles` → `attendance_records`, `marks`, `semester_results`, `quiz_attempts`.
+- 18 tables, created by six Flyway migrations (`V1` to `V6`). The core chain: `users` → `student_profiles` → `attendance_records`, `marks`, `semester_results`, `quiz_attempts`.
 - `subjects` → `subject_units` categorise resources and questions.
 - **Constraints to mention:** unique roll number; foreign keys from marks to student and assessment; check constraints on ranges (semester 1 to 8, SGPA 0 to 10); a unique key so the same class cannot be recorded twice for a student.
 - **Design points:** PDFs are in file storage and the database holds only the path; CGPA is calculated, not stored; the audit log is append-only and never holds password data.
@@ -60,19 +60,22 @@ ER diagram and data dictionary: [08-database-design.md](08-database-design.md).
 
 ## 6. Important classes to be ready to open
 
-| Class | What it shows | Be ready to explain |
+| Class (file) | What it shows | Be ready to explain |
 | --- | --- | --- |
-| `AttendanceService` | Plain Java business logic | The percentage formula, `BigDecimal` and rounding, the null case for zero classes |
-| `ResultService` | Calculation over a collection | CGPA weighted by the credits registered in each semester, using streams or a loop; why registered credits and not earned credits |
-| `QuizEvaluationService` | Collections and maps | Matching answers to questions with a `Map`, counting correct ones |
-| `ProgressService` | Rules and enums | The thresholds and why they are in Java, not AI |
-| `AttendanceController` | A REST controller | Annotations, how the current user is obtained, why there is no student ID parameter |
-| `SecurityConfig` | Spring Security | URL rules, BCrypt, CSRF, session settings |
-| `GlobalExceptionHandler` | Exception handling | One place that turns exceptions into error responses |
-| `StudentProfile` and its repository | JPA entity and Spring Data | Annotations, relationships, a derived query method |
-| `AiProvider`, `MockAiProvider` | Interface and polymorphism | Why an interface: swap the real provider for a mock in tests |
-| `StartQuizRequest` | Record and validation | Records as DTOs, Bean Validation annotations |
-| `V1__core.sql` | SQL | Table creation, keys and constraints |
+| `AttendanceCalculator` (`attendance/`) | Plain Java business logic, no Spring | The percentage formula, `BigDecimal` with `HALF_UP` to two decimals, the null case for zero classes, "below" only when strictly less |
+| `CgpaCalculator` (`assessment/`), used by `ResultService` | Calculation over a collection | CGPA weighted by the credits registered in each semester; why registered and not earned; withheld results left out |
+| `QuizEvaluationService` (`quiz/`) | Collections and maps | A `Map` from question ID to the right option; unanswered counts wrong; an answer for a foreign question is refused |
+| `QuizService` (`quiz/`) | A transaction with a lock | Random questions, shuffled options, the end time fixed at the start, `findOwnForUpdate` so a test is submitted once, the 15-second grace |
+| `ProgressCalculator` (`progress/`) | Rules and enums | Latest 20 answers, at least 5, below 60% and from 80%; why in Java and not AI |
+| `AttendanceController` (`attendance/`) | A REST controller | Annotations, `@AuthenticationPrincipal`, why there is no student ID parameter |
+| `SecurityConfig` (`common/security/`) | Spring Security | URL rules, BCrypt, CSRF cookie to header, session rules, the Content-Security-Policy, HTTPS in production |
+| `GlobalExceptionHandler` (`common/error/`) | Exception handling | One place that turns exceptions into problem responses with a stable `code` |
+| `StudentProfile`, `StudentProfileRepository` (`student/`) | JPA entity and Spring Data | Annotations, the link to the account, a derived query method, a JPQL query with optional filters |
+| `AiProvider`, `MockAiProvider`, `AiProviderConfig` (`ai/provider/`) | Interface and polymorphism | One interface, one implementation chosen by configuration, the mock for tests and the demo |
+| `AiResponseParser`, `PromptBuilder` (`ai/`) | Treating outside text as untrusted | Wrapper tags removed from the student's text; the reply checked for shape and size, never trusted |
+| `PdfValidator` (`resource/`), `ProfilePhotoProcessor` (`student/`) | Safe file handling | Size, type, signature, parsing with a time limit; a photo redrawn so nothing hidden in it is kept |
+| `StartQuizRequest` (`quiz/dto/`) | Record and validation | Records as DTOs, Bean Validation annotations |
+| `V1__core.sql` (`resources/db/migration/`) | SQL | Tables, keys, check constraints, Row Level Security and the minimum grants |
 
 ## 7. Java and OOP concepts and where they appear
 
@@ -81,7 +84,7 @@ ER diagram and data dictionary: [08-database-design.md](08-database-design.md).
 | Classes and objects | Entities such as `StudentProfile`, `Subject`, `QuizQuestion` |
 | Encapsulation | Private fields with controlled access; services expose operations, not data structures |
 | Abstraction | `AiProvider` and `StorageClient` hide how the external service is called |
-| Interfaces and polymorphism | `MockAiProvider` and the real provider are used through the same interface; Spring picks one by configuration |
+| Interfaces and polymorphism | `MockAiProvider` (and later the real provider) used through `AiProvider`; `AiProviderConfig` picks one from `AI_PROVIDER`. `SupabaseStorageClient` and the tests' in-memory store share `StorageClient` |
 | Inheritance | Custom exceptions extend a common base exception; repositories extend Spring Data interfaces |
 | Composition | A service is built from the repositories and services passed to its constructor |
 | Records | Request and response DTOs |
@@ -94,7 +97,8 @@ ER diagram and data dictionary: [08-database-design.md](08-database-design.md).
 | Dependency injection | Constructor injection throughout |
 | Annotations | `@RestController`, `@Service`, `@Entity`, `@Valid`, `@Transactional` |
 | JDBC and SQL | Flyway migrations; the JDBC driver and connection pool under JPA |
-| File I/O | Reading an uploaded file's bytes, checking its signature, extracting PDF text |
+| File I/O | Reading an uploaded file's bytes, checking its signature, opening it with PDFBox; reading and redrawing an image with `javax.imageio` |
+| Concurrency | A two-thread executor with a time limit for opening PDFs; a database row lock for submitting a test; synchronised rate-limit counters |
 | HTTP client | Calling the AI provider and the storage API |
 | Unit testing | JUnit 5 and Mockito for the service classes |
 
@@ -125,7 +129,7 @@ Then, if asked: lockout after five failures; audit log for marks changes; privat
 ## 10. AI integration explanation
 
 - The browser never calls the AI provider. It calls **my Java endpoint**.
-- A Java service checks the usage limit, builds a prompt from a versioned template, and calls the provider through an `AiProvider` interface with a timeout.
+- A Java service checks the usage limits, builds a prompt from a versioned template (`prompts/explain-v1.txt`), and calls the provider through the `AiProvider` interface with a timeout. Until a real provider is chosen, the built-in mock answers and the page says "Demo mode".
 - The model must reply in JSON. **Java parses and validates it** before returning it. Malformed output is rejected. This checks the shape of a reply, not whether its content is right, which is why every answer is labelled.
 - The AI receives only what the student typed plus the subject name. It cannot read marks or attendance.
 - **AI never scores a test.** Scoring is deterministic Java.
@@ -134,10 +138,11 @@ Then, if asked: lockout after five failures; audit log for marks changes; privat
 
 ## 11. Testing and deployment
 
-- **Unit tests** with JUnit 5 and Mockito for the rule classes.
-- **Controller tests** for every endpoint, including "not logged in", "wrong role" and "someone else's record".
-- **Database tests** against real PostgreSQL in a container.
-- **AI tests** use a mock provider, so they cost nothing and are repeatable.
+- **191 unit tests** with JUnit and Mockito for the rule classes, the parsers and the file checks.
+- **161 integration tests** over real HTTP against real PostgreSQL in a container, including "not logged in", "wrong role" and "someone else's record".
+- **`EndpointAccessIT`** reads every endpoint from the running application and checks that a visitor, a student and an admin are each refused where they must be, so a new endpoint cannot be forgotten.
+- **Database tests** check the roles, grants and Row Level Security of every table.
+- **AI tests** use the mock provider, so they cost nothing and are repeatable.
 - **Deployment:** GitHub runs the tests; the JAR is deployed to Heroku; configuration and secrets are environment variables; Flyway updates the database at startup.
 
 ## 12. Demonstration script (about eight minutes)
@@ -152,7 +157,7 @@ Then, if asked: lockout after five failures; audit log for marks changes; privat
 | 2 | Log in as the demo student | "The dashboard is built from one API call to my Spring Boot service." |
 | 3 | Open Attendance | "The percentage and the red flag are calculated in `AttendanceService`." |
 | 4 | Open Results | "CGPA is calculated in Java from the semester results." |
-| 5 | Open Resources; filter to DBMS question papers; preview one | "The file is in private storage. The server gave my browser a link that expires in five minutes." |
+| 5 | Open Resources; filter to Data Structures question papers; preview one | "The file is in private storage. The server gave my browser a link that expires in five minutes." (Needs the storage bucket, `T3-01`. Without it the page says the file is temporarily unavailable, and the rest still works.) |
 | 6 | Open the Assistant; explain a topic from the paper | "My Java service called the AI provider and validated the JSON it returned." |
 | 7 | Take a 5-question test; submit | "The correct answers were never sent to the browser. Java scored it." |
 | 8 | Open Progress | "This unit is marked for revision by a simple Java rule, with notes recommended." |
@@ -165,17 +170,17 @@ Then, if asked: lockout after five failures; audit log for marks changes; privat
 
 ## 13. Demo data and accounts
 
-All data is synthetic. Fill in the real values after seeding (`T6-06`).
+All data is synthetic. These are the accounts of the demo seeder (`DEMO_SEED_ENABLED=true`), with the example domain used locally. On the deployed application the domain is the one confirmed under OQ-15.
 
 | Account | Login email | Purpose |
 | --- | --- | --- |
-| Demo student with low attendance in one subject | `23cse001@<domain>` (TBD) | Main walkthrough |
-| Freshly provisioned student, never logged in | `23cse050@<domain>` (TBD) | Showing the first-time password change |
-| Demo student with no data | `23cse099@<domain>` (TBD) | Showing empty states |
-| Demo admin | The administrator email (TBD) | Admin walkthrough |
+| Demo student with low attendance in some subjects | `23cse001@university.example` | Main walkthrough |
+| Seeded student, never logged in | `23cse002@university.example` (also `23cse003`, `23cse004`) | Showing the first-time password change |
+| Demo student with no records | `23ece001@university.example` (ECE has no subjects) | Showing empty states |
+| Demo admin | The address in `ADMIN_BOOTSTRAP_EMAIL` | Admin walkthrough |
 
-- **Passwords are never written in this document or anywhere in the repository.** Keep them privately.
-- Prepare in advance: one subject (DBMS) with five units; at least ten published questions in one unit; three or four resources including a past paper; one unpublished assessment to show that students cannot see it.
+- **Passwords are never written in this document or anywhere in the repository.** A seeded student's first password is the roll number and must be changed at first login; keep the passwords you then choose privately.
+- The seeder prepares: five CSE semester 3 subjects with their units, a weekly timetable, four weeks of attendance, assessments with marks, semester results, notices, and 38 practice questions (10 in Data Structures unit 2). Upload three or four PDFs, including a past paper, by hand once the storage bucket exists.
 
 ## 14. Likely viva questions
 
