@@ -3,11 +3,13 @@ package com.campuscompanion.common.security;
 import com.campuscompanion.auth.PasswordChangeRequiredFilter;
 import com.campuscompanion.auth.UserRepository;
 import com.campuscompanion.common.config.StorageProperties;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -54,8 +56,13 @@ public class SecurityConfig {
       SecurityContextRepository securityContextRepository,
       SessionRegistry sessionRegistry,
       UserRepository users,
-      StorageProperties storageProperties)
+      StorageProperties storageProperties,
+      @Value("${app.security.require-https}") boolean requireHttps)
       throws Exception {
+    if (requireHttps) {
+      // Production only: a plain HTTP request is sent to the same address over HTTPS.
+      http.redirectToHttps(Customizer.withDefaults());
+    }
     http.authorizeHttpRequests(
             requests ->
                 requests
@@ -110,6 +117,9 @@ public class SecurityConfig {
                     .contentSecurityPolicy(
                         csp -> csp.policyDirectives(contentSecurityPolicy(storageProperties)))
                     .referrerPolicy(referrer -> referrer.policy(ReferrerPolicy.NO_REFERRER))
+                    // Sent on HTTPS responses only, as browsers ignore it on plain HTTP.
+                    .httpStrictTransportSecurity(
+                        hsts -> hsts.includeSubDomains(true).maxAgeInSeconds(31_536_000))
                     .permissionsPolicyHeader(
                         permissions ->
                             permissions.policy("camera=(), microphone=(), geolocation=()")));

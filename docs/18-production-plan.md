@@ -51,14 +51,14 @@ web: java $JAVA_OPTS -Dserver.port=$PORT -jar target/campus-companion.jar
 
 ## 4. Production application settings
 
-Set in `application-prod.yml` (no secrets in this file):
+Set in `application-prod.yml` (no secrets in this file). Built in task `T6-01` and checked by `ProductionProfileIT`, which runs the application with the `prod` profile and sends the headers Heroku's router adds. The JAR was also started by hand with `SPRING_PROFILES_ACTIVE=prod` against a local test database on 2026-10-14: health was `UP`, plain HTTP was redirected to HTTPS, and HTTPS responses carried HSTS.
 
 | Setting | Value | Why |
 | --- | --- | --- |
-| `server.forward-headers-strategy` | `native` | Trust Heroku's forwarded protocol header so HTTPS is detected |
+| `server.forward-headers-strategy` | `native` | Trust Heroku's forwarded protocol header so HTTPS is detected. Tomcat trusts the header only from private addresses. **Verify** after the first deploy that the router connects from such an address: if it does not, every page redirects to itself, and the trusted range must be set with `server.tomcat.remoteip.internal-proxies` (never to "any address", which would let a client fake its IP and get round the login limit) |
 | Session cookie | `secure=true`, `http-only=true`, `same-site=lax` | |
 | Session timeout | 30 minutes | |
-| HTTPS | Require secure channel; HSTS on | |
+| HTTPS | `app.security.require-https: true` redirects HTTP to HTTPS; HSTS `max-age=31536000; includeSubDomains` | Off in development, where there is no HTTPS |
 | `spring.jpa.hibernate.ddl-auto` | `validate` | |
 | `spring.flyway.enabled` | `true` | Migrate at startup |
 | Hikari `maximum-pool-size` | 5 | Stay within pooler limits |

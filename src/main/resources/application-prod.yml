@@ -1,0 +1,22 @@
+# The production profile, used on Heroku with SPRING_PROFILES_ACTIVE=prod.
+# The settings are those of docs/18-production-plan.md section 4. No secret belongs in this file:
+# every secret is a Heroku config var.
+server:
+  # Heroku ends HTTPS at its router and forwards the request over HTTP with X-Forwarded-Proto.
+  # Tomcat trusts that header only from private addresses, which is where the router connects from.
+  forward-headers-strategy: native
+  servlet:
+    session:
+      cookie:
+        # The session cookie is never sent over plain HTTP.
+        secure: true
+  error:
+    include-stacktrace: never
+    include-message: never
+    include-binding-errors: never
+    include-exception: false
+
+app:
+  security:
+    # Plain HTTP is redirected to HTTPS, and every HTTPS response carries HSTS.
+    require-https: true

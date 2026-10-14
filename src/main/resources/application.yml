@@ -63,6 +63,8 @@ app:
       lock-duration: 15m
       max-attempts-per-ip: 20
       ip-window: 10m
+    # Off on a developer's machine, which has no HTTPS. The prod profile switches it on.
+    require-https: false
     api:
       # Fixed defaults, defined in docs/09-api-contract.md section 6.
       max-requests-per-session: 120
