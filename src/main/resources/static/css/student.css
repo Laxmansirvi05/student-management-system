@@ -930,6 +930,11 @@ button.qdot:hover {
   gap: var(--space-2);
 }
 
+/* The score and its label keep their size; a long unit title gives way instead. */
+.unit__score {
+  flex-shrink: 0;
+}
+
 .unit--untried .row__title {
   color: var(--color-text-muted);
   font-weight: 500;

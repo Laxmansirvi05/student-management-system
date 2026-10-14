@@ -66,7 +66,7 @@ function subjectCard(subject) {
         const state = LEVELS[unit.level] || LEVELS.NOT_ENOUGH_DATA;
         return h(
           "li.row.unit",
-          h("div.line", h("span.row__title.clip", `Unit ${unit.unitNo}: ${unit.unitTitle}`), h("span.line.line--start", h("strong.num", rounded(unit.accuracyPercent)), tag(state.label, state.kind, state.iconName))),
+          h("div.line", h("span.row__title", `Unit ${unit.unitNo}: ${unit.unitTitle}`), h("span.line.line--start.unit__score", h("strong.num", rounded(unit.accuracyPercent)), tag(state.label, state.kind, state.iconName))),
           bar(unit.accuracyPercent, state.bar),
           h("p.row__meta.num", `${unit.correct} of ${unit.answered} recent answers correct`),
         );

@@ -266,6 +266,23 @@ Manual checks on every page before release:
 - [ ] One pass with a screen reader on login, dashboard, quiz and assistant.
 - [ ] Tested in current Chrome and Firefox on desktop and Chrome on Android.
 
+### Results of 2026-10-14 (task `T6-02`)
+
+Run in the desktop app's built-in Chromium browser on a local test database, logged in as a student and as an admin, with a script on every page and screenshots of the new ones.
+
+| Check | Pages | Result |
+| --- | --- | --- |
+| No sideways page scroll at 360 px and 375 px | All 15 student pages, all 11 admin pages, login, privacy, terms | **Passed after fixes.** Two pages failed at first: the AI Assistant tabs and the level tags on Progress pushed the page wider than the screen. Fixed by letting page headers and list rows shrink, shortening the third assistant tab label on phones, and keeping the score column of a unit row at full size |
+| No sideways page scroll at 768 px | Progress, Assistant, Timetable, Profile | Passed |
+| Exactly one `<h1>` | Every page | Passed |
+| Every input, select and text area has a label | Every page | Passed (also enforced for the static pages by `StaticFrontendRulesTest`) |
+| Every link and button has a name, including icon-only ones | Every page | Passed |
+| No duplicate element IDs | Every page | Passed |
+| Images have alternative text | Every page | Passed |
+| Three figures on a phone leave no empty half-card | Test history | **Fixed:** the third figure now takes the whole second row |
+
+Still to do by hand before release: keyboard-only use, a screen reader pass, 200% zoom, a contrast tool, and Firefox and Chrome on Android.
+
 ## 14. Release acceptance criteria
 
 The release is accepted when all of these are true and recorded:
