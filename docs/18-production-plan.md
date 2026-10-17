@@ -226,6 +226,8 @@ Rolling back the code does not undo the migration. Choose one:
 | --- | --- |
 | Heroku dyno | Heroku has no free dynos. Choose the lowest tier that fits. Low-cost dynos sleep after inactivity, so the first request after a pause is slow; wake the app before a demo. |
 | Dyno memory | Small dynos have limited memory. Set `JAVA_OPTS` to cap the heap, and keep the Hikari pool small. |
+| Memory, measured | On 2026-10-17 the application ran in a container limited to 512 MB with `-Xmx256m` (the `Dockerfile` default): about 330 MB after start-up, 360 MB with six students browsing at once, and 376 MB after four large photo uploads at the same time. No out-of-memory kill. Start-up took 8 to 10 seconds against a local database; expect longer against a remote one. A host with less than 512 MB is not enough. |
+| Render, free web service (no card) | Runs the `Dockerfile`. Sleeps after about 15 minutes without traffic and takes roughly a minute to wake (third-party reports; verify on Render's pages), so open the site a minute before a demo. Set the same environment variables as section 5, plus `PORT` which Render provides. Sessions are in memory, so a restart or a wake-up from sleep logs everyone out. |
 | Dyno restarts | Dynos restart about daily. In-memory sessions are lost, so users log in again. |
 | Request timeout | The router ends requests after 30 seconds, which is why AI calls are capped at 25 seconds and uploads at 10 MB. |
 | Supabase | The free plan has database, storage and bandwidth limits, and inactive free projects can be paused. Open the dashboard and the app shortly before a demo. |
