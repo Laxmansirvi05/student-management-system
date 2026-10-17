@@ -16,6 +16,7 @@ A decision record (ADR) captures one significant technical decision: the context
 | [0008](0008-institutional-email-login.md) | Institutional email login, with the roll number as a first-time password | Accepted as a security exception, for synthetic data only |
 | [0009](0009-student-personal-details-and-photo.md) | Students edit their personal details and upload a profile photo | Accepted |
 | [0010](0010-roll-number-first-password-with-real-students.md) | Roll number as the first password, with real students | Accepted |
+| [0011](0011-real-student-data-for-the-demonstration.md) | Real student data in the demonstration deployment | Accepted |
 
 **Accepted** records reflect choices the owner has already made. **Proposed** records are recommendations written with the documentation and await the owner's approval.
 

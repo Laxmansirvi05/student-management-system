@@ -27,7 +27,7 @@ They are different from:
 
 ## 3. Data
 
-- **AG-11** You MUST NOT put real student information (names, roll numbers, institutional email addresses, marks, contact details) into fixtures, seed data, tests, documentation or examples, even if you are given it.
+- **AG-11** You MUST NOT put real student information (names, roll numbers, institutional email addresses, marks, contact details) into fixtures, seed data, tests, documentation or examples, even if you are given it. Under exception EX-DATA-01 ([ADR 0011](docs/decisions/0011-real-student-data-for-the-demonstration.md)) you may load the owner's class into the hosted demonstration database, keeping working files only in the Git-ignored `private-data/` folder.
 - **AG-12** Test and demo data MUST be obviously synthetic, and MUST use a reserved example email domain such as `university.example`, never the institution's real domain.
 - **AG-13** You MUST NOT export, download or copy data out of any hosted database.
 

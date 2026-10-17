@@ -29,3 +29,6 @@ logs/
 
 # Design exports from Google Stitch: reference only, not part of the application
 stitch_file_based_generator*
+
+# Real student data, on the owner's permission (ADR 0011). Never committed.
+private-data/

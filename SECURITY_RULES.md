@@ -75,7 +75,7 @@ The full AI rules are in [docs/14-AI-security-and-privacy.md](docs/14-AI-securit
 
 ## 9. Data
 
-- **SR-42** Only synthetic data MUST be used in every environment. Real student information MUST NOT be stored, committed or used in tests.
+- **SR-42** Only synthetic data MUST be used in every environment. Real student information MUST NOT be stored, committed or used in tests. **Exception EX-DATA-01**, approved by the owner on 2026-10-18 ([ADR 0011](docs/decisions/0011-real-student-data-for-the-demonstration.md)): the owner's own class may be stored in the hosted demonstration database only, under the conditions of that record. It is never committed or used in tests.
 - **SR-43** Logs MUST NOT contain passwords, session identifiers, tokens, keys, signed URLs or AI prompt and response text.
 
 ## 10. Process
