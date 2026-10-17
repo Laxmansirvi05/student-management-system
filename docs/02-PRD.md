@@ -500,6 +500,7 @@ Behaviour rules are in [13-AI-rules.md](13-AI-rules.md). Limits and formats are 
   4. **For password events the entry records only that the event happened.** No entry ever contains a password, a temporary password, a password hash, or any part of one, in any field.
   5. The entry is saved in the same transaction as the change. If either fails, neither is saved.
   6. Entries cannot be edited or deleted through the application, and the application's own database credential is not permitted to change or delete them.
+  7. **Viewer (P1, built 2026-10-17, task `T7-03`):** an admin reads the entries newest first on the Audit log page, filtered by action and by kind of record. Each row names the actor and, where known, the account or roll number it is about. The viewer has no way to change an entry.
 - **Edge cases:** Saving a sheet in which nothing changed writes no entries. A bulk save writes one entry per changed row.
 - **Depends on:** FR-ADM-001 to FR-ADM-004, FR-AUTH-003.
 - **Priority split:** Writing entries is **P0**. A screen for admins to browse and filter entries is **P1**. Until that screen exists, the P0 behaviour is shown by the automated tests and by a read-only database query run by the owner.

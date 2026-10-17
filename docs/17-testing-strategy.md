@@ -355,6 +355,7 @@ P1 requirements built so far:
 
 | Test | Requirement | Passes when | Evidence |
 | --- | --- | --- | --- |
+| AT-ADM-009V | FR-ADM-009 (viewer, P1) | An admin reads entries newest first with actor and subject; filters work; password events carry no values and no password text appears; paging is bounded; no way to change an entry; students and visitors are refused | `AdminAuditIT`; `EndpointAccessIT` |
 | AT-ADM-010 | FR-ADM-010 | A valid file creates every student by the FR-ADM-001 rules; a file with any wrong, repeated or existing roll number creates nothing and lists every problem by line; a failure while creating undoes the whole file; only admins may import | `CsvReaderTest`; `StudentImportIT`; `EndpointAccessIT` |
 
 The acceptance tests for FR-AI-001 to FR-AI-003 need the real provider. All acceptance tests are run again on the deployed application before release (tasks `T6-02` and `T6-05`).

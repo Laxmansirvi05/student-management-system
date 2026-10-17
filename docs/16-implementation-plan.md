@@ -45,10 +45,10 @@ Consequences to keep in mind:
 | **Built and tested** | T1-01 to T1-11; T2-01 to T2-15; T3-02 to T3-09; T4-01 to T4-09; T5-01 to T5-05, T5-07, and the automated part of T5-08; T6-01, T6-02 (automated and scripted checks), T6-03, T6-07 (as far as possible before deployment) |
 | **Added at the owner's request** | Students edit their phone, text and photo; Settings pages; privacy policy and terms (FR-STU-003, FR-STU-004, FR-LEG-001, [ADR 0009](decisions/0009-student-personal-details-and-photo.md)) |
 | **Waiting for the owner** 👤 | T0-01, T0-02, T0-04, T0-05 (reviews, open decisions, GitHub security settings); T3-01 (storage bucket and service key); T5-06 and the manual half of T5-08 (AI provider, key, behaviour run B1 to B20); T6-04 to T6-06 (Heroku app, first deployment, demo data) |
-| **Also built** | The public landing page (FR-UX-002); from the P1 backlog, T7-07 CSV student import (FR-ADM-010) |
+| **Also built** | The public landing page (FR-UX-002); from the P1 backlog, T7-07 CSV student import (FR-ADM-010) and T7-03 audit log viewer (FR-ADM-009) |
 | **Not started** | The rest of the P1 backlog of Phase 7 |
 
-The last full run of `./mvnw verify` passed with 199 unit tests and 169 integration tests. What is open for the owner is listed in [21-security-review.md](21-security-review.md) §3.
+The last full run of `./mvnw verify` passed with 199 unit tests and 175 integration tests. What is open for the owner is listed in [21-security-review.md](21-security-review.md) §3.
 
 ## Phase 0: Decisions
 
@@ -171,7 +171,7 @@ Follow [15-AI-features-handoff.md](15-AI-features-handoff.md).
 | --- | --- | --- |
 | T7-01 | Attendance calculator | FR-ATT-003 |
 | T7-02 | `V6__planner.sql`, study tasks, exam countdown | FR-PLN-001, FR-PLN-002 |
-| T7-03 | Audit log viewer | FR-ADM-009 |
+| T7-03 ✅ | Audit log viewer. Built on 2026-10-17 | FR-ADM-009 |
 | T7-04 | PDF summarization, including the indirect-injection review required by the AI security document §3.3 | FR-AI-005 |
 | T7-05 | Flowchart generation (vendor Mermaid 👤) | FR-AI-006 |
 | T7-06 | Report a resource | FR-LIB-005 |

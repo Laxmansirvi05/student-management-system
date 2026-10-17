@@ -145,7 +145,7 @@ The AI component can read no table except its own usage log. It cannot look up m
 | Data | Action | Visitor | Student | Admin | System |
 | --- | --- | --- | --- | --- | --- |
 | Audit log | Create | ❌ | ❌ | ❌ | ✅ |
-| Audit log | Read (P1 screen) | ❌ | ❌ | ✅ | — |
+| Audit log | Read (P1 screen, built 2026-10-17) | ❌ | ❌ | ✅ | — |
 | Audit log | Update, delete | ❌ | ❌ | ❌ | ❌ |
 | Health endpoint | Read status only | ✅ | ✅ | ✅ | — |
 | Other actuator endpoints | Any | ❌ | ❌ | ❌ | — |

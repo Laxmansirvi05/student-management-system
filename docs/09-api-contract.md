@@ -230,7 +230,8 @@ All paths start with `/admin` and require the `ADMIN` role.
 | PUT, DELETE | `/admin/resources/{id}` | Update details or status; delete. |
 | GET, POST | `/admin/quiz-questions` | List and create questions. |
 | PUT | `/admin/quiz-questions/{id}` | Update a question, including `status`. |
-| GET | `/admin/audit-logs` | Read the audit log (P1). |
+| GET | `/admin/audit-logs` | Read the audit log, newest first (P1). See 8.15. |
+| GET | `/admin/audit-logs/actions` | The actions that can appear, for the filter. |
 | POST | `/admin/imports/students` | Create many students from one CSV file (P1). See 8.14. |
 
 ### 7.7 Health
@@ -627,6 +628,36 @@ rollNo,fullName,branch,currentSemester,section,admissionYear,phone
 - `409 CONFLICT` if an account appears while the students are being created, for example a generated email that another account already has. The transaction is undone, so no student of the file is left behind.
 - `413 UPLOAD_TOO_LARGE` over 1 MB; `415 UPLOAD_INVALID_TYPE` when the file name does not end in `.csv`.
 - The file is read in memory and never stored.
+
+### 8.15 Read the audit log (admin)
+
+`GET /api/v1/admin/audit-logs?action=PASSWORD_RESET&entityType=USER&page=0&size=20`
+
+Both filters are optional; `size` is 1 to 100. The answer is a page (section 5), newest entry first:
+
+```json
+{
+  "content": [
+    {
+      "id": 412,
+      "createdAt": "2026-10-17T14:39:02Z",
+      "action": "ACCOUNT_DEACTIVATED",
+      "actor": "admin@university.example",
+      "entityType": "USER",
+      "entityId": "1001",
+      "subject": "23cse001@university.example",
+      "oldValue": { "active": true },
+      "newValue": { "active": false },
+      "ipAddress": "203.0.113.7"
+    }
+  ],
+  "page": 0, "size": 20, "totalElements": 1, "totalPages": 1
+}
+```
+
+- `actor` is an email, or `System` for actions taken by the application itself. `subject` is the email of an account or the roll number of a student, and is null when none is known.
+- For `PASSWORD_RESET` and `PASSWORD_CHANGED`, `oldValue` and `newValue` are always null. No entry has a password or a hash in any field.
+- The endpoint only reads. There is no way through the API to add, change or remove an entry.
 
 ## 9. AI endpoints
 

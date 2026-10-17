@@ -24,7 +24,7 @@ Operating rules the owner accepts:
 1. **Create accounts shortly before students first log in.** Import the file the day the students are told, not weeks earlier.
 2. **Tell students the same day** how to log in and to change the password at once.
 3. **Review accounts that are still "Awaiting first login"** a few days later (Admin, Students) and reset or deactivate any that should not be open.
-4. **Treat a student's report that their password was already changed before they logged in as a takeover:** reset the account and read the audit entry.
+4. **Treat a student's report that their password was already changed before they logged in as a takeover:** reset the account and read the audit entry (Admin, Audit log, filter "Password reset" or "Password changed").
 
 ## Consequences
 
