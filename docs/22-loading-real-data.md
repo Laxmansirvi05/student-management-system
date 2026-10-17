@@ -8,7 +8,7 @@ The steps for putting the college's real students and records into the deployed 
 
 | # | Task | Where |
 | --- | --- | --- |
-| 1 | Deploy to Heroku with `SPRING_PROFILES_ACTIVE=prod`; `DEMO_SEED_ENABLED` not set | [18-production-plan.md](18-production-plan.md), T6-04 to T6-05 |
+| 1 | Deploy with `SPRING_PROFILES_ACTIVE=prod` and `DEMO_SEED_ENABLED` not set, on Render or Heroku | [23-deploying-on-render.md](23-deploying-on-render.md), [18-production-plan.md](18-production-plan.md) |
 | 2 | Use a database for real data only (not the one that holds demo students) | [18-production-plan.md](18-production-plan.md) |
 | 3 | Create the private storage bucket and set `SUPABASE_URL` and the service key, so photos and PDFs work | T3-01 |
 | 4 | Set `STUDENT_EMAIL_DOMAIN=gcet.edu.in` on Heroku (OQ-15 is answered: the email is the roll number in lower case at that domain) | Heroku config |

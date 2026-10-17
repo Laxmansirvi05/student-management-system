@@ -121,6 +121,7 @@ Status values: **Draft** (written, not yet reviewed by the owner), **Approved**,
 | 20 | [Risk register](docs/20-risk-register.md) | Risks and mitigations | Draft |
 | 21 | [Security review](docs/21-security-review.md) | Rule-by-rule review and open findings | Review of 2026-10-14 |
 | 22 | [Loading real data](docs/22-loading-real-data.md) | What to do before and after loading the real students | Draft |
+| 23 | [Deploying on Render](docs/23-deploying-on-render.md) | Free hosting steps with Supabase | Draft |
 | | [Decision records](docs/decisions/README.md) | Why key choices were made | See index |
 | | [Demo and viva guide](docs/demo-and-viva-guide.md) | Presentation preparation | Draft |
 

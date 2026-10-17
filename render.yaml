@@ -1,0 +1,40 @@
+# Render Blueprint: describes the web service so Render can create it from this repository.
+# Steps and explanations are in docs/23-deploying-on-render.md.
+# Secrets are never written here: every "sync: false" value is typed into Render's dashboard.
+services:
+  - type: web
+    name: campus-companion
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /actuator/health
+    autoDeploy: true
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      # Students log in as <roll number in lower case>@this domain (OQ-15).
+      - key: STUDENT_EMAIL_DOMAIN
+        value: gcet.edu.in
+      # The mock AI answers with canned text until a provider is chosen (ADR 0005).
+      - key: AI_PROVIDER
+        value: mock
+      - key: AI_ENABLED
+        value: "true"
+      - key: SUPABASE_STORAGE_BUCKET
+        value: learning-resources
+      # Supabase session pooler, as jdbc:postgresql://<pooler-host>:5432/postgres?sslmode=require
+      - key: DB_URL
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_MIGRATION_USERNAME
+        sync: false
+      - key: DB_MIGRATION_PASSWORD
+        sync: false
+      # Needed for study-material uploads and profile photos. The pages work without them.
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
