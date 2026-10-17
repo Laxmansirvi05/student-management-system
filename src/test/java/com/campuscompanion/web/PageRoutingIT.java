@@ -108,7 +108,7 @@ class PageRoutingIT extends PostgresIntegrationTest {
     assertThat(privacy.body())
         .contains("<h1>Privacy policy</h1>")
         .contains("The text you send to the AI assistant and the answer it gives are not stored.")
-        .contains("invented students only");
+        .contains("must be reviewed and adopted by the college");
     assertThat(terms.statusCode()).isEqualTo(200);
     assertThat(terms.body())
         .contains("<h1>Terms of use</h1>")

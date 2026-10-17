@@ -1,74 +1,98 @@
-/* The two public pages of rules: the privacy policy and the terms of use. They are plain reading
-   pages, with no script and nothing loaded from anywhere else. */
+/* The two public reading pages: the privacy policy and the terms of use. No script, and nothing
+   loaded from anywhere else. The contents list works with plain links. */
 .legal {
   min-height: 100dvh;
-  padding: var(--space-6) var(--space-4) var(--space-8);
-  background: var(--color-bg);
+  background: var(--color-bg-subtle);
+  color: var(--color-text);
 }
 
-.legal__page {
-  display: grid;
-  gap: var(--space-5);
-  max-width: 760px;
-  margin: 0 auto;
-}
-
+/* --- Top bar ------------------------------------------------------------------------------ */
 .legal__top {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.85);
+  border-bottom: 1px solid var(--color-hairline);
+  backdrop-filter: saturate(180%) blur(16px);
+}
+
+.legal__bar {
   display: flex;
-  flex-wrap: wrap;
   gap: var(--space-3);
   align-items: center;
   justify-content: space-between;
+  max-width: 1080px;
+  min-height: 56px;
+  margin: 0 auto;
+  padding: 0 var(--space-4);
 }
 
 .legal__brand {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
   color: var(--color-text);
   font: 600 17px/24px var(--font);
   letter-spacing: -0.02em;
   text-decoration: none;
 }
 
+.legal__mark {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.legal__mark .icon {
+  width: 16px;
+  height: 16px;
+}
+
 .legal__links {
   display: flex;
   gap: var(--space-4);
+  align-items: center;
   font: var(--text-small);
 }
 
-.legal__sheet {
+.legal__back {
+  display: none;
+}
+
+/* --- Page ----------------------------------------------------------------------------------- */
+.legal__page {
   display: grid;
   gap: var(--space-5);
-  padding: var(--space-6) var(--space-5);
-  background: var(--color-surface);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-card);
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4) var(--space-7);
 }
 
-.legal__sheet h1 {
-  font: 700 34px/40px var(--font);
-  letter-spacing: -0.03em;
-}
-
-.legal__sheet h2 {
-  margin-top: var(--space-2);
-  font: 600 20px/26px var(--font);
-  letter-spacing: -0.02em;
-}
-
-.legal__sheet section {
-  display: grid;
-  gap: var(--space-3);
-}
-
-.legal__sheet ul {
+.legal__hero {
   display: grid;
   gap: var(--space-2);
-  padding-left: var(--space-5);
+  max-width: 720px;
 }
 
-.legal__sheet p,
-.legal__sheet li {
-  max-width: 68ch;
-  line-height: 1.6;
+.legal__eyebrow {
+  color: var(--color-primary);
+  font: 600 13px/18px var(--font);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.legal__hero h1 {
+  font: 700 clamp(32px, 6vw, 48px) / 1.08 var(--font);
+  letter-spacing: -0.035em;
+}
+
+.legal__lead {
+  color: var(--color-text-muted);
+  font: 400 18px/28px var(--font);
 }
 
 .legal__dated {
@@ -76,15 +100,215 @@
   font: var(--text-small);
 }
 
+/* --- In short ------------------------------------------------------------------------------- */
+.legal__glance {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.legal__fact {
+  display: grid;
+  gap: var(--space-1);
+  align-content: start;
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-card);
+  font: var(--text-small);
+}
+
+.legal__fact .icon {
+  width: 22px;
+  height: 22px;
+  margin-bottom: var(--space-1);
+  color: var(--color-primary);
+}
+
+.legal__fact strong {
+  font: 600 16px/22px var(--font);
+}
+
+.legal__fact span {
+  color: var(--color-text-muted);
+}
+
+/* --- Contents and document ------------------------------------------------------------------ */
+.legal__layout {
+  display: grid;
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.legal__toc {
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-card);
+  font: var(--text-small);
+}
+
+.legal__toc-title {
+  margin-bottom: var(--space-2);
+  color: var(--color-text-muted);
+  font: 600 12px/16px var(--font);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.legal__toc ol {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: toc;
+}
+
+.legal__toc li {
+  counter-increment: toc;
+}
+
+.legal__toc a {
+  display: flex;
+  gap: var(--space-2);
+  padding: 6px var(--space-2);
+  border-radius: 8px;
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.legal__toc a::before {
+  min-width: 1.4em;
+  color: var(--color-text-muted);
+  content: counter(toc) ".";
+}
+
+.legal__toc a:hover {
+  background: var(--tint-primary);
+  color: var(--on-tint-primary);
+}
+
+.legal__sheet {
+  display: grid;
+  gap: var(--space-5);
+  padding: var(--space-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
 .legal__note {
   padding: var(--space-4);
-  background: var(--color-bg-subtle);
-  border-left: 3px solid var(--color-primary);
+  background: var(--tint-warning);
+  border-left: 3px solid var(--color-warning);
   border-radius: var(--radius-input);
+  color: var(--on-tint-warning);
+  font: var(--text-small);
+}
+
+.legal__section {
+  display: grid;
+  gap: var(--space-3);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-hairline);
+  scroll-margin-top: 76px;
+}
+
+.legal__section:first-of-type {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.legal__section h2 {
+  display: flex;
+  gap: var(--space-3);
+  align-items: baseline;
+  font: 600 22px/28px var(--font);
+  letter-spacing: -0.02em;
+}
+
+.legal__num {
+  color: var(--color-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.legal__section ul {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding-left: var(--space-5);
+}
+
+.legal__section p,
+.legal__section li {
+  max-width: 68ch;
+  font: 400 16px/26px var(--font);
+}
+
+.legal__section li::marker {
+  color: var(--color-primary);
+}
+
+.legal__end {
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-hairline);
+  color: var(--color-text-muted);
+  font: var(--text-small);
+}
+
+.legal a:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
 }
 
 @media (min-width: 720px) {
+  .legal__back {
+    display: inline;
+  }
+
+  .legal__page {
+    padding-top: var(--space-7);
+  }
+
   .legal__sheet {
-    padding: var(--space-8) var(--space-8);
+    padding: var(--space-6);
+  }
+}
+
+@media (min-width: 960px) {
+  .legal__layout {
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: var(--space-5);
+  }
+
+  .legal__toc {
+    position: sticky;
+    top: 76px;
+  }
+}
+
+@media print {
+  .legal {
+    background: #ffffff;
+  }
+
+  .legal__top,
+  .legal__toc {
+    display: none;
+  }
+
+  .legal__sheet,
+  .legal__fact {
+    border: 0;
+    box-shadow: none;
+  }
+
+  .legal__layout {
+    display: block;
   }
 }

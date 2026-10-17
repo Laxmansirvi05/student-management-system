@@ -11,7 +11,7 @@ The steps for putting the college's real students and records into the deployed 
 | 1 | Deploy to Heroku with `SPRING_PROFILES_ACTIVE=prod`; `DEMO_SEED_ENABLED` not set | [18-production-plan.md](18-production-plan.md), T6-04 to T6-05 |
 | 2 | Use a database for real data only (not the one that holds demo students) | [18-production-plan.md](18-production-plan.md) |
 | 3 | Create the private storage bucket and set `SUPABASE_URL` and the service key, so photos and PDFs work | T3-01 |
-| 4 | Set `STUDENT_EMAIL_DOMAIN` to the college's real domain (OQ-15) | `.env.example` |
+| 4 | Set `STUDENT_EMAIL_DOMAIN=gcet.edu.in` on Heroku (OQ-15 is answered: the email is the roll number in lower case at that domain) | Heroku config |
 | 5 | Create the first admin with `ADMIN_BOOTSTRAP_EMAIL` and a strong password, log in, change the password, then remove the bootstrap variables | [18-production-plan.md](18-production-plan.md) |
 | 6 | Rotate the development passwords and keys that were exposed (finding F4); turn on GitHub secret scanning and push protection (F6, F7) | [21-security-review.md](21-security-review.md) |
 | 7 | Have the college read and adopt the privacy policy and terms pages; they currently say they are a demonstration | `privacy.html`, `terms.html` |
