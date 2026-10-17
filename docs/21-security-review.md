@@ -41,7 +41,7 @@ Severity: **High** can expose data or accounts; **Medium** weakens a control or 
 | F9 | Low | **The AI daily limit can be passed by one request.** The count and the request are not one transaction, so two requests sent at the same moment, at 29 of 30, can both go through. The two-at-a-time limit caps the overshoot at one. | **Accepted.** Recorded here. |
 | F10 | Low | **Some list endpoints are not paged** (subjects, units, assessments of a subject, the timetable, a student's own marks and results). SR-23 asks for paging. | **Accepted.** Each list is small by nature: a week of classes, the units of one subject. The API contract defines them as plain lists. |
 | F11 | Low | **AI usage rows are never deleted.** The 90-day clean-up job is P1 (T7-09). The rows hold numbers only, no text. | **Open, P1.** The privacy policy says so. |
-| F12 | Info | **The roll-number first password (EX-AUTH-01)** is allowed for synthetic data only. | **Recorded.** Real student data needs the owner's decision on OQ-17 first (SR-59). |
+| F12 | Info | **The roll-number first password (EX-AUTH-01)** is allowed for synthetic data only. | **Decided 2026-10-17.** The owner approved it for real students with four operating rules ([ADR 0010](decisions/0010-roll-number-first-password-with-real-students.md)). |
 | F13 | Info | **Trusting Heroku's forwarded protocol header** depends on the router connecting from a private address. If it does not, every page redirects to itself. | **Verify at first deploy.** See [18-production-plan.md](18-production-plan.md) §4. Never set the trusted range to "any address". |
 | F14 | Info | **Student photo upload and one more image host in the CSP** were added at the owner's request ([ADR 0009](decisions/0009-student-personal-details-and-photo.md)). | **For the owner's review.** |
 | F15 | Info | **No virus scanning of uploads.** | **Accepted** in [11-security-plan.md](11-security-plan.md) §9. PDFs come from admins only, and photos are redrawn, never stored as uploaded. |
@@ -110,7 +110,7 @@ Severity: **High** can expose data or accounts; **Medium** weakens a control or 
 | SR-56 Admins never get a roll-number password | ✓ | `AdminBootstrapTest` |
 | SR-57 No self-registration | ✓ | No such endpoint; `PageRoutingIT.theLoginPageOffersNothingTheProjectForbids` |
 | SR-58 Email never claimed verified | ✓ | Profile and settings say "login email"; the API marks it as an identifier only |
-| SR-59 EX-AUTH-01 not with real data | ⧗ | F12, OQ-17 |
+| SR-59 EX-AUTH-01 not with real data until the owner decides | ✓ | F12, ADR 0010 |
 
 ## 5. Release criteria of [11-security-plan.md](11-security-plan.md) §16
 
@@ -127,7 +127,7 @@ Severity: **High** can expose data or accounts; **Medium** weakens a control or 
 | Security headers on a production response | Met locally with the prod profile; check again on Heroku |
 | Bootstrap admin password changed | Owner, after the first start |
 | `STUDENT_EMAIL_DOMAIN` confirmed (OQ-15) | Owner |
-| EX-AUTH-01 applies: synthetic data only (OQ-17) | Owner |
+| ADR 0010 followed: create accounts shortly before first login, review awaiting accounts (OQ-17) | Owner |
 | No account left awaiting first login that should not be | Owner, after loading demo data |
 | Only synthetic data loaded | Owner |
 | Actuator exposes only `health` | Met (`ProductionProfileIT`, `ApplicationIT`) |

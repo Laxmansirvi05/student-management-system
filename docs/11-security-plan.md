@@ -99,7 +99,7 @@ This is a deliberate exception to the rule that a predictable value must not be 
 
 **Recommended practice** (operational, not automated): provision accounts shortly before students first log in; review the list for accounts still awaiting first login and deactivate any that should not be open; if a student reports that their password was changed before they ever logged in, treat it as a takeover, reset the password and read the audit entry.
 
-**Not approved for real students.** Before any deployment that holds real student data, the owner must carry out an explicit security review and record a new decision (OQ-17). Options to weigh then include random one-time passwords handed over in person, an activation step that needs a second fact, or the institution's own single sign-on.
+**Approved for real students on 2026-10-17** by the owner, with four operating rules ([ADR 0010](decisions/0010-roll-number-first-password-with-real-students.md)). The text below is the review that was required first. Before any deployment that holds real student data, the owner must carry out an explicit security review and record a new decision (OQ-17). Options to weigh then include random one-time passwords handed over in person, an activation step that needs a second fact, or the institution's own single sign-on.
 
 ### 3.5 Lockout and rate limits
 
@@ -234,7 +234,7 @@ An administrator may upload a CSV file of students (FR-ADM-010, [09-api-contract
 3. At most 100 students, so the request ends well inside the platform's 30 seconds; at most 100 problems are returned.
 4. Every line goes through `StudentProvisioningService`, the same validation, email rule and audit entry as a student added by hand. Nothing is saved unless every line is valid, and all of it is one transaction.
 5. **The file is never stored**, neither in the database nor in Storage. It is read in memory and dropped.
-6. The first password of every imported student is the roll number (EX-AUTH-01), so the import is for synthetic data only until the owner answers OQ-17.
+6. The first password of every imported student is the roll number (EX-AUTH-01), which the owner approved for real students on 2026-10-17 ([ADR 0010](decisions/0010-roll-number-first-password-with-real-students.md)).
 
 ## 10. Supabase controls
 
@@ -344,7 +344,7 @@ A release is blocked unless all of these are true:
 - [ ] Security headers are present on a production response.
 - [ ] The bootstrap admin password has been changed.
 - [ ] `STUDENT_EMAIL_DOMAIN` is the domain the owner confirmed (OQ-15).
-- [ ] Exception EX-AUTH-01 applies: this deployment holds synthetic data only (OQ-17).
+- [ ] ADR 0010 is followed: accounts are created shortly before students log in, and accounts still awaiting first login are reviewed (OQ-17).
 - [ ] No account is left awaiting first login that should not be open.
-- [ ] Only synthetic data is loaded.
+- [ ] Real data is loaded only into this deployment, never into the demonstration database.
 - [ ] Actuator exposes only `health`.

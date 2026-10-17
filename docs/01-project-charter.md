@@ -136,7 +136,7 @@ A default is **not** a decision. Where it matters, the affected text in other do
 
 | OQ-15 | What is the official student email domain, and is `<roll number>@<domain>` really the institution's naming convention? | Owner, confirming with the college | Before `T6-04` (production configuration). Development can proceed with a reserved example domain | Generate `<roll number in lower case>@<STUDENT_EMAIL_DOMAIN>`. The domain in the change request (`university.edu.com`) was given as an example and is **not** verified; documents use `university.example`. |
 | OQ-16 | Two account rules: (a) should an admin reset restore the roll number or issue a random temporary password? (b) may a roll number or login email be corrected after the account exists? | Owner | Before `T2-03` | (a) Random temporary password, never the roll number. (b) Neither can be changed through the application; a mistake is corrected by deactivating the account and provisioning the right one. |
-| OQ-17 | May the roll-number temporary password be used with real students? | Owner, after an explicit security review | Before any deployment that holds real student data | **No.** It is approved only for the assignment and demonstration with synthetic data ([ADR 0008](decisions/0008-institutional-email-login.md)). |
+| OQ-17 | May the roll-number temporary password be used with real students? | Owner, after an explicit security review | Before any deployment that holds real student data | **Yes, answered 2026-10-17 by the owner**, with four operating rules ([ADR 0010](decisions/0010-roll-number-first-password-with-real-students.md)). Before that it was approved only for synthetic data ([ADR 0008](decisions/0008-institutional-email-login.md)). |
 
 ### Technical verifications
 

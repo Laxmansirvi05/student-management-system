@@ -183,7 +183,7 @@ Migrations are forward-only. A bad migration is corrected by a new migration, no
 - [ ] `AI_DAILY_LIMIT_PER_USER` and `AI_DAILY_LIMIT_GLOBAL` are set to values the owner chose.
 - [ ] `DEMO_SEED_ENABLED` is not set.
 - [ ] `STUDENT_EMAIL_DOMAIN` is the confirmed official domain (OQ-15), and `ADMIN_BOOTSTRAP_EMAIL` is set.
-- [ ] The deployment will hold synthetic data only, as security exception EX-AUTH-01 requires (OQ-17).
+- [ ] If this deployment holds real students, ADR 0010 is followed (OQ-17): accounts are created shortly before students log in.
 - [ ] A database backup exists if the release includes a risky migration.
 - [ ] The previous release number is noted, for rollback.
 - [ ] Heroku plan and expected cost confirmed.
