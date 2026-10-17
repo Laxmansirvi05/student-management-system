@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.campuscompanion.auth.Role;
 import com.campuscompanion.auth.User;
 import com.campuscompanion.auth.UserRepository;
+import com.campuscompanion.common.csv.CsvReader;
 import com.campuscompanion.support.ApiIntegrationTest;
 import com.campuscompanion.support.ApiTestClient;
 import java.net.http.HttpResponse;

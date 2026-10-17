@@ -16,6 +16,9 @@ public interface StudentProfileRepository extends JpaRepository<StudentProfile, 
   /** The roll number must already be in upper case. */
   boolean existsByRollNo(String rollNo);
 
+  /** Roll numbers must already be in upper case. */
+  java.util.List<StudentProfile> findByRollNoIn(java.util.Collection<String> rollNos);
+
   /** The students of one class, in roll-number order, for attendance and marks sheets. */
   List<StudentProfile> findByBranchAndCurrentSemesterAndSectionOrderByRollNo(
       String branch, int currentSemester, String section);

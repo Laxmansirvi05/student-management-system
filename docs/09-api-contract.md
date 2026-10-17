@@ -233,6 +233,7 @@ All paths start with `/admin` and require the `ADMIN` role.
 | GET | `/admin/audit-logs` | Read the audit log, newest first (P1). See 8.15. |
 | GET | `/admin/audit-logs/actions` | The actions that can appear, for the filter. |
 | POST | `/admin/imports/students` | Create many students from one CSV file (P1). See 8.14. |
+| POST | `/admin/imports/attendance-reports` | The college's attendance totals for a period, from a CSV file. See 8.16. |
 
 ### 7.7 Health
 
@@ -326,11 +327,19 @@ After a successful change, logging in with the old password returns `401 AUTH_IN
       "percent": 90,
       "belowRequired": false
     }
-  ]
+  ],
+  "report": {
+    "fromDate": "2026-07-27",
+    "toDate": "2026-09-30",
+    "classesHeld": 211,
+    "classesAttended": 163,
+    "percent": 77.25,
+    "belowRequired": false
+  }
 }
 ```
 
-A subject with no classes has `classesHeld: 0` and `percent: null`.
+A subject with no classes has `classesHeld: 0` and `percent: null`. `report` is the college's latest attendance report for the student (the one whose period ends last), or `null`. When no class has been recorded subject by subject, `overallPercent` is the report's percentage.
 
 ### 8.4 Own results
 
@@ -658,6 +667,26 @@ Both filters are optional; `size` is 1 to 100. The answer is a page (section 5),
 - `actor` is an email, or `System` for actions taken by the application itself. `subject` is the email of an account or the roll number of a student, and is null when none is known.
 - For `PASSWORD_RESET` and `PASSWORD_CHANGED`, `oldValue` and `newValue` are always null. No entry has a password or a hash in any field.
 - The endpoint only reads. There is no way through the API to add, change or remove an entry.
+
+### 8.16 Import an attendance report (admin)
+
+`POST /api/v1/admin/imports/attendance-reports?fromDate=2026-07-27&toDate=2026-09-30` as `multipart/form-data` with one part, `file`:
+
+```text
+rollNo,classesHeld,classesAttended,percent
+23CSE101,211,163,77.25
+```
+
+`200 OK`
+
+```json
+{ "created": 1, "corrected": 0, "unchanged": 0 }
+```
+
+- Columns in any order and letter case: `rollNo`, `classesHeld`, `classesAttended`, and optionally `percent` and `fullName` (which is ignored). When `percent` is given, it must agree with the two numbers to within 0.01, which catches typing slips.
+- The period must not end in the future, and `fromDate` must not be after `toDate`.
+- The whole file is checked first. Unknown or repeated roll numbers, numbers out of range and a disagreeing percent are listed as `rows[<line>].<field>`; nothing is saved. At most 1,000 lines and 1 MB.
+- Importing the same period again replaces the numbers of the students in the file; each change is audited as `ATTENDANCE_CORRECTED`.
 
 ## 9. AI endpoints
 

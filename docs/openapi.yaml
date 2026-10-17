@@ -802,6 +802,39 @@ paths:
         "413": { $ref: "#/components/responses/Problem" }
         "415": { $ref: "#/components/responses/Problem" }
 
+  /admin/imports/attendance-reports:
+    post:
+      tags: [Admin]
+      summary: Import the college's attendance totals for a period from a CSV file
+      parameters:
+        - { name: fromDate, in: query, required: true, schema: { type: string, format: date } }
+        - { name: toDate, in: query, required: true, schema: { type: string, format: date } }
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary, description: "CSV in UTF-8, at most 1 MB and 1,000 lines." }
+      responses:
+        "200":
+          description: What was saved.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [created, corrected, unchanged]
+                properties:
+                  created: { type: integer }
+                  corrected: { type: integer }
+                  unchanged: { type: integer }
+        "400": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "413": { $ref: "#/components/responses/Problem" }
+        "415": { $ref: "#/components/responses/Problem" }
+
   /admin/attendance:
     get:
       tags: [Admin]
@@ -1608,6 +1641,18 @@ components:
               classesAttended: { type: integer }
               percent: { type: number, nullable: true }
               belowRequired: { type: boolean }
+        report:
+          type: object
+          nullable: true
+          description: The college's latest attendance report for the student.
+          required: [fromDate, toDate, classesHeld, classesAttended, percent, belowRequired]
+          properties:
+            fromDate: { type: string, format: date }
+            toDate: { type: string, format: date }
+            classesHeld: { type: integer }
+            classesAttended: { type: integer }
+            percent: { type: number }
+            belowRequired: { type: boolean }
 
     AttendanceStatus:
       type: string

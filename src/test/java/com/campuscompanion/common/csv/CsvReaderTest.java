@@ -1,10 +1,10 @@
-package com.campuscompanion.student;
+package com.campuscompanion.common.csv;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.campuscompanion.student.CsvReader.MalformedCsvException;
-import com.campuscompanion.student.CsvReader.Row;
+import com.campuscompanion.common.csv.CsvReader.MalformedCsvException;
+import com.campuscompanion.common.csv.CsvReader.Row;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 

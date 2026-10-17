@@ -280,3 +280,25 @@ export function semesterOptions(allLabel = "") {
   const numbers = Array.from({ length: 8 }, (_, index) => [String(index + 1), "Semester " + (index + 1)]);
   return allLabel ? [["", allLabel], ...numbers] : numbers;
 }
+
+/** "rows[4].fullName" becomes "Line 4"; problems with the header, the period or the file say so. */
+function whereOf(field) {
+  const row = /^rows\[(\d+)\]/.exec(field || "");
+  if (row) {
+    return "Line " + row[1];
+  }
+  if (field === "fromDate" || field === "toDate") {
+    return "Period";
+  }
+  return field === "header" ? "First line" : "File";
+}
+
+/** The problems of a refused CSV import, one per line of the file, with "nothing was imported". */
+export function importProblems(failure) {
+  const items = failure.fieldErrors.map(({ field: where, message }) => h("li.import__problem", h("span.import__where", whereOf(where)), h("span", message)));
+  return h(
+    "div.stack.stack--tight",
+    h("p.inset.inset--danger.inset--note", { role: "alert" }, icon("alert"), "Nothing was imported. Fix these lines in the file and choose it again."),
+    h("ul.import__problems", { "aria-label": "Problems in the file" }, items),
+  );
+}

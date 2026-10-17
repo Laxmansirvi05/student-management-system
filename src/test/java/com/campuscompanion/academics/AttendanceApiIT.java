@@ -234,7 +234,8 @@ class AttendanceApiIT extends ApiIntegrationTest {
     return jdbc.queryForObject(
         "select count(*) from app.audit_logs a join app.attendance_records r on r.id::text = a.entity_id"
             + " join app.subjects s on s.id = r.subject_id"
-            + " where a.action = 'ATTENDANCE_CORRECTED' and s.code = 'ATT201'",
+            + " where a.action = 'ATTENDANCE_CORRECTED' and a.entity_type = 'ATTENDANCE_RECORD'"
+            + " and s.code = 'ATT201'",
         Integer.class);
   }
 }

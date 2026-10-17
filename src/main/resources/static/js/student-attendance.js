@@ -29,9 +29,15 @@ function statusTag(subject) {
 }
 
 function hero() {
-  const { overallPercent, requiredPercent, subjects } = summary;
-  const held = subjects.reduce((sum, subject) => sum + subject.classesHeld, 0);
-  const attended = subjects.reduce((sum, subject) => sum + subject.classesAttended, 0);
+  const { overallPercent, requiredPercent, subjects, report } = summary;
+  let held = subjects.reduce((sum, subject) => sum + subject.classesHeld, 0);
+  let attended = subjects.reduce((sum, subject) => sum + subject.classesAttended, 0);
+  // Without subject-wise records, the college's report is the figure.
+  const fromReport = held === 0 && report;
+  if (fromReport) {
+    held = report.classesHeld;
+    attended = report.classesAttended;
+  }
   if (overallPercent === null) {
     return h(
       "section.hero.reveal",
@@ -55,6 +61,7 @@ function hero() {
         icon(onTrack ? "check-circle" : "alert"),
         onTrack ? `On track · ${margin}% above the required ${requiredPercent}%` : `Below required · ${margin}% under ${requiredPercent}%`,
       ),
+      fromReport ? h("p.hero__sub", `College report, ${formatDate(report.fromDate)} to ${formatDate(report.toDate)}`) : null,
       h(
         "ul.chips",
         h("li.chip", icon("target"), "Required ", h("strong", requiredPercent + "%")),
@@ -66,6 +73,26 @@ function hero() {
       "div.hero__aside",
       ring(overallPercent, { size: 176, stroke: 14, label: [h("span.eyebrow.eyebrow--inverse", "Required"), h("strong.ring__big", requiredPercent + "%")] }),
     ),
+  );
+}
+
+/** The college's report, when the hero shows subject-wise records instead. */
+function reportCard() {
+  const { report } = summary;
+  const subjectTotal = summary.subjects.reduce((sum, subject) => sum + subject.classesHeld, 0);
+  if (!report || subjectTotal === 0) {
+    return null;
+  }
+  return h(
+    "section.card.reveal" + (report.belowRequired ? ".card--alert" : ""),
+    { "aria-label": "College attendance report" },
+    h("div.line", h("p.eyebrow", "College report"), report.belowRequired ? tag("Below required", "danger", "alert") : tag("On track", "success", "check-circle")),
+    h(
+      "div.line",
+      h("span.row__meta.num", `${formatDate(report.fromDate)} to ${formatDate(report.toDate)} · Attended ${report.classesAttended} of ${report.classesHeld}`),
+      h("span.figure.figure--small" + (report.belowRequired ? ".figure--danger" : ""), percent(report.percent)),
+    ),
+    bar(report.percent, report.belowRequired ? "danger" : "success"),
   );
 }
 
@@ -179,7 +206,10 @@ function filters() {
 loadInto(content, () => api.get("/attendance/me"), (data) => {
   summary = data;
   if (!summary.subjects.length) {
-    fill(content, hero(), h("div.card", empty("resources", "No subjects yet", "Your subjects for this semester have not been set up.")));
+    const note = summary.report
+      ? empty("resources", "Subject-wise attendance comes later", "The figure above is the college's report. Attendance for each subject appears once the college records it here.")
+      : empty("resources", "No subjects yet", "Your subjects for this semester have not been set up.");
+    fill(content, hero(), h("div.card", note));
     reveal();
     return;
   }
@@ -187,6 +217,7 @@ loadInto(content, () => api.get("/attendance/me"), (data) => {
   fill(
     content,
     hero(),
+    reportCard(),
     h("div.section-head.reveal", h("h2", "Subjects"), filters()),
     h("div.grid.grid--split", h("div.stack.stack--loose", { id: "subjects" }), h("aside.card.sticky.reveal.only-wide", { id: "history", "aria-live": "polite" })),
   );

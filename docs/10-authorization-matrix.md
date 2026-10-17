@@ -74,6 +74,8 @@ In the first release, further admin accounts are created only by the owner direc
 | --- | --- | --- | --- | --- | --- |
 | Attendance | Read | ❌ | 🔒 own | ✅ | — |
 | Attendance | Create, correct | ❌ | ❌ | ✅ | — |
+| Attendance reports (college totals for a period) | Read | ❌ | 🔒 own | ✅ by import | — |
+| Attendance reports | Import, correct by importing again | ❌ | ❌ | ✅ | — |
 | Assessments | Read | ❌ | 📢 published | ✅ | — |
 | Assessments | Create, update, publish | ❌ | ❌ | ✅ | — |
 | Marks | Read | ❌ | 🔒 own, and only for published assessments | ✅ | — |

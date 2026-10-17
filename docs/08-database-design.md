@@ -384,6 +384,21 @@ Metadata for limits and cost. **No prompt or response text is stored.**
 
 Index: (`user_id`, `created_at`), (`created_at`). Only `SUCCESS` and `DECLINED` rows count, both toward the per-user daily limit and toward the application-wide daily ceiling. Both are counted per calendar day in `Asia/Kolkata`. The limits are defined in [12-AI-features-spec.md](12-AI-features-spec.md) §2.
 
+### 4.18a `attendance_reports`
+
+The college's attendance total for one student over a period, as the college publishes it ("Attendance Shortage Report"): classes held and classes attended between two dates. Added in V7 on 2026-10-18, because the college's figures come as totals, not class by class.
+
+| Column | Type | Rules |
+| --- | --- | --- |
+| `id` | bigint identity | Primary key |
+| `student_id` | bigint | Not null, references `student_profiles` |
+| `from_date`, `to_date` | date | Not null, `from_date <= to_date` |
+| `classes_held` | integer | 1 to 10,000 |
+| `classes_attended` | integer | 0 to `classes_held` |
+| `created_at`, `updated_at` | timestamptz | Not null |
+
+Unique on (`student_id`, `from_date`, `to_date`): importing the same period again corrects the row, and the correction is audited as `ATTENDANCE_CORRECTED` with entity type `ATTENDANCE_REPORT`. The percentage is not stored; Java calculates it. RLS on; `cc_app` has `SELECT`, `INSERT`, `UPDATE`.
+
 ### 4.19 `study_tasks` (P1)
 
 | Column | Type | Constraints |
@@ -464,6 +479,7 @@ Flyway, versioned SQL files, forward-only. See [ADR 0006](decisions/0006-flyway-
 | V4 | `V4__quiz.sql` | quiz_questions, quiz_attempts, quiz_attempt_answers | M4 |
 | V5 | `V5__ai.sql` | ai_request_logs | M5 |
 | V6 | `V6__profile_details.sql` | Adds `bio` and `photo_path` to student_profiles ([ADR 0009](decisions/0009-student-personal-details-and-photo.md)) | Added 2026-10-14 |
+| V7 | `V7__attendance_reports.sql` | Adds `attendance_reports`, the college's totals per student and period (section 4.18a) | Added 2026-10-18 |
 | V7 | `V7__planner.sql` | study_tasks, resource_reports | P1, not built |
 
 Rules:

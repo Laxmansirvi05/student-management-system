@@ -1,4 +1,4 @@
-import { attempt, confirmAction, dataTable, dialogShell, field, hidePageError, input, numberSelect, openForm, pager, rowAction, semesterOptions, showOnce } from "./admin-kit.js";
+import { attempt, confirmAction, dataTable, dialogShell, field, importProblems, hidePageError, input, numberSelect, openForm, pager, rowAction, semesterOptions, showOnce } from "./admin-kit.js";
 import { ApiError, api, messageFor } from "./api.js";
 import { fill, formatDate, h, icon, tag, toast } from "./dom.js";
 import { loadInto } from "./parts.js";
@@ -54,24 +54,6 @@ function addStudent() {
 const IMPORT_MAX_BYTES = 1024 * 1024;
 const IMPORT_EXAMPLE = "rollNo,fullName,branch,currentSemester,section,admissionYear,phone\n23CSE101,Demo Student,CSE,3,A,2023,";
 
-/** "rows[4].fullName" becomes "Line 4"; problems with the header or the whole file say so. */
-function whereOf(field) {
-  const row = /^rows\[(\d+)\]/.exec(field || "");
-  if (row) {
-    return "Line " + row[1];
-  }
-  return field === "header" ? "First line" : "File";
-}
-
-function problemList(failure) {
-  const items = failure.fieldErrors.map(({ field: where, message }) => h("li.import__problem", h("span.import__where", whereOf(where)), h("span", message)));
-  return h(
-    "div.stack.stack--tight",
-    h("p.inset.inset--danger.inset--note", { role: "alert" }, icon("alert"), "Nothing was imported. Fix these lines in the file and choose it again."),
-    h("ul.import__problems", { "aria-label": "Problems in the file" }, items),
-  );
-}
-
 function importStudents() {
   const dialog = dialogShell("import-title");
   dialog.classList.add("dialog--wide");
@@ -117,7 +99,7 @@ function importStudents() {
       load();
     } catch (failure) {
       const listed = failure instanceof ApiError && failure.fieldErrors.length;
-      fill(result, listed ? problemList(failure) : h("p.inset.inset--danger.inset--note", { role: "alert" }, icon("alert"), messageFor(failure)));
+      fill(result, listed ? importProblems(failure) : h("p.inset.inset--danger.inset--note", { role: "alert" }, icon("alert"), messageFor(failure)));
     } finally {
       submit.disabled = false;
     }

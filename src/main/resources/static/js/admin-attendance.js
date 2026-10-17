@@ -1,4 +1,4 @@
-import { field, hidePageError, input, numberSelect } from "./admin-kit.js";
+import { dialogShell, field, hidePageError, importProblems, input, numberSelect } from "./admin-kit.js";
 import { api, ApiError, messageFor } from "./api.js";
 import { fill, h, icon, toast } from "./dom.js";
 import { empty, loadInto } from "./parts.js";
@@ -6,6 +6,7 @@ import "./shell.js";
 
 // Admin: the attendance sheet of one class (FR-ADM-002). Choose the subject, section, date and
 // period, mark each student, and save the whole sheet at once. Saving it again corrects it.
+// Also: import the college's attendance report (totals per student for a period) from a CSV file.
 
 const content = document.getElementById("content");
 const today = new Date().toLocaleDateString("en-CA");
@@ -133,6 +134,69 @@ function start(subjects) {
   });
   fill(content, form, h("section.card", { id: "sheet", "aria-label": "Attendance sheet", "aria-live": "polite" }, empty("attendance", "Choose a class", "Pick the subject, section, date and period, then open the sheet.")));
 }
+
+const REPORT_EXAMPLE = "rollNo,classesHeld,classesAttended,percent\n23CSE101,211,163,77.25";
+
+function importReport() {
+  const dialog = dialogShell("report-title");
+  dialog.classList.add("dialog--wide");
+  const from = input("fromDate", { type: "date", max: today });
+  const to = input("toDate", { type: "date", max: today });
+  const file = input("file", { type: "file", accept: ".csv,text/csv" });
+  const result = h("div", { "aria-live": "polite" });
+  const submit = h("button.button.button--primary", { type: "submit" }, icon("upload"), "Import");
+  const form = h(
+    "form.stack.stack--loose",
+    { novalidate: true },
+    h(
+      "div.stack.stack--tight",
+      h("h2", { id: "report-title" }, "Import an attendance report"),
+      h("p.muted", "The college's totals for one period: one line per student with classes held and classes attended. Students see it on their attendance page and dashboard."),
+    ),
+    h("pre.import__example", { "aria-label": "Example file" }, REPORT_EXAMPLE),
+    h("p.muted", "The percent column is optional. When it is there, it must agree with the two numbers, which catches typing slips. The whole file is checked first; if any line is wrong, nothing is saved. Importing the same period again corrects it."),
+    h("div.form-grid", field("From", from), field("To", to)),
+    field("CSV file", file, "UTF-8, up to 1 MB."),
+    result,
+    h("div.dialog__actions", h("button.button.button--quiet", { type: "button", "data-close": true }, "Cancel"), submit),
+  );
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const chosen = file.files[0];
+    let problem = "";
+    if (!from.value || !to.value) {
+      problem = "Choose the first and the last day of the period.";
+    } else if (!chosen) {
+      problem = "Choose a CSV file.";
+    } else if (!chosen.name.toLowerCase().endsWith(".csv")) {
+      problem = "Choose a file whose name ends in .csv.";
+    }
+    if (problem) {
+      fill(result, h("p.inset.inset--danger.inset--note", { role: "alert" }, icon("alert"), problem));
+      return;
+    }
+    submit.disabled = true;
+    fill(result, h("p.muted", "Checking the file…"));
+    try {
+      const params = new URLSearchParams({ fromDate: from.value, toDate: to.value });
+      const done = await api.postFile("/admin/imports/attendance-reports?" + params, chosen);
+      dialog.close();
+      toast(`Imported: ${done.created} new, ${done.corrected} corrected, ${done.unchanged} unchanged`);
+    } catch (failure) {
+      const listed = failure instanceof ApiError && failure.fieldErrors.length;
+      fill(result, listed ? importProblems(failure) : h("p.inset.inset--danger.inset--note", { role: "alert" }, icon("alert"), messageFor(failure)));
+    } finally {
+      submit.disabled = false;
+    }
+  });
+  file.addEventListener("change", () => fill(result));
+  fill(dialog, form);
+  dialog.showModal();
+}
+
+const reportButton = h("button.button.button--secondary", { type: "button" }, icon("upload"), "Import report");
+reportButton.addEventListener("click", importReport);
+fill(document.getElementById("actions"), reportButton);
 
 loadInto(content, () => api.get("/admin/subjects"), (subjects) => start(subjects.filter((subject) => subject.active)));
 

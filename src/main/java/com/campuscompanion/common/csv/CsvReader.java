@@ -1,4 +1,4 @@
-package com.campuscompanion.student;
+package com.campuscompanion.common.csv;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,7 +11,7 @@ import java.util.List;
 public final class CsvReader {
 
   /** The invisible character some programs, Excel among them, put at the start of a UTF-8 file. */
-  static final String BYTE_ORDER_MARK = String.valueOf((char) 0xFEFF);
+  public static final String BYTE_ORDER_MARK = String.valueOf((char) 0xFEFF);
 
   private CsvReader() {}
 

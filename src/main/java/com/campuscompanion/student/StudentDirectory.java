@@ -18,6 +18,16 @@ public class StudentDirectory {
     this.profiles = profiles;
   }
 
+  /** Roll number to student ID, for the roll numbers that exist. Roll numbers are upper case. */
+  @Transactional(readOnly = true)
+  public Map<String, Long> idsByRollNumber(Collection<String> rollNumbers) {
+    Map<String, Long> ids = new HashMap<>();
+    profiles
+        .findByRollNoIn(rollNumbers)
+        .forEach(profile -> ids.put(profile.getRollNo(), profile.getId()));
+    return ids;
+  }
+
   /** Student ID to roll number, for the IDs that exist. */
   @Transactional(readOnly = true)
   public Map<Long, String> rollNumbersOf(Collection<Long> studentIds) {

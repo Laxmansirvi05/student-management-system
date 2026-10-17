@@ -13,6 +13,8 @@ public sealed interface AuditSnapshot {
 
   record Attendance(String status) implements AuditSnapshot {}
 
+  record AttendanceTotals(int classesHeld, int classesAttended) implements AuditSnapshot {}
+
   record Result(
       BigDecimal sgpa,
       int creditsRegistered,

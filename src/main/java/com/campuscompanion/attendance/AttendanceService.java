@@ -30,16 +30,19 @@ import org.springframework.transaction.annotation.Transactional;
 public class AttendanceService {
 
   private final AttendanceRecordRepository records;
+  private final AttendanceReportRepository reports;
   private final StudentProfileService students;
   private final SubjectService subjects;
   private final AcademicProperties academic;
 
   public AttendanceService(
       AttendanceRecordRepository records,
+      AttendanceReportRepository reports,
       StudentProfileService students,
       SubjectService subjects,
       AcademicProperties academic) {
     this.records = records;
+    this.reports = reports;
     this.students = students;
     this.subjects = subjects;
     this.academic = academic;
@@ -73,8 +76,31 @@ public class AttendanceService {
       totalHeld += held;
       totalAttended += attended;
     }
-    return new AttendanceSummaryResponse(
-        required, AttendanceCalculator.percent(totalAttended, totalHeld), rows);
+    AttendanceSummaryResponse.Report report = latestReport(student.studentId(), required);
+    BigDecimal overall = AttendanceCalculator.percent(totalAttended, totalHeld);
+    if (overall == null && report != null) {
+      overall = report.percent();
+    }
+    return new AttendanceSummaryResponse(required, overall, rows, report);
+  }
+
+  private AttendanceSummaryResponse.Report latestReport(Long studentId, BigDecimal required) {
+    return reports
+        .findFirstByStudentIdOrderByToDateDescFromDateDesc(studentId)
+        .map(
+            report -> {
+              BigDecimal percent =
+                  AttendanceCalculator.percent(
+                      report.getClassesAttended(), report.getClassesHeld());
+              return new AttendanceSummaryResponse.Report(
+                  report.getFromDate(),
+                  report.getToDate(),
+                  report.getClassesHeld(),
+                  report.getClassesAttended(),
+                  percent,
+                  AttendanceCalculator.isBelowRequired(percent, required));
+            })
+        .orElse(null);
   }
 
   /** The dated history of one subject, newest first. Only the student's own rows can match. */

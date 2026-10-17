@@ -1,10 +1,11 @@
 package com.campuscompanion.student;
 
+import com.campuscompanion.common.csv.CsvReader;
+import com.campuscompanion.common.csv.CsvReader.Row;
 import com.campuscompanion.common.error.ApiException;
 import com.campuscompanion.common.error.ErrorCode;
 import com.campuscompanion.common.error.FieldErrorDetail;
 import com.campuscompanion.common.error.ValidationException;
-import com.campuscompanion.student.CsvReader.Row;
 import com.campuscompanion.student.dto.StudentCreateRequest;
 import com.campuscompanion.student.dto.StudentImportResponse;
 import java.nio.ByteBuffer;
