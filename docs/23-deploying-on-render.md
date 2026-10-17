@@ -10,6 +10,8 @@ How to put the application on the internet with Render's free web service and a 
 
 ## 1. Supabase (once)
 
+> **State on 2026-10-18 (checked and set up with the owner's permission).** The project `campus-companion` already exists. It has the roles `cc_app` and `cc_migrator` (neither bypasses Row Level Security), the schema `app` with all 19 tables, and migrations up to V6 applied. It holds 6 demo students and no administrator. The private bucket `learning-resources` was created that day (10 MB limit, PDF and JPEG only, no public policy). So steps 3 and 4 below are done, and what remains is step 5: copying the connection details and the secret key from the dashboard. A security notice remains open for `app.audit_logs_reject_change` (its search path is not fixed); it is low risk and can be fixed in a later migration. Do not use the other project in the account, `opportunity-radar`, for anything here.
+
 1. Create a Supabase project on the free plan. Choose a region near you and save the database password where only you can read it.
 2. **Switch the Data API off:** Project settings, Data API (or API), disable it. The application talks to the database directly.
 3. **Create the roles and the schema.** In the SQL editor, run the statements in [08-database-design.md](08-database-design.md) §11.7, with two strong passwords of your own in place of `<set-by-owner>`. Keep the two passwords for step 2 below.

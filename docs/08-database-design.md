@@ -630,7 +630,7 @@ revoke all on schema app from anon, authenticated, service_role;
 | ~~Custom roles can connect through the Supabase session pooler, and the user name format they need~~ | **Verified 2026-10-13:** yes. The user name is the role, a dot, and the project reference (`cc_app.<project-ref>`), on the pooler host shown in the dashboard's Connect panel, port 5432 |
 | ~~The exact statements `postgres` needs to create a schema owned by another role on Supabase~~ | **Verified 2026-10-13:** `grant cc_migrator to postgres` first; see section 11.7 |
 | ~~Supabase's `postgres` role bypasses RLS~~ | **Verified 2026-10-13:** `pg_roles` shows `rolbypassrls = true` for `postgres` and `service_role`, and `false` for `cc_app` and `cc_migrator` |
-| Storage keeps working with the Data API switched off | `T3-01` |
+| Storage keeps working with the Data API switched off | `T3-01`. The private bucket `learning-resources` was created on 2026-10-18 with no public policy; an upload through the application with the service key is still to be tried |
 | ~~Whether inserting into identity columns as `cc_app` needs any sequence privilege~~ | **Verified in `T1-03` on PostgreSQL 17:** no. `INSERT` on the table is enough |
 | Current names of Supabase's API keys. The documentation now calls the public key "publishable"; this project's documents say "service key" for the server-side key | `T3-01` |
 
