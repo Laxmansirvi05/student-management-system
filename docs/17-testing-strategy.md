@@ -330,6 +330,7 @@ Notation: `AU`, `PV`, `Z` and `UP` numbers are the scenarios in sections 6 and 8
 | AT-LIB-002 | FR-LIB-002 | Search matches title and description, ignores case, and escapes wildcards | Repository tests |
 | AT-LIB-003 | FR-LIB-003 | A signed link is issued only for a published resource and lasts at most five minutes | UP9, UP10; Z9; the manual bucket check in section 8; E1.5 |
 | AT-LIB-004 | FR-LIB-004 | Bookmarking is idempotent and affects only the student's own list | Controller test; Z10; E1.5 |
+| AT-LIB-006 | FR-LIB-006 | Past papers: search escapes wildcards; a student sees only published papers; a signed link is short-lived; saving is idempotent and private; the admin upload rejects non-PDFs and duplicates; the folder path is parsed into branch, subject, year, month and exam | `PyqPathParserTest`; `PyqSearchTermsTest`; `PyqIT`; `DatabaseSecurityModelIT`; `EndpointAccessIT` |
 | AT-QZ-001 | FR-QZ-001 | Questions are random and published; the response holds no answers; too few questions gives the documented error | Z13; integration test |
 | AT-QZ-002 | FR-QZ-002 | The server enforces the time limit; one submission only; late submission is rejected | Integration test with a controllable clock; E1.7 |
 | AT-QZ-003 | FR-QZ-003 | Java scores the attempt; the result shows answers and explanations; a score from the browser is ignored | `QuizEvaluationServiceTest`; Z7; E1.7 |

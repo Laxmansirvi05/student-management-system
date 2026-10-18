@@ -32,3 +32,6 @@ stitch_file_based_generator*
 
 # Real student data, on the owner's permission (ADR 0011). Never committed.
 private-data/
+
+# Question papers the owner keeps locally for upload; never committed.
+*QUESTION PAPER*/

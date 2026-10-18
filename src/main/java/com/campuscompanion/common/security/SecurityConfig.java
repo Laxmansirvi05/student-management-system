@@ -44,6 +44,7 @@ public class SecurityConfig {
     "/api/v1/results/**",
     "/api/v1/timetable/**",
     "/api/v1/bookmarks/**",
+    "/api/v1/pyqs/**",
     "/api/v1/quiz-attempts/**",
     "/api/v1/progress/**",
     "/api/v1/ai/**"

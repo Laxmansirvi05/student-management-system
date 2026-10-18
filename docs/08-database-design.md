@@ -421,6 +421,35 @@ The college's attendance total for one student over a period, as the college pub
 
 Unique on (`student_id`, `from_date`, `to_date`): importing the same period again corrects the row, and the correction is audited as `ATTENDANCE_CORRECTED` with entity type `ATTENDANCE_REPORT`. The percentage is not stored; Java calculates it. RLS on; `cc_app` has `SELECT`, `INSERT`, `UPDATE`.
 
+### 4.21 `pyq_papers`
+
+A previous-year question paper. Added in V10 on 2026-10-18 ([ADR 0012](decisions/0012-previous-year-question-papers.md)). The papers belong to a branch and a subject *name*, not to a row of `subjects`.
+
+| Column | Type | Rules |
+| --- | --- | --- |
+| `id` | bigint identity | Primary key |
+| `branch` | varchar(10) | Upper-case letters, 2 to 10 (CSE, ECE, EEE, MECH, CIVIL, FE, IT) |
+| `subject_name` | varchar(120) | Not null |
+| `exam_year`, `exam_month` | smallint | Year 2000 to 2100; month 1 to 12 |
+| `exam_kind` | varchar(10) | `REGULAR`, `SUPPLY` or `MID` |
+| `mid_number` | smallint | 1 to 4 for a mid paper that says it, otherwise null |
+| `regulation` | varchar(10) | Null or `AR` and two digits |
+| `course_code` | varchar(40) | Optional |
+| `variant` | smallint | Question set, 1 to 20; default 1 |
+| `storage_path` | varchar(300) | Unique. `pyq/<BRANCH>/<random id>.pdf` |
+| `size_bytes` | integer | Greater than 0 |
+| `checksum_sha256` | char(64) | Unique: the same file cannot be added twice |
+| `status` | varchar(10) | `PUBLISHED` or `HIDDEN` |
+| `download_count` | integer | At least 0; one `UPDATE` per download |
+| `created_by` | bigint | References `users` |
+| `created_at`, `updated_at` | timestamptz | Not null |
+
+Unique on the sitting: (`branch`, lower(`subject_name`), `exam_year`, `exam_month`, `exam_kind`, coalesce(`mid_number`, 0), coalesce(`regulation`, ''), `variant`). RLS on; `cc_app` has `SELECT`, `INSERT`, `UPDATE`, `DELETE`.
+
+### 4.22 `pyq_bookmarks`
+
+A student's saved paper. Primary key (`student_id`, `paper_id`), both foreign keys. RLS on; `cc_app` has `SELECT`, `INSERT`, `DELETE`. The application removes a paper's bookmarks before the paper.
+
 ### 4.19 `study_tasks` (P1)
 
 | Column | Type | Constraints |
@@ -502,6 +531,7 @@ Flyway, versioned SQL files, forward-only. See [ADR 0006](decisions/0006-flyway-
 | V5 | `V5__ai.sql` | ai_request_logs | M5 |
 | V6 | `V6__profile_details.sql` | Adds `bio` and `photo_path` to student_profiles ([ADR 0009](decisions/0009-student-personal-details-and-photo.md)) | Added 2026-10-14 |
 | V8 | `V8__subject_results.sql` | Adds `subject_results`; lets `semester_results.sgpa` be empty for a semester that is not passed (sections 4.8, 4.8a) | Added 2026-10-18 |
+| V10 | `V10__pyq.sql` | Adds `pyq_papers` and `pyq_bookmarks` (sections 4.21 and 4.22) | Added 2026-10-18 |
 | V9 | `V9__profile_links.sql` | Adds `personal_email`, `linkedin_url`, `github_url`, `portfolio_url` and `skills` to student_profiles (section 4.2) | Added 2026-10-18 |
 | V7 | `V7__attendance_reports.sql` | Adds `attendance_reports`, the college's totals per student and period (section 4.18a) | Added 2026-10-18 |
 | V7 | `V7__planner.sql` | study_tasks, resource_reports | P1, not built |

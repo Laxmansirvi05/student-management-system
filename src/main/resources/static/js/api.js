@@ -95,6 +95,10 @@ export const api = {
     form.append("file", file);
     return request("POST", path, form);
   },
+  /** Sends a form that already holds its parts, for example a file and a path. */
+  postForm(path, form, options) {
+    return request("POST", path, form, options);
+  },
   /** Sends one file as the part "file", for example a CSV of students. */
   postFile(path, file) {
     const form = new FormData();

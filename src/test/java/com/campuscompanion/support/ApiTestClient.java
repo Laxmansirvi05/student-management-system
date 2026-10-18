@@ -100,6 +100,30 @@ public class ApiTestClient {
     return sendFile("POST", path, fileName, fileType, file);
   }
 
+  /** POST of one file as the part "file" plus one plain text field, such as a folder path. */
+  public HttpResponse<String> postFileWithField(
+      String path, String field, String value, String fileName, String fileType, byte[] file)
+      throws IOException, InterruptedException {
+    String boundary = "----campus-companion-test-" + System.nanoTime();
+    ByteArrayOutputStream body = new ByteArrayOutputStream();
+    body.write(
+        ("--%s\r\nContent-Disposition: form-data; name=\"%s\"\r\n\r\n%s\r\n")
+            .formatted(boundary, field, value)
+            .getBytes(StandardCharsets.UTF_8));
+    body.write(
+        ("--%s\r\nContent-Disposition: form-data; name=\"file\"; filename=\"%s\"\r\n"
+                + "Content-Type: %s\r\n\r\n")
+            .formatted(boundary, fileName, fileType)
+            .getBytes(StandardCharsets.UTF_8));
+    body.write(file);
+    body.write(("\r\n--" + boundary + "--\r\n").getBytes(StandardCharsets.UTF_8));
+    return send(
+        HttpRequest.newBuilder(URI.create(baseUrl + path))
+            .header("Content-Type", "multipart/form-data; boundary=" + boundary)
+            .header("X-XSRF-TOKEN", csrfToken())
+            .POST(HttpRequest.BodyPublishers.ofByteArray(body.toByteArray())));
+  }
+
   private HttpResponse<String> sendFile(
       String method, String path, String fileName, String fileType, byte[] file)
       throws IOException, InterruptedException {

@@ -230,6 +230,12 @@ All paths start with `/admin` and require the `ADMIN` role.
 | PUT, DELETE | `/admin/resources/{id}` | Update details or status; delete. |
 | GET, POST | `/admin/quiz-questions` | List and create questions. |
 | PUT | `/admin/quiz-questions/{id}` | Update a question, including `status`. |
+| GET | `/pyqs/overview`, `/pyqs/subjects`, `/pyqs`, `/pyqs/saved` | Previous-year papers (P1). Student only. See 8.17. |
+| GET | `/pyqs/{id}/link` | A five-minute link to open or download a paper. |
+| PUT, DELETE | `/pyqs/{id}/save` | Save or unsave a paper. |
+| GET, POST | `/admin/pyqs` | List all papers and add one (multipart). See 8.18. |
+| GET | `/admin/pyqs/{id}/link` | A five-minute link to any paper, hidden ones too. |
+| PUT, DELETE | `/admin/pyqs/{id}` | Edit details or visibility; delete. |
 | GET | `/admin/audit-logs` | Read the audit log, newest first (P1). See 8.15. |
 | GET | `/admin/audit-logs/actions` | The actions that can appear, for the filter. |
 | POST | `/admin/imports/students` | Create many students from one CSV file (P1). See 8.14. |
@@ -695,6 +701,40 @@ rollNo,classesHeld,classesAttended,percent
 - The period must not end in the future, and `fromDate` must not be after `toDate`.
 - The whole file is checked first. Unknown or repeated roll numbers, numbers out of range and a disagreeing percent are listed as `rows[<line>].<field>`; nothing is saved. At most 1,000 lines and 1 MB.
 - Importing the same period again replaces the numbers of the students in the file; each change is audited as `ATTENDANCE_CORRECTED`.
+
+### 8.17 Previous-year papers (students)
+
+All under `/api/v1/pyqs`, students only. A hidden paper is `404` to a student everywhere.
+
+- `GET /overview` returns `{ "branches": [{ "branch": "CSE", "subjects": 70, "papers": 354 }], "years": [2026, 2025], "regulations": ["AR18", "AR20"], "totalPapers": 1243 }`.
+- `GET /subjects?branch=CSE&q=learning` returns one entry per subject: `{ "branch": "CSE", "subject": "Machine Learning", "papers": 9, "firstYear": 2022, "latestYear": 2026 }`. Both filters are optional.
+- `GET /?branch=&subject=&year=&kind=&regulation=&q=&sort=&page=0&size=20` returns a page (section 5) of papers. `kind` is `REGULAR`, `SUPPLY` or `MID`; `sort` is `newest` (default), `oldest`, `popular` or `subject`; `q` is split into words (at most three, any order); each word must appear in the subject, the course code or the year, case-insensitively, and `%` and `_` are ordinary characters. `size` is 1 to 100; `year` is 2000 to 2100.
+- `GET /saved?page=&size=` returns the student's saved papers that are still published.
+- `GET /{id}/link?download=true|false` returns `{ "url": "...", "expiresAt": "..." }`. With `download=true` the link saves the file as `CSE - Machine Learning - 2025 December Supplementary AR20.pdf`, and the download is counted. `503 STORAGE_UNAVAILABLE` if file storage is down.
+- `PUT /{id}/save` and `DELETE /{id}/save` answer `204`, and repeating either changes nothing.
+
+A paper:
+
+```json
+{
+  "id": 412, "branch": "CSE", "subject": "Machine Learning", "year": 2025, "month": 12,
+  "monthName": "December", "kind": "SUPPLY", "midNumber": null, "regulation": "AR20",
+  "courseCode": null, "variant": 1, "sizeBytes": 213004, "downloads": 7, "bookmarked": false,
+  "status": "PUBLISHED", "createdAt": "2026-10-18T14:30:00Z",
+  "downloadName": "CSE - Machine Learning - 2025 December Supplementary AR20.pdf"
+}
+```
+
+The storage path is never in a response.
+
+### 8.18 Previous-year papers (admin)
+
+- `POST /api/v1/admin/pyqs` as `multipart/form-data`: the part `file` (a PDF of at most 10 MB), and **either** a JSON part `metadata` (`branch`, `subject`, `year`, `month` 1 to 12, `kind`, optional `midNumber` 1 to 4 for a mid paper, `regulation` such as `AR20`, `courseCode`, `variant`) **or** a text field `path` with where the file sits in the organised folder, such as `CSE/Machine Learning/2025(December)-supply AR20 (2).pdf`. The file name is `year(Month)-regular|supply|mid|mid-1|mid-2`, then optionally a regulation or a course code, then optionally a question-set number in brackets. `201` with the paper.
+- Failures: `400 VALIDATION_FAILED` naming `path` or the field (an unreadable path, a mid number on a regular paper); `409 CONFLICT` when the same file, or the same sitting, is already in the library (the message names it and says to give a second question set a set number); `413 UPLOAD_TOO_LARGE`; `415 UPLOAD_INVALID_TYPE`; `503 STORAGE_UNAVAILABLE`.
+- `GET /api/v1/admin/pyqs?branch=&status=&q=&page=&size=` lists every paper, hidden ones included.
+- `GET /api/v1/admin/pyqs/{id}/link` gives a five-minute link to any paper. It is not counted as a download.
+- `PUT /api/v1/admin/pyqs/{id}` with `{ "metadata": {...}, "status": "PUBLISHED|HIDDEN" }` changes the details or the visibility. `409` if the new details are another paper's.
+- `DELETE /api/v1/admin/pyqs/{id}` removes the saves, the row and then the file; if the file cannot be removed nothing is removed (`503`).
 
 ## 9. AI endpoints
 

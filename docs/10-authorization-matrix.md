@@ -106,6 +106,9 @@ In the first release, further admin accounts are created only by the owner direc
 | Resource file | Direct read from storage without a signed link | ❌ | ❌ | ❌ | ✅ with service key |
 | Resource | Upload, update, hide, delete | ❌ | ❌ | ✅ | — |
 | Bookmarks | Read, add, remove | ❌ | 🔒 own | ❌ | — |
+| Previous-year papers (FR-LIB-006) | Browse, search, get a signed link | ❌ | 📢 published | ✅ via the admin list | Issues the link |
+| Previous-year papers | Save and unsave | ❌ | 🔒 own | ❌ | — |
+| Previous-year papers | Add, import, edit, hide, delete | ❌ | ❌ | ✅ | — |
 | Resource reports (P1) | Create | ❌ | ✅ | — | — |
 | Resource reports (P1) | Read, resolve | ❌ | ❌ | ✅ | — |
 

@@ -48,6 +48,7 @@ A priority is changed only by editing this document, stating the reason, with th
 | FR-LIB-003 | Preview and download | P0 |
 | FR-LIB-004 | Bookmarks | P0 |
 | FR-LIB-005 | Report a resource | P1 |
+| FR-LIB-006 | Previous-year question papers (PYQs) | P1 |
 | FR-LIB-006 | Question paper analyzer | P2 |
 | FR-QZ-001 | Start a Quick Exam | P0 |
 | FR-QZ-002 | Timer and submission | P0 |
@@ -312,6 +313,21 @@ A priority is changed only by editing this document, stating the reason, with th
 
 - **Acceptance criteria:** A student can bookmark and un-bookmark any published resource and see their bookmarks on one page. Bookmarking twice has no extra effect.
 - **Edge cases:** A bookmarked resource that is later hidden disappears from the list.
+
+### FR-LIB-006 Previous-year question papers (P1)
+
+Added on 2026-10-18 at the owner's request. The decision is [ADR 0012](decisions/0012-previous-year-question-papers.md).
+
+- **Story:** As a student, I want to find the previous-year papers of a subject quickly, open or download them, and keep the ones I need.
+- **Acceptance criteria:**
+  1. Papers are organised by branch and subject name, and each has its year, month, kind (regular, supplementary or mid) and, when known, its regulation.
+  2. A student can browse subjects with their paper counts, search by subject, course code or year (several words, in any order), filter by branch, year, exam and regulation, and sort by newest, oldest, most downloaded or subject.
+  3. A student can open a paper in the page, download it under a readable name, and save or unsave it. Saved papers are listed. A hidden paper is "not found" to students, including in their saved list.
+  4. The papers a student opened are listed under "Recently opened", kept only in their own browser.
+  5. A student sees papers only through links that last five minutes. No student can add, change or remove a paper.
+  6. An admin can add a paper with its details or import an organised folder (`BRANCH/Subject/2025(December)-supply.pdf`), correct a paper's details, hide it from students, and remove it. A file already in the library, or a sitting already in the library, is refused with a clear message.
+- **Edge cases:** Importing again skips what is already there. A file that is not a real PDF, or is over 10 MB, is refused and nothing is stored. If file storage is unavailable, the import stops and says so.
+- **Depends on:** FR-ADM-007 for the upload checks and the storage rules.
 
 ### FR-LIB-005 Report a resource (P1)
 
