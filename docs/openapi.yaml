@@ -1765,7 +1765,27 @@ components:
       required: [semester, sgpa, creditsRegistered, creditsEarned, resultStatus]
       properties:
         semester: { type: integer, minimum: 1, maximum: 8 }
-        sgpa: { type: number, minimum: 0, maximum: 10 }
+        sgpa:
+          type: number
+          minimum: 0
+          maximum: 10
+          nullable: true
+          description: Null when the college published no SGPA because a subject is failed. Never null for PASS.
+        subjects:
+          type: array
+          description: In the student's own results only. Each subject with its current grade.
+          items:
+            type: object
+            required: [subjectCode, subjectName, grade, exam, attempts, passed]
+            properties:
+              subjectCode: { type: string }
+              subjectName: { type: string }
+              credits: { type: number, nullable: true }
+              grade: { type: string, enum: [O, A+, A, B+, B, C, D, F, Ab, S, U] }
+              exam: { type: string }
+              attempts: { type: integer, minimum: 1 }
+              firstGrade: { type: string, nullable: true }
+              passed: { type: boolean }
         creditsRegistered:
           type: integer
           minimum: 1

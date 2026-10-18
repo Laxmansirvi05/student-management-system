@@ -1100,3 +1100,29 @@ button.qdot:hover {
     display: none;
   }
 }
+
+/* Results: the subjects of a semester, opened from its card. */
+.grades summary {
+  cursor: pointer;
+  color: var(--color-link);
+  font: var(--text-small);
+  font-weight: 600;
+}
+
+.grades[open] summary {
+  margin-bottom: var(--space-2);
+}
+
+.grade {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.grade__value {
+  display: inline-flex;
+  flex-shrink: 0;
+  gap: var(--space-2);
+  align-items: center;
+}

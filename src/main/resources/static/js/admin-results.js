@@ -18,7 +18,7 @@ function resultForm(result) {
     intro: "Credits earned cannot be more than credits registered. A withheld semester is left out of the CGPA.",
     fields: [
       field("Semester", numberSelect("semester", semesterOptions(), result?.semester || student.currentSemester)),
-      field("SGPA", input("sgpa", { type: "number", value: result?.sgpa ?? "", min: 0, max: 10, step: 0.01 }), "From 0 to 10."),
+      field("SGPA", input("sgpa", { type: "number", value: result?.sgpa ?? "", min: 0, max: 10, step: 0.01 }), "From 0 to 10. Leave it empty when the college published none because a subject is failed."),
       field("Credits registered", input("creditsRegistered", { type: "number", value: result?.creditsRegistered ?? "", min: 1 })),
       field("Credits earned", input("creditsEarned", { type: "number", value: result?.creditsEarned ?? "", min: 0 })),
       field("Status", select("resultStatus", STATUSES, result?.resultStatus || "PASS")),
@@ -46,7 +46,7 @@ function showStudent(chosen) {
       dataTable(
         [
           { label: "Semester", cell: (result) => h("strong", "Semester " + result.semester) },
-          { label: "SGPA", cell: (result) => h("span.mono.num", Number(result.sgpa).toFixed(2)) },
+          { label: "SGPA", cell: (result) => h("span.mono.num", result.sgpa === null ? "—" : Number(result.sgpa).toFixed(2)) },
           { label: "Registered", cell: (result) => result.creditsRegistered },
           { label: "Earned", cell: (result) => result.creditsEarned },
           { label: "Status", cell: (result) => tag(...statusTag[result.resultStatus]) },

@@ -53,6 +53,22 @@ class CgpaCalculatorTest {
         .isEqualTo(new BigDecimal("7.02"));
   }
 
+  @Test
+  void aSemesterWithoutAPublishedSgpaMeansNoCgpaYet() {
+    List<Term> terms =
+        List.of(term("8.39", 18, ResultStatus.PASS), new Term(null, 22, ResultStatus.FAIL));
+
+    assertThat(CgpaCalculator.cgpa(terms)).isNull();
+  }
+
+  @Test
+  void aWithheldSemesterWithoutSgpaIsStillLeftOut() {
+    List<Term> terms =
+        List.of(term("8.39", 18, ResultStatus.PASS), new Term(null, 22, ResultStatus.WITHHELD));
+
+    assertThat(CgpaCalculator.cgpa(terms)).isEqualTo(new BigDecimal("8.39"));
+  }
+
   private static Term term(String sgpa, int creditsRegistered, ResultStatus status) {
     return new Term(new BigDecimal(sgpa), creditsRegistered, status);
   }

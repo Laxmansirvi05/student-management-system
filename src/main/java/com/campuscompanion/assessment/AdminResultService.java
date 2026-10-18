@@ -50,6 +50,9 @@ public class AdminResultService {
     if (students.findStudent(request.studentId()).isEmpty()) {
       throw new ValidationException("studentId", "Choose an existing student.");
     }
+    if (request.sgpa() == null && request.resultStatus() == ResultStatus.PASS) {
+      throw new ValidationException("sgpa", "Enter the SGPA of a passed semester.");
+    }
     if (request.creditsEarned() > request.creditsRegistered()) {
       throw new ValidationException(
           "creditsEarned", "Credits earned cannot be more than credits registered.");
@@ -77,7 +80,7 @@ public class AdminResultService {
 
   private static AuditSnapshot snapshot(SemesterResult result) {
     return new AuditSnapshot.Result(
-        result.getSgpa().stripTrailingZeros(),
+        result.getSgpa() == null ? null : result.getSgpa().stripTrailingZeros(),
         result.getCreditsRegistered(),
         result.getCreditsEarned(),
         result.getResultStatus().name(),

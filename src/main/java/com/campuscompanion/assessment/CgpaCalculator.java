@@ -12,6 +12,9 @@ import java.util.List;
  * semesters whose status is PASS or FAIL, rounded half up to two decimals. A WITHHELD semester is
  * left out until it is resolved. With no qualifying semester there is no CGPA (null).
  *
+ * <p>While a subject is failed the college publishes no SGPA for that semester. Then there is no
+ * CGPA either (null), because the college gives none until every subject is cleared.
+ *
  * <p>The weight is the credits registered, not the credits earned: an SGPA already averages over
  * every registered course, with a failed course counting as zero, so weighting by registered
  * credits gives the true average across all courses.
@@ -29,6 +32,9 @@ public final class CgpaCalculator {
     for (Term term : publishedTerms) {
       if (term.status() == ResultStatus.WITHHELD) {
         continue;
+      }
+      if (term.sgpa() == null) {
+        return null;
       }
       weighted = weighted.add(term.sgpa().multiply(BigDecimal.valueOf(term.creditsRegistered())));
       credits += term.creditsRegistered();

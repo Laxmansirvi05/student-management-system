@@ -189,6 +189,8 @@ Unique: (`student_id`, `assessment_id`). Check: `absent = true` or `marks_obtain
 
 ### 4.8 `semester_results`
 
+> **Changed in V8 (2026-10-18):** `sgpa` may be empty, but only when `result_status` is not `PASS` (constraint `semester_results_sgpa_required_when_passed`), because the college publishes no SGPA while a subject is failed. CGPA is then not calculated: `CgpaCalculator` returns no CGPA while any published, non-withheld semester has no SGPA.
+
 | Column | Type | Constraints | Notes |
 | --- | --- | --- | --- |
 | id | BIGINT | PK | |
@@ -384,6 +386,23 @@ Metadata for limits and cost. **No prompt or response text is stored.**
 
 Index: (`user_id`, `created_at`), (`created_at`). Only `SUCCESS` and `DECLINED` rows count, both toward the per-user daily limit and toward the application-wide daily ceiling. Both are counted per calendar day in `Asia/Kolkata`. The limits are defined in [12-AI-features-spec.md](12-AI-features-spec.md) §2.
 
+### 4.8a `subject_results`
+
+One attempt at one subject, as the college published it. Added in V8 on 2026-10-18.
+
+| Column | Type | Rules |
+| --- | --- | --- |
+| `id` | bigint identity | Primary key |
+| `student_id` | bigint | Not null, references `student_profiles` |
+| `semester` | smallint | 1 to 8: the semester the subject belongs to, even when it is retaken later |
+| `subject_code`, `subject_name` | varchar(20), varchar(80) | As the college prints them |
+| `credits` | numeric(3,1) | Null for a course without credits (graded S or U) |
+| `grade` | varchar(2) | One of O, A+, A, B+, B, C, D, F, Ab, S, U |
+| `attempt` | smallint | 1 for the first attempt, then 2, 3 ...; the highest is the current grade |
+| `exam` | varchar(100) | The examination, for example "I Year I Sem Supplementary (AR25), July 2026" |
+
+Unique on (`student_id`, `subject_code`, `attempt`). RLS on; `cc_app` has `SELECT`, `INSERT`, `UPDATE`. A failed subject is any whose current grade is F, Ab or U.
+
 ### 4.18a `attendance_reports`
 
 The college's attendance total for one student over a period, as the college publishes it ("Attendance Shortage Report"): classes held and classes attended between two dates. Added in V7 on 2026-10-18, because the college's figures come as totals, not class by class.
@@ -479,6 +498,7 @@ Flyway, versioned SQL files, forward-only. See [ADR 0006](decisions/0006-flyway-
 | V4 | `V4__quiz.sql` | quiz_questions, quiz_attempts, quiz_attempt_answers | M4 |
 | V5 | `V5__ai.sql` | ai_request_logs | M5 |
 | V6 | `V6__profile_details.sql` | Adds `bio` and `photo_path` to student_profiles ([ADR 0009](decisions/0009-student-personal-details-and-photo.md)) | Added 2026-10-14 |
+| V8 | `V8__subject_results.sql` | Adds `subject_results`; lets `semester_results.sgpa` be empty for a semester that is not passed (sections 4.8, 4.8a) | Added 2026-10-18 |
 | V7 | `V7__attendance_reports.sql` | Adds `attendance_reports`, the college's totals per student and period (section 4.18a) | Added 2026-10-18 |
 | V7 | `V7__planner.sql` | study_tasks, resource_reports | P1, not built |
 

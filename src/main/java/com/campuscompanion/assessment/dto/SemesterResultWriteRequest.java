@@ -15,8 +15,8 @@ public record SemesterResultWriteRequest(
         @Min(value = 1, message = "Semester must be 1 to 8.")
         @Max(value = 8, message = "Semester must be 1 to 8.")
         Integer semester,
-    @NotNull(message = "Enter the SGPA.")
-        @DecimalMin(value = "0", message = "SGPA must be 0 to 10.")
+    // Empty while a subject is failed: the college publishes no SGPA then. Required for PASS.
+    @DecimalMin(value = "0", message = "SGPA must be 0 to 10.")
         @DecimalMax(value = "10", message = "SGPA must be 0 to 10.")
         @Digits(integer = 2, fraction = 2, message = "Use at most two decimals.")
         BigDecimal sgpa,

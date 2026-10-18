@@ -101,20 +101,43 @@ const STATUS = {
   WITHHELD: ["Withheld", "warning", "minus-circle"],
 };
 
+const GRADE_KIND = { O: "success", "A+": "success", A: "success", "B+": "primary", B: "primary", C: "warning", D: "warning", S: "success" };
+
+/** One subject of a semester: its grade, and how it was cleared when it took more than one try. */
+function subjectRow(subject) {
+  const kind = subject.passed ? GRADE_KIND[subject.grade] || "" : "danger";
+  const later = subject.attempts > 1 ? (subject.passed ? `Cleared in ${subject.exam}` : `Attempt ${subject.attempts}: ${subject.exam}`) : null;
+  return h(
+    "li.row.grade",
+    h(
+      "div.stack.stack--tight",
+      h("span.row__title", subject.subjectName),
+      h("span.row__meta", h("span.mono", subject.subjectCode), subject.credits === null ? " · No credits" : ` · ${Number(subject.credits)} credit${Number(subject.credits) === 1 ? "" : "s"}`, later ? " · " + later : null),
+    ),
+    h("span.grade__value", subject.firstGrade ? h("s.muted", subject.firstGrade) : null, tag(subject.grade, kind)),
+  );
+}
+
 function semesterCard(entry) {
   const [label, kind, iconName] = STATUS[entry.resultStatus];
   const figure = h("p.figure");
-  countUp(figure, entry.sgpa, { decimals: 2 });
+  if (entry.sgpa !== null) {
+    countUp(figure, entry.sgpa, { decimals: 2 });
+  }
+  const subjects = entry.subjects || [];
   return h(
     "section.card.card--lift.reveal",
     h("div.line", h("h3", "Semester " + entry.semester), tag(label, kind, iconName)),
-    h("div.stack.stack--tight", h("p.eyebrow", "SGPA"), figure),
-    bar(entry.sgpa * 10, kind === "danger" ? "danger" : kind === "warning" ? "warning" : "success"),
+    entry.sgpa === null
+      ? h("div.stack.stack--tight", h("p.eyebrow", "SGPA"), h("p.note", icon("info"), "Published once every subject is cleared."))
+      : h("div.stack.stack--tight", h("p.eyebrow", "SGPA"), figure),
+    entry.sgpa === null ? null : bar(entry.sgpa * 10, kind === "danger" ? "danger" : kind === "warning" ? "warning" : "success"),
     h(
       "dl.facts.facts--2",
       h("div", h("dt", "Credits registered"), h("dd.num", entry.creditsRegistered)),
       h("div", h("dt", "Credits earned"), h("dd.num", entry.creditsEarned)),
     ),
+    subjects.length ? h("details.grades", h("summary", `Subjects and grades (${subjects.length})`), h("ul.rows", subjects.map(subjectRow))) : null,
   );
 }
 
@@ -145,8 +168,8 @@ function semestersView() {
         ),
         cgpa === null ? null : h("div.hero__aside", ring(cgpa * 10, { size: 152, stroke: 12, label: [h("strong.ring__big", "CGPA"), h("span.eyebrow.eyebrow--inverse", "out of 10")] })),
       ),
-      h("div.grid.grid--3", stagger(cards)),
-      h("p.note.reveal", icon("info"), "CGPA is the average of your SGPAs, weighted by the credits registered in each semester. A withheld semester is left out until it is resolved."),
+      h("div.grid.grid--2", stagger(cards)),
+      h("p.note.reveal", icon("info"), "CGPA is the average of your SGPAs, weighted by the credits registered in each semester. It is shown once every published semester has an SGPA, as the college does. A withheld semester is left out until it is resolved."),
     );
     reveal();
     enableTilt();

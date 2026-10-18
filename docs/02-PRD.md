@@ -264,6 +264,7 @@ A priority is changed only by editing this document, stating the reason, with th
   1. Each published semester shows SGPA, credits registered, credits earned and result status.
   2. CGPA is the average of the published SGPAs weighted by the credits **registered** in each semester, shown to two decimals. Withheld semesters are left out. The exact rule is in [08-database-design.md](08-database-design.md) §4.8. It is the default until the college's regulation is confirmed (OQ-3).
 - **Edge cases:** No published results shows "Results not published yet".
+- **Changed on 2026-10-18 for the college's real results:** each semester also lists its subjects with their grades, and a subject cleared in a supplementary examination shows both grades. While a subject is failed the college publishes no SGPA for that semester, so the SGPA is shown as "published once every subject is cleared", and no CGPA is shown until every published semester has an SGPA, as the college does. The rule is in [08-database-design.md](08-database-design.md) §4.8. **For the owner to confirm.**
 - **Depends on:** FR-ADM-004.
 
 ### FR-TT-001 View timetable (P0)

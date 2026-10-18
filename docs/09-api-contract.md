@@ -349,11 +349,19 @@ A subject with no classes has `classesHeld: 0` and `percent: null`. `report` is 
 {
   "cgpa": 7.12,
   "semesters": [
-    { "semester": 1, "sgpa": 7.8, "creditsRegistered": 22, "creditsEarned": 22, "resultStatus": "PASS" },
-    { "semester": 2, "sgpa": 6.5, "creditsRegistered": 24, "creditsEarned": 20, "resultStatus": "FAIL" }
+    {
+      "semester": 1, "sgpa": 7.8, "creditsRegistered": 22, "creditsEarned": 22, "resultStatus": "PASS",
+      "subjects": [
+        { "subjectCode": "CS101", "subjectName": "Programming", "credits": 3, "grade": "B",
+          "exam": "I Year I Sem Supplementary, July 2026", "attempts": 2, "firstGrade": "F", "passed": true }
+      ]
+    },
+    { "semester": 2, "sgpa": 6.5, "creditsRegistered": 24, "creditsEarned": 20, "resultStatus": "FAIL", "subjects": [] }
   ]
 }
 ```
+
+`subjects` lists each subject of the semester with its current grade (the latest attempt). `firstGrade` is the first attempt's grade when there was more than one attempt, otherwise `null`; `credits` is `null` for a course without credits. `sgpa` is `null` for a semester the college published without an SGPA (a subject is failed); `cgpa` is then `null` as well.
 
 `cgpa` is weighted by `creditsRegistered`, not by `creditsEarned`: (7.8 × 22 + 6.5 × 24) ÷ 46 = 7.12. The rule is in [08-database-design.md](08-database-design.md) §4.8. `cgpa` is `null` and `semesters` is empty when nothing is published.
 
