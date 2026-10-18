@@ -15,4 +15,9 @@ public record StudentProfileResponse(
     int admissionYear,
     String phone,
     String bio,
+    String personalEmail,
+    String linkedinUrl,
+    String githubUrl,
+    String portfolioUrl,
+    String skills,
     boolean hasPhoto) {}

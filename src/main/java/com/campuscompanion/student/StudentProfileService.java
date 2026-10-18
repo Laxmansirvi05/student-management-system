@@ -52,6 +52,11 @@ public class StudentProfileService {
         profile.getAdmissionYear(),
         profile.getPhone(),
         profile.getBio(),
+        profile.getPersonalEmail(),
+        profile.getLinkedinUrl(),
+        profile.getGithubUrl(),
+        profile.getPortfolioUrl(),
+        profile.getSkills(),
         profile.getPhotoPath() != null);
   }
 

@@ -48,7 +48,7 @@ Consequences to keep in mind:
 | **Also built** | The public landing page (FR-UX-002); from the P1 backlog, T7-07 CSV student import (FR-ADM-010) and T7-03 audit log viewer (FR-ADM-009) |
 | **Not started** | The rest of the P1 backlog of Phase 7 |
 
-The last full run of `./mvnw verify` passed with 203 unit tests and 184 integration tests. What is open for the owner is listed in [21-security-review.md](21-security-review.md) §3.
+The last full run of `./mvnw verify` passed with 209 unit tests and 186 integration tests. What is open for the owner is listed in [21-security-review.md](21-security-review.md) §3.
 
 ## Phase 0: Decisions
 

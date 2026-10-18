@@ -206,6 +206,7 @@ A priority is changed only by editing this document, stating the reason, with th
   4. A student cannot change their name, roll number, email, branch, semester, section or admission year, by the page or by a direct request.
   5. Every change applies to the student who is logged in. No request names a student.
   6. The photo is shown through a link that lasts at most five minutes and is given only to its owner.
+  7. **Added on 2026-10-18 at the owner's request:** a student can also keep a personal email, links to their LinkedIn, GitHub and portfolio, and a short list of skills. All optional. A link must be https with no user name or password in it; a LinkedIn or GitHub link must be on that site. Links open in a new tab and never pass on the page they came from.
 - **Edge cases:** A file that is not a picture is refused with a clear message. If file storage is unavailable, the page says so and the rest of the profile still works.
 - **Depends on:** FR-STU-002, the storage bucket of FR-LIB-003.
 

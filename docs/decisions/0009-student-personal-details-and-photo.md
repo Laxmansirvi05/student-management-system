@@ -5,6 +5,8 @@
 - Deciders: Laxman Sirvi
 - Changes: FR-STU-002 (no longer fully read-only); adds FR-STU-003, FR-STU-004 and FR-LEG-001
 
+> **Amended on 2026-10-18 at the owner's request:** a student may also keep a personal email, LinkedIn, GitHub and portfolio links, and a list of skills (V9). The same reasoning applies: these are the student's own details, not the college's record. Links are limited to https web pages without credentials, checked in Java (`ProfileLinks`) and by the database, so a link on the page cannot run script or carry a password.
+
 ## Context
 
 Until now a student's profile was read-only, and the project said explicitly that there was no profile photo. Only administrators uploaded files, and only PDFs. On 2026-10-14 the owner asked for three things:

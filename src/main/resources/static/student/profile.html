@@ -62,81 +62,78 @@
           </div>
           <button type="button" id="retry" class="button button--secondary">Retry</button>
         </div>
-        <div id="profile" class="stack stack--loose" hidden>
-          <section class="hero profile-hero rise" data-tilt aria-labelledby="hero-name">
-            <div class="profile-hero__who">
-              <div class="profile-hero__avatar">
-                <span class="profile-hero__ring" aria-hidden="true"></span>
-                <span class="profile-hero__initials" id="initials" aria-hidden="true"></span>
-                <img class="profile-hero__photo" id="photo" alt="Your profile photo" hidden />
+        <div id="profile" class="profile" hidden>
+          <section class="profile-card rise" aria-labelledby="hero-name">
+            <div class="profile-card__photo">
+              <div class="avatar-xl">
+                <span class="avatar-xl__initials" id="initials" aria-hidden="true"></span>
+                <img class="avatar-xl__img" id="photo" alt="Your profile photo" hidden />
+                <button type="button" class="avatar-xl__edit" id="photo-choose" aria-label="Add photo"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#camera" /></svg><span class="visually-hidden" id="photo-choose-text">Add photo</span></button>
               </div>
-              <div class="profile-hero__photo-actions">
-                <button type="button" class="button button--glass button--small" id="photo-choose"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#camera" /></svg><span id="photo-choose-text">Add photo</span></button>
-                <button type="button" class="button button--glass button--small" id="photo-remove" hidden><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#trash" /></svg>Remove</button>
-                <label class="visually-hidden" for="photo-file">Choose a photo, JPEG or PNG, up to 2 MB</label>
-                <input class="visually-hidden" type="file" id="photo-file" accept="image/jpeg,image/png" tabindex="-1" />
-              </div>
+              <button type="button" class="button button--quiet button--small" id="photo-remove" hidden><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#trash" /></svg>Remove photo</button>
+              <label class="visually-hidden" for="photo-file">Choose a photo, JPEG or PNG, up to 2 MB</label>
+              <input class="visually-hidden" type="file" id="photo-file" accept="image/jpeg,image/png" tabindex="-1" />
             </div>
-            <div class="hero__main">
-              <p class="hero__eyebrow">Student profile</p>
-              <h1 class="hero__title" id="hero-name"></h1>
-              <p class="hero__sub" id="programme"></p>
-              <ul class="chips">
-                <li class="chip"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#id" /></svg>Roll no. <strong class="mono" id="roll-chip"></strong></li>
-                <li class="chip"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#calendar" /></svg>Admitted <strong id="admitted-chip"></strong></li>
-                <li class="chip"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#lock" /></svg>Managed by your college</li>
+            <div class="profile-card__who">
+              <p class="eyebrow">Student profile</p>
+              <h1 class="profile-card__name" id="hero-name"></h1>
+              <p class="profile-card__programme" id="programme"></p>
+              <ul class="profile-card__tags">
+                <li><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#id" /></svg><span class="mono" id="roll-chip"></span></li>
+                <li><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#calendar" /></svg>Admitted <span id="admitted-chip"></span></li>
               </ul>
-              <button type="button" class="chip chip--action" id="copy-email">
-                <svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#mail" /></svg>
-                <span class="clip" id="email-chip"></span>
-                <span class="chip__hint" id="copy-hint" aria-live="polite">Copy</span>
-              </button>
             </div>
+            <button type="button" class="button button--primary profile-card__edit" id="edit-details"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#edit" /></svg>Edit profile</button>
           </section>
 
-          <section class="stats" aria-label="At a glance">
-            <div class="stat rise" data-tilt><p class="stat__value" id="stat-semester"></p><p class="stat__label">Semester</p></div>
-            <div class="stat rise" data-tilt><p class="stat__value" id="stat-year"></p><p class="stat__label">Year of study</p></div>
-            <div class="stat rise" data-tilt><p class="stat__value" id="stat-section"></p><p class="stat__label">Section</p></div>
-            <div class="stat rise" data-tilt><p class="stat__value" id="stat-admission"></p><p class="stat__label">Admission year</p></div>
-          </section>
-
-          <div class="grid grid--aside">
-            <section class="card rise" aria-labelledby="academic-title">
-              <div class="card__head">
-                <h2 class="card__title" id="academic-title"><span class="badge-icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#resources" /></svg></span>Academic details</h2>
-              </div>
-              <dl class="detail-list">
-                <div class="detail-list__row"><dt>Name</dt><dd id="full-name"></dd></div>
-                <div class="detail-list__row"><dt>Roll number</dt><dd id="roll-no"></dd></div>
-                <div class="detail-list__row"><dt>Branch</dt><dd id="branch"></dd></div>
-                <div class="detail-list__row"><dt>Semester</dt><dd id="semester"></dd></div>
-                <div class="detail-list__row"><dt>Section</dt><dd id="section"></dd></div>
-                <div class="detail-list__row"><dt>Admission year</dt><dd id="admission-year"></dd></div>
-              </dl>
+          <div class="profile-grid">
+            <section class="panel rise" aria-labelledby="about-title">
+              <h2 class="panel__title" id="about-title">About</h2>
+              <p class="profile-bio" id="bio"></p>
+              <ul class="skill-list" id="skills" aria-label="Skills"></ul>
             </section>
-            <div class="stack stack--loose">
-              <section class="card rise" aria-labelledby="about-title">
-                <div class="card__head">
-                  <h2 class="card__title" id="about-title"><span class="badge-icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#user" /></svg></span>About me</h2>
-                  <button type="button" class="button button--secondary button--small" id="edit-details"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#edit" /></svg>Edit</button>
-                </div>
-                <p class="profile-bio" id="bio"></p>
-                <dl class="detail-list detail-list--stacked">
-                <div class="detail-list__row"><dt>Phone</dt><dd id="phone"></dd></div>
-                <div class="detail-list__row"><dt>Institutional email</dt><dd id="email"></dd></div>
-                </dl>
-              </section>
-              <section class="card card--tinted rise" aria-labelledby="note-title">
-              <div class="card__head">
-                <h2 class="card__title" id="note-title"><span class="badge-icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#shield" /></svg></span>Official record</h2>
+
+            <section class="panel rise" aria-labelledby="contact-title">
+              <h2 class="panel__title" id="contact-title">Contact</h2>
+              <ul class="info-list">
+                <li class="info-list__row">
+                  <span class="info-list__icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#mail" /></svg></span>
+                  <span class="info-list__text"><span class="info-list__label">Institutional email</span><span class="info-list__value clip" id="email"></span></span>
+                  <button type="button" class="button button--quiet button--small" id="copy-email"><span id="copy-hint" aria-live="polite">Copy</span><span class="visually-hidden" id="email-chip"></span></button>
+                </li>
+                <li class="info-list__row">
+                  <span class="info-list__icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#send" /></svg></span>
+                  <span class="info-list__text"><span class="info-list__label">Personal email</span><span class="info-list__value clip" id="personal-email"></span></span>
+                </li>
+                <li class="info-list__row">
+                  <span class="info-list__icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#phone" /></svg></span>
+                  <span class="info-list__text"><span class="info-list__label">Phone</span><span class="info-list__value" id="phone"></span></span>
+                </li>
+              </ul>
+            </section>
+
+            <section class="panel rise" aria-labelledby="links-title">
+              <h2 class="panel__title" id="links-title">Links</h2>
+              <ul class="info-list" id="links"></ul>
+            </section>
+
+            <section class="panel rise" aria-labelledby="academic-title">
+              <div class="panel__head">
+                <h2 class="panel__title" id="academic-title">Academic record</h2>
+                <span class="panel__note"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#lock" /></svg>Managed by your college</span>
               </div>
-                <p class="muted">Your name, roll number, branch, semester and section come from the college's records and cannot be edited here. If something is wrong, ask your college administrator to correct it. Your photo, your phone number and the text about you are yours to change.</p>
-                <a class="more" href="/student/settings.html">Password and settings <svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#chevron-right" /></svg></a>
-              </section>
-              <button type="button" class="button button--secondary profile-logout" data-logout>Log out</button>
-            </div>
+              <dl class="facts-grid">
+                <div><dt>Roll number</dt><dd class="mono" id="roll-no"></dd></div>
+                <div><dt>Branch</dt><dd id="branch"></dd></div>
+                <div><dt>Semester</dt><dd id="semester"></dd></div>
+                <div><dt>Section</dt><dd id="section"></dd></div>
+                <div><dt>Year of study</dt><dd id="stat-year"></dd></div>
+                <div><dt>Admission year</dt><dd id="admission-year"></dd></div>
+              </dl>
+              <p class="panel__foot">Something wrong here? Ask your college administrator to correct it. <a href="/student/settings.html">Password and settings</a></p>
+            </section>
           </div>
+          <button type="button" class="button button--secondary profile-logout" data-logout>Log out</button>
         </div>
       </main>
       <nav class="tabbar" aria-label="Main">
@@ -169,23 +166,61 @@
         <button type="button" class="button button--secondary" data-close>Close</button>
       </div>
     </dialog>
-    <dialog class="dialog" id="details-dialog" aria-labelledby="details-title">
+    <dialog class="dialog dialog--wide" id="details-dialog" aria-labelledby="details-title">
       <form class="stack stack--loose" id="details-form" novalidate>
         <div class="stack stack--tight">
-          <h2 id="details-title">Edit your details</h2>
-          <p class="muted">Both are optional. Your name, roll number, branch and section are managed by your college.</p>
+          <h2 id="details-title">Edit profile</h2>
+          <p class="muted">Everything here is optional and only you can change it. Your name, roll number, branch and section come from the college.</p>
         </div>
         <p class="inset inset--danger inset--note" id="details-error" role="alert" hidden></p>
-        <div class="field">
-          <label class="field__label" for="f-phone">Phone</label>
-          <input class="textbox" id="f-phone" name="phone" type="tel" maxlength="20" autocomplete="tel" aria-describedby="f-phone-error" />
-          <p class="field__error" id="f-phone-error" hidden></p>
-        </div>
-        <div class="field">
-          <div class="line"><label class="field__label" for="f-bio">About me</label><span class="row__meta num" id="bio-count"></span></div>
-          <textarea class="textbox textbox--area" id="f-bio" name="bio" maxlength="280" aria-describedby="f-bio-error"></textarea>
-          <p class="field__error" id="f-bio-error" hidden></p>
-        </div>
+        <fieldset class="form-section">
+          <legend>About you</legend>
+          <div class="field">
+            <div class="line"><label class="field__label" for="f-bio">About me</label><span class="row__meta num" id="bio-count"></span></div>
+            <textarea class="textbox textbox--area" id="f-bio" name="bio" maxlength="280" aria-describedby="f-bio-error"></textarea>
+            <p class="field__error" id="f-bio-error" hidden></p>
+          </div>
+          <div class="field">
+            <label class="field__label" for="f-skills">Skills</label>
+            <input class="textbox" id="f-skills" name="skills" type="text" maxlength="200" autocomplete="off" placeholder="Java, SQL, Figma" aria-describedby="f-skills-error f-skills-help" />
+            <p class="field__help" id="f-skills-help">Separate them with commas.</p>
+            <p class="field__error" id="f-skills-error" hidden></p>
+          </div>
+        </fieldset>
+        <fieldset class="form-section">
+          <legend>Contact</legend>
+          <div class="form-grid-2">
+          <div class="field">
+            <label class="field__label" for="f-personalEmail">Personal email</label>
+            <input class="textbox" id="f-personalEmail" name="personalEmail" type="email" maxlength="254" autocomplete="email" placeholder="name@example.com" aria-describedby="f-personalEmail-error" />
+            <p class="field__error" id="f-personalEmail-error" hidden></p>
+          </div>
+          <div class="field">
+            <label class="field__label" for="f-phone">Phone</label>
+            <input class="textbox" id="f-phone" name="phone" type="tel" maxlength="20" autocomplete="tel" placeholder="+91 98765 43210" aria-describedby="f-phone-error" />
+            <p class="field__error" id="f-phone-error" hidden></p>
+          </div>
+          </div>
+        </fieldset>
+        <fieldset class="form-section">
+          <legend>Links</legend>
+          <div class="field">
+            <label class="field__label" for="f-linkedinUrl">LinkedIn</label>
+            <input class="textbox" id="f-linkedinUrl" name="linkedinUrl" type="url" maxlength="200" autocomplete="url" placeholder="linkedin.com/in/your-name" aria-describedby="f-linkedinUrl-error" />
+            <p class="field__error" id="f-linkedinUrl-error" hidden></p>
+          </div>
+          <div class="field">
+            <label class="field__label" for="f-githubUrl">GitHub</label>
+            <input class="textbox" id="f-githubUrl" name="githubUrl" type="url" maxlength="200" autocomplete="url" placeholder="github.com/your-name" aria-describedby="f-githubUrl-error" />
+            <p class="field__error" id="f-githubUrl-error" hidden></p>
+          </div>
+          <div class="field">
+            <label class="field__label" for="f-portfolioUrl">Portfolio or website</label>
+            <input class="textbox" id="f-portfolioUrl" name="portfolioUrl" type="url" maxlength="200" autocomplete="url" placeholder="your-site.com" aria-describedby="f-portfolioUrl-error f-portfolioUrl-help" />
+            <p class="field__help" id="f-portfolioUrl-help">Must start with https:// (it is added for you if you leave it out).</p>
+            <p class="field__error" id="f-portfolioUrl-error" hidden></p>
+          </div>
+        </fieldset>
         <div class="dialog__actions">
           <button type="button" class="button button--quiet" data-close>Cancel</button>
           <button type="submit" class="button button--primary" id="details-save">Save</button>

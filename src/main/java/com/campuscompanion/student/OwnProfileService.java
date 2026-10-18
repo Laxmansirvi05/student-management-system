@@ -3,13 +3,17 @@ package com.campuscompanion.student;
 import com.campuscompanion.audit.AuditAction;
 import com.campuscompanion.audit.AuditService;
 import com.campuscompanion.audit.AuditSnapshot;
+import com.campuscompanion.common.error.FieldErrorDetail;
 import com.campuscompanion.common.error.ResourceNotFoundException;
+import com.campuscompanion.common.error.ValidationException;
 import com.campuscompanion.common.security.CurrentUser;
 import com.campuscompanion.common.storage.StorageClient;
 import com.campuscompanion.common.storage.StorageUnavailableException;
 import com.campuscompanion.student.dto.OwnProfileUpdateRequest;
 import com.campuscompanion.student.dto.PhotoUrlResponse;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,12 +52,28 @@ public class OwnProfileService {
     this.audit = audit;
   }
 
-  /** Saves the phone number and the text. A changed phone number is written to the audit log. */
+  /**
+   * Saves the student's own details: phone, text, personal email, links and skills. A changed phone
+   * number is written to the audit log.
+   */
   @Transactional
   public void update(CurrentUser currentUser, OwnProfileUpdateRequest request) {
     StudentProfile profile = own(currentUser);
     AuditSnapshot.Profile before = snapshot(profile);
-    profile.updateOwnDetails(blankToNull(request.phone()), blankToNull(request.bio()));
+    List<FieldErrorDetail> problems = new ArrayList<>();
+    StudentProfile.OwnDetails details =
+        new StudentProfile.OwnDetails(
+            blankToNull(request.phone()),
+            blankToNull(request.bio()),
+            ProfileLinks.email(request.personalEmail(), "personalEmail", problems),
+            ProfileLinks.link(request.linkedinUrl(), "linkedinUrl", "linkedin.com", problems),
+            ProfileLinks.link(request.githubUrl(), "githubUrl", "github.com", problems),
+            ProfileLinks.link(request.portfolioUrl(), "portfolioUrl", null, problems),
+            blankToNull(request.skills()));
+    if (!problems.isEmpty()) {
+      throw new ValidationException(problems);
+    }
+    profile.updateOwnDetails(details);
     AuditSnapshot.Profile after = snapshot(profile);
     if (!after.equals(before)) {
       audit.record(AuditAction.PROFILE_UPDATED, STUDENT, profile.getId(), before, after);

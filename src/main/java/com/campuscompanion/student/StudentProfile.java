@@ -60,6 +60,22 @@ public class StudentProfile {
   @Column(length = 280)
   private String bio;
 
+  /** The student's own contact and links. All optional. */
+  @Column(name = "personal_email", length = 254)
+  private String personalEmail;
+
+  @Column(name = "linkedin_url", length = 200)
+  private String linkedinUrl;
+
+  @Column(name = "github_url", length = 200)
+  private String githubUrl;
+
+  @Column(name = "portfolio_url", length = 200)
+  private String portfolioUrl;
+
+  @Column(length = 200)
+  private String skills;
+
   /** Where the student's photo is kept in file storage, or null when there is none. */
   @Column(name = "photo_path", length = 300)
   private String photoPath;
@@ -112,9 +128,44 @@ public class StudentProfile {
    * Replaces the personal details a student may edit themselves. Everything the college decides
    * (name, roll number, branch, semester, section, admission year) is not touched.
    */
-  public void updateOwnDetails(String phone, String bio) {
-    this.phone = phone;
-    this.bio = bio;
+  public void updateOwnDetails(OwnDetails details) {
+    this.phone = details.phone();
+    this.bio = details.bio();
+    this.personalEmail = details.personalEmail();
+    this.linkedinUrl = details.linkedinUrl();
+    this.githubUrl = details.githubUrl();
+    this.portfolioUrl = details.portfolioUrl();
+    this.skills = details.skills();
+  }
+
+  /** The details a student keeps themselves, already checked and tidied. */
+  public record OwnDetails(
+      String phone,
+      String bio,
+      String personalEmail,
+      String linkedinUrl,
+      String githubUrl,
+      String portfolioUrl,
+      String skills) {}
+
+  public String getPersonalEmail() {
+    return personalEmail;
+  }
+
+  public String getLinkedinUrl() {
+    return linkedinUrl;
+  }
+
+  public String getGithubUrl() {
+    return githubUrl;
+  }
+
+  public String getPortfolioUrl() {
+    return portfolioUrl;
+  }
+
+  public String getSkills() {
+    return skills;
   }
 
   public void setPhotoPath(String photoPath) {

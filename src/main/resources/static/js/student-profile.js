@@ -1,12 +1,12 @@
 import { api, messageFor } from "./api.js";
-import { toast } from "./dom.js";
+import { fill, h, icon, toast } from "./dom.js";
 import { setFieldError, showBanner } from "./forms.js";
-import { countUp, enableTilt } from "./motion.js";
+
 import { initialsOf } from "./shell.js";
 
 // The student's own profile (FR-STU-002, FR-STU-003). What the college manages is read-only. The
-// student can change three things here: their photo, their phone number and a short text about
-// themselves. The server decides whose profile it is from the session; no ID is ever sent.
+// student can change their photo, a short text, skills, personal email, phone and three links.
+// The server decides whose profile it is from the session; no ID is ever sent.
 
 const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
 const loading = document.getElementById("loading");
@@ -22,15 +22,45 @@ const photoChoose = document.getElementById("photo-choose");
 const photoRemove = document.getElementById("photo-remove");
 const dialog = document.getElementById("details-dialog");
 const form = document.getElementById("details-form");
-const phoneInput = document.getElementById("f-phone");
 const bioInput = document.getElementById("f-bio");
+// The fields of the edit form, by the name the server uses.
+const EDITABLE = ["bio", "skills", "personalEmail", "phone", "linkedinUrl", "githubUrl", "portfolioUrl"];
+const inputs = Object.fromEntries(EDITABLE.map((name) => [name, document.getElementById("f-" + name)]));
+const LINKS = [
+  ["linkedinUrl", "LinkedIn", "briefcase"],
+  ["githubUrl", "GitHub", "code"],
+  ["portfolioUrl", "Portfolio", "globe"],
+];
 let student = null;
 
 function show(id, text) {
   document.getElementById(id).textContent = text;
 }
 
-function render(loaded, animate = true) {
+/** "https://www.linkedin.com/in/name/" is shown as "linkedin.com/in/name". */
+function shortLink(url) {
+  return url.replace(/^https:\/\//, "").replace(/^www\./, "").replace(/\/$/, "");
+}
+
+function renderLinks() {
+  const rows = LINKS.filter(([field]) => student[field]).map(([field, label, iconName]) => {
+    const anchor = h("a.info-list__value.clip", { href: student[field], target: "_blank", rel: "noopener noreferrer" }, shortLink(student[field]));
+    return h("li.info-list__row", h("span.info-list__icon", icon(iconName)), h("span.info-list__text", h("span.info-list__label", label), anchor), icon("arrow-up-right", "info-list__go"));
+  });
+  fill(
+    document.getElementById("links"),
+    rows.length ? rows : h("li.info-list__empty", "Add your LinkedIn, GitHub or portfolio so others can find your work."),
+  );
+}
+
+function renderSkills() {
+  const skills = (student.skills || "").split(",").map((skill) => skill.trim()).filter(Boolean);
+  const list = document.getElementById("skills");
+  fill(list, skills.map((skill) => h("li.skill", skill)));
+  list.hidden = !skills.length;
+}
+
+function render(loaded) {
   student = loaded;
   show("initials", initialsOf(student.fullName));
   show("hero-name", student.fullName);
@@ -38,33 +68,37 @@ function render(loaded, animate = true) {
   show("roll-chip", student.rollNo);
   show("admitted-chip", String(student.admissionYear));
   show("email-chip", student.email);
-
-  show("full-name", student.fullName);
-  show("roll-no", student.rollNo);
   show("email", student.email);
+
+  show("roll-no", student.rollNo);
   show("branch", student.branch);
   show("semester", String(student.currentSemester));
   show("section", student.section);
+  // Two semesters make one year of study.
+  show("stat-year", String(Math.ceil(student.currentSemester / 2)));
   show("admission-year", String(student.admissionYear));
-  show("phone", student.phone || "Not provided");
-  const bio = document.getElementById("bio");
-  bio.textContent = student.bio || "You have not written anything about yourself yet.";
-  bio.classList.toggle("profile-bio--empty", !student.bio);
 
-  show("stat-section", student.section);
+  const optional = (id, value) => {
+    const element = document.getElementById(id);
+    element.textContent = value || "Not added";
+    element.classList.toggle("is-empty", !value);
+  };
+  optional("phone", student.phone);
+  optional("personal-email", student.personalEmail);
+  const bio = document.getElementById("bio");
+  bio.textContent = student.bio || "Write a few lines about yourself: what you study, what you enjoy, what you are looking for.";
+  bio.classList.toggle("profile-bio--empty", !student.bio);
+  renderSkills();
+  renderLinks();
   profile.hidden = false;
-  if (animate) {
-    countUp(document.getElementById("stat-semester"), student.currentSemester);
-    // Two semesters make one year of study.
-    countUp(document.getElementById("stat-year"), Math.ceil(student.currentSemester / 2));
-    countUp(document.getElementById("stat-admission"), student.admissionYear);
-  }
   showPhoto();
 }
 
 /** Shows the photo through its short-lived link, or the initials when there is no photo. */
 async function showPhoto() {
-  show("photo-choose-text", student.hasPhoto ? "Change photo" : "Add photo");
+  const label = student.hasPhoto ? "Change photo" : "Add photo";
+  show("photo-choose-text", label);
+  photoChoose.setAttribute("aria-label", label);
   photoRemove.hidden = !student.hasPhoto;
   if (!student.hasPhoto) {
     photo.hidden = true;
@@ -124,7 +158,7 @@ photoFile.addEventListener("change", async () => {
   }
   photoChoose.disabled = true;
   try {
-    render(await api.putFile("/students/me/photo", file), false);
+    render(await api.putFile("/students/me/photo", file));
     toast("Photo saved");
   } catch (failure) {
     toast(messageFor(failure));
@@ -137,7 +171,7 @@ photoRemove.addEventListener("click", async () => {
   photoRemove.disabled = true;
   try {
     await api.delete("/students/me/photo");
-    render({ ...student, hasPhoto: false }, false);
+    render({ ...student, hasPhoto: false });
     toast("Photo removed");
   } catch (failure) {
     toast(messageFor(failure));
@@ -146,7 +180,7 @@ photoRemove.addEventListener("click", async () => {
   }
 });
 
-// ---------------------------------------------------------------- Phone and text
+// ---------------------------------------------------------------- Personal details
 const bioCount = document.getElementById("bio-count");
 const detailsError = document.getElementById("details-error");
 const showBioCount = () => {
@@ -154,10 +188,10 @@ const showBioCount = () => {
 };
 
 document.getElementById("edit-details").addEventListener("click", () => {
-  phoneInput.value = student.phone || "";
-  bioInput.value = student.bio || "";
-  setFieldError(phoneInput, "");
-  setFieldError(bioInput, "");
+  for (const name of EDITABLE) {
+    inputs[name].value = student[name] || "";
+    setFieldError(inputs[name], "");
+  }
   detailsError.hidden = true;
   showBioCount();
   dialog.showModal();
@@ -172,23 +206,24 @@ dialog.addEventListener("click", (event) => {
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   const save = document.getElementById("details-save");
-  setFieldError(phoneInput, "");
-  setFieldError(bioInput, "");
+  for (const name of EDITABLE) {
+    setFieldError(inputs[name], "");
+  }
   detailsError.hidden = true;
   save.disabled = true;
   try {
-    // Only these two fields are sent. The server refuses a request that names anything else.
-    render(await api.put("/students/me", { phone: phoneInput.value.trim() || null, bio: bioInput.value.trim() || null }), false);
+    // Only these fields are sent. The server refuses a request that names anything else.
+    const body = Object.fromEntries(EDITABLE.map((name) => [name, inputs[name].value.trim() || null]));
+    render(await api.put("/students/me", body));
     dialog.close();
-    toast("Saved");
+    toast("Profile saved");
   } catch (failure) {
-    const fields = { phone: phoneInput, bio: bioInput };
-    const known = (failure.fieldErrors || []).filter((entry) => fields[entry.field]);
+    const known = (failure.fieldErrors || []).filter((entry) => inputs[entry.field]);
     for (const entry of known) {
-      setFieldError(fields[entry.field], entry.message);
+      setFieldError(inputs[entry.field], entry.message);
     }
     if (known.length) {
-      fields[known[0].field].focus();
+      inputs[known[0].field].focus();
     } else {
       detailsError.textContent = messageFor(failure);
       detailsError.hidden = false;
@@ -211,5 +246,4 @@ copyEmail.addEventListener("click", async () => {
 });
 
 document.getElementById("retry").addEventListener("click", load);
-enableTilt();
 load();

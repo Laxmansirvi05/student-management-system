@@ -44,6 +44,50 @@ class OwnProfileIT extends ApiIntegrationTest {
         "select photo_path from app.student_profiles where roll_no = ?", String.class, rollNo);
   }
 
+  // --- Links, personal email and skills -------------------------------------------------------
+
+  @Test
+  void aStudentCanAddTheirLinksAndPersonalEmail() throws Exception {
+    ApiTestClient student = student("23OWN101");
+
+    HttpResponse<String> response =
+        student.put(
+            ME,
+            """
+            {"phone":null,"bio":null,"personalEmail":" Demo.Student@Example.com ",
+             "linkedinUrl":"linkedin.com/in/demo-student","githubUrl":"https://github.com/demo",
+             "portfolioUrl":"https://demo.example","skills":"Java, SQL"}
+            """);
+
+    assertThat(response.statusCode()).as(response.body()).isEqualTo(200);
+    JsonNode saved = json(student.get(ME));
+    assertThat(saved.get("personalEmail").asString()).isEqualTo("demo.student@example.com");
+    assertThat(saved.get("linkedinUrl").asString())
+        .isEqualTo("https://linkedin.com/in/demo-student");
+    assertThat(saved.get("githubUrl").asString()).isEqualTo("https://github.com/demo");
+    assertThat(saved.get("portfolioUrl").asString()).isEqualTo("https://demo.example");
+    assertThat(saved.get("skills").asString()).isEqualTo("Java, SQL");
+  }
+
+  @Test
+  void unsafeOrWrongLinksAreRefusedAndNothingIsSaved() throws Exception {
+    ApiTestClient student = student("23OWN102");
+
+    HttpResponse<String> response =
+        student.put(
+            ME,
+            """
+            {"phone":"+91 98765 43210","personalEmail":"nope","linkedinUrl":"https://github.com/x",
+             "githubUrl":"javascript:alert(1)","portfolioUrl":"http://demo.example"}
+            """);
+
+    assertThat(invalidFields(response))
+        .containsExactlyInAnyOrder("personalEmail", "linkedinUrl", "githubUrl", "portfolioUrl");
+    JsonNode profile = json(student.get(ME));
+    assertThat(profile.get("phone").isNull()).isTrue();
+    assertThat(profile.get("githubUrl").isNull()).isTrue();
+  }
+
   // --- Personal details -----------------------------------------------------------------------
 
   @Test

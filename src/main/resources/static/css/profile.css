@@ -1,79 +1,7 @@
-/* The student profile page: the avatar with its turning ring, and the stacked contact list.
-   The hero, chips, figure tiles and cards come from app.css. */
-.profile-hero {
-  justify-items: start;
-}
+/* The student profile page, and two small pieces the settings pages share. Calm surfaces, one
+   accent colour, generous space, and type that does the work. */
 
-.profile-hero__avatar {
-  position: relative;
-  display: grid;
-  width: 104px;
-  height: 104px;
-  place-items: center;
-}
-
-/* A ring of light that turns slowly around the initials. */
-.profile-hero__ring {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: conic-gradient(from 0deg, #0071e3, #9fd0ff, #ffffff, #0071e3);
-  animation: turn 7s linear infinite;
-}
-
-.profile-hero__ring::after {
-  content: "";
-  position: absolute;
-  inset: 3px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 30% 25%, #2c2c2e, #0a0a0c 70%);
-}
-
-@keyframes turn {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.profile-hero__initials {
-  position: relative;
-  font: 600 36px/1 var(--font);
-  letter-spacing: 0.02em;
-}
-
-/* The photo covers the initials. It sits inside the turning ring. */
-.profile-hero__photo {
-  position: absolute;
-  inset: 5px;
-  width: calc(100% - 10px);
-  height: calc(100% - 10px);
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.profile-hero__who {
-  display: grid;
-  gap: var(--space-3);
-  justify-items: center;
-}
-
-.profile-hero__photo-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  justify-content: center;
-}
-
-.profile-bio {
-  max-width: 60ch;
-  overflow-wrap: anywhere;
-  white-space: pre-line;
-}
-
-.profile-bio--empty {
-  color: var(--color-text-muted);
-}
-
+/* --- Shared with the settings pages --------------------------------------------------------- */
 .settings-logout {
   justify-self: start;
 }
@@ -83,29 +11,371 @@
   gap: var(--space-1);
 }
 
-.stats .rise:nth-child(1) { animation-delay: 80ms; }
-.stats .rise:nth-child(2) { animation-delay: 140ms; }
-.stats .rise:nth-child(3) { animation-delay: 200ms; }
-.stats .rise:nth-child(4) { animation-delay: 260ms; }
-.grid--aside .rise { animation-delay: 320ms; }
+/* --- Page ----------------------------------------------------------------------------------- */
+.profile {
+  display: grid;
+  gap: var(--space-5);
+}
+
+/* The header card: photo, name, programme, and the one main action. */
+.profile-card {
+  display: grid;
+  gap: var(--space-5);
+  justify-items: center;
+  padding: var(--space-6) var(--space-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-hero);
+  box-shadow: var(--shadow-card);
+  text-align: center;
+}
+
+.profile-card__photo {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: center;
+}
+
+.avatar-xl {
+  position: relative;
+  display: grid;
+  width: 128px;
+  height: 128px;
+  place-items: center;
+  border-radius: 50%;
+  background: linear-gradient(160deg, #2c2c2e, #0a0a0c);
+  box-shadow:
+    0 0 0 4px var(--color-surface),
+    0 0 0 5px var(--color-hairline),
+    0 12px 32px rgba(0, 0, 0, 0.12);
+}
+
+.avatar-xl__initials {
+  color: #f5f5f7;
+  font: 600 44px/1 var(--font);
+  letter-spacing: 0.01em;
+}
+
+.avatar-xl__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* The camera button sits on the edge of the photo, like a badge. */
+.avatar-xl__edit {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  padding: 0;
+  border: 3px solid var(--color-surface);
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  cursor: pointer;
+  transition: transform var(--motion), background-color var(--motion);
+}
+
+.avatar-xl__edit:hover:not([disabled]) {
+  background: var(--color-primary-hover);
+  transform: scale(1.06);
+}
+
+.avatar-xl__edit[disabled] {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.avatar-xl__edit .icon {
+  width: 18px;
+  height: 18px;
+}
+
+.profile-card__who {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: center;
+  min-width: 0;
+}
+
+.profile-card__name {
+  font: 700 clamp(28px, 5vw, 40px) / 1.1 var(--font);
+  letter-spacing: -0.03em;
+  overflow-wrap: anywhere;
+}
+
+.profile-card__programme {
+  color: var(--color-text-muted);
+  font: 400 17px/24px var(--font);
+}
+
+.profile-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  justify-content: center;
+  margin: var(--space-1) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.profile-card__tags li {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  background: var(--color-bg-subtle);
+  font: var(--text-small);
+}
+
+.profile-card__tags .icon {
+  width: 16px;
+  height: 16px;
+  color: var(--color-text-muted);
+}
+
+/* --- Panels --------------------------------------------------------------------------------- */
+.profile-grid {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.panel {
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+  padding: var(--space-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-card);
+}
+
+.panel__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.panel__title {
+  font: 600 19px/24px var(--font);
+  letter-spacing: -0.015em;
+}
+
+.panel__note {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  color: var(--color-text-muted);
+  font: var(--text-small);
+}
+
+.panel__note .icon {
+  width: 14px;
+  height: 14px;
+}
+
+.panel__foot {
+  color: var(--color-text-muted);
+  font: var(--text-small);
+}
+
+.profile-bio {
+  max-width: 60ch;
+  font: 400 17px/26px var(--font);
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+.profile-bio--empty {
+  color: var(--color-text-muted);
+  font-size: 15px;
+}
+
+.skill-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.skill {
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  background: var(--tint-primary);
+  color: var(--on-tint-primary);
+  font: 500 14px/20px var(--font);
+}
+
+/* A list of rows with an icon, a small label and the value. */
+.info-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.info-list__row {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--color-hairline);
+}
+
+.info-list__row:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.info-list__icon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--color-bg-subtle);
+  color: var(--color-text-muted);
+}
+
+.info-list__icon .icon {
+  width: 18px;
+  height: 18px;
+}
+
+.info-list__text {
+  display: grid;
+  min-width: 0;
+}
+
+.info-list__label {
+  color: var(--color-text-muted);
+  font: 400 13px/18px var(--font);
+}
+
+.info-list__value {
+  color: var(--color-text);
+  font: 500 15px/22px var(--font);
+}
+
+a.info-list__value {
+  color: var(--color-link);
+  text-decoration: none;
+}
+
+a.info-list__value:hover {
+  text-decoration: underline;
+}
+
+.info-list__value.is-empty {
+  color: var(--color-text-muted);
+  font-weight: 400;
+}
+
+.info-list__go {
+  width: 16px;
+  height: 16px;
+  color: var(--color-text-muted);
+}
+
+.info-list__empty {
+  color: var(--color-text-muted);
+  font: var(--text-small);
+}
+
+/* The college's fields, as a quiet grid of label over value. */
+.facts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4) var(--space-5);
+  margin: 0;
+}
+
+.facts-grid dt {
+  color: var(--color-text-muted);
+  font: 400 13px/18px var(--font);
+}
+
+.facts-grid dd {
+  margin: 0;
+  font: 500 16px/24px var(--font);
+}
+
+/* --- Edit form ------------------------------------------------------------------------------ */
+#details-dialog.dialog--wide {
+  width: min(640px, calc(100vw - 32px));
+}
+
+.form-section {
+  display: grid;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.form-section legend {
+  margin-bottom: var(--space-3);
+  padding: 0;
+  color: var(--color-text-muted);
+  font: 600 13px/18px var(--font);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.form-grid-2 {
+  display: grid;
+  gap: var(--space-4);
+  align-items: start;
+}
 
 .profile-logout {
   justify-self: start;
 }
 
-@media (min-width: 600px) {
-  .profile-hero {
-    grid-template-columns: auto minmax(0, 1fr);
+@media (min-width: 640px) {
+  .form-grid-2 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 760px) {
+  .profile-card {
+    grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
+    justify-items: start;
+    padding: var(--space-6);
+    text-align: left;
   }
 
-  .profile-hero__avatar {
-    width: 132px;
-    height: 132px;
+  .profile-card__who,
+  .profile-card__tags {
+    justify-items: start;
+    justify-content: flex-start;
   }
 
-  .profile-hero__initials {
-    font-size: 46px;
+  .profile-card__edit {
+    align-self: start;
+  }
+
+  .profile-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .facts-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 

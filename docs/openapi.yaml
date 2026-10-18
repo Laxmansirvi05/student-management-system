@@ -1583,6 +1583,11 @@ components:
         admissionYear: { type: integer }
         phone: { type: string, nullable: true }
         bio: { type: string, maxLength: 280, nullable: true, description: A few lines the student wrote about themselves. }
+        personalEmail: { type: string, format: email, nullable: true }
+        linkedinUrl: { type: string, format: uri, nullable: true, description: "https, on linkedin.com" }
+        githubUrl: { type: string, format: uri, nullable: true, description: "https, on github.com" }
+        portfolioUrl: { type: string, format: uri, nullable: true, description: "https" }
+        skills: { type: string, maxLength: 200, nullable: true, description: "Separated by commas." }
         hasPhoto: { type: boolean, description: Whether the student has a profile photo. The photo is fetched through /students/me/photo-url. }
 
     OwnProfileUpdateRequest:
@@ -1594,6 +1599,11 @@ components:
       properties:
         phone: { type: string, pattern: "^$|^[0-9+() -]{7,20}$", nullable: true }
         bio: { type: string, maxLength: 280, nullable: true }
+        personalEmail: { type: string, maxLength: 254, nullable: true }
+        linkedinUrl: { type: string, maxLength: 200, nullable: true, description: "https:// is added when left out." }
+        githubUrl: { type: string, maxLength: 200, nullable: true }
+        portfolioUrl: { type: string, maxLength: 200, nullable: true }
+        skills: { type: string, maxLength: 200, nullable: true }
 
     Dashboard:
       type: object

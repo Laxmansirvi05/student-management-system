@@ -152,7 +152,7 @@ Access: **Public**, **Any** (any logged-in user), **Student**, **Admin**. Detail
 | Method | Path | Access | Purpose |
 | --- | --- | --- | --- |
 | GET | `/students/me` | Student | Own profile. |
-| PUT | `/students/me` | Student | Change own phone number and the text about themselves. No other field is accepted. |
+| PUT | `/students/me` | Student | Change own phone number, the text about themselves, personal email, LinkedIn, GitHub and portfolio links, and skills. Every field is optional and a blank one is cleared. Links must be https; LinkedIn and GitHub links must be on those sites; an invalid one is a `400` naming the field. No other field is accepted. |
 | PUT | `/students/me/photo` | Student | Add or replace own photo: multipart part `file`, JPEG or PNG, at most 2 MB. The server stores a redrawn 512 by 512 JPEG. |
 | DELETE | `/students/me/photo` | Student | Remove own photo. Idempotent. |
 | GET | `/students/me/photo-url` | Student | Signed link to own photo, valid five minutes. `404` when there is none. |
