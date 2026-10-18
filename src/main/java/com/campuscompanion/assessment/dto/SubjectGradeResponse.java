@@ -11,6 +11,7 @@ public record SubjectGradeResponse(
     String subjectName,
     BigDecimal credits,
     String grade,
+    Integer gradePoint,
     String exam,
     int attempts,
     String firstGrade,

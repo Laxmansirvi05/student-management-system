@@ -18,8 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class ResultService {
 
-  private static final java.util.Set<String> NOT_PASSED = java.util.Set.of("F", "Ab", "U");
-
   private final SemesterResultRepository results;
   private final SubjectResultRepository subjectResults;
   private final StudentProfileService students;
@@ -48,11 +46,17 @@ public class ResultService {
             .toList();
     java.util.Map<Integer, List<SubjectGradeResponse>> grades =
         gradesBySemester(student.studentId());
-    return new ResultsResponse(
-        CgpaCalculator.cgpa(terms),
-        published.stream()
-            .map(result -> toResponse(result, grades.getOrDefault(result.getSemester(), List.of())))
-            .toList());
+    // The CGPA printed on each semester's memorandum: over that semester and the ones before.
+    List<SemesterResultResponse> semesters = new java.util.ArrayList<>();
+    for (int i = 0; i < published.size(); i++) {
+      SemesterResult result = published.get(i);
+      semesters.add(
+          toResponse(
+              result,
+              CgpaCalculator.cgpa(terms.subList(0, i + 1)),
+              grades.getOrDefault(result.getSemester(), List.of())));
+    }
+    return new ResultsResponse(CgpaCalculator.cgpa(terms), semesters);
   }
 
   /** The current grade of every subject, by semester: the latest attempt wins. */
@@ -74,22 +78,24 @@ public class ResultService {
                   latest.getSubjectName(),
                   latest.getCredits(),
                   latest.getGrade(),
+                  GradeScale.points(latest.getGrade()),
                   latest.getExam(),
                   subject.size(),
                   subject.size() > 1 ? first.getGrade() : null,
-                  !NOT_PASSED.contains(latest.getGrade())));
+                  GradeScale.passed(latest.getGrade())));
     }
     return bySemester;
   }
 
   static SemesterResultResponse toResponse(
-      SemesterResult result, List<SubjectGradeResponse> subjects) {
+      SemesterResult result, java.math.BigDecimal cgpaToDate, List<SubjectGradeResponse> subjects) {
     return new SemesterResultResponse(
         result.getSemester(),
         result.getSgpa(),
         result.getCreditsRegistered(),
         result.getCreditsEarned(),
         result.getResultStatus(),
+        cgpaToDate,
         subjects);
   }
 }

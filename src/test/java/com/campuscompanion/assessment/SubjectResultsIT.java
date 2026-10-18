@@ -66,12 +66,15 @@ class SubjectResultsIT extends ApiIntegrationTest {
     JsonNode cleared = subjects.get(0);
     assertThat(cleared.get("subjectCode").asString()).isEqualTo("SUB101");
     assertThat(cleared.get("grade").asString()).isEqualTo("B");
+    assertThat(cleared.get("gradePoint").asInt()).isEqualTo(6);
+    assertThat(semester.get("cgpaToDate").decimalValue()).isEqualByComparingTo("7.50");
     assertThat(cleared.get("firstGrade").asString()).isEqualTo("F");
     assertThat(cleared.get("attempts").asInt()).isEqualTo(2);
     assertThat(cleared.get("exam").asString()).contains("Supplementary");
     assertThat(cleared.get("passed").asBoolean()).isTrue();
     assertThat(subjects.get(1).get("firstGrade").isNull()).isTrue();
     assertThat(subjects.get(2).get("credits").isNull()).isTrue();
+    assertThat(subjects.get(2).get("gradePoint").isNull()).isTrue();
   }
 
   @Test
@@ -86,6 +89,9 @@ class SubjectResultsIT extends ApiIntegrationTest {
     assertThat(results.get("cgpa").isNull()).isTrue();
     JsonNode second = results.get("semesters").get(1);
     assertThat(second.get("sgpa").isNull()).isTrue();
+    assertThat(results.get("semesters").get(0).get("cgpaToDate").decimalValue())
+        .isEqualByComparingTo("8.39");
+    assertThat(second.get("cgpaToDate").isNull()).isTrue();
     assertThat(second.get("subjects").get(0).get("passed").asBoolean()).isFalse();
   }
 

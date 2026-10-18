@@ -101,20 +101,82 @@ const STATUS = {
   WITHHELD: ["Withheld", "warning", "minus-circle"],
 };
 
-const GRADE_KIND = { O: "success", "A+": "success", A: "success", "B+": "primary", B: "primary", C: "warning", D: "warning", S: "success" };
+const GRADE_TABLE = [
+  ["90% and above", "O", "Outstanding", 10],
+  ["80% to below 90%", "A+", "Excellent", 9],
+  ["70% to below 80%", "A", "Very Good", 8],
+  ["60% to below 70%", "B+", "Good", 7],
+  ["50% to below 60%", "B", "Average", 6],
+  ["40% to below 50%", "C", "Pass", 5],
+  ["Below 40%", "F", "Fail", 0],
+  ["Absent", "Ab", "Absent", 0],
+];
 
-/** One subject of a semester: its grade, and how it was cleared when it took more than one try. */
-function subjectRow(subject) {
-  const kind = subject.passed ? GRADE_KIND[subject.grade] || "" : "danger";
-  const later = subject.attempts > 1 ? (subject.passed ? `Cleared in ${subject.exam}` : `Attempt ${subject.attempts}: ${subject.exam}`) : null;
+/** The college's B.Tech grading rules (AR25), for reference. */
+function gradingPolicy() {
   return h(
-    "li.row.grade",
+    "details.card.policy.reveal",
+    h("summary", h("span.eyebrow", "For reference"), h("strong", "How grades, SGPA and CGPA work")),
     h(
-      "div.stack.stack--tight",
-      h("span.row__title", subject.subjectName),
-      h("span.row__meta", h("span.mono", subject.subjectCode), subject.credits === null ? " · No credits" : ` · ${Number(subject.credits)} credit${Number(subject.credits) === 1 ? "" : "s"}`, later ? " · " + later : null),
+      "div.memo__scroll",
+      h(
+        "table.memo__table",
+        h("thead", h("tr", ["Marks in a course", "Grade", "Meaning", "Grade point"].map((label) => h("th", { scope: "col" }, label)))),
+        h("tbody", GRADE_TABLE.map(([marks, grade, meaning, points]) => h("tr", h("td", marks), h("td.memo__grade", grade), h("td", meaning), h("td.num", points)))),
+      ),
     ),
-    h("span.grade__value", subject.firstGrade ? h("s.muted", subject.firstGrade) : null, tag(subject.grade, kind)),
+    h(
+      "ul.policy__rules",
+      h("li", "The minimum grade to pass each theory and practical course is ", h("strong", "C"), "."),
+      h("li", "A semester is passed only when its SGPA is ", h("strong", "5.00 or more"), "."),
+      h("li", h("strong", "SGPA"), " = Σ (grade point × credits) ÷ Σ credits, for the courses of that semester."),
+      h("li", h("strong", "CGPA"), " = Σ (grade point × credits) ÷ Σ credits, for all courses passed up to that semester."),
+      h("li", "A course without credits, such as the Induction Program, is graded S (satisfactory) and does not count in SGPA or CGPA."),
+      h("li", "While a course is failed, the college publishes no SGPA for that semester and no CGPA."),
+    ),
+    h("p.note", icon("info"), "B.Tech, Academic Regulations AR25. If anything here differs from your memorandum of grades, the memorandum is the official record."),
+  );
+}
+
+/** The semester's grade sheet, laid out like the college's memorandum of grades. */
+function gradeSheet(entry) {
+  const subjects = entry.subjects;
+  const credited = subjects.filter((subject) => subject.credits !== null);
+  const appeared = subjects.filter((subject) => subject.grade !== "Ab").length;
+  const passed = subjects.filter((subject) => subject.passed).length;
+  const points = credited.reduce((sum, subject) => sum + (subject.gradePoint ?? 0), 0);
+  const credits = credited.reduce((sum, subject) => sum + Number(subject.credits), 0);
+  const row = (subject, index) =>
+    h(
+      "tr" + (subject.passed ? "" : ".memo__failed"),
+      h("td.num", index + 1),
+      h("td.mono", subject.subjectCode),
+      h(
+        "td",
+        subject.subjectName,
+        subject.attempts > 1 ? h("span.memo__note", subject.passed ? `Cleared in ${subject.exam} (first grade ${subject.firstGrade})` : `Attempt ${subject.attempts}: ${subject.exam}`) : null,
+      ),
+      h("td.memo__grade", subject.grade),
+      h("td.num", subject.gradePoint ?? "–"),
+      h("td", subject.passed ? "P" : "F"),
+      h("td.num", subject.credits === null ? "–" : Number(subject.credits)),
+    );
+  return h(
+    "div.memo",
+    h(
+      "div.memo__scroll",
+      h(
+        "table.memo__table",
+        h("thead", h("tr", ["S.No", "Code", "Subject", "Grade", "Grade point", "Result", "Credits"].map((label) => h("th", { scope: "col" }, label)))),
+        h("tbody", subjects.map(row)),
+        h("tfoot", h("tr", h("td", { colspan: 4 }, `Registered ${subjects.length} · Appeared ${appeared} · Passed ${passed}`), h("td.num", points), h("td"), h("td.num", credits))),
+      ),
+    ),
+    h(
+      "dl.facts.facts--2",
+      h("div", h("dt", "SGPA"), h("dd.num", entry.sgpa === null ? "Not published" : Number(entry.sgpa).toFixed(2))),
+      h("div", h("dt", "CGPA"), h("dd.num", entry.cgpaToDate === null || entry.cgpaToDate === undefined ? "Not published" : Number(entry.cgpaToDate).toFixed(2))),
+    ),
   );
 }
 
@@ -137,7 +199,7 @@ function semesterCard(entry) {
       h("div", h("dt", "Credits registered"), h("dd.num", entry.creditsRegistered)),
       h("div", h("dt", "Credits earned"), h("dd.num", entry.creditsEarned)),
     ),
-    subjects.length ? h("details.grades", { open: entry.sgpa === null || undefined }, h("summary", `Subjects and grades (${subjects.length})`), h("ul.rows", subjects.map(subjectRow))) : null,
+    subjects.length ? h("details.grades", { open: entry.sgpa === null || undefined }, h("summary", `Grade sheet (${subjects.length} subjects)`), gradeSheet(entry)) : null,
   );
 }
 
@@ -175,7 +237,8 @@ function semestersView() {
             ),
           ),
         ),
-        h("div.grid.grid--2", stagger(cards)),
+        h("div.stack.stack--loose", stagger(cards)),
+        gradingPolicy(),
       );
       reveal();
       return;
@@ -193,7 +256,8 @@ function semestersView() {
         ),
         cgpa === null ? null : h("div.hero__aside", ring(cgpa * 10, { size: 152, stroke: 12, label: [h("strong.ring__big", "CGPA"), h("span.eyebrow.eyebrow--inverse", "out of 10")] })),
       ),
-      h("div.grid.grid--2", stagger(cards)),
+      h("div.stack.stack--loose", stagger(cards)),
+      gradingPolicy(),
       h("p.note.reveal", icon("info"), "CGPA is the average of your SGPAs, weighted by the credits registered in each semester. It is shown once every published semester has an SGPA, as the college does. A withheld semester is left out until it is resolved."),
     );
     reveal();

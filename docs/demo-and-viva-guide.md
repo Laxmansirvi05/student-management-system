@@ -139,7 +139,7 @@ Then, if asked: lockout after five failures; audit log for marks changes; privat
 
 ## 11. Testing and deployment
 
-- **201 unit tests** with JUnit and Mockito for the rule classes, the parsers and the file checks.
+- **203 unit tests** with JUnit and Mockito for the rule classes, the parsers and the file checks.
 - **184 integration tests** over real HTTP against real PostgreSQL in a container, including "not logged in", "wrong role" and "someone else's record".
 - **`EndpointAccessIT`** reads every endpoint from the running application and checks that a visitor, a student and an admin are each refused where they must be, so a new endpoint cannot be forgotten.
 - **Database tests** check the roles, grants and Row Level Security of every table.

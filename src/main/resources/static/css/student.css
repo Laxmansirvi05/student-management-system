@@ -1113,6 +1113,56 @@ button.qdot:hover {
   margin-bottom: var(--space-2);
 }
 
+/* The grade sheet of a semester, like the college's memorandum of grades. */
+.memo {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.memo__scroll {
+  overflow-x: auto;
+}
+
+.memo__table {
+  width: 100%;
+  border-collapse: collapse;
+  font: var(--text-small);
+}
+
+.memo__table th,
+.memo__table td {
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--color-hairline);
+  text-align: left;
+  vertical-align: top;
+}
+
+.memo__table th {
+  color: var(--color-text-muted);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.memo__table tfoot td {
+  border-bottom: 0;
+  font-weight: 600;
+}
+
+.memo__grade {
+  font-weight: 700;
+}
+
+.memo__failed td {
+  background: var(--tint-danger);
+  color: var(--on-tint-danger);
+}
+
+.memo__note {
+  display: block;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
 .grade {
   display: flex;
   gap: var(--space-3);
@@ -1125,4 +1175,23 @@ button.qdot:hover {
   flex-shrink: 0;
   gap: var(--space-2);
   align-items: center;
+}
+
+/* Results: the grading rules, folded away until asked for. */
+.policy summary {
+  display: grid;
+  gap: var(--space-1);
+  cursor: pointer;
+}
+
+.policy[open] summary {
+  margin-bottom: var(--space-3);
+}
+
+.policy__rules {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-3) 0;
+  padding-left: var(--space-5);
+  font: var(--text-small);
 }

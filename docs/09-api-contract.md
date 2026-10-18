@@ -352,7 +352,7 @@ A subject with no classes has `classesHeld: 0` and `percent: null`. `report` is 
     {
       "semester": 1, "sgpa": 7.8, "creditsRegistered": 22, "creditsEarned": 22, "resultStatus": "PASS",
       "subjects": [
-        { "subjectCode": "CS101", "subjectName": "Programming", "credits": 3, "grade": "B",
+        { "subjectCode": "CS101", "subjectName": "Programming", "credits": 3, "grade": "B", "gradePoint": 6,
           "exam": "I Year I Sem Supplementary, July 2026", "attempts": 2, "firstGrade": "F", "passed": true }
       ]
     },
@@ -361,7 +361,7 @@ A subject with no classes has `classesHeld: 0` and `percent: null`. `report` is 
 }
 ```
 
-`subjects` lists each subject of the semester with its current grade (the latest attempt). `firstGrade` is the first attempt's grade when there was more than one attempt, otherwise `null`; `credits` is `null` for a course without credits. `sgpa` is `null` for a semester the college published without an SGPA (a subject is failed); `cgpa` is then `null` as well.
+`subjects` lists each subject of the semester with its current grade (the latest attempt) and its `gradePoint` on the college scale (O 10, A+ 9, A 8, B+ 7, B 6, C 5, F and Ab 0; `null` for S or U). `cgpaToDate` is the CGPA over that semester and the ones before it, as printed on the memorandum of grades, or `null` while any of them has no SGPA. `firstGrade` is the first attempt's grade when there was more than one attempt, otherwise `null`; `credits` is `null` for a course without credits. `sgpa` is `null` for a semester the college published without an SGPA (a subject is failed); `cgpa` is then `null` as well.
 
 `cgpa` is weighted by `creditsRegistered`, not by `creditsEarned`: (7.8 × 22 + 6.5 × 24) ÷ 46 = 7.12. The rule is in [08-database-design.md](08-database-design.md) §4.8. `cgpa` is `null` and `semesters` is empty when nothing is published.
 

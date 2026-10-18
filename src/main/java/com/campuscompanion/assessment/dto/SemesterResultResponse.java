@@ -10,4 +10,5 @@ public record SemesterResultResponse(
     int creditsRegistered,
     int creditsEarned,
     ResultStatus resultStatus,
+    BigDecimal cgpaToDate,
     List<SubjectGradeResponse> subjects) {}
