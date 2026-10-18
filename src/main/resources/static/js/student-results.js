@@ -137,7 +137,7 @@ function semesterCard(entry) {
       h("div", h("dt", "Credits registered"), h("dd.num", entry.creditsRegistered)),
       h("div", h("dt", "Credits earned"), h("dd.num", entry.creditsEarned)),
     ),
-    subjects.length ? h("details.grades", h("summary", `Subjects and grades (${subjects.length})`), h("ul.rows", subjects.map(subjectRow))) : null,
+    subjects.length ? h("details.grades", { open: entry.sgpa === null || undefined }, h("summary", `Subjects and grades (${subjects.length})`), h("ul.rows", subjects.map(subjectRow))) : null,
   );
 }
 
@@ -154,6 +154,31 @@ function semestersView() {
     const cards = [...semesters].reverse().map(semesterCard);
     if (!published.has(currentSemester)) {
       cards.unshift(h("section.card.card--flat.reveal", h("h3", "Semester " + currentSemester), h("p.note", icon("clock"), "Results not published yet.")));
+    }
+    const failed = semesters.flatMap((entry) => (entry.subjects || []).filter((subject) => !subject.passed).map((subject) => ({ ...subject, semester: entry.semester })));
+    if (failed.length) {
+      fill(
+        content,
+        h(
+          "section.card.card--alert.reveal",
+          { "aria-label": "Subjects to clear" },
+          h("div.line", h("h2", "Subjects to clear"), tag(failed.length + (failed.length === 1 ? " subject" : " subjects"), "danger", "alert")),
+          h("p.row__meta", "CGPA is shown once every subject is cleared. Your grade sheet for each semester is below."),
+          h(
+            "ul.rows",
+            failed.map((subject) =>
+              h(
+                "li.row.grade",
+                h("div.stack.stack--tight", h("span.row__title", subject.subjectName), h("span.row__meta", h("span.mono", subject.subjectCode), ` · Semester ${subject.semester} · ${subject.exam}`)),
+                tag(subject.grade, "danger"),
+              ),
+            ),
+          ),
+        ),
+        h("div.grid.grid--2", stagger(cards)),
+      );
+      reveal();
+      return;
     }
     fill(
       content,
