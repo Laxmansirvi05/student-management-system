@@ -441,7 +441,7 @@ A previous-year question paper. Added in V10 on 2026-10-18 ([ADR 0012](decisions
 | `checksum_sha256` | char(64) | Unique: the same file cannot be added twice |
 | `status` | varchar(10) | `PUBLISHED` or `HIDDEN` |
 | `download_count` | integer | At least 0; one `UPDATE` per download |
-| `created_by` | bigint | References `users` |
+| `created_by` | bigint | Optional, references `users`. Empty for papers loaded by the one-off import before an administrator existed (V11) |
 | `created_at`, `updated_at` | timestamptz | Not null |
 
 Unique on the sitting: (`branch`, lower(`subject_name`), `exam_year`, `exam_month`, `exam_kind`, coalesce(`mid_number`, 0), coalesce(`regulation`, ''), `variant`). RLS on; `cc_app` has `SELECT`, `INSERT`, `UPDATE`, `DELETE`.
@@ -531,6 +531,7 @@ Flyway, versioned SQL files, forward-only. See [ADR 0006](decisions/0006-flyway-
 | V5 | `V5__ai.sql` | ai_request_logs | M5 |
 | V6 | `V6__profile_details.sql` | Adds `bio` and `photo_path` to student_profiles ([ADR 0009](decisions/0009-student-personal-details-and-photo.md)) | Added 2026-10-14 |
 | V8 | `V8__subject_results.sql` | Adds `subject_results`; lets `semester_results.sgpa` be empty for a semester that is not passed (sections 4.8, 4.8a) | Added 2026-10-18 |
+| V11 | `V11__pyq_created_by_optional.sql` | Makes `pyq_papers.created_by` optional (section 4.21) | Added 2026-10-19 |
 | V10 | `V10__pyq.sql` | Adds `pyq_papers` and `pyq_bookmarks` (sections 4.21 and 4.22) | Added 2026-10-18 |
 | V9 | `V9__profile_links.sql` | Adds `personal_email`, `linkedin_url`, `github_url`, `portfolio_url` and `skills` to student_profiles (section 4.2) | Added 2026-10-18 |
 | V7 | `V7__attendance_reports.sql` | Adds `attendance_reports`, the college's totals per student and period (section 4.18a) | Added 2026-10-18 |

@@ -73,7 +73,7 @@ public class PyqPaper {
   @Column(name = "download_count", nullable = false)
   private int downloadCount;
 
-  @Column(name = "created_by", nullable = false, updatable = false)
+  @Column(name = "created_by", updatable = false)
   private Long createdBy;
 
   @Column(name = "created_at", nullable = false, updatable = false)
