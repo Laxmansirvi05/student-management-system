@@ -1552,3 +1552,42 @@ button.qdot:hover {
     padding-right: var(--space-4);
   }
 }
+
+/* The robot's quick chats, on the AI Assistant page. */
+.quick-chat__title {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.quick-chat__messages {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.quick-chat__message {
+  max-width: 85%;
+  padding: 8px 12px;
+  border-radius: 14px;
+  background: var(--tint-neutral);
+  font: var(--text-small);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.quick-chat__message--user {
+  justify-self: end;
+  background: var(--tint-primary);
+  color: var(--on-tint-primary);
+}

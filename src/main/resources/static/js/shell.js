@@ -73,6 +73,8 @@ currentStudent
   .then((student) => {
     if (student) {
       showAvatarPhoto(student.hasPhoto);
+      // The floating robot lives on every student page, and is loaded only there.
+      import("./robot/robot.js").then((robot) => robot.mountRobot()).catch(() => {});
     }
     const chip = document.getElementById("student-chip");
     if (student && chip) {

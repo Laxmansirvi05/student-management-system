@@ -26,8 +26,12 @@ class ContentSecurityPolicyTest {
         .contains("object-src 'none'")
         .contains("frame-ancestors 'none'")
         .contains("form-action 'self'")
-        .doesNotContain("unsafe-inline")
-        .doesNotContain("unsafe-eval");
+        // Only the robot's WebAssembly decoder is allowed to compile: eval() of text and inline
+        // scripts and styles stay forbidden.
+        .contains("script-src 'self' 'wasm-unsafe-eval';")
+        .contains("worker-src 'self' blob:;")
+        .doesNotContain("'unsafe-inline'")
+        .doesNotContain("'unsafe-eval'");
   }
 
   @Test
@@ -38,7 +42,8 @@ class ContentSecurityPolicyTest {
         .contains("img-src 'self' data: https://abcdefgh.supabase.co;")
         .contains("frame-src https://abcdefgh.supabase.co;")
         // Scripts, styles and requests made by scripts still come from our own origin only.
-        .contains("default-src 'self'; script-src 'self'; style-src 'self';")
+        .contains("default-src 'self'; script-src 'self' 'wasm-unsafe-eval';")
+        .contains("style-src 'self';")
         .doesNotContain("connect-src");
   }
 

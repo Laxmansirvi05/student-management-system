@@ -176,7 +176,11 @@ public class SecurityConfig {
     String url = storage.supabaseUrl();
     // A placeholder or malformed value must never be written into the header.
     boolean configured = StringUtils.hasText(url) && url.matches("^https://[a-z0-9.-]+$");
-    return "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:"
+    // 'wasm-unsafe-eval' lets the robot's 3D scene compile its WebAssembly mesh decoder; it does
+    // not
+    // allow eval() of text. The decoder runs in a worker made from a blob, hence worker-src.
+    return "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:;"
+        + " style-src 'self'; img-src 'self' data:"
         + (configured ? " " + url : "")
         + "; frame-src "
         + (configured ? url : "'none'")
