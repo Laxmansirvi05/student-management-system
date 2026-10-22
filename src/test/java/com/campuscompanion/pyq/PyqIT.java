@@ -260,6 +260,22 @@ class PyqIT extends ApiIntegrationTest {
   }
 
   @Test
+  void searchFindsAPaperByItsCourseCodeAndTheCodeIsInTheResponse() throws Exception {
+    ApiTestClient admin = admin();
+    add(admin, "CIVIL/Pyq Kappa Geology/2022(May)-regular 20PQ99001.pdf");
+    add(admin, "CIVIL/Pyq Kappa Geology/2023(May)-regular.pdf");
+    ApiTestClient student = student("23PYQ004");
+
+    JsonNode found = json(student.get(PYQS + "?q=20pq99001"));
+
+    assertThat(found.get("totalElements").asInt()).isEqualTo(1);
+    assertThat(found.get("content").get(0).get("courseCode").asString()).isEqualTo("20PQ99001");
+    // The code and the subject can be searched together, in any order.
+    assertThat(json(student.get(PYQS + "?q=geology%2020pq99001")).get("totalElements").asInt())
+        .isEqualTo(1);
+  }
+
+  @Test
   void theOverviewListsBranchesYearsAndRegulations() throws Exception {
     ApiTestClient admin = admin();
     add(admin, "IT/Pyq Theta Mining/2019(May)-regular AR18.pdf");

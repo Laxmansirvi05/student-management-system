@@ -10,6 +10,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
@@ -64,7 +65,7 @@ public class SupabaseStorageClient implements StorageClient {
         () ->
             http.post()
                 .uri(objectUrl(path))
-                .header("Authorization", "Bearer " + properties.serviceKey())
+                .headers(this::authenticate)
                 .header("x-upsert", "false")
                 .contentType(MediaType.parseMediaType(contentType))
                 .body(content)
@@ -79,7 +80,7 @@ public class SupabaseStorageClient implements StorageClient {
         () ->
             http.delete()
                 .uri(objectUrl(path))
-                .header("Authorization", "Bearer " + properties.serviceKey())
+                .headers(this::authenticate)
                 .retrieve()
                 .toBodilessEntity());
   }
@@ -91,7 +92,7 @@ public class SupabaseStorageClient implements StorageClient {
       Map<?, ?> body =
           http.post()
               .uri(baseUrl() + "/object/sign/" + properties.bucket() + "/" + path)
-              .header("Authorization", "Bearer " + properties.serviceKey())
+              .headers(this::authenticate)
               .contentType(MediaType.APPLICATION_JSON)
               .body(Map.of("expiresIn", validFor.toSeconds()))
               .retrieve()
@@ -118,6 +119,15 @@ public class SupabaseStorageClient implements StorageClient {
     }
     return "&download="
         + URLEncoder.encode(downloadName, StandardCharsets.UTF_8).replace("+", "%20");
+  }
+
+  /**
+   * Supabase's newer secret keys (sb_secret_...) are not JWTs and are accepted only in the apikey
+   * header; the older service_role key is a JWT and works in either. Sending both suits both.
+   */
+  private void authenticate(HttpHeaders headers) {
+    headers.set("apikey", properties.serviceKey());
+    headers.setBearerAuth(properties.serviceKey());
   }
 
   private void call(String action, Runnable request) {

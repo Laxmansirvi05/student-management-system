@@ -82,7 +82,7 @@ Names are defined in [.env.example](../.env.example). In production they are Her
 | `DB_MIGRATION_USERNAME` | Yes | No | The migration role, `cc_migrator`. Used only by Flyway at startup |
 | `DB_MIGRATION_PASSWORD` | Yes | **Yes** | Password of `cc_migrator` |
 | `SUPABASE_URL` | Yes | No | |
-| `SUPABASE_SERVICE_KEY` | Yes | **Yes** | Full storage access. Server only. |
+| `SUPABASE_SERVICE_KEY` | Yes | **Yes** | Full storage access. Server only. Either key style works: the new `sb_secret_…` key or the older `service_role` key. The application sends it in both the `apikey` and the `Authorization` headers, because the new style is accepted only in `apikey`. |
 | `SUPABASE_STORAGE_BUCKET` | Yes | No | |
 | `AI_ENABLED` | Yes | No | Kill switch |
 | `AI_PROVIDER` | Yes | No | `mock` or the real provider's name |

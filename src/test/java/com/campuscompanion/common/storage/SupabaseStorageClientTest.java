@@ -43,6 +43,7 @@ class SupabaseStorageClientTest {
         .expect(requestTo(BASE + "/object/learning/resources/CS301/a.pdf"))
         .andExpect(method(HttpMethod.POST))
         .andExpect(header("Authorization", "Bearer service-key"))
+        .andExpect(header("apikey", "service-key"))
         .andExpect(header("x-upsert", "false"))
         .andExpect(content().contentType(MediaType.APPLICATION_PDF))
         .andRespond(withSuccess());
@@ -58,6 +59,7 @@ class SupabaseStorageClientTest {
         .expect(requestTo(BASE + "/object/learning/resources/CS301/a.pdf"))
         .andExpect(method(HttpMethod.DELETE))
         .andExpect(header("Authorization", "Bearer service-key"))
+        .andExpect(header("apikey", "service-key"))
         .andRespond(withSuccess());
 
     storage.delete("resources/CS301/a.pdf");
@@ -70,6 +72,8 @@ class SupabaseStorageClientTest {
     server
         .expect(requestTo(BASE + "/object/sign/learning/resources/CS301/a.pdf"))
         .andExpect(method(HttpMethod.POST))
+        .andExpect(header("Authorization", "Bearer service-key"))
+        .andExpect(header("apikey", "service-key"))
         .andExpect(content().json("{\"expiresIn\":300}"))
         .andRespond(
             withSuccess(

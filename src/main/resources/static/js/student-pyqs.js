@@ -28,9 +28,9 @@ function kindLabel(paper) {
   return paper.kind === "MID" && paper.midNumber ? `${label} ${paper.midNumber}` : label;
 }
 
-/** "December 2025 · Supplementary · AR20 · set 2" */
+/** "December 2025 · Supplementary · AR20 · 20CS42004 · set 2" */
 function sittingText(paper) {
-  return [`${paper.monthName} ${paper.year}`, kindLabel(paper), paper.regulation, paper.variant > 1 ? "set " + paper.variant : null].filter(Boolean).join(" · ");
+  return [`${paper.monthName} ${paper.year}`, kindLabel(paper), paper.regulation, paper.courseCode, paper.variant > 1 ? "set " + paper.variant : null].filter(Boolean).join(" · ");
 }
 
 /** "I B.Tech", "CSE(AI&ML)" and so on become the library's branch codes. */
@@ -64,10 +64,12 @@ function openPaper(paper) {
   const message = h("p.row__meta", "Opening the paper…");
   const download = h("button.button.button--secondary.button--small", { type: "button" }, icon("download"), "Download");
   download.addEventListener("click", () => downloadPaper(paper));
+  // Many phone browsers cannot show a PDF inside a page, so the paper can also open on its own.
+  const newTab = h("a.button.button--secondary.button--small", { hidden: "", target: "_blank", rel: "noopener noreferrer" }, icon("external"), "Open in new tab");
   const dialog = h(
     "dialog.dialog.dialog--viewer",
     { "aria-labelledby": "pyq-view-title" },
-    h("div.line", h("div.stack.stack--tight", h("h2", { id: "pyq-view-title" }, paper.subject), h("p.row__meta", `${paper.branch} · ${sittingText(paper)}`)), h("div.line", download, h("button.button.button--quiet.button--small", { type: "button", "data-close": true }, "Close"))),
+    h("div.pyq-viewer__top", h("div.stack.stack--tight", h("h2", { id: "pyq-view-title" }, paper.subject), h("p.row__meta", `${paper.branch} · ${sittingText(paper)}`)), h("div.pyq-viewer__actions", newTab, download, h("button.button.button--quiet.button--small", { type: "button", "data-close": true }, "Close"))),
     message,
     frame,
   );
@@ -82,8 +84,16 @@ function openPaper(paper) {
   api
     .get(`/pyqs/${paper.id}/link`)
     .then((link) => {
-      frame.src = link.url;
-      message.hidden = true;
+      newTab.href = link.url;
+      newTab.hidden = false;
+      if (navigator.pdfViewerEnabled === false) {
+        // Most Android browsers cannot show a PDF inside a page; do not leave an empty box.
+        message.textContent = "Your browser cannot show PDFs inside the page. Use Open in new tab or Download.";
+        frame.hidden = true;
+      } else {
+        frame.src = link.url;
+        message.hidden = true;
+      }
       rememberOpened(paper);
     })
     .catch((failure) => {
@@ -143,7 +153,7 @@ function paperRow(paper, { showSubject = false, onSaveChange } = {}) {
     h(
       "div.stack.stack--tight.pyq-row__text",
       h("span.row__title", showSubject ? paper.subject : `${paper.monthName} ${paper.year}`),
-      h("span.row__meta", showSubject ? `${paper.branch} · ${sittingText(paper)}` : [kindLabel(paper), paper.regulation, paper.variant > 1 ? "set " + paper.variant : null].filter(Boolean).join(" · "), " · ", h("span.num", formatSize(paper.sizeBytes))),
+      h("span.row__meta", showSubject ? `${paper.branch} · ${sittingText(paper)}` : [kindLabel(paper), paper.regulation, paper.courseCode, paper.variant > 1 ? "set " + paper.variant : null].filter(Boolean).join(" · "), " · ", h("span.num", formatSize(paper.sizeBytes))),
     ),
     tag(kindLabel(paper), kindColour),
     h("div.pyq-row__actions", open, download, saveButton(paper, onSaveChange)),
@@ -333,9 +343,9 @@ function drawFilters() {
   });
   fill(
     filterBar,
-    select("Year", "pyq-year", [["", "Any year"], ...overview.years.map((year) => [String(year), String(year)])], state.year, change("year")),
-    select("Exam", "pyq-kind", [["", "Any exam"], ["REGULAR", "Regular"], ["SUPPLY", "Supplementary"], ["MID", "Mid"]], state.kind, change("kind")),
-    select("Regulation", "pyq-reg", [["", "Any regulation"], ...overview.regulations.map((regulation) => [regulation, regulation])], state.regulation, change("regulation")),
+    select("Year", "pyq-year", [["", "Year"], ...overview.years.map((year) => [String(year), String(year)])], state.year, change("year")),
+    select("Exam", "pyq-kind", [["", "Exam"], ["REGULAR", "Regular"], ["SUPPLY", "Supplementary"], ["MID", "Mid"]], state.kind, change("kind")),
+    select("Regulation", "pyq-reg", [["", "Regulation"], ...overview.regulations.map((regulation) => [regulation, regulation])], state.regulation, change("regulation")),
     select("Sort", "pyq-sort", [["newest", "Newest first"], ["oldest", "Oldest first"], ["popular", "Most downloaded"], ["subject", "Subject A–Z"]], state.sort, change("sort")),
     reset,
   );
