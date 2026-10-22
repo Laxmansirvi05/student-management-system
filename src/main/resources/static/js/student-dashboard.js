@@ -31,22 +31,23 @@ currentStudent
   })
   .catch(() => {});
 
-function attendanceCard({ overallPercent, requiredPercent, subjectsBelowRequired }) {
+function attendanceCard({ overallPercent, requiredPercent }) {
   const body = [];
   if (overallPercent === null) {
     body.push(empty("calendar", "No classes recorded yet", "Your attendance appears once classes are held."));
   } else {
     const figure = h("p.figure");
     countUp(figure, overallPercent, { decimals: 2, suffix: "%" });
+    const below = Number(overallPercent) < Number(requiredPercent);
     body.push(
       h(
         "div.line",
-        h("div.stack.stack--tight", h("p.eyebrow", "Overall"), figure, h("p.row__meta", `Required: ${requiredPercent}%`)),
-        ring(overallPercent, { size: 104, stroke: 10, label: icon("cap"), kind: overallPercent < requiredPercent ? "danger" : "" }),
+        h("div.stack.stack--tight", h("p.eyebrow", "Total"), figure, h("p.row__meta", `Required: ${requiredPercent}%`)),
+        ring(overallPercent, { size: 104, stroke: 10, label: icon("cap"), kind: below ? "danger" : "" }),
       ),
-      subjectsBelowRequired
-        ? h("p.inset.inset--warning.inset--note", icon("alert"), h("span", h("strong", subjectsBelowRequired), ` subject${subjectsBelowRequired > 1 ? "s" : ""} below the required ${requiredPercent}%`))
-        : h("p.inset.inset--note", icon("check-circle"), `Every subject is at or above ${requiredPercent}%.`),
+      below
+        ? h("p.inset.inset--warning.inset--note", icon("alert"), `Below the required ${requiredPercent}%. The attendance page shows how many classes you need.`)
+        : h("p.inset.inset--note", icon("check-circle"), `At or above the required ${requiredPercent}%.`),
     );
   }
   return h("section.card.card--lift.reveal", cardHead("attendance", "Attendance", "/student/attendance.html"), body);
