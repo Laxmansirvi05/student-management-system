@@ -23,8 +23,8 @@ public interface LearningResourceRepository extends JpaRepository<LearningResour
         and (:anySubject = true or r.subjectId in :subjectIds)
         and (:unitId is null or r.unitId = :unitId)
         and (:type is null or r.resourceType = :type)
-        and (:search is null or lower(r.title) like :search
-             or lower(coalesce(r.description, '')) like :search)
+        and (:search is null or lower(r.title) like :search escape '\\'
+             or lower(coalesce(r.description, '')) like :search escape '\\')
       """)
   Page<LearningResource> search(
       @Param("status") ResourceStatus status,
@@ -45,8 +45,8 @@ public interface LearningResourceRepository extends JpaRepository<LearningResour
                      where (:examYear is null or q.examYear = :examYear)
                        and (:examType is null or q.examType = :examType))
         and (:subjectId is null or r.subjectId = :subjectId)
-        and (:search is null or lower(r.title) like :search
-             or lower(coalesce(r.description, '')) like :search)
+        and (:search is null or lower(r.title) like :search escape '\\'
+             or lower(coalesce(r.description, '')) like :search escape '\\')
       """)
   Page<LearningResource> searchPapers(
       @Param("subjectId") Long subjectId,

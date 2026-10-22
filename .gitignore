@@ -35,3 +35,7 @@ private-data/
 
 # Question papers the owner keeps locally for upload; never committed.
 *QUESTION PAPER*/
+
+# Class notes and college notices the owner uploads (copyrighted material and circulars); never committed.
+/notes/
+/notices/

@@ -159,10 +159,21 @@ public class ResourceService {
     };
   }
 
-  /** Lower case and wrapped for "contains". A blank query means no text filter. */
+  /**
+   * Lower case, with the wildcard characters made ordinary, and wrapped for "contains". A blank
+   * query means no text filter.
+   */
   static String searchText(String query) {
-    return query == null || query.isBlank()
-        ? null
-        : "%" + query.strip().toLowerCase(Locale.ROOT) + "%";
+    if (query == null || query.isBlank()) {
+      return null;
+    }
+    String plain =
+        query
+            .strip()
+            .toLowerCase(Locale.ROOT)
+            .replace("\\", "\\\\")
+            .replace("%", "\\%")
+            .replace("_", "\\_");
+    return "%" + plain + "%";
   }
 }

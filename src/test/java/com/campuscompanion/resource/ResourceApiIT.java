@@ -448,6 +448,10 @@ class ResourceApiIT extends ApiIntegrationTest {
     // The text is matched in the title and the description, in any letter case.
     assertThat(titles(student, "/api/v1/resources?subjectId=" + dataStructures + "&q=ARRAYS"))
         .containsExactly("Lab manual", "Arrays notes");
+    // A percent sign or an underscore is just a character, so it matches nothing here.
+    assertThat(titles(student, "/api/v1/resources?q=%25%25")).isEmpty();
+    assertThat(titles(student, "/api/v1/resources?q=__")).isEmpty();
+    assertThat(titles(student, "/api/v1/resources?q=arrays%25")).isEmpty();
     // A student may read the resources of any semester and branch.
     assertThat(titles(student, "/api/v1/resources?subjectId=" + networks))
         .containsExactly("Model paper 2026");

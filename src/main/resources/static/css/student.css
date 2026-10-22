@@ -358,6 +358,11 @@
   border-radius: var(--radius-input);
 }
 
+/* A notice is plain text: keep its line breaks, so a list of dates stays a list. */
+.notice__body p {
+  white-space: pre-line;
+}
+
 /* ---- Resources ---- */
 .filters {
   display: grid;
