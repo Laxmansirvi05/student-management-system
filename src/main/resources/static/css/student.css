@@ -1379,3 +1379,176 @@ button.qdot:hover {
 .notice-doc__actions .button {
   white-space: nowrap;
 }
+
+/* ---- The complaint form ---- */
+.dialog--form {
+  width: min(640px, calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
+  padding: 0;
+  overflow: hidden;
+}
+
+/* The header and the footer stay in view; only the middle scrolls. */
+.dialog--form[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.complaint-form {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.complaint-form__head {
+  display: flex;
+  flex: none;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-5) var(--space-5) var(--space-3);
+  border-bottom: 1px solid var(--color-hairline);
+}
+
+.complaint-form__body {
+  display: grid;
+  flex: 1;
+  gap: var(--space-4);
+  min-height: 0;
+  padding: var(--space-4) var(--space-5);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.complaint-form__foot {
+  display: grid;
+  flex: none;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5) var(--space-4);
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-hairline);
+}
+
+.complaint-form__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+}
+
+.complaint-types {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+/* Three options of the same size, whatever their text. */
+.type-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.type-option {
+  position: relative;
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+  min-height: 72px;
+  padding: var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-input);
+  cursor: pointer;
+  transition:
+    border-color var(--motion),
+    background-color var(--motion),
+    box-shadow var(--motion);
+}
+
+.type-option:hover {
+  background: var(--color-bg-subtle);
+}
+
+.type-option__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.type-option__mark {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  border: 2px solid var(--color-hairline);
+  border-radius: 50%;
+  transition:
+    border-color var(--motion),
+    box-shadow var(--motion);
+}
+
+.type-option__text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.type-option:has(.type-option__input:checked) {
+  background: var(--tint-primary);
+  border-color: var(--color-primary);
+}
+
+.type-option:has(.type-option__input:checked) .type-option__mark {
+  border-color: var(--color-primary);
+  box-shadow: inset 0 0 0 3px var(--color-surface), inset 0 0 0 9px var(--color-primary);
+}
+
+.type-option:has(.type-option__input:focus-visible) {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.complaint-explain {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg-subtle);
+  border-radius: var(--radius-input);
+  line-height: 1.5;
+}
+
+.complaint-identity {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-input);
+}
+
+@media (min-width: 560px) {
+  .complaint-form__row {
+    grid-template-columns: 200px minmax(0, 1fr);
+  }
+}
+
+/* On a phone the three options stack, each one a full-width row. */
+@media (max-width: 559px) {
+  .type-options {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .type-option {
+    min-height: 0;
+  }
+
+  .complaint-form__head,
+  .complaint-form__body,
+  .complaint-form__foot {
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+  }
+}

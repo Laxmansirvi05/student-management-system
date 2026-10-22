@@ -18,11 +18,49 @@ function show(id, text) {
   }
 }
 
+/**
+ * Shows the student's photo in both round avatars (sidebar and top bar), or the initials when
+ * there is no photo. The profile page calls it after a photo is added or removed, so the two
+ * always agree.
+ */
+export async function showAvatarPhoto(hasPhoto) {
+  const avatars = ["user-initials", "top-initials"].map((id) => document.getElementById(id)).filter(Boolean);
+  const initials = () => {
+    for (const avatar of avatars) {
+      avatar.classList.remove("avatar--photo");
+      avatar.textContent = avatar.dataset.initials || avatar.textContent;
+    }
+  };
+  if (!hasPhoto) {
+    initials();
+    return;
+  }
+  try {
+    const link = await api.get("/students/me/photo-url");
+    for (const avatar of avatars) {
+      const image = document.createElement("img");
+      image.alt = "";
+      image.addEventListener("error", initials, { once: true });
+      image.src = link.url;
+      avatar.replaceChildren(image);
+      avatar.classList.add("avatar--photo");
+    }
+  } catch {
+    // File storage is not reachable: the initials stay.
+    initials();
+  }
+}
+
 export const currentUser = api.get("/auth/me").then((user) => {
   show("user-name", user.displayName);
   show("user-email", user.email);
-  show("user-initials", initialsOf(user.displayName));
-  show("top-initials", initialsOf(user.displayName));
+  for (const id of ["user-initials", "top-initials"]) {
+    show(id, initialsOf(user.displayName));
+    const avatar = document.getElementById(id);
+    if (avatar) {
+      avatar.dataset.initials = initialsOf(user.displayName);
+    }
+  }
   return user;
 });
 currentUser.catch(() => {});
@@ -33,6 +71,9 @@ export const currentStudent = currentUser.then((user) =>
 );
 currentStudent
   .then((student) => {
+    if (student) {
+      showAvatarPhoto(student.hasPhoto);
+    }
     const chip = document.getElementById("student-chip");
     if (student && chip) {
       chip.textContent = `${student.branch} · Sem ${student.currentSemester} · Sec ${student.section} · ${student.rollNo}`;
@@ -47,6 +88,24 @@ for (const button of document.querySelectorAll("[data-logout]")) {
     window.location.assign(LOGIN_PAGE);
   });
 }
+
+// The sidebar's blue highlight is one element placed behind the current page's item. Each page puts
+// it in its own spot, and the browser glides it from the old spot to the new one between pages.
+function placeNavPill() {
+  const nav = document.querySelector(".nav");
+  const active = nav?.querySelector('.nav__item[aria-current="page"]');
+  if (!nav || !active) {
+    return;
+  }
+  const pill = document.createElement("span");
+  pill.className = "nav__pill";
+  pill.setAttribute("aria-hidden", "true");
+  pill.style.top = active.offsetTop + "px";
+  pill.style.height = active.offsetHeight + "px";
+  nav.prepend(pill);
+  nav.classList.add("nav--pill");
+}
+placeNavPill();
 
 // The phone menu: a sheet that slides up from the tab bar.
 const menu = document.getElementById("menu-sheet");

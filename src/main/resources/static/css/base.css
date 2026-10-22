@@ -679,7 +679,9 @@ a {
 
 .ring__label {
   position: absolute;
+  inset: 0;
   display: grid;
+  place-content: center;
   justify-items: center;
   text-align: center;
 }
@@ -915,6 +917,35 @@ a {
 
   ::view-transition-new(root) {
     animation: 360ms var(--ease) both page-in;
+  }
+
+  /* The sidebar does not animate: its items stay exactly where they are. Only the blue highlight
+     (named nav-pill) glides from the old page's item to the new one. */
+  ::view-transition-group(sidebar) {
+    animation: none;
+  }
+
+  ::view-transition-old(sidebar) {
+    display: none;
+  }
+
+  ::view-transition-new(sidebar) {
+    animation: none;
+  }
+
+  ::view-transition-group(nav-pill) {
+    animation-duration: 360ms;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  ::view-transition-old(nav-pill),
+  ::view-transition-new(nav-pill) {
+    animation: none;
+    mix-blend-mode: normal;
+  }
+
+  ::view-transition-old(nav-pill) {
+    display: none;
   }
 }
 

@@ -167,7 +167,6 @@ function semestersView() {
           "div.hero__main",
           h("p.hero__eyebrow", "Cumulative grade point average"),
           cgpa === null ? h("h2.hero__title", "Not available yet") : figure,
-          h("p.hero__sub", `From your ${semesters.length} published semester${semesters.length > 1 ? "s" : ""}.`),
         ),
         cgpa === null ? null : h("div.hero__aside", ring(cgpa * 10, { size: 152, stroke: 12, label: [h("strong.ring__big", "CGPA"), h("span.eyebrow.eyebrow--inverse", "out of 10")] })),
       ),

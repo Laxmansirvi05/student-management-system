@@ -10,9 +10,9 @@ import "./shell.js";
 
 const PAGE_SIZE = 20;
 const TYPES = {
-  PUBLIC: { label: "Public", colour: "primary", text: "Every student and the administrator can read it, and students can support it. You choose whether other students see your roll number. The administrator can always see who raised it." },
-  PRIVATE: { label: "Private", colour: "warning", text: "Only the administrator can read it. The administrator sees who you are." },
-  SECURE: { label: "Secure", colour: "success", text: "Only the administrator can read it, and the administrator never sees who raised it. You still follow it and read the response here. Use it for serious matters." },
+  PUBLIC: { label: "Public", colour: "primary", short: "Everyone can read it", text: "Every student and the administrator can read it, and students can support it. You choose whether other students see your roll number. The administrator can always see who raised it." },
+  PRIVATE: { label: "Private", colour: "warning", short: "Only the administrator", text: "Only the administrator can read it. The administrator sees who you are." },
+  SECURE: { label: "Secure", colour: "success", short: "Administrator, identity hidden", text: "Only the administrator can read it, and the administrator never sees who raised it. You still follow it and read the response here. Use it for serious matters." },
 };
 const CATEGORIES = { ACADEMIC: "Academic", EXAMS: "Exams", FACILITIES: "Facilities", FACULTY: "Faculty", ADMINISTRATION: "Administration", OTHER: "Other" };
 const STATUSES = { OPEN: ["Open", "warning"], IN_REVIEW: ["In review", "primary"], RESOLVED: ["Resolved", "success"], REJECTED: ["Rejected", "danger"] };
@@ -148,44 +148,62 @@ function drawControls() {
 
 function raiseDialog() {
   const chosen = { type: "PUBLIC" };
-  const error = h("p.field__error", { hidden: true });
-  const explain = h("p.row__meta");
+  const explain = h("p.complaint-explain", { id: "c-explain", "aria-live": "polite" });
   const identity = h("input", { type: "checkbox", id: "c-identity" });
-  const identityRow = h("label.line.line--start", { for: "c-identity" }, identity, "Show my roll number to other students");
-  const identityNote = h("p.field__help", "If you leave this off, other students see “Anonymous”. The administrator can still see who you are. Choose Secure to hide yourself from the administrator too.");
+  const identityRow = h("div.complaint-identity", h("label.line.line--start", { for: "c-identity" }, identity, h("span", "Show my roll number to other students")), h("p.field__help", "If you leave this off, other students see “Anonymous”. The administrator can still see who you are. Choose Secure to hide yourself from the administrator too."));
   const category = h("select.select", { id: "c-new-category" }, Object.entries(CATEGORIES).map(([value, text]) => h("option", { value }, text)));
-  const title = h("input.textbox", { id: "c-title", maxlength: 120, autocomplete: "off" });
-  const description = h("textarea.textbox", { id: "c-description", rows: 6, maxlength: 2000 });
-  const count = h("span.row__meta.num");
-  const choices = Object.entries(TYPES).map(([value, type]) => {
-    const radio = h("input", { type: "radio", name: "c-type", id: "c-type-" + value, value });
+  const title = h("input.textbox", { id: "c-title", maxlength: 120, autocomplete: "off", "aria-describedby": "c-title-error" });
+  const description = h("textarea.textbox", { id: "c-description", rows: 6, maxlength: 2000, "aria-describedby": "c-description-help c-description-error" });
+  const titleError = h("p.field__error", { id: "c-title-error", hidden: true });
+  const descriptionError = h("p.field__error", { id: "c-description-error", hidden: true });
+  const count = h("span.row__meta.num", { "aria-hidden": "true" });
+  const formError = h("p.field__error", { id: "c-form-error", role: "alert", hidden: true });
+  const options = Object.entries(TYPES).map(([value, type]) => {
+    const radio = h("input.type-option__input", { type: "radio", name: "c-type", id: "c-type-" + value, value });
     radio.checked = value === chosen.type;
     radio.addEventListener("change", () => {
       chosen.type = value;
       refresh();
     });
-    return h("label.card.card--choice", { for: "c-type-" + value }, h("div.line.line--start", radio, h("strong", type.label)), h("p.row__meta", type.text));
+    return h("label.type-option", { for: "c-type-" + value }, radio, h("span.type-option__mark", { "aria-hidden": "true" }), h("span.type-option__text", h("strong", type.label), h("span.row__meta", type.short)));
   });
   const refresh = () => {
     explain.textContent = TYPES[chosen.type].text;
-    identityRow.hidden = identityNote.hidden = chosen.type !== "PUBLIC";
+    identityRow.hidden = chosen.type !== "PUBLIC";
+  };
+  const invalid = (control, error, message) => {
+    error.textContent = message || "";
+    error.hidden = !message;
+    control.setAttribute("aria-invalid", String(Boolean(message)));
+  };
+  /** The same limits the server checks, so a mistake is shown at once beside the field. */
+  const check = () => {
+    const titleText = title.value.trim();
+    const descriptionText = description.value.trim();
+    invalid(title, titleError, titleText.length < 5 || titleText.length > 120 ? "Use 5 to 120 characters." : "");
+    invalid(description, descriptionError, descriptionText.length < 20 || descriptionText.length > 2000 ? "Use 20 to 2,000 characters." : "");
+    return titleText.length >= 5 && titleText.length <= 120 && descriptionText.length >= 20 && descriptionText.length <= 2000;
   };
   const submit = h("button.button.button--primary", { type: "submit" }, "Submit complaint");
   const cancel = h("button.button.button--quiet", { type: "button", "data-close": true }, "Cancel");
+  const closeX = h("button.icon-button.icon-button--bare", { type: "button", "data-close": true, "aria-label": "Close" }, icon("x"));
   const form = h(
-    "form.stack.stack--loose",
-    h("h2", { id: "c-form-title" }, "Raise a complaint"),
-    h("fieldset.stack", h("legend.field__label", "Who should see it?"), h("div.grid.grid--3", choices)),
-    h("div.field", h("label.field__label", { for: "c-new-category" }, "Category"), category),
-    h("div.field", h("label.field__label", { for: "c-title" }, "Title"), title),
-    h("div.field", h("div.line", h("label.field__label", { for: "c-description" }, "What is the problem?"), count), description, h("p.field__help", "Plain text, 20 to 2,000 characters. Do not put passwords or other secrets in it.")),
-    identityRow,
-    identityNote,
-    error,
-    h("div.dialog__actions", cancel, submit),
+    "form.complaint-form",
+    { novalidate: true },
+    h("header.complaint-form__head", h("div.stack.stack--tight", h("h2", { id: "c-form-title" }, "Raise a complaint"), h("p.row__meta", "Choose who should see it, then describe the problem.")), closeX),
+    h(
+      "div.complaint-form__body",
+      h("fieldset.complaint-types", h("legend.field__label", "Who should see it?"), h("div.type-options", options), explain),
+      h("div.complaint-form__row", h("div.field", h("label.field__label", { for: "c-new-category" }, "Category"), category), h("div.field", h("label.field__label", { for: "c-title" }, "Title"), title, titleError)),
+      h("div.field", h("div.line", h("label.field__label", { for: "c-description" }, "What is the problem?"), count), description, h("p.field__help", { id: "c-description-help" }, "Plain text. Do not put passwords or other secrets in it."), descriptionError),
+      identityRow,
+    ),
+    h("footer.complaint-form__foot", formError, h("div.dialog__actions", cancel, submit)),
   );
-  const dialog = h("dialog.dialog.dialog--wide", { "aria-labelledby": "c-form-title" }, form);
+  const dialog = h("dialog.dialog.dialog--form", { "aria-labelledby": "c-form-title" }, form);
   description.addEventListener("input", () => (count.textContent = description.value.length + " / 2000"));
+  title.addEventListener("blur", check);
+  description.addEventListener("blur", check);
   count.textContent = "0 / 2000";
   refresh();
   dialog.addEventListener("click", (event) => {
@@ -196,7 +214,11 @@ function raiseDialog() {
   dialog.addEventListener("close", () => dialog.remove());
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
-    error.hidden = true;
+    formError.hidden = true;
+    if (!check()) {
+      (titleError.hidden ? description : title).focus();
+      return;
+    }
     submit.disabled = true;
     try {
       await api.post("/complaints", { type: chosen.type, category: category.value, title: title.value.trim(), description: description.value.trim(), showIdentity: chosen.type === "PUBLIC" && identity.checked });
@@ -207,8 +229,8 @@ function raiseDialog() {
       drawControls();
       load();
     } catch (failure) {
-      error.textContent = failure.fieldErrors?.length ? failure.fieldErrors.map((item) => item.message).join(" ") : messageFor(failure);
-      error.hidden = false;
+      formError.textContent = failure.fieldErrors?.length ? failure.fieldErrors.map((item) => item.message).join(" ") : messageFor(failure);
+      formError.hidden = false;
     } finally {
       submit.disabled = false;
     }

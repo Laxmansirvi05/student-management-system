@@ -36,7 +36,8 @@ const pct = (attended, held) => (held === 0 ? 0 : (attended * 100) / held);
 
 function hero(summary, { held, attended, report }) {
   const required = summary.requiredPercent;
-  const current = pct(attended, held);
+  // The server's overall figure is the one source, so the dashboard and this page always agree.
+  const current = summary.overallPercent === null ? pct(attended, held) : Number(summary.overallPercent);
   const figure = h("p.hero__figure");
   countUp(figure, current, { decimals: 2, suffix: "%" });
   const onTrack = current >= required;

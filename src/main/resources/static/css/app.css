@@ -54,11 +54,29 @@ body.app {
 }
 
 .nav {
+  position: relative;
   display: grid;
   flex: 1;
   gap: 2px;
   align-content: start;
   overflow-y: auto;
+}
+
+/* The blue highlight is its own element, so only it moves between pages; the items stay put. */
+.nav__pill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  background: var(--tint-primary);
+  border-radius: 10px;
+  pointer-events: none;
+  view-transition-name: nav-pill;
+}
+
+.nav__item {
+  position: relative;
 }
 
 .nav__heading {
@@ -100,8 +118,13 @@ body.app {
   background: var(--tint-primary);
   color: var(--on-tint-primary);
   font-weight: 600;
-  /* The highlight glides from the old page's item to the new one. */
-  view-transition-name: nav-active;
+}
+
+/* With the moving highlight in place, the item itself needs no background of its own. */
+.nav--pill .nav__item[aria-current="page"] {
+  background: transparent;
+  /* No fade between the item's own highlight and the pill: they are the same colour. */
+  transition: color var(--motion);
 }
 
 .nav__item[aria-current="page"] .icon {
@@ -187,6 +210,18 @@ body.app {
   font: 600 13px/1 var(--font);
   letter-spacing: 0.02em;
   text-decoration: none;
+}
+
+.avatar--photo {
+  overflow: hidden;
+  background: var(--color-bg-subtle);
+}
+
+.avatar--photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .avatar--link {

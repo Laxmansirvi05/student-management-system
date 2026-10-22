@@ -2,7 +2,7 @@ import { api, messageFor } from "./api.js";
 import { fill, h, icon, toast } from "./dom.js";
 import { setFieldError, showBanner } from "./forms.js";
 
-import { initialsOf } from "./shell.js";
+import { initialsOf, showAvatarPhoto } from "./shell.js";
 
 // The student's own profile (FR-STU-002, FR-STU-003). What the college manages is read-only. The
 // student can change their photo, a short text, skills, personal email, phone and three links.
@@ -96,6 +96,7 @@ function render(loaded) {
 
 /** Shows the photo through its short-lived link, or the initials when there is no photo. */
 async function showPhoto() {
+  showAvatarPhoto(student.hasPhoto);
   const label = student.hasPhoto ? "Change photo" : "Add photo";
   show("photo-choose-text", label);
   photoChoose.setAttribute("aria-label", label);
