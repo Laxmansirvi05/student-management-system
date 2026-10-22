@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletRequestWrapper;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Locale;
+import java.util.regex.Pattern;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.MediaType;
@@ -23,12 +24,19 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * API needs more: the longest text field holds 12,000 characters. File uploads are multipart and
  * have their own limits, so they are not counted here.
  *
+ * <p>The one exception is writing a note, which carries the whole document (up to 200,000
+ * characters of HTML) and may be 1 MB (ADR 0014). It is a logged-in student's own write, and it is
+ * still counted by the session's request limit.
+ *
  * <p>A body that announces its length is refused before any of it is read. A body sent in chunks,
  * without a length, is cut off as soon as it passes the limit.
  */
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE + 10)
 public class RequestBodyLimitFilter extends OncePerRequestFilter {
+
+  static final long NOTE_BODY_BYTES = 1024 * 1024;
+  private static final Pattern NOTE_WRITE = Pattern.compile("^/api/v1/notes(/\\d{1,18})?$");
 
   private final long maxBytes;
   private final ApiSecurityErrorHandler errorHandler;
@@ -52,14 +60,26 @@ public class RequestBodyLimitFilter extends OncePerRequestFilter {
   protected void doFilterInternal(
       HttpServletRequest request, HttpServletResponse response, FilterChain chain)
       throws ServletException, IOException {
-    if (request.getContentLengthLong() > maxBytes) {
+    long limit = limitFor(request);
+    if (request.getContentLengthLong() > limit) {
       errorHandler.write(
           request,
           response,
-          new ApiException(ErrorCode.REQUEST_TOO_LARGE, "The request is larger than 64 KB."));
+          new ApiException(
+              ErrorCode.REQUEST_TOO_LARGE,
+              "The request is larger than " + (limit / 1024) + " KB."));
       return;
     }
-    chain.doFilter(new LimitedBodyRequest(request, maxBytes), response);
+    chain.doFilter(new LimitedBodyRequest(request, limit), response);
+  }
+
+  /** The limit for this request: larger only for creating or changing a note. */
+  private long limitFor(HttpServletRequest request) {
+    String method = request.getMethod();
+    boolean write = "POST".equals(method) || "PATCH".equals(method) || "PUT".equals(method);
+    return write && NOTE_WRITE.matcher(request.getRequestURI()).matches()
+        ? Math.max(maxBytes, NOTE_BODY_BYTES)
+        : maxBytes;
   }
 
   /** The request with a body that stops with an error once more than the limit has been read. */

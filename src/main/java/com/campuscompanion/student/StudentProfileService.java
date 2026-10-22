@@ -98,6 +98,14 @@ public class StudentProfileService {
     return profiles.findById(studentId).map(StudentProfileService::toContext);
   }
 
+  /** The student with this roll number (upper case), if there is one. */
+  @Transactional(readOnly = true)
+  public Optional<StudentContext> findByRollNo(String rollNo) {
+    return profiles.findByRollNoIn(List.of(rollNo)).stream()
+        .findFirst()
+        .map(StudentProfileService::toContext);
+  }
+
   /** Students by ID, for naming the student of a record. */
   @Transactional(readOnly = true)
   public Map<Long, StudentContext> studentsByIds(Collection<Long> studentIds) {

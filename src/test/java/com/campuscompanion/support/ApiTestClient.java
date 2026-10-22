@@ -52,6 +52,16 @@ public class ApiTestClient {
             .PUT(HttpRequest.BodyPublishers.ofString(json)));
   }
 
+  /** PATCH with the CSRF header. */
+  public HttpResponse<String> patch(String path, String json)
+      throws IOException, InterruptedException {
+    return send(
+        HttpRequest.newBuilder(URI.create(baseUrl + path))
+            .header("Content-Type", "application/json")
+            .header("X-XSRF-TOKEN", csrfToken())
+            .method("PATCH", HttpRequest.BodyPublishers.ofString(json)));
+  }
+
   /** DELETE with the CSRF header. */
   public HttpResponse<String> delete(String path) throws IOException, InterruptedException {
     return send(
