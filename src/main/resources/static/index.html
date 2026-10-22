@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="/css/landing.css" />
   </head>
   <body class="landing landing--checking">
+    <canvas class="landing-grid-canvas" aria-hidden="true"></canvas>
     <header class="landing-nav">
       <a class="brand landing-nav__brand" href="/">
         <span class="brand__mark"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#cap" /></svg></span>
@@ -21,6 +22,7 @@
         <a href="#features">Features</a>
         <a href="#college">For colleges</a>
         <a href="#privacy">Privacy</a>
+        <a href="#faq">FAQ</a>
       </nav>
       <a class="button button--primary button--small" href="/login.html">Log in</a>
     </header>
@@ -28,14 +30,14 @@
     <main>
       <section class="landing-hero" aria-labelledby="landing-title">
         <div class="landing-hero__text">
-          <p class="hero__eyebrow">For students and their college</p>
-          <h1 id="landing-title">Your college life, <span class="landing-hero__accent">in one calm place.</span></h1>
-          <p class="landing-hero__sub">Attendance, marks, timetable and notices next to your study material, timed practice tests and a study assistant. One login, on any screen.</p>
+          <p class="hero__eyebrow">A clearer view of college life</p>
+          <h1 id="landing-title">Your college life, <span class="landing-hero__accent">all in one place.</span></h1>
+          <p class="landing-hero__sub">Keep attendance, marks, classes and college notices close to the resources and practice tools that help you study.</p>
           <div class="landing-hero__actions">
             <a class="button button--primary" href="/login.html">Log in <svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#arrow-right" /></svg></a>
             <a class="button button--glass" href="#features">See what it does</a>
           </div>
-          <p class="landing-hero__note">Accounts are created by your college. There is no sign-up.</p>
+          <p class="landing-hero__note">Your college creates accounts. There is no public sign-up.</p>
         </div>
         <div class="landing-preview" aria-hidden="true">
           <div class="landing-preview__card landing-preview__card--ring">
@@ -67,32 +69,32 @@
           <h2 id="features-title">Everything you check, and everything you study, together.</h2>
         </div>
         <div class="landing-grid">
-            <article class="landing-card reveal">
+            <article class="landing-card reveal" id="feature-records">
               <span class="badge-icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#attendance" /></svg></span>
               <h3>Attendance, marks and results</h3>
               <p>Your attendance in every subject, the marks of each test, your SGPA and CGPA, worked out exactly and flagged before they become a problem.</p>
             </article>
-            <article class="landing-card reveal">
+            <article class="landing-card reveal" id="feature-schedule">
               <span class="badge-icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#calendar" /></svg></span>
               <h3>Timetable and notices</h3>
               <p>Today's classes at a glance, the full week, and every notice and deadline from your college in one list.</p>
             </article>
-            <article class="landing-card reveal">
+            <article class="landing-card reveal" id="feature-resources">
               <span class="badge-icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#resources" /></svg></span>
               <h3>Study material</h3>
               <p>Notes, past papers, lab manuals and model papers for your subjects. Search them, preview them in the page and bookmark the ones you need.</p>
             </article>
-            <article class="landing-card reveal">
+            <article class="landing-card reveal" id="feature-quick-exam">
               <span class="badge-icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#quiz" /></svg></span>
               <h3>Quick Exam</h3>
               <p>Timed practice tests on one unit. The answers are marked on the server and explained as soon as you finish.</p>
             </article>
-            <article class="landing-card reveal">
+            <article class="landing-card reveal" id="feature-progress">
               <span class="badge-icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#progress" /></svg></span>
               <h3>Progress</h3>
               <p>See which units are strong and which need work, judged on your own recent answers, with notes to revise from.</p>
             </article>
-            <article class="landing-card reveal">
+            <article class="landing-card reveal" id="feature-assistant">
               <span class="badge-icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#sparkles" /></svg></span>
               <h3>AI study assistant</h3>
               <p>Explanations, summaries and practice questions for your subjects. Clearly labelled, and it never sees your records.</p>
@@ -147,17 +149,105 @@
         <p>Log in with the institutional email your college gave you.</p>
         <a class="button button--primary" href="/login.html">Log in <svg class="icon" aria-hidden="true" focusable="false"><use href="/img/icons.svg#arrow-right" /></svg></a>
       </section>
+
+      <section class="landing-faq" id="faq" aria-labelledby="faq-title">
+        <div class="landing-faq__head">
+          <h2 id="faq-title">Frequently asked questions</h2>
+          <p>How Campus Companion works, what students can see, and how college records stay protected.</p>
+        </div>
+        <div class="landing-faq__rows">
+          <div class="landing-faq__row" role="group" aria-label="Frequently asked questions, row one">
+            <div class="landing-faq__track">
+              <div class="landing-faq__group">
+                <article class="landing-faq__card"><h3>What is Campus Companion?</h3><p>A student management and learning platform for college records, study resources, practice tests and an AI study assistant.</p></article>
+                <article class="landing-faq__card"><h3>How do I get an account?</h3><p>Accounts are created by your college. There is no self sign-up on the public landing page.</p></article>
+                <article class="landing-faq__card"><h3>What can I see as a student?</h3><p>You can view your own attendance, marks, results, timetable, published notices and learning resources.</p></article>
+                <article class="landing-faq__card"><h3>Can I use it on my phone?</h3><p>The site adapts to phone, tablet and desktop screens, so you can use the same account across screen sizes.</p></article>
+              </div>
+              <div class="landing-faq__group" aria-hidden="true">
+                <article class="landing-faq__card"><h3>What is Campus Companion?</h3><p>A student management and learning platform for college records, study resources, practice tests and an AI study assistant.</p></article>
+                <article class="landing-faq__card"><h3>How do I get an account?</h3><p>Accounts are created by your college. There is no self sign-up on the public landing page.</p></article>
+                <article class="landing-faq__card"><h3>What can I see as a student?</h3><p>You can view your own attendance, marks, results, timetable, published notices and learning resources.</p></article>
+                <article class="landing-faq__card"><h3>Can I use it on my phone?</h3><p>The site adapts to phone, tablet and desktop screens, so you can use the same account across screen sizes.</p></article>
+              </div>
+            </div>
+          </div>
+          <div class="landing-faq__row landing-faq__row--reverse" role="group" aria-label="Frequently asked questions, row two">
+            <div class="landing-faq__track">
+              <div class="landing-faq__group">
+                <article class="landing-faq__card"><h3>Can another student see my records?</h3><p>Student access is limited to the signed-in student's own records. A student cannot open another student's academic information.</p></article>
+                <article class="landing-faq__card"><h3>Does the AI assistant receive my college records?</h3><p>No. Your name and official records are not sent to the AI provider. It receives only the text you submit for that request.</p></article>
+                <article class="landing-faq__card"><h3>Who updates attendance and marks?</h3><p>College administrators manage official records. Students can view their records but cannot change official marks or attendance.</p></article>
+                <article class="landing-faq__card"><h3>Where can I read the privacy details?</h3><p>The privacy policy explains what the application handles and how it protects account and academic information.</p></article>
+              </div>
+              <div class="landing-faq__group" aria-hidden="true">
+                <article class="landing-faq__card"><h3>Can another student see my records?</h3><p>Student access is limited to the signed-in student's own records. A student cannot open another student's academic information.</p></article>
+                <article class="landing-faq__card"><h3>Does the AI assistant receive my college records?</h3><p>No. Your name and official records are not sent to the AI provider. It receives only the text you submit for that request.</p></article>
+                <article class="landing-faq__card"><h3>Who updates attendance and marks?</h3><p>College administrators manage official records. Students can view their records but cannot change official marks or attendance.</p></article>
+                <article class="landing-faq__card"><h3>Where can I read the privacy details?</h3><p>The privacy policy explains what the application handles and how it protects account and academic information.</p></article>
+              </div>
+            </div>
+          </div>
+          <div class="landing-faq__row landing-faq__row--slow" role="group" aria-label="Frequently asked questions, row three">
+            <div class="landing-faq__track">
+              <div class="landing-faq__group">
+                <article class="landing-faq__card"><h3>How do I log in?</h3><p>Use the institutional email address and password provided by your college. Ask your college administrator if you need help.</p></article>
+                <article class="landing-faq__card"><h3>What if I forget my password?</h3><p>Contact your college administrator to reset it. The application does not offer public account recovery.</p></article>
+                <article class="landing-faq__card"><h3>What can the practice tests do?</h3><p>Quick Exam offers timed practice on a unit and shows your score and explanations after you submit.</p></article>
+                <article class="landing-faq__card"><h3>Can I save useful study material?</h3><p>Students can search resources, preview available files and bookmark material for later.</p></article>
+              </div>
+              <div class="landing-faq__group" aria-hidden="true">
+                <article class="landing-faq__card"><h3>How do I log in?</h3><p>Use the institutional email address and password provided by your college. Ask your college administrator if you need help.</p></article>
+                <article class="landing-faq__card"><h3>What if I forget my password?</h3><p>Contact your college administrator to reset it. The application does not offer public account recovery.</p></article>
+                <article class="landing-faq__card"><h3>What can the practice tests do?</h3><p>Quick Exam offers timed practice on a unit and shows your score and explanations after you submit.</p></article>
+                <article class="landing-faq__card"><h3>Can I save useful study material?</h3><p>Students can search resources, preview available files and bookmark material for later.</p></article>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
 
     <footer class="landing-footer">
-      <span>Campus Companion</span>
-      <nav class="landing-footer__links" aria-label="About">
-        <a href="/privacy.html">Privacy</a>
-        <a href="/terms.html">Terms</a>
-        <a href="/login.html">Log in</a>
-      </nav>
-      <p class="landing-footer__note">A student project. The demonstration uses invented students only.</p>
+      <div class="landing-footer__grid">
+        <section class="landing-footer__column" aria-labelledby="footer-brand">
+          <h2 id="footer-brand">Campus Companion</h2>
+          <p>A clearer place for students to follow college records and keep their study tools together.</p>
+        </section>
+        <nav class="landing-footer__column" aria-label="Platform">
+          <h3>Platform</h3>
+          <ul>
+            <li><a href="#features">Student features</a></li>
+            <li><a href="#college">For colleges</a></li>
+            <li><a href="#privacy">Privacy and security</a></li>
+            <li><a href="#faq">Frequently asked questions</a></li>
+          </ul>
+        </nav>
+        <nav class="landing-footer__column" aria-label="Student tools">
+          <h3>Student tools</h3>
+          <ul>
+            <li><a href="#feature-records">Attendance and results</a></li>
+            <li><a href="#feature-resources">Study resources</a></li>
+            <li><a href="#feature-quick-exam">Quick Exam</a></li>
+            <li><a href="#feature-assistant">Study assistant</a></li>
+          </ul>
+        </nav>
+        <nav class="landing-footer__column" aria-label="Resources">
+          <h3>Resources</h3>
+          <ul>
+            <li><a href="/privacy.html">Privacy policy</a></li>
+            <li><a href="/terms.html">Terms of use</a></li>
+            <li><a href="/login.html">Log in</a></li>
+          </ul>
+        </nav>
+      </div>
+      <div class="landing-footer__rule"></div>
+      <div class="landing-footer__bottom">
+        <p>Campus Companion · A student project using invented demonstration students.</p>
+        <div class="landing-footer__legal"><a href="/privacy.html">Privacy policy</a><a href="/terms.html">Terms of use</a></div>
+      </div>
     </footer>
+    <script type="module" src="/js/landing-grid.js"></script>
     <script type="module" src="/js/index.js"></script>
   </body>
 </html>

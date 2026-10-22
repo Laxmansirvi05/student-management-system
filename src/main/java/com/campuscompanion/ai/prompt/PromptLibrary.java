@@ -20,6 +20,7 @@ public class PromptLibrary {
   private final PromptTemplate explain = load("explain-v1");
   private final PromptTemplate summarize = load("summarize-v1");
   private final PromptTemplate quiz = load("quiz-v1");
+  private final PromptTemplate quickChat = load("assistant-quick-v1");
 
   public PromptTemplate explain() {
     return explain;
@@ -31,6 +32,11 @@ public class PromptLibrary {
 
   public PromptTemplate quiz() {
     return quiz;
+  }
+
+  /** The robot's short chat: plain text answers of a few sentences. */
+  public PromptTemplate quickChat() {
+    return quickChat;
   }
 
   static PromptTemplate load(String version) {

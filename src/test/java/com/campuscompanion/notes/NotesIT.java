@@ -513,14 +513,22 @@ class NotesIT extends ApiIntegrationTest {
     assertThat(uploaded.statusCode()).as(uploaded.body()).isEqualTo(201);
     JsonNode image = json(uploaded);
     assertThat(image.get("kind").asString()).isEqualTo("image");
-    assertThat(image.get("name").asString()).doesNotContain("/").doesNotContain("\\");
+    assertThat(image.get("mimeType").asString()).isEqualTo("image/jpeg");
+    assertThat(image.get("name").asString())
+        .doesNotContain("/")
+        .doesNotContain("\\")
+        .endsWith(".jpg");
     assertThat(image.get("url").asString())
         .isEqualTo("/api/v1/notes/attachments/" + image.get("id").asLong() + "/file");
-    assertThat(storage.paths()).contains(storage.lastWritten());
-    assertThat(storage.lastWritten()).startsWith("notes/").doesNotContain("evil");
+    String stored = storage.lastWritten();
+    assertThat(storage.paths()).contains(stored);
+    assertThat(stored).startsWith("notes/").endsWith(".jpg").doesNotContain("evil");
+    // What is stored is a new JPEG, not the file that was uploaded.
+    assertThat(storage.contentAt(stored)[0]).isEqualTo((byte) 0xFF);
+    assertThat(storage.contentAt(stored)[1]).isEqualTo((byte) 0xD8);
 
     long pdf = uploadId(me, "notes.pdf", "application/pdf", TestPdfs.valid(1), null);
-    long text = uploadId(me, "list.txt", "text/plain", "plain text".getBytes(), null);
+    long second = uploadId(me, "second.pdf", "application/pdf", TestPdfs.valid(2), null);
 
     JsonNode all = json(me.get(FILES)).get("attachments");
     assertThat(all).hasSize(3);
@@ -534,7 +542,22 @@ class NotesIT extends ApiIntegrationTest {
     assertThat(redirect.headers().firstValue("Cache-Control").orElse("")).contains("private");
     HttpResponse<String> download = me.get(FILES + "/" + pdf + "/file?download=true");
     assertThat(download.headers().firstValue("Location").orElse("")).contains("download=notes.pdf");
-    assertThat(text).isPositive();
+    assertThat(second).isPositive();
+  }
+
+  @Test
+  void aPictureIsTurnedUprightAndStripsItsHiddenData() throws Exception {
+    ApiTestClient me = student("NTEF0007");
+    byte[] sideways = TestImages.withExif(TestImages.jpeg(120, 60), 6, "GPS 12.97,77.59");
+    HttpResponse<String> response = me.postFile(FILES, "phone.jpg", "image/jpeg", sideways);
+    assertThat(response.statusCode()).as(response.body()).isEqualTo(201);
+    byte[] stored = storage.contentAt(storage.lastWritten());
+    java.awt.image.BufferedImage picture = TestImages.read(stored);
+    // Orientation 6 means a quarter turn, so the stored picture is taller than wide.
+    assertThat(picture.getHeight()).isEqualTo(120);
+    assertThat(picture.getWidth()).isEqualTo(60);
+    assertThat(new String(stored, java.nio.charset.StandardCharsets.ISO_8859_1))
+        .doesNotContain("GPS 12.97");
   }
 
   @Test

@@ -71,24 +71,24 @@ public class NoteAttachmentService {
   public AttachmentResponse upload(
       CurrentUser user, byte[] content, String originalName, String contentType, Long noteId) {
     Long studentId = students.currentStudent(user).studentId();
-    NoteFileChecker.Checked checked = checker.check(content, contentType, originalName);
+    NoteFileChecker.Prepared prepared = checker.prepare(content, contentType, originalName);
     // A forged note ID must not attach a file to someone else's note.
     Long ownedNote =
         noteId == null
             ? null
             : notes.findByIdAndStudentId(noteId, studentId).map(Note::getId).orElse(null);
-    String path = "notes/" + studentId + "/" + UUID.randomUUID() + "." + checked.extension();
-    storage.upload(path, content, checked.mimeType());
+    String path = "notes/" + studentId + "/" + UUID.randomUUID() + "." + prepared.extension();
+    storage.upload(path, prepared.content(), prepared.mimeType());
     NoteAttachment saved =
         attachments.save(
             new NoteAttachment(
                 studentId,
                 ownedNote,
                 path,
-                safeName(originalName),
-                checked.mimeType(),
-                content.length,
-                checked.kind()));
+                displayName(originalName, prepared),
+                prepared.mimeType(),
+                prepared.content().length,
+                prepared.kind()));
     return respond(saved, null);
   }
 
@@ -230,6 +230,17 @@ public class NoteAttachmentService {
         a.getSizeBytes(),
         a.getKind(),
         a.getCreatedAt());
+  }
+
+  /** The name shown for the file. A picture is stored as a JPEG, so its name ends in .jpg. */
+  private static String displayName(String originalName, NoteFileChecker.Prepared prepared) {
+    String name = safeName(originalName);
+    if (!"image".equals(prepared.kind())) {
+      return name;
+    }
+    int dot = name.lastIndexOf('.');
+    String stem = dot > 0 ? name.substring(0, dot) : name;
+    return stem + ".jpg";
   }
 
   /** Path separators and control characters out of a name the user chose. */

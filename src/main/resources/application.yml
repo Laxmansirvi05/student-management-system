@@ -56,6 +56,10 @@ logging:
     level: "%5p [%X{traceId:-}]"
 
 app:
+  notes:
+    # Documents that may be attached besides PDF. The storage bucket accepts only PDF and JPEG, so
+    # this is empty until its allowed types are widened. See docs/22 and ADR 0014.
+    extra-file-types: ${NOTES_EXTRA_FILE_TYPES:}
   security:
     login:
       # Fixed defaults, defined in docs/18-production-plan.md section 5.

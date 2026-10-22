@@ -39,6 +39,9 @@ public class MockAiProvider implements AiProvider {
   }
 
   private static String replyFor(String promptVersion, String content) {
+    if (promptVersion.startsWith("assistant")) {
+      return chatReply(content);
+    }
     if (content.contains("[[mock:invalid]]")) {
       return "Sorry, here is my answer in plain words instead of the structure you asked for.";
     }
@@ -55,6 +58,23 @@ public class MockAiProvider implements AiProvider {
       return summary(content);
     }
     return promptVersion.startsWith("quiz") ? questions(content) : explanation(content);
+  }
+
+  /** The plain-text answer of the quick chat: it repeats what was asked, as a demo. */
+  private static String chatReply(String content) {
+    if (content.contains("[[mock:empty]]")) {
+      return "";
+    }
+    int last = content.lastIndexOf("Student: ");
+    String asked = last < 0 ? "" : content.substring(last + "Student: ".length());
+    int end = asked.indexOf("</student_conversation>");
+    asked = (end < 0 ? asked : asked.substring(0, end)).strip();
+    String shown = asked.length() > 120 ? asked.substring(0, 120) + "…" : asked;
+    String reply =
+        "Demo answer. No AI provider is connected yet, so this text only shows where the answer will"
+            + " appear. You asked: "
+            + shown;
+    return special(content, reply);
   }
 
   private static String explanation(String content) {
