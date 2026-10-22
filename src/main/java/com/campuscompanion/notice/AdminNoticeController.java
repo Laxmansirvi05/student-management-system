@@ -2,12 +2,15 @@ package com.campuscompanion.notice;
 
 import com.campuscompanion.common.security.CurrentUser;
 import com.campuscompanion.common.web.PageResponse;
+import com.campuscompanion.notice.dto.NoticeDocumentLinkResponse;
 import com.campuscompanion.notice.dto.NoticeResponse;
 import com.campuscompanion.notice.dto.NoticeWriteRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import java.io.IOException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,8 +23,10 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 /** Admin: notices, drafts included. Contract: docs/09-api-contract.md section 7. */
 @RestController
@@ -66,6 +71,25 @@ public class AdminNoticeController {
   public ResponseEntity<Void> unpublish(@PathVariable Long id) {
     notices.unpublish(id);
     return ResponseEntity.noContent().build();
+  }
+
+  /** The official document: one part "file", a PDF or a JPEG or PNG picture, at most 10 MB. */
+  @PostMapping(path = "/{id}/document", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  public NoticeResponse attachDocument(
+      @PathVariable Long id, @RequestPart("file") MultipartFile file) throws IOException {
+    return notices.attachDocument(
+        id, file.getBytes(), file.getContentType(), file.getOriginalFilename());
+  }
+
+  @DeleteMapping("/{id}/document")
+  public NoticeResponse removeDocument(@PathVariable Long id) {
+    return notices.removeDocument(id);
+  }
+
+  @GetMapping("/{id}/document")
+  public NoticeDocumentLinkResponse documentLink(
+      @PathVariable Long id, @RequestParam(defaultValue = "false") boolean download) {
+    return notices.documentLink(id, download);
   }
 
   @DeleteMapping("/{id}")

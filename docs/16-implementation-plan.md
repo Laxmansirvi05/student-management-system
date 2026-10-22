@@ -48,7 +48,7 @@ Consequences to keep in mind:
 | **Also built** | The public landing page (FR-UX-002); from the P1 backlog, T7-07 CSV student import (FR-ADM-010), T7-03 audit log viewer (FR-ADM-009) and T7-10 past papers library (FR-LIB-006) |
 | **Not started** | The rest of the P1 backlog of Phase 7 |
 
-The last full run of `./mvnw verify` passed with 220 unit tests and 204 integration tests. What is open for the owner is listed in [21-security-review.md](21-security-review.md) §3.
+The last full run of `./mvnw verify` passed with 220 unit tests and 209 integration tests. What is open for the owner is listed in [21-security-review.md](21-security-review.md) §3.
 
 ## Phase 0: Decisions
 
@@ -169,7 +169,7 @@ Follow [15-AI-features-handoff.md](15-AI-features-handoff.md).
 
 | ID | Task | Requirement |
 | --- | --- | --- |
-| T7-01 | Attendance calculator | FR-ATT-003 |
+| T7-01 ✅ | Attendance calculator, on the total attendance (targets 70 to 85%). Built on 2026-10-22 | FR-ATT-003 |
 | T7-02 | `V6__planner.sql`, study tasks, exam countdown | FR-PLN-001, FR-PLN-002 |
 | T7-03 ✅ | Audit log viewer. Built on 2026-10-17 | FR-ADM-009 |
 | T7-04 | PDF summarization, including the indirect-injection review required by the AI security document §3.3 | FR-AI-005 |

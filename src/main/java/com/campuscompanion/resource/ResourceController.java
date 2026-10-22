@@ -4,10 +4,12 @@ import com.campuscompanion.common.security.CurrentUser;
 import com.campuscompanion.common.web.PageResponse;
 import com.campuscompanion.resource.dto.DownloadUrlResponse;
 import com.campuscompanion.resource.dto.ResourceResponse;
+import com.campuscompanion.resource.dto.ResourceSubjectResponse;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
@@ -50,6 +52,12 @@ public class ResourceController {
       @RequestParam(defaultValue = "0") @Min(0) int page,
       @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
     return resources.search(currentUser, subjectId, unitId, semester, type, q, sort, page, size);
+  }
+
+  /** The subject folders of the resource hub, with how many resources each has. */
+  @GetMapping("/resources/subjects")
+  public List<ResourceSubjectResponse> subjectFolders() {
+    return resources.subjectFolders();
   }
 
   @GetMapping("/resources/{id}")

@@ -7,11 +7,15 @@ import com.campuscompanion.common.storage.StorageClient;
 import com.campuscompanion.common.web.PageResponse;
 import com.campuscompanion.resource.dto.DownloadUrlResponse;
 import com.campuscompanion.resource.dto.ResourceResponse;
+import com.campuscompanion.resource.dto.ResourceSubjectResponse;
 import com.campuscompanion.student.StudentProfileService;
 import com.campuscompanion.subject.SubjectService;
 import java.time.Duration;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -73,6 +77,31 @@ public class ResourceService {
             searchText(query),
             PageRequest.of(page, size, sortOf(sort)));
     return page(found, currentUser);
+  }
+
+  /**
+   * The subjects that have published resources, as folders: the newest semester first, then by
+   * name. A subject with nothing published is left out.
+   */
+  public List<ResourceSubjectResponse> subjectFolders() {
+    Map<Long, Long> counts = new HashMap<>();
+    for (Object[] row : resources.publishedCountsBySubject()) {
+      counts.put((Long) row[0], (Long) row[1]);
+    }
+    return subjects.byIds(counts.keySet()).values().stream()
+        .map(
+            subject ->
+                new ResourceSubjectResponse(
+                    subject.id(),
+                    subject.code(),
+                    subject.name(),
+                    subject.semester(),
+                    counts.get(subject.id())))
+        .sorted(
+            Comparator.comparingInt(ResourceSubjectResponse::semester)
+                .reversed()
+                .thenComparing(ResourceSubjectResponse::subjectName))
+        .toList();
   }
 
   /** Published question papers and model papers; subject, exam year and exam type are optional. */

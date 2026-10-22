@@ -164,7 +164,8 @@ Access: **Public**, **Any** (any logged-in user), **Student**, **Admin**. Detail
 | GET | `/results/me` | Student | Semester results and CGPA. |
 | GET | `/timetable/me` | Student | Weekly timetable. Filter: `day`. |
 | GET | `/notices` | Any | Published notices (paginated). Filter: `category`. |
-| GET | `/notices/{id}` | Any | One published notice. |
+| GET | `/notices/{id}` | Any | One published notice. `documentType` is `application/pdf`, `image/jpeg` or null. |
+| GET | `/notices/{id}/document` | Any | Five-minute signed link to the notice's official document: `{url, expiresAt, contentType}`. `download=true` saves it as `Notice - <title>.pdf/.jpg`. 404 when the notice is not visible to the user or has no document. |
 | GET | `/subjects` | Any | Subjects (a student sees their branch). Filter: `semester`. |
 | GET | `/subjects/{id}/units` | Any | Units of a subject. |
 
@@ -173,6 +174,7 @@ Access: **Public**, **Any** (any logged-in user), **Student**, **Admin**. Detail
 | Method | Path | Access | Purpose |
 | --- | --- | --- | --- |
 | GET | `/resources` | Any | Search published resources. Filters: `subjectId`, `unitId`, `semester`, `type`, `q`. Sort: `createdAt`, `title`. |
+| GET | `/resources/subjects` | Any | Subject folders: `[{subjectId, subjectCode, subjectName, semester, resources}]` for subjects with published resources, newest semester first, then by name. |
 | GET | `/resources/{id}` | Any | Resource details. |
 | GET | `/resources/{id}/download-url` | Any | Short-lived signed link. |
 | GET | `/question-papers` | Any | Search papers. Filters: `subjectId`, `examYear`, `examType`, `q`. |
@@ -226,6 +228,7 @@ All paths start with `/admin` and require the `ADMIN` role.
 | GET, POST | `/admin/notices` | List all notices (including drafts) and create. |
 | PUT, DELETE | `/admin/notices/{id}` | Update or delete a notice. |
 | POST | `/admin/notices/{id}/publish`, `/admin/notices/{id}/unpublish` | Change status. |
+| POST, DELETE, GET | `/admin/notices/{id}/document` | Attach or replace the official document (multipart part `file`: PDF, JPEG or PNG, at most 10 MB; 413 too large, 415 not a valid file, 503 storage unavailable), remove it (404 when there is none), or get a signed link (drafts included). POST and DELETE return the notice. |
 | GET, POST | `/admin/resources` | List all resources and upload (multipart). |
 | PUT, DELETE | `/admin/resources/{id}` | Update details or status; delete. |
 | GET, POST | `/admin/quiz-questions` | List and create questions. |

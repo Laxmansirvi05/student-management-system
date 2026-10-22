@@ -2,6 +2,7 @@ package com.campuscompanion.notice;
 
 import com.campuscompanion.common.security.CurrentUser;
 import com.campuscompanion.common.web.PageResponse;
+import com.campuscompanion.notice.dto.NoticeDocumentLinkResponse;
 import com.campuscompanion.notice.dto.NoticeResponse;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -32,6 +33,15 @@ public class NoticeController {
       @RequestParam(defaultValue = "0") @Min(0) int page,
       @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
     return notices.visibleTo(currentUser, category, page, size);
+  }
+
+  /** A five-minute link to the notice's official document; add download=true to save it. */
+  @GetMapping("/{id}/document")
+  public NoticeDocumentLinkResponse document(
+      @AuthenticationPrincipal CurrentUser currentUser,
+      @PathVariable Long id,
+      @RequestParam(defaultValue = "false") boolean download) {
+    return notices.documentLink(currentUser, id, download);
   }
 
   @GetMapping("/{id}")

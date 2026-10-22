@@ -43,6 +43,7 @@ A priority is changed only by editing this document, stating the reason, with th
 | FR-MRK-002 | View semester results and CGPA | P0 |
 | FR-TT-001 | View timetable | P0 |
 | FR-NOT-001 | Notices and deadlines | P0 |
+| FR-NOT-002 | Official document of a notice | P1 |
 | FR-LIB-001 | Browse and filter resources | P0 |
 | FR-LIB-002 | Search resources | P0 |
 | FR-LIB-003 | Preview and download | P0 |
@@ -238,6 +239,7 @@ A priority is changed only by editing this document, stating the reason, with th
   2. An overall percentage across subjects.
   3. Selecting a subject shows the dated history, newest first.
 - **Edge cases:** A subject with no classes recorded shows "No classes recorded yet", not 0%.
+- **Changed on 2026-10-22 at the owner's request:** the college gives each student a total, not subject-wise records, so the page shows only the total attendance (from the college's report when there are no subject-wise records) and the planner of FR-ATT-003. Criteria 1 and 3 are no longer shown on the page; the subject-wise API stays for later.
 - **Depends on:** FR-ADM-002.
 
 ### FR-ATT-002 Low-attendance flag (P0)
@@ -253,11 +255,13 @@ A priority is changed only by editing this document, stating the reason, with th
   2. If already above the target, show how many classes can be missed while staying at or above it.
   3. The result is labelled an estimate based on recorded classes.
 - **Edge cases:** Target of 100% with any absence shows "Not reachable".
+- **Built on 2026-10-22, on the total instead of a subject:** for 70%, 75%, 80% and 85% the page shows how many classes to attend in a row to reach each, or how many can be missed in a row while staying at or above it, and a "what if" box for the coming classes. 100% is not offered.
 
 ### FR-MRK-001 View own marks (P0)
 
 - **Acceptance criteria:** For each subject, list published assessments with marks obtained, maximum marks and percentage. Unpublished assessments are not shown.
 - **Edge cases:** Marked absent shows "Absent", not 0.
+- **Changed on 2026-10-22 at the owner's request:** the student Results page no longer shows marks; it shows only semester results (FR-MRK-002). The marks API and the admin marks page stay.
 - **Depends on:** FR-ADM-003.
 
 ### FR-MRK-002 View semester results and CGPA (P0)
@@ -284,6 +288,18 @@ A priority is changed only by editing this document, stating the reason, with th
 - **Edge cases:** Draft notices are never visible to students.
 - **Depends on:** FR-ADM-006.
 
+### FR-NOT-002 Official document of a notice (P1)
+
+Added on 2026-10-22 at the owner's request: the college's circular carries its stamp and signature, so students should see the real document, not only a summary.
+
+- **Acceptance criteria:**
+  1. An admin can attach one official document to a notice (a PDF, or a JPEG or PNG photo or scan, up to 10 MB), replace it or remove it. A text-only notice stays possible.
+  2. A notice with a document is marked "Official notice attached" in the list. Opening it shows a short summary and the document itself: a picture inline, a PDF in a viewer, with "Open full size" and "Download".
+  3. A student reaches the document only through a five-minute signed link, and only for a notice they may see (published and meant for them); otherwise "not found".
+  4. A picture is drawn again as a new JPEG (at most 2,400 pixels on its longer side), so nothing but the pixels is stored.
+- **Edge cases:** A file that is not a real PDF or picture, or is too small to read, is refused and nothing is stored. Deleting the notice or replacing the document removes the old file.
+- **Depends on:** FR-NOT-001, FR-ADM-006.
+
 ## 6. Learning resource hub
 
 ### FR-LIB-001 Browse and filter (P0)
@@ -294,6 +310,7 @@ A priority is changed only by editing this document, stating the reason, with th
   2. Question papers also filter by exam year and exam type.
   3. Results are paginated, 20 per page, and show title, subject, unit, type and upload date.
 - **Edge cases:** No match shows "No resources match these filters" with a clear-filters action.
+- **Changed on 2026-10-22 at the owner's request:** without a search or filter, the hub shows one folder per subject (newest semester first, with how many resources each has). Opening a folder lists that subject's resources grouped as whole-subject material and then unit by unit.
 - **Depends on:** FR-ADM-007.
 
 ### FR-LIB-002 Search (P0)

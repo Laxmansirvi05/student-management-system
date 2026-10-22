@@ -254,8 +254,11 @@ Index: (`branch`, `semester`, `section`, `day_of_week`). Overlaps within a secti
 | published_at | TIMESTAMPTZ | NULL | |
 | created_by | BIGINT | NOT NULL, FK → users | |
 | created_at, updated_at | TIMESTAMPTZ | NOT NULL | |
+| document_path | VARCHAR(300) | NULL, UNIQUE | The official document in the private bucket (`notices/<uuid>.pdf` or `.jpg`). Added in V12. |
+| document_type | VARCHAR(30) | NULL, CHECK in (`application/pdf`, `image/jpeg`) | Set together with the path and size. |
+| document_size | INTEGER | NULL, CHECK > 0 | Bytes. |
 
-Index: (`status`, `published_at` DESC).
+Index: (`status`, `published_at` DESC). The three document columns are all set or all empty (FR-NOT-002).
 
 ### 4.11 `learning_resources`
 
@@ -531,6 +534,7 @@ Flyway, versioned SQL files, forward-only. See [ADR 0006](decisions/0006-flyway-
 | V5 | `V5__ai.sql` | ai_request_logs | M5 |
 | V6 | `V6__profile_details.sql` | Adds `bio` and `photo_path` to student_profiles ([ADR 0009](decisions/0009-student-personal-details-and-photo.md)) | Added 2026-10-14 |
 | V8 | `V8__subject_results.sql` | Adds `subject_results`; lets `semester_results.sgpa` be empty for a semester that is not passed (sections 4.8, 4.8a) | Added 2026-10-18 |
+| V12 | `V12__notice_documents.sql` | Adds the official document columns to `notices` (section 4.10) | Added 2026-10-22 |
 | V11 | `V11__pyq_created_by_optional.sql` | Makes `pyq_papers.created_by` optional (section 4.21) | Added 2026-10-19 |
 | V10 | `V10__pyq.sql` | Adds `pyq_papers` and `pyq_bookmarks` (sections 4.21 and 4.22) | Added 2026-10-18 |
 | V9 | `V9__profile_links.sql` | Adds `personal_email`, `linkedin_url`, `github_url`, `portfolio_url` and `skills` to student_profiles (section 4.2) | Added 2026-10-18 |

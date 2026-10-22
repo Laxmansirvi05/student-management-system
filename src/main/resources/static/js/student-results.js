@@ -1,99 +1,14 @@
 import { api } from "./api.js";
 import { fill, h, icon, stagger, tag } from "./dom.js";
-import { bar, countUp, enableTilt, reveal, ring, segmented, swap } from "./motion.js";
+import { bar, countUp, enableTilt, reveal, ring } from "./motion.js";
 import { empty, loadInto } from "./parts.js";
 import { currentStudent } from "./shell.js";
 
-// Results (FR-MRK-001, FR-MRK-002): the published marks of a semester, and the official semester
-// results with the CGPA the server calculates. Everything is read-only.
+// Results (FR-MRK-002): the official semester results with the grade sheets and the CGPA the
+// server calculates. Everything is read-only.
 
 const content = document.getElementById("content");
-const TYPES = { INTERNAL: "Internal exam", ASSIGNMENT: "Assignment", LAB: "Lab", SEMESTER_EXAM: "Semester exam" };
 let currentSemester = 1;
-let semester = 1;
-
-const two = (value) => Number(value).toFixed(2);
-
-function subjectCard(subject) {
-  if (!subject.assessments.length) {
-    return h(
-      "section.card.card--flat.reveal",
-      h("div.line.line--start", h("span.tag.mono", subject.subjectCode)),
-      h("h3.subject__name", subject.subjectName),
-      h("p.note", icon("clock"), "Marks have not been published yet."),
-    );
-  }
-  // An absent student has no marks for that assessment, so it adds nothing to "obtained".
-  const obtained = subject.assessments.reduce((sum, item) => sum + (item.marksObtained ?? 0), 0);
-  const maximum = subject.assessments.reduce((sum, item) => sum + item.maxMarks, 0);
-  const total = (obtained / maximum) * 100;
-  const rows = subject.assessments.map((item) =>
-    h(
-      "li.row.marks__row",
-      h("div.stack.stack--tight", h("span.row__title", item.name), h("span.row__meta", TYPES[item.type])),
-      item.absent
-        ? tag("Absent", "danger")
-        : item.marksObtained === null
-          ? tag("Not entered")
-          : h("span.mono.num", `${two(item.marksObtained)} / ${item.maxMarks}`),
-      h("span.row__meta.num.marks__pct", item.percent === null ? "—" : two(item.percent) + "%"),
-    ),
-  );
-  return h(
-    "section.card.card--lift.reveal",
-    h(
-      "div.line",
-      h("div.stack", h("span.tag.tag--primary.mono", subject.subjectCode), h("h3.subject__name", subject.subjectName)),
-      h("div.stack.stack--tight.align-end", h("span.figure.figure--small", two(total) + "%"), h("span.eyebrow", "So far")),
-    ),
-    bar(total, total >= 75 ? "success" : total < 50 ? "danger" : ""),
-    h("div.line.marks__head", h("span.eyebrow", "Assessment"), h("span.eyebrow", "Marks")),
-    h("ul.rows", rows),
-    h("div.inset.inset--row", h("span.row__title", "Total"), h("span.mono.num", `${two(obtained)} / ${maximum}`)),
-  );
-}
-
-function loadMarks() {
-  const holder = document.getElementById("marks");
-  holder.className = "grid grid--2";
-  fill(holder, h("div.skeleton.skeleton--card"), h("div.skeleton.skeleton--card"));
-  loadInto(holder, () => api.get("/marks/me?semester=" + semester), (subjects) => {
-    if (!subjects.length) {
-      holder.className = "card";
-      fill(holder, empty("clock", "Marks have not been published yet", `Nothing is published for semester ${semester}.`));
-      return;
-    }
-    fill(holder, stagger(subjects.map(subjectCard)));
-    reveal();
-  });
-}
-
-function marksView() {
-  const numbers = Array.from({ length: currentSemester }, (_, index) => currentSemester - index);
-  const pills = h(
-    "div.pills",
-    { role: "group", "aria-label": "Semester" },
-    numbers.map((number) => {
-      const pill = h(
-        "button.pill",
-        { type: "button", "aria-pressed": String(number === semester) },
-        "Semester " + number,
-        number === currentSemester ? h("span.pill__count", "current") : null,
-      );
-      pill.addEventListener("click", () => {
-        semester = number;
-        for (const other of pill.parentElement.children) {
-          other.setAttribute("aria-pressed", String(other === pill));
-        }
-        loadMarks();
-      });
-      return pill;
-    }),
-  );
-  fill(content, h("div.card.card--bar.reveal", h("span.eyebrow", "Semester"), pills), h("div.grid.grid--2", { id: "marks" }));
-  loadMarks();
-  reveal();
-}
 
 const STATUS = {
   PASS: ["Pass", "success", "check-circle"],
@@ -265,19 +180,9 @@ function semestersView() {
   });
 }
 
-function render(view) {
-  if (view === "marks") {
-    marksView();
-  } else {
-    semestersView();
-  }
-}
-
-segmented(document.getElementById("view-tabs"), (view) => swap(content, () => render(view)));
 currentStudent
   .then((student) => {
     currentSemester = student ? student.currentSemester : 1;
-    semester = currentSemester;
   })
   .catch(() => {})
-  .finally(() => render("marks"));
+  .finally(semestersView);

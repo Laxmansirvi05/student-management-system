@@ -1,11 +1,13 @@
-import { api } from "./api.js";
+import { api, messageFor } from "./api.js";
 import { fill, formatDate, h, icon, stagger } from "./dom.js";
 import { reveal, swap } from "./motion.js";
 import { categoryLabels, categoryTag, dueTag, dueText, empty, isWide, loadInto, openSheet } from "./parts.js";
 import "./shell.js";
 
-// Notices (FR-NOT-001): published notices, newest first, with a filter by category, a search box
-// and the full text of the chosen notice. The server sends only notices this student may see.
+// Notices (FR-NOT-001, FR-NOT-002): published notices, newest first, with a filter by category, a
+// search box and the chosen notice with its official document (the college's circular with its
+// stamp and signature), shown through a short-lived link. The server sends only notices this
+// student may see.
 
 const PAGE_SIZE = 100;
 const content = document.getElementById("content");
@@ -19,6 +21,41 @@ function matches(notice) {
   return (category === "ALL" || notice.category === category) && text.includes(query.toLowerCase());
 }
 
+/** The official document: the picture itself, or the PDF in a frame, with open and download. */
+function officialDocument(notice) {
+  const holder = h("div.notice-doc", h("p.row__meta", "Loading the official notice…"));
+  const isPicture = notice.documentType === "image/jpeg";
+  api
+    .get(`/notices/${notice.id}/document`)
+    .then(async (link) => {
+      const open = h("a.button.button--secondary.button--small", { href: link.url, target: "_blank", rel: "noopener noreferrer" }, icon("external"), "Open full size");
+      const save = h("button.button.button--quiet.button--small", { type: "button" }, icon("download"), "Download");
+      save.addEventListener("click", async () => {
+        try {
+          const file = await api.get(`/notices/${notice.id}/document?download=true`);
+          const anchor = h("a", { href: file.url, download: "" });
+          document.body.append(anchor);
+          anchor.click();
+          anchor.remove();
+        } catch (failure) {
+          holder.append(h("p.field__error", messageFor(failure)));
+        }
+      });
+      let view;
+      if (isPicture) {
+        view = h("a.notice-doc__picture", { href: link.url, target: "_blank", rel: "noopener noreferrer", "aria-label": "Open the official notice full size" }, h("img", { src: link.url, alt: "Official notice: " + notice.title, loading: "lazy" }));
+      } else if (navigator.pdfViewerEnabled === false) {
+        view = h("p.row__meta", "Your browser cannot show PDFs inside the page. Use Open full size or Download.");
+      } else {
+        // Fit the page to the width and hide the thumbnails, so the circular is readable in the panel.
+        view = h("iframe.notice-doc__frame", { src: link.url + "#navpanes=0&view=FitH", title: "Official notice: " + notice.title });
+      }
+      fill(holder, h("div.notice-doc__head", h("span.eyebrow", icon("shield"), " Official notice"), h("span.notice-doc__actions", open, save)), view);
+    })
+    .catch((failure) => fill(holder, h("p.row__meta", messageFor(failure))));
+  return holder;
+}
+
 function detail(notice) {
   return [
     h("div.line.line--start.line--wrap", categoryTag(notice.category), dueTag(notice.dueDate)),
@@ -27,6 +64,7 @@ function detail(notice) {
       ? h("div.inset.inset--row", h("span.line.line--start", icon("calendar"), h("strong.num", "Due " + formatDate(notice.dueDate))), h("span.eyebrow", dueText(notice.dueDate)))
       : null,
     h("div.notice__body", notice.body.split(/\n\s*\n/).map((paragraph) => h("p", paragraph))),
+    notice.documentType ? officialDocument(notice) : null,
     h("p.note", icon("clock"), "Published " + formatDate(notice.publishedAt)),
   ];
 }
@@ -38,7 +76,11 @@ function card(notice) {
     h("div.line", h("span.line.line--start", categoryTag(notice.category), h("span.eyebrow.num", formatDate(notice.publishedAt))), dueTag(notice.dueDate)),
     h("h3.subject__name", notice.title),
     h("p.row__meta.clamp-2", notice.body.split(/\n\s*\n/)[0]),
-    notice.dueDate ? h("p.row__meta.line.line--start", icon("clock"), dueText(notice.dueDate)) : null,
+    h(
+      "p.row__meta.line.line--start.line--wrap",
+      notice.dueDate ? h("span.line.line--start", icon("clock"), dueText(notice.dueDate)) : null,
+      notice.documentType ? h("span.line.line--start", icon("file"), "Official notice attached") : null,
+    ),
   );
   element.addEventListener("click", () => {
     chosen = notice;

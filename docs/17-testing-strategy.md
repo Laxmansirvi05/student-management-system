@@ -326,6 +326,7 @@ Notation: `AU`, `PV`, `Z` and `UP` numbers are the scenarios in sections 6 and 8
 | AT-MRK-002 | FR-MRK-002 | CGPA is weighted by credits registered; unpublished and withheld semesters are left out | `ResultServiceTest`; controller test; E1.4 |
 | AT-TT-001 | FR-TT-001 | The student sees the timetable of their own branch, semester and section | Controller test; integration test |
 | AT-NOT-001 | FR-NOT-001 | Only published, correctly targeted notices are returned; due dates appear as deadlines | Integration test; Z8 |
+| AT-NOT-002 | FR-NOT-002 | A PDF or picture is attached, replaced and removed; pictures are stored as new JPEGs; wrong files are refused with nothing stored; only students who may see the notice get a link; removing or deleting removes the file | `NoticeDocumentIT` |
 | AT-LIB-001 | FR-LIB-001 | Every filter and pagination work, alone and combined | Repository tests; controller test; E1.5 |
 | AT-LIB-002 | FR-LIB-002 | Search matches title and description, ignores case, and escapes wildcards | Repository tests |
 | AT-LIB-003 | FR-LIB-003 | A signed link is issued only for a published resource and lasts at most five minutes | UP9, UP10; Z9; the manual bucket check in section 8; E1.5 |

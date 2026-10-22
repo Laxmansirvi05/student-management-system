@@ -96,12 +96,15 @@ In the first release, further admin accounts are created only by the owner direc
 | --- | --- | --- | --- | --- | --- |
 | Notices | Read | ❌ | 📢 published, for all or for own branch and semester | ✅ including drafts | — |
 | Notices | Create, update, publish, unpublish, delete | ❌ | ❌ | ✅ | — |
+| Notice official document | Get a signed link | ❌ | 📢 only for a notice they may read | ✅ including drafts | Issues the link |
+| Notice official document | Attach, replace, remove | ❌ | ❌ | ✅ | Stores and removes the file |
 
 ### 4.4 Learning resources
 
 | Data | Action | Visitor | Student | Admin | System |
 | --- | --- | --- | --- | --- | --- |
 | Resource metadata | Read | ❌ | 📢 published | ✅ including hidden | — |
+| Resource subject folders | Read (counts of published resources) | ❌ | ✅ | ✅ | — |
 | Resource file | Get a signed link | ❌ | 📢 published | ✅ | Issues the link |
 | Resource file | Direct read from storage without a signed link | ❌ | ❌ | ❌ | ✅ with service key |
 | Resource | Upload, update, hide, delete | ❌ | ❌ | ✅ | — |

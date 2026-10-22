@@ -14,4 +14,5 @@ public record NoticeResponse(
     Integer targetSemester,
     LocalDate dueDate,
     NoticeStatus status,
-    Instant publishedAt) {}
+    Instant publishedAt,
+    String documentType) {}

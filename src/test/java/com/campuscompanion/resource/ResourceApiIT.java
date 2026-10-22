@@ -448,6 +448,19 @@ class ResourceApiIT extends ApiIntegrationTest {
     // The text is matched in the title and the description, in any letter case.
     assertThat(titles(student, "/api/v1/resources?subjectId=" + dataStructures + "&q=ARRAYS"))
         .containsExactly("Lab manual", "Arrays notes");
+    // The subject folders count only published resources, the newest semester first.
+    JsonNode folders = json(student.get("/api/v1/resources/subjects"));
+    JsonNode dsFolder =
+        folders
+            .valueStream()
+            .filter(folder -> folder.get("subjectId").asLong() == dataStructures)
+            .findFirst()
+            .orElseThrow();
+    assertThat(dsFolder.get("resources").asLong()).isEqualTo(3);
+    assertThat(dsFolder.get("subjectName").asString()).isNotBlank();
+    java.util.List<Integer> semesters =
+        folders.valueStream().map(folder -> folder.get("semester").asInt()).toList();
+    assertThat(semesters).isSortedAccordingTo(java.util.Comparator.reverseOrder());
     // A percent sign or an underscore is just a character, so it matches nothing here.
     assertThat(titles(student, "/api/v1/resources?q=%25%25")).isEmpty();
     assertThat(titles(student, "/api/v1/resources?q=__")).isEmpty();

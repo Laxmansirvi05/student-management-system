@@ -75,4 +75,13 @@ public interface LearningResourceRepository extends JpaRepository<LearningResour
         and r.id in (select b.resourceId from Bookmark b where b.studentId = :studentId)
       """)
   Page<LearningResource> findBookmarked(@Param("studentId") Long studentId, Pageable pageable);
+
+  /** How many published resources each subject has: rows of subject id and count. */
+  @Query(
+      """
+      select r.subjectId, count(r) from LearningResource r
+      where r.status = com.campuscompanion.resource.ResourceStatus.PUBLISHED
+      group by r.subjectId
+      """)
+  List<Object[]> publishedCountsBySubject();
 }

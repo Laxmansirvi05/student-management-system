@@ -23,6 +23,7 @@ public class InMemoryStorageClient implements StorageClient {
   private volatile boolean failUploads;
   private volatile boolean failDeletes;
   private volatile boolean failSigning;
+  private volatile String lastWritten;
 
   @Override
   public void upload(String path, byte[] content, String contentType) {
@@ -30,6 +31,7 @@ public class InMemoryStorageClient implements StorageClient {
       throw new StorageUnavailableException();
     }
     files.put(path, content.clone());
+    lastWritten = path;
   }
 
   @Override
@@ -51,6 +53,11 @@ public class InMemoryStorageClient implements StorageClient {
             + "?token=test"
             + (downloadName == null ? "" : "&download=" + downloadName),
         Instant.now().plus(validFor));
+  }
+
+  /** The path of the most recent successful upload. */
+  public String lastWritten() {
+    return lastWritten;
   }
 
   public Set<String> paths() {

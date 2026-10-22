@@ -326,6 +326,23 @@ paths:
               schema: { $ref: "#/components/schemas/Notice" }
         "404": { $ref: "#/components/responses/Problem" }
 
+  /notices/{id}/document:
+    get:
+      tags: [Student]
+      summary: Signed link to a notice's official document
+      description: Only for a notice the user may read. With download=true the file is saved under a readable name.
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+        - { name: download, in: query, schema: { type: boolean, default: false } }
+      responses:
+        "200":
+          description: Link.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/NoticeDocumentLink" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "503": { $ref: "#/components/responses/Problem" }
+
   /subjects:
     get:
       tags: [Student]
@@ -382,6 +399,20 @@ paths:
               schema: { $ref: "#/components/schemas/ResourcePage" }
         "400": { $ref: "#/components/responses/Problem" }
         "401": { $ref: "#/components/responses/Problem" }
+
+  /resources/subjects:
+    get:
+      tags: [Resources]
+      summary: Subject folders of the resource hub
+      description: Subjects that have published resources, newest semester first, then by name.
+      responses:
+        "200":
+          description: Folders.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ResourceSubjectFolder" }
 
   /resources/{id}:
     get:
@@ -1015,6 +1046,57 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/Notice" }
         "400": { $ref: "#/components/responses/Problem" }
+
+  /admin/notices/{id}/document:
+    post:
+      tags: [Admin]
+      summary: Attach or replace a notice's official document
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary, description: "PDF, JPEG or PNG, at most 10 MB." }
+      responses:
+        "200":
+          description: The notice with its document.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Notice" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "413": { $ref: "#/components/responses/Problem" }
+        "415": { $ref: "#/components/responses/Problem" }
+        "503": { $ref: "#/components/responses/Problem" }
+    delete:
+      tags: [Admin]
+      summary: Remove a notice's official document
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      responses:
+        "200":
+          description: The notice, now text only.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Notice" }
+        "404": { $ref: "#/components/responses/Problem" }
+    get:
+      tags: [Admin]
+      summary: Signed link to a notice's official document, drafts included
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+        - { name: download, in: query, schema: { type: boolean, default: false } }
+      responses:
+        "200":
+          description: Link.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/NoticeDocumentLink" }
+        "404": { $ref: "#/components/responses/Problem" }
 
   /admin/notices/{id}/publish:
     post:
@@ -2147,6 +2229,29 @@ components:
         dueDate: { type: string, format: date, nullable: true }
         status: { type: string, enum: [DRAFT, PUBLISHED] }
         publishedAt: { type: string, format: date-time, nullable: true }
+        documentType:
+          type: string
+          nullable: true
+          enum: [application/pdf, image/jpeg]
+          description: The official document's type, or null when the notice is text only.
+
+    NoticeDocumentLink:
+      type: object
+      required: [url, expiresAt, contentType]
+      properties:
+        url: { type: string, description: "Signed link, valid for five minutes." }
+        expiresAt: { type: string, format: date-time }
+        contentType: { type: string, enum: [application/pdf, image/jpeg] }
+
+    ResourceSubjectFolder:
+      type: object
+      required: [subjectId, subjectCode, subjectName, semester, resources]
+      properties:
+        subjectId: { type: integer, format: int64 }
+        subjectCode: { type: string }
+        subjectName: { type: string }
+        semester: { type: integer }
+        resources: { type: integer, format: int64, description: Published resources of the subject. }
 
     NoticeWriteRequest:
       type: object

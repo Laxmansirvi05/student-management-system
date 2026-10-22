@@ -1284,3 +1284,98 @@ button.qdot:hover {
     grid-column: auto;
   }
 }
+
+/* ---- Attendance planner ---- */
+.planner__row {
+  display: grid;
+  grid-template-columns: 3.5rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.planner__target {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.planner__text {
+  min-width: 0;
+}
+
+.planner__inputs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.planner__result {
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg-subtle);
+  border-radius: var(--radius-input);
+}
+
+@media (max-width: 480px) {
+  .planner__row {
+    grid-template-columns: 3rem minmax(0, 1fr);
+  }
+
+  .planner__row .tag {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
+
+/* ---- The official document of a notice ---- */
+.notice-doc {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-input);
+}
+
+.notice-doc__picture {
+  display: block;
+  overflow: hidden;
+  border-radius: var(--radius-input);
+  background: var(--color-bg-subtle);
+}
+
+.notice-doc__picture img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.notice-doc__frame {
+  width: 100%;
+  height: min(75vh, 900px);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-input);
+  background: var(--color-bg-subtle);
+}
+
+/* ---- Resource folders ---- */
+.folder-group__title {
+  margin: var(--space-2) 0 0;
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+}
+
+.notice-doc__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.notice-doc__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.notice-doc__actions .button {
+  white-space: nowrap;
+}

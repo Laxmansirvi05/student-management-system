@@ -2,11 +2,16 @@ package com.campuscompanion.notice;
 
 import com.campuscompanion.common.error.ResourceNotFoundException;
 import com.campuscompanion.common.security.CurrentUser;
+import com.campuscompanion.common.storage.StorageClient;
 import com.campuscompanion.common.web.PageResponse;
+import com.campuscompanion.notice.dto.NoticeDocumentLinkResponse;
 import com.campuscompanion.notice.dto.NoticeResponse;
 import com.campuscompanion.notice.dto.NoticeWriteRequest;
 import java.time.Clock;
 import java.util.Locale;
+import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -21,11 +26,18 @@ import org.springframework.transaction.annotation.Transactional;
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminNoticeService {
 
+  private static final Logger log = LoggerFactory.getLogger(AdminNoticeService.class);
+
   private final NoticeRepository notices;
+  private final StorageClient storage;
+  private final NoticeDocumentChecker checker;
   private final Clock clock;
 
-  public AdminNoticeService(NoticeRepository notices, Clock clock) {
+  public AdminNoticeService(
+      NoticeRepository notices, StorageClient storage, NoticeDocumentChecker checker, Clock clock) {
     this.notices = notices;
+    this.storage = storage;
+    this.checker = checker;
     this.clock = clock;
   }
 
@@ -79,9 +91,77 @@ public class AdminNoticeService {
     find(id).unpublish(clock.instant());
   }
 
+  /** Deletes the notice and then its document, so a failed file removal keeps the notice. */
   @Transactional
   public void delete(Long id) {
-    notices.delete(find(id));
+    Notice notice = find(id);
+    String document = notice.getDocumentPath();
+    notices.delete(notice);
+    notices.flush();
+    if (document != null) {
+      storage.delete(document);
+    }
+  }
+
+  /**
+   * Adds the official document (the scanned circular) to a notice, or replaces it. The new file is
+   * stored first; if the notice cannot be saved, it is removed again.
+   */
+  @Transactional
+  public NoticeResponse attachDocument(
+      Long id, byte[] content, String declaredType, String fileName) {
+    Notice notice = find(id);
+    NoticeDocumentChecker.Checked checked = checker.check(content, declaredType, fileName);
+    String extension = "application/pdf".equals(checked.contentType()) ? ".pdf" : ".jpg";
+    String path = "notices/" + UUID.randomUUID() + extension;
+    storage.upload(path, checked.content(), checked.contentType());
+    String previous;
+    try {
+      previous =
+          notice.attachDocument(
+              path, checked.contentType(), checked.content().length, clock.instant());
+      notices.flush();
+    } catch (RuntimeException databaseFailure) {
+      removeQuietly(path);
+      throw databaseFailure;
+    }
+    if (previous != null) {
+      removeQuietly(previous);
+    }
+    return NoticeService.toResponse(notice);
+  }
+
+  /** Takes the document off a notice; the notice stays as text. */
+  @Transactional
+  public NoticeResponse removeDocument(Long id) {
+    Notice notice = find(id);
+    String previous = notice.removeDocument(clock.instant());
+    if (previous == null) {
+      throw new ResourceNotFoundException();
+    }
+    notices.flush();
+    storage.delete(previous);
+    return NoticeService.toResponse(notice);
+  }
+
+  /** A five-minute link for the admin, drafts included. */
+  @Transactional(readOnly = true)
+  public NoticeDocumentLinkResponse documentLink(Long id, boolean download) {
+    return NoticeService.linkTo(find(id), download, storage);
+  }
+
+  /**
+   * A file that is no longer referenced is removed; if storage refuses, the notice is still right,
+   * so the problem is logged for the clean-up job (T7-09) instead of failing the request.
+   */
+  private void removeQuietly(String path) {
+    try {
+      storage.delete(path);
+    } catch (RuntimeException storageFailure) {
+      log.warn(
+          "An unreferenced notice document could not be removed: {}",
+          storageFailure.getClass().getSimpleName());
+    }
   }
 
   private Notice find(Long id) {

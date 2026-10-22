@@ -58,6 +58,16 @@ public class Notice {
   @Column(name = "updated_at", nullable = false)
   private Instant updatedAt = Instant.now();
 
+  /** The official document in the private bucket, or null when the notice is text only. */
+  @Column(name = "document_path", length = 300)
+  private String documentPath;
+
+  @Column(name = "document_type", length = 30)
+  private String documentType;
+
+  @Column(name = "document_size")
+  private Integer documentSize;
+
   /** Required by JPA. */
   protected Notice() {}
 
@@ -136,5 +146,37 @@ public class Notice {
 
   public Instant getPublishedAt() {
     return publishedAt;
+  }
+
+  /** Sets the official document and returns the path of the one it replaces, or null. */
+  public String attachDocument(String path, String contentType, int size, Instant now) {
+    String previous = documentPath;
+    documentPath = path;
+    documentType = contentType;
+    documentSize = size;
+    updatedAt = now;
+    return previous;
+  }
+
+  /** Removes the official document and returns its path, or null when there was none. */
+  public String removeDocument(Instant now) {
+    String previous = documentPath;
+    documentPath = null;
+    documentType = null;
+    documentSize = null;
+    updatedAt = now;
+    return previous;
+  }
+
+  public String getDocumentPath() {
+    return documentPath;
+  }
+
+  public String getDocumentType() {
+    return documentType;
+  }
+
+  public Integer getDocumentSize() {
+    return documentSize;
   }
 }

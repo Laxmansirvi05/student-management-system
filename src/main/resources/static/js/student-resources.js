@@ -4,7 +4,8 @@ import { reveal } from "./motion.js";
 import { empty, loadInto, resourceCard, resourceTypes } from "./parts.js";
 import "./shell.js";
 
-// The resource hub (FR-LIB-001, FR-LIB-002): search, three filters, and pages of resource cards.
+// The resource hub (FR-LIB-001, FR-LIB-002): subject folders first; a folder shows that subject's
+// resources grouped by unit. A search or a type filter lists matching resources from every subject.
 // The server does the searching; this page only sends the filters and draws what comes back.
 // Students can read and bookmark; uploading belongs to the admin side.
 
@@ -30,8 +31,8 @@ const reset = h("button.button.button--quiet.button--small", { type: "button" },
 const list = h("div.stack.stack--loose", { id: "list" }, h("div.skeleton.skeleton--card"));
 
 /** The filters as a query string. A search of one letter is left out, as the server asks for two. */
-function query() {
-  const params = new URLSearchParams({ page: state.page, size: PAGE_SIZE });
+function query(size = PAGE_SIZE) {
+  const params = new URLSearchParams({ page: state.page, size });
   if (state.query.length >= 2) {
     params.set("q", state.query);
   }
@@ -79,13 +80,104 @@ function nothingFound() {
 // fast typing can never show the results of an older search.
 let latest = 0;
 
+/** The subject folders, newest semester first, as cards to open. */
+function folders(subjects) {
+  const bySemester = new Map();
+  for (const subject of subjects) {
+    if (!bySemester.has(subject.semester)) {
+      bySemester.set(subject.semester, []);
+    }
+    bySemester.get(subject.semester).push(subject);
+  }
+  return [...bySemester].map(([semester, list]) =>
+    h(
+      "section.stack.reveal",
+      { "aria-label": "Semester " + semester },
+      h("h2.folder-group__title", "Semester " + semester),
+      h(
+        "div.grid.grid--3",
+        list.map((subject) => {
+          const card = h(
+            "button.card.card--choice.card--lift.folder",
+            { type: "button" },
+            h("div.line", h("span.badge-icon", icon("book-open")), h("span.tag.mono", subject.subjectCode)),
+            h("h3.subject__name", subject.subjectName),
+            h("p.row__meta.num", subject.resources === 1 ? "1 resource" : subject.resources + " resources"),
+            h("span.more", "Open", icon("chevron-right")),
+          );
+          card.addEventListener("click", () => openSubject(subject.subjectId));
+          return card;
+        }),
+      ),
+    ),
+  );
+}
+
+function openSubject(subjectId) {
+  state.subjectId = String(subjectId);
+  state.unitId = "";
+  subjectField.select.value = state.subjectId;
+  fillUnits();
+  refresh();
+  list.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+/** One subject's resources, grouped: whole-subject material first, then unit by unit. */
+function subjectView(page) {
+  const first = page.content[0];
+  const back = h("button.button.button--quiet.button--small", { type: "button" }, icon("arrow-left"), "All subjects");
+  back.addEventListener("click", clearFilters);
+  const groups = new Map();
+  for (const resource of page.content) {
+    const key = resource.unitNo ?? 0;
+    if (!groups.has(key)) {
+      groups.set(key, []);
+    }
+    groups.get(key).push(resource);
+  }
+  const ordered = [...groups].sort(([a], [b]) => a - b);
+  return [
+    h(
+      "div.line.reveal",
+      h("div.stack.stack--tight", h("p.eyebrow", first ? first.subjectCode : ""), h("h2", first ? first.subjectName : "Subject"), h("p.row__meta.num", page.totalElements === 1 ? "1 resource" : page.totalElements + " resources")),
+      back,
+    ),
+    ...ordered.map(([unitNo, resources]) =>
+      h(
+        "section.stack.reveal",
+        { "aria-label": unitNo ? "Unit " + unitNo : "Whole subject" },
+        h("h3.folder-group__title", unitNo ? `Unit ${unitNo}${resources[0].unitTitle && resources[0].unitTitle !== "Unit " + unitNo ? ": " + resources[0].unitTitle : ""}` : "Whole subject"),
+        h("div.grid.grid--3", stagger(resources.map((resource) => resourceCard(resource)))),
+      ),
+    ),
+  ];
+}
+
 function load() {
   const mine = ++latest;
-  loadInto(list, () => api.get("/resources?" + query()), (page) => {
+  if (!filtered()) {
+    count.textContent = "";
+    loadInto(list, () => api.get("/resources/subjects"), (subjects) => {
+      if (mine !== latest) {
+        return;
+      }
+      fill(list, subjects.length ? folders(subjects) : nothingFound());
+      reveal();
+    });
+    return;
+  }
+  const oneSubject = state.subjectId && state.query.length < 2 && !state.type && !state.unitId;
+  const size = oneSubject ? 100 : PAGE_SIZE;
+  loadInto(list, () => api.get("/resources?" + query(size)), (page) => {
     if (mine !== latest) {
       return;
     }
     count.textContent = page.totalElements === 1 ? "1 resource" : page.totalElements + " resources";
+    if (oneSubject && page.content.length) {
+      fill(list, subjectView(page));
+      reveal();
+      return;
+    }
     fill(
       list,
       page.content.length
@@ -161,8 +253,8 @@ fillUnits();
 reveal();
 load();
 
-// The subject filter lists the subjects of the student's own branch. Without a filter, the list
-// shows the resources of every subject.
+// The subject filter lists the subjects of the student's own branch. Without a filter, the page
+// shows the subject folders.
 api
   .get("/subjects")
   .then((subjects) => {
