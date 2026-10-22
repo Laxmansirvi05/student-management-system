@@ -239,6 +239,12 @@ All paths start with `/admin` and require the `ADMIN` role.
 | GET, POST | `/admin/pyqs` | List all papers and add one (multipart). See 8.18. |
 | GET | `/admin/pyqs/{id}/link` | A five-minute link to any paper, hidden ones too. |
 | PUT, DELETE | `/admin/pyqs/{id}` | Edit details or visibility; delete. |
+| POST, GET | `/complaints` | Raise a complaint; list the public board. Student only. See 8.19. |
+| GET | `/complaints/mine`, `/complaints/{id}` | Own complaints; one complaint. |
+| DELETE | `/complaints/{id}` | Withdraw own open complaint. |
+| PUT, DELETE | `/complaints/{id}/support` | Support or unsupport a public complaint. |
+| GET | `/admin/complaints`, `/admin/complaints/{id}` | List and read complaints. See 8.20. |
+| PUT | `/admin/complaints/{id}` | Set status and response. |
 | GET | `/admin/audit-logs` | Read the audit log, newest first (P1). See 8.15. |
 | GET | `/admin/audit-logs/actions` | The actions that can appear, for the filter. |
 | POST | `/admin/imports/students` | Create many students from one CSV file (P1). See 8.14. |
@@ -738,6 +744,25 @@ The storage path is never in a response.
 - `GET /api/v1/admin/pyqs/{id}/link` gives a five-minute link to any paper. It is not counted as a download.
 - `PUT /api/v1/admin/pyqs/{id}` with `{ "metadata": {...}, "status": "PUBLISHED|HIDDEN" }` changes the details or the visibility. `409` if the new details are another paper's.
 - `DELETE /api/v1/admin/pyqs/{id}` removes the saves, the row and then the file; if the file cannot be removed nothing is removed (`503`).
+
+### 8.19 Complaints (students)
+
+Student only. The student always comes from the session.
+
+- `POST /complaints` with `{type: PUBLIC|PRIVATE|SECURE, category, title (5-120), description (20-2000), showIdentity}` returns 201 with the complaint. A sixth complaint in 24 hours returns 429 `RATE_LIMITED`.
+- `GET /complaints?category=&status=&sort=newest|top&page=&size=` returns a page of public, non-rejected complaints (`size` 1 to 50).
+- `GET /complaints/mine` returns the student's own complaints of every type.
+- `GET /complaints/{id}` returns a public complaint on the board, or one of the student's own; otherwise 404.
+- `DELETE /complaints/{id}` withdraws an own complaint: 204; 409 when it is no longer Open; 404 when it is not theirs.
+- `PUT` and `DELETE /complaints/{id}/support` support or unsupport a public complaint and return it. 409 for your own or a resolved complaint; 404 for one that is not on the board. Repeating either changes nothing.
+- A response has `id, type, category, title, description, status, adminResponse, respondedAt, createdAt, authorRollNo, supporters, group, supported, mine`. `authorRollNo` is set only on a public complaint whose author chose to show it. `group` is true from 5 supporters.
+
+### 8.20 Complaints (admin)
+
+- `GET /admin/complaints?type=&status=&page=&size=` lists every complaint, open first, then in review, then the rest.
+- `GET /admin/complaints/{id}` returns one, with `supportedBy` for a public complaint.
+- `PUT /admin/complaints/{id}` with `{status, response}` sets the handling and is audited as `COMPLAINT_UPDATED`.
+- A response has `student` (`rollNo, fullName, branch, semester, section`), `identityProtected` and `hiddenFromStudents`. **For a `SECURE` complaint `student` is always null, `identityProtected` is true, and `createdAt` is cut to the day.**
 
 ## 9. AI endpoints
 

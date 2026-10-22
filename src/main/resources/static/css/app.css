@@ -1239,3 +1239,9 @@ body.app {
 :root[data-reduce-motion] [data-tilt] {
   transform: none;
 }
+
+/* ---- Complaints ---- */
+.complaint__text {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}

@@ -453,6 +453,32 @@ Unique on the sitting: (`branch`, lower(`subject_name`), `exam_year`, `exam_mont
 
 A student's saved paper. Primary key (`student_id`, `paper_id`), both foreign keys. RLS on; `cc_app` has `SELECT`, `INSERT`, `DELETE`. The application removes a paper's bookmarks before the paper.
 
+### 4.23 `complaints`
+
+A student complaint (FR-CMP-001 to FR-CMP-004, [ADR 0013](decisions/0013-student-complaints.md)). Added in V13. It has **no student column**: the author is in `complaint_owners`.
+
+| Column | Type | Constraints |
+| --- | --- | --- |
+| id | BIGINT | PK |
+| type | VARCHAR(10) | NOT NULL, CHECK in (`PUBLIC`, `PRIVATE`, `SECURE`) |
+| category | VARCHAR(20) | NOT NULL, CHECK in (`ACADEMIC`, `EXAMS`, `FACILITIES`, `FACULTY`, `ADMINISTRATION`, `OTHER`) |
+| title | VARCHAR(120) | NOT NULL |
+| description | VARCHAR(2000) | NOT NULL |
+| show_identity | BOOLEAN | NOT NULL, default false; CHECK: only a `PUBLIC` complaint can be true |
+| status | VARCHAR(10) | NOT NULL, default `OPEN`, CHECK in (`OPEN`, `IN_REVIEW`, `RESOLVED`, `REJECTED`) |
+| admin_response, responded_at | VARCHAR(2000), TIMESTAMPTZ | NULL together |
+| created_at, updated_at | TIMESTAMPTZ | NOT NULL |
+
+Index: (`type`, `status`, `created_at` DESC). RLS on; `cc_app` has `SELECT`, `INSERT`, `UPDATE`, `DELETE`.
+
+### 4.24 `complaint_owners`
+
+Who raised a complaint. Primary key `complaint_id` (foreign key, `ON DELETE CASCADE`), `student_id` NOT NULL (foreign key → student_profiles). The administrator's service never reads this table for a `SECURE` complaint. RLS on; `cc_app` has `SELECT`, `INSERT`, `DELETE`.
+
+### 4.25 `complaint_supports`
+
+One student's support for one public complaint. Primary key (`complaint_id`, `student_id`), both foreign keys, `ON DELETE CASCADE` on the complaint, `created_at`. RLS on; `cc_app` has `SELECT`, `INSERT`, `DELETE`.
+
 ### 4.19 `study_tasks` (P1)
 
 | Column | Type | Constraints |
@@ -534,6 +560,7 @@ Flyway, versioned SQL files, forward-only. See [ADR 0006](decisions/0006-flyway-
 | V5 | `V5__ai.sql` | ai_request_logs | M5 |
 | V6 | `V6__profile_details.sql` | Adds `bio` and `photo_path` to student_profiles ([ADR 0009](decisions/0009-student-personal-details-and-photo.md)) | Added 2026-10-14 |
 | V8 | `V8__subject_results.sql` | Adds `subject_results`; lets `semester_results.sgpa` be empty for a semester that is not passed (sections 4.8, 4.8a) | Added 2026-10-18 |
+| V13 | `V13__complaints.sql` | Adds `complaints`, `complaint_owners` and `complaint_supports` (sections 4.23 to 4.25) | Added 2026-10-23 |
 | V12 | `V12__notice_documents.sql` | Adds the official document columns to `notices` (section 4.10) | Added 2026-10-22 |
 | V11 | `V11__pyq_created_by_optional.sql` | Makes `pyq_papers.created_by` optional (section 4.21) | Added 2026-10-19 |
 | V10 | `V10__pyq.sql` | Adds `pyq_papers` and `pyq_bookmarks` (sections 4.21 and 4.22) | Added 2026-10-18 |
@@ -719,6 +746,7 @@ If custom roles cannot be used through the pooler, stop and report it. Do not fa
 | --- | --- | --- |
 | `MARKS_UPDATED` | A saved mark changes | Marks obtained and absent flag, before and after |
 | `ATTENDANCE_CORRECTED` | A saved attendance status changes | Status, before and after |
+| `COMPLAINT_UPDATED` | The administrator handles a complaint | Status and whether there is a response, before and after. Never the student |
 | `RESULT_UPDATED` | A semester result is created or changed | SGPA, credits registered, credits earned, status, published flag |
 | `ACCOUNT_CREATED` | An admin provisions a student, or the system creates the first admin | New: role, login email and active flag. Never the temporary password |
 | `ACCOUNT_DEACTIVATED`, `ACCOUNT_ACTIVATED` | An admin changes account status | Active flag, before and after |

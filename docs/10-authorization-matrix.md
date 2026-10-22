@@ -99,6 +99,16 @@ In the first release, further admin accounts are created only by the owner direc
 | Notice official document | Get a signed link | ❌ | 📢 only for a notice they may read | ✅ including drafts | Issues the link |
 | Notice official document | Attach, replace, remove | ❌ | ❌ | ✅ | Stores and removes the file |
 
+### 4.3b Complaints
+
+| Data | Action | Visitor | Student | Admin | System |
+| --- | --- | --- | --- | --- | --- |
+| Complaint | Raise, withdraw own open one | ❌ | ✅ own | ❌ | — |
+| Public complaint | Read, support | ❌ | ✅ unless rejected | ✅ | — |
+| Private complaint | Read | ❌ | 👤 own only | ✅ with the student | — |
+| Secure complaint | Read | ❌ | 👤 own only | ✅ **without** the student | — |
+| Complaint | Set status and response | ❌ | ❌ | ✅ | Audited |
+
 ### 4.4 Learning resources
 
 | Data | Action | Visitor | Student | Admin | System |

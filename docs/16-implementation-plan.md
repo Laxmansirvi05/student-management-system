@@ -48,7 +48,7 @@ Consequences to keep in mind:
 | **Also built** | The public landing page (FR-UX-002); from the P1 backlog, T7-07 CSV student import (FR-ADM-010), T7-03 audit log viewer (FR-ADM-009) and T7-10 past papers library (FR-LIB-006) |
 | **Not started** | The rest of the P1 backlog of Phase 7 |
 
-The last full run of `./mvnw verify` passed with 220 unit tests and 209 integration tests. What is open for the owner is listed in [21-security-review.md](21-security-review.md) §3.
+The last full run of `./mvnw verify` passed with 220 unit tests and 221 integration tests. What is open for the owner is listed in [21-security-review.md](21-security-review.md) §3.
 
 ## Phase 0: Decisions
 
@@ -178,6 +178,7 @@ Follow [15-AI-features-handoff.md](15-AI-features-handoff.md).
 | T7-07 ✅ | CSV student import, through `StudentProvisioningService` so the same rules apply. Built on 2026-10-14 | FR-ADM-010 |
 | T7-08 | Database-backed sessions 👤 new dependency | |
 | T7-09 | Orphaned-file cleanup and AI log retention jobs | |
+| T7-11 ✅ | Student complaints (public, private, secure), V13. Built on 2026-10-23 | FR-CMP-001 to FR-CMP-004 |
 | T7-10 ✅ | Past papers (PYQ) library: `V10__pyq.sql`, student search, filter, save and signed viewing, admin upload and folder import. Built on 2026-10-18 | FR-LIB-006 |
 
 ## Tasks that always need the owner

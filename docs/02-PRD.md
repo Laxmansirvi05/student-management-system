@@ -50,6 +50,7 @@ A priority is changed only by editing this document, stating the reason, with th
 | FR-LIB-004 | Bookmarks | P0 |
 | FR-LIB-005 | Report a resource | P1 |
 | FR-LIB-006 | Previous-year question papers (PYQs) | P1 |
+| FR-CMP-001 to FR-CMP-004 | Student complaints: public, private and secure | P1 |
 | FR-LIB-006 | Question paper analyzer | P2 |
 | FR-QZ-001 | Start a Quick Exam | P0 |
 | FR-QZ-002 | Timer and submission | P0 |
@@ -299,6 +300,36 @@ Added on 2026-10-22 at the owner's request: the college's circular carries its s
   4. A picture is drawn again as a new JPEG (at most 2,400 pixels on its longer side), so nothing but the pixels is stored.
 - **Edge cases:** A file that is not a real PDF or picture, or is too small to read, is refused and nothing is stored. Deleting the notice or replacing the document removes the old file.
 - **Depends on:** FR-NOT-001, FR-ADM-006.
+
+## 5b. Student complaints
+
+Added on 2026-10-23 at the owner's request. The decision and its reasons are in [ADR 0013](decisions/0013-student-complaints.md).
+
+### FR-CMP-001 Raise a complaint (P1)
+
+- **Story:** As a student, I want to raise a problem and choose who sees it.
+- **Acceptance criteria:**
+  1. A student chooses a type, a category (academic, exams, facilities, faculty, administration, other), a title of 5 to 120 characters and a description of 20 to 2,000 characters, as plain text.
+  2. **Public:** every student and the administrator can read it. The student chooses whether other students see their roll number; if not, it shows "Anonymous". The administrator can always see who raised it.
+  3. **Private:** only the administrator reads it, and sees the student.
+  4. **Secure:** only the administrator reads it, and never sees the student, in any screen, response or audit entry.
+  5. A student can raise 5 complaints in 24 hours.
+- **Edge cases:** "Show my roll number" is ignored on a private or secure complaint.
+
+### FR-CMP-002 Public board and support (P1)
+
+- **Acceptance criteria:**
+  1. Students list public complaints that are not rejected, newest first or most supported first, filtered by category and status.
+  2. A student can support a public complaint once, take the support back, and cannot support their own or a resolved one. The page shows the number of supporters.
+  3. From 5 supporters a complaint is marked a group complaint. The administrator sees the supporters.
+
+### FR-CMP-003 Follow and withdraw (P1)
+
+- **Acceptance criteria:** A student lists their own complaints of every type with status and the administrator's response, and can delete one while it is Open. Another student's complaint, a private or secure one, or a rejected public one is "not found".
+
+### FR-CMP-004 Handle complaints (P1)
+
+- **Acceptance criteria:** The administrator lists every complaint (open first), filters by type and status, opens one and sets a status (Open, In review, Resolved, Rejected) with an optional response. Each change is audited with the status only. A rejected public complaint leaves the public board.
 
 ## 6. Learning resource hub
 
