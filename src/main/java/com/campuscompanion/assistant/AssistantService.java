@@ -136,7 +136,9 @@ public class AssistantService {
     Integer outputChars = null;
     AiRequestStatus status = AiRequestStatus.FAILED;
     try {
-      AiCompletion completion = provider.complete(prompt);
+      // With several models configured, an empty reply sends the request on to the next model.
+      AiCompletion completion =
+          provider.complete(prompt, reply -> reply != null && !reply.isBlank());
       String text = completion.text() == null ? "" : completion.text().strip();
       outputChars = text.length();
       if (text.isEmpty()) {
@@ -150,6 +152,9 @@ public class AssistantService {
       if (failure.getKind() == AiProviderException.Kind.TIMEOUT) {
         status = AiRequestStatus.TIMEOUT;
         throw new AiTimeoutException(UNAVAILABLE);
+      }
+      if (failure.getKind() == AiProviderException.Kind.INVALID_OUTPUT) {
+        throw new AiInvalidResponseException(UNAVAILABLE);
       }
       throw new AiUnavailableException(UNAVAILABLE);
     } finally {

@@ -46,6 +46,7 @@ public class AiStudyService {
   static final String QUIZ_NOTICE =
       "AI-generated practice questions. They are not official exam questions.";
   private static final String UNAVAILABLE = "The assistant is unavailable right now.";
+  private static final String INVALID = "The assistant gave an answer that could not be used.";
 
   private static final Logger log = LoggerFactory.getLogger(AiStudyService.class);
 
@@ -166,7 +167,9 @@ public class AiStudyService {
     Integer outputChars = null;
     AiRequestStatus status = AiRequestStatus.FAILED;
     try {
-      AiCompletion completion = provider.complete(prompt);
+      // With several models configured, a reply that fails the parser sends the request on to the
+      // next model; a decline is a usable reply, not a failure.
+      AiCompletion completion = provider.complete(prompt, reply -> usable(parse, reply));
       outputChars = completion.text() == null ? 0 : completion.text().length();
       T parsed = parse.apply(completion.text());
       status = AiRequestStatus.SUCCESS;
@@ -181,11 +184,26 @@ public class AiStudyService {
         status = AiRequestStatus.TIMEOUT;
         throw new AiTimeoutException(UNAVAILABLE);
       }
+      if (failure.getKind() == AiProviderException.Kind.INVALID_OUTPUT) {
+        throw new AiInvalidResponseException(INVALID);
+      }
       throw new AiUnavailableException(UNAVAILABLE);
     } finally {
       long durationMs = (System.nanoTime() - started) / 1_000_000;
       usage.record(
           user.id(), feature, prompt.promptVersion(), inputChars, outputChars, status, durationMs);
+    }
+  }
+
+  /** Whether the parser accepts a reply. A reply the model used to decline counts as usable. */
+  private static <T> boolean usable(Function<String, T> parse, String reply) {
+    try {
+      parse.apply(reply);
+      return true;
+    } catch (AiRequestDeclinedException declined) {
+      return true;
+    } catch (AiInvalidResponseException unusable) {
+      return false;
     }
   }
 

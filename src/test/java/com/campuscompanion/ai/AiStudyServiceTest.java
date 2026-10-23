@@ -7,11 +7,13 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.withSettings;
 
 import com.campuscompanion.ai.dto.AnswerFormat;
 import com.campuscompanion.ai.dto.ExplainRequest;
@@ -51,7 +53,10 @@ class AiStudyServiceTest {
           + "\"example\":null,\"basis\":\"GENERAL_KNOWLEDGE\"}";
 
   private final AiUsageService usage = mock(AiUsageService.class);
-  private final AiProvider provider = mock(AiProvider.class);
+  // The service calls the interface's two-argument default method, which delegates to the stubbed
+  // one, as a real single provider does.
+  private final AiProvider provider =
+      mock(AiProvider.class, withSettings().defaultAnswer(CALLS_REAL_METHODS));
   private final SubjectService subjects = mock(SubjectService.class);
   private final PromptLibrary templates = new PromptLibrary();
 
