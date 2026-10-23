@@ -1,6 +1,6 @@
 # Campus Companion — Project Audit Report
 
-> **Part A** (this first section) is the remediation status of 2026-10-23, written after the fixes. **Part B** (sections 1 to 14 and Appendix A) is the original audit, kept as it was found, so the "before" stays readable. Original audit: `main` at `4fd019e`. Remediation: commits `82bd52b` to `c00a4f9` on `main`, local only (not pushed, not deployed). The owner's 23 uncommitted frontend files were never staged or changed (checked byte for byte against a backup taken before the work).
+> **Part A** (this first section) is the remediation status of 2026-10-23, written after the fixes. **Part B** (sections 1 to 14 and Appendix A) is the original audit. Its findings, measurements and evidence are kept as found, so the "before" stays readable, but the issue register (§7), readiness (§3.4), roadmap (§12), deployment (§13) and verdict (§14) now also show the current status. Original audit: `main` at `4fd019e`. Remediation: commits `82bd52b` to `c00a4f9` on `main`, local only (not pushed, not deployed). The owner's 23 uncommitted frontend files were never staged or changed (checked byte for byte against a backup taken before the work).
 
 ## Part A — Remediation status (2026-10-23)
 
@@ -99,7 +99,7 @@ Same conditions as Part B section 6: MacBook (Apple Silicon), JAR with `-Xmx256m
 
 # Part B — Original audit (before remediation)
 
-> Audit date: 2026-10-23 · Branch: `main` at `4fd019e` plus 23 uncommitted frontend changes (left untouched) · Audit only: no project file was changed except this report. Statuses in Part B are as found **before** the fixes; Part A has the current status of each finding.
+> Audit date: 2026-10-23 · Branch: `main` at `4fd019e` plus 23 uncommitted frontend changes (left untouched) · Audit only: no project file was changed except this report. Findings and measurements in Part B are as found **before** the fixes. The "Now" column of §7 and the updates in §3.4, §12, §13 and §14 give the status after remediation; Part A has the details.
 
 ## At a glance (original)
 
@@ -214,6 +214,15 @@ Uncertainty: about ±5 points. Admin UI, real storage and real AI were not exerc
 | Performance and reliability | ✓ fast APIs (5–35 ms) · ✓ 4.3 s startup · ✗ ~3.1 MB per page, uncached and uncompressed · ✗ in-memory sessions and limits lost on restart · ✗ 1.4 s main-thread block on the first dashboard load · ✗ autosave never retries | **≈ 55 %** |
 | Security and privacy | ✓ strict CSP, CSRF, BCrypt, lockout, rate limits, RLS everywhere, allow-list HTML sanitiser, no committed secrets · ✗ attachment access hole (CC-01) · ✗ roll-number-to-name lookup (CC-05) · ✗ privacy text wrong (CC-02) · ? credential rotation F4 unverified | **≈ 70 %** |
 | Documentation and deployment | ✓ very complete specs, ADRs, runbook · ✗ several documents out of date (CC-10) · ✗ not deployed; Heroku vs Render unresolved · ✗ PRD has no Notes/robot requirement | **≈ 45 %** |
+
+**After remediation (2026-10-23).** The same checklists, ticked again from the results in Part A (judgement, not measurement):
+
+| Area | What changed | Score now |
+| --- | --- | --- |
+| Integration and testing | ✓ 547 Java tests + 13 Node tests pass · ✓ a smoke test follows every page's files and imports · ✓ tests ignore `.env` · ✓ JS unit tests exist and run in CI · ✗ rendering is still checked by hand · ✗ real storage and AI still never exercised | **≈ 80 %** |
+| Performance and reliability | ✓ gzip and caching; later student pages 15–41 KB instead of 3.1 MB · ✓ robot starts after the page is usable · ✓ autosave retries and saves on page hide · ✗ in-memory sessions still lost on restart · ✗ memory on the real host not measured | **≈ 75 %** |
+| Security and privacy | ✓ CC-01, CC-05, CC-18 fixed · ✓ privacy page accurate (CC-02, CC-15) · ✗ credential rotation (F4/CC-21) unverified · ✗ no automatic AI-log clean-up (stated honestly) | **≈ 85 %** |
+| Documentation and deployment | ✓ docs match the code (CC-10, CC-19) · ✓ landing exception recorded (ADR 0015) · ✗ host not chosen, not deployed | **≈ 60 %** |
 
 ---
 
@@ -383,29 +392,31 @@ A **full** list of every Java method (1,174 declarations) and every browser Java
 
 Unique root causes only. Severity uses the impact on users and data.
 
-| ID | Sev. | Category | Feature / location | What is wrong (plain English) | Evidence / reproduction | User impact | Recommended correction | State |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| **CC-01** | **High** | Security | Note attachments · `NoteAttachmentService.java:135-146, 210-219` | When link sharing is on for a note, **any** signed-in student can open its pictures and files. They need only the attachment number (numbers count up from 1), **not** the secret link. This also works while the note is in the Trash. | Probe test: stranger got 404 before sharing, **302 (signed link) after link sharing with no slug**, and 302 after the note was trashed | Private pictures or PDFs inside shared notes can be harvested by guessing numbers | Treat the slug as the key: allow link access only through `/notes/shared/{slug}` (e.g. a `?share=slug` on the file link, checked server-side), and refuse trashed notes. Add an IT. | Confirmed |
-| **CC-02** | **High** | Security / Documentation | Privacy policy · `static/privacy.html:64` vs `V15__assistant_chats.sql`, `docs/14` §(exception), ADR 0014 line 45 | The privacy page says the text sent to the AI assistant is **not stored**. V15 stores Quick Assistant chats (up to six per student). | Read directly in code and docs | Students are told something untrue about their data. This matters more because ADR 0011 allows real student data | Update `privacy.html` (and `terms.html` if relevant) to describe chat storage, the six-chat limit and deletion | Confirmed |
-| **CC-03** | **High** | Architecture | Landing page · `landing-frontend/`, `static/js/landing/`, `docs/04-TRD.md:41`, `AGENTS.md` §2 | The landing page is React 19 + Vite + Tailwind + three.js + framer-motion. The project's rules forbid any frontend framework, bundler or CSS framework without an accepted decision record. None exists (ADR 0014 even rejects React for notes). `StaticFrontendRulesTest.java:50` exempts the bundle from the frontend rules. | Commit `4fd019e`; ADR list 0001–0014 | Viva risk ("why is there React in a Java project?"); a second toolchain (189 MB `node_modules`) to maintain; rules bypassed by a test exemption | Owner decides: either accept it in a new ADR (and update TRD, AGENTS, README) or rebuild the page in plain HTML/CSS/JS | Confirmed |
-| **CC-04** | **High** | Performance | Every student page · `static/js/shell.js:128`, `application.yml` (no `server.compression`), security headers | About 3.1 MB per student page view, 2.6 MB of it the robot. Not compressed, never cached. The first dashboard load blocks the main thread for 1.4 s. | Section 6.3 measurements; response headers `Cache-Control: no-cache, no-store` | Slow on phones and mobile data; heavy for a free host | Enable `server.compression` for JS/CSS/JSON/wasm; allow long caching for fingerprinted and `vendor/` files; load the robot only after idle or on click | Confirmed |
-| CC-05 | Medium | Security (privacy) | Note sharing · `NoteShareService.java:88-112` | Adding a "recipient" returns the full name for any roll number, so a student can look up classmates' names one by one. | Probe: adding roll numbers returned `200` with names | Personal data enumeration | Return a name only after the share is confirmed, or rate-limit and audit lookups | Confirmed |
-| CC-06 | Medium | Functional | Note sharing + attachments · `NoteService.java:232` (adopt only for owner), `NoteAttachmentService.java:150-158` | A picture added by a shared **editor** stays owned by the editor and attached to nothing, so the **owner** (and other readers) get 404 for it. | Probe: owner opening the editor's picture → **404** | Broken images in shared notes | Adopt editor uploads into the note (owned by the note owner, or allow access by note) | Confirmed |
-| CC-07 | Medium | Functional / Reliability | Notes autosave · `static/js/notes/autosave.js:70` | After a failed save (network, 429, server), the status shows "error" but nothing retries. If the student stops typing or closes the tab, the last edit is lost. | Code reading; 120/min session limit vs 800 ms debounce | Silent data loss in edge cases | Retry with backoff, honour `Retry-After`, flush on `visibilitychange`/`pagehide` | Suspected |
-| CC-08 | Low | Data / Maintenance | `static/js/landing/` (8 × 1.3 MB), `static/css/landing/` (7) | 7 old JS bundles and 6 old CSS bundles are committed and packed into the JAR, about 9 MB of dead weight. | `static/index.html:12-13` references only one pair | Bigger repo and JAR | Delete the unreferenced bundles; have the build clean `js/landing` | Confirmed |
-| CC-09 | Medium | Testing | Frontend | There is no automated browser test and no JavaScript unit test. The notes editor (~3,000 lines across `js/notes`) is checked only by a static rules test. | Test inventory | Editor regressions go unnoticed | Add a small Playwright smoke suite (login, each page, save a note) — needs approval as a dependency | Confirmed |
-| CC-10 | Medium | Documentation | `AGENTS.md:11`, `docs/decisions/0005-…`, README hosting, `docs/02-PRD.md` | Several documents are out of date. AGENTS.md lists only V1–V13 (V15 exists) and says the real AI provider is not done (a Gemini adapter exists). ADR 0005 does not mention Gemini. README and TRD say Heroku while `render.yaml` and doc 23 target Render. Notes, robot and Quick Assistant have no PRD requirement. | Read directly | Confusion in the viva and for future agents | Update the documents together; add PRD rows for the ADR 0014 features | Confirmed |
-| CC-11 | Medium | Testing | `application.yml:7` imports `.env`; `PostgresIntegrationTest.java:36-45` overrides only DB, domain and seed | Integration tests read the developer's `.env`. Storage is safely replaced by `InMemoryStorageClient` (`@Primary`), but `AI_PROVIDER`/`AI_API_KEY` are not overridden. If `.env` were set to `gemini` with a key, tests would call the real AI. | Code reading (today `.env` says `mock`, so it is not happening now) | Accidental paid/third-party calls; tests that pass only on one machine | Force `AI_PROVIDER=mock` (and empty Supabase settings) in the test base class | Suspected |
-| CC-12 | Medium | Data | `NoteService.java:219-227` | When an autosave leaves the owner's note empty (title and content), the note is **permanently deleted** with its attachments, shares and links. Selecting all text, deleting it and pausing 0.8 s is enough. | Code reading | Shares, links and files lost after an accidental clear | Only delete a brand-new never-saved draft; otherwise keep the empty note | Suspected |
-| CC-13 | Medium | Performance / Deployment | `Dockerfile` JAVA_OPTS, `render.yaml` plan free | The idle JVM used 461 MB RSS locally with `-Xmx256m`; the free 512 MB container leaves little headroom. Sessions, rate limits and the session registry live in memory, so every restart or free-tier sleep logs everyone out. | Section 6.1 | Crashes or logouts in production | Measure on the host; consider a JDBC session store later; document the trade-off | Confirmed (local) |
-| CC-14 | Low | UI | Robot · `vendor/spline/runtime.js:8117` | "Missing property" is logged as a console error on every student page load. | Playwright console log, 40 entries | Noise; possibly a broken scene property | Check the scene export against the runtime version | Confirmed |
-| CC-15 | Low | Privacy | `privacy.html:95` | 90-day removal of AI usage logs is promised but not built (the page admits it). | Read directly; no scheduled job in code | Data kept longer than the policy aims | Add a scheduled cleanup | Confirmed |
-| CC-16 | Low | Maintenance | `js/index.js`, `js/landing-grid.js`, `css/landing.css`, `landing-frontend/index.original.html`, `ui/demo.tsx` | Files left behind by the landing rewrite. | Section 5.4 | Confusion | Remove after the owner's decision on CC-03 | Confirmed |
-| CC-17 | Low | Code quality | `ai/AiRequestStatus.java:13`, `AiUsageService` | `countsTowardLimits()` exists but the usage service repeats the rule instead of calling it; 12 other methods are unused (section 5.4). | Search | Two places to change one rule | Use the enum method; delete truly dead getters | Confirmed |
-| CC-18 | Low | Security | `ApiRateLimitFilter.java:49-58` | The per-session API limit can be reset by logging in again (new session). The login limit (20 per IP per 10 min) caps this. | Observed: a fresh login got a full allowance | Weak limit for a determined user | Key the limit by user ID as well as session | Confirmed |
-| CC-19 | Low | Documentation | `.env` sets `SPRING_PROFILES_ACTIVE=dev`; no `application-dev.yml` | The `dev` profile has no file. `AGENTS.md` §5 lists `application-dev.yml`. | File listing | Minor confusion | Add the file or fix the docs | Confirmed |
-| CC-20 | Low | Accessibility | `student/settings.html` | The password form has no (hidden) username field; Chrome warns. | Console verbose message | Password managers work less well | Add a hidden `autocomplete="username"` field | Confirmed |
-| CC-21 | (High if open) | Security | `docs/21-security-review.md` F4, F5 | Credentials exposed during development were to be rotated. I cannot see whether that happened. | Doc only | Leaked credentials stay valid | Owner confirms rotation in the Supabase and AI consoles | Unverified |
+| ID | Sev. | Category | Feature / location | What is wrong (plain English) | Evidence / reproduction | User impact | Recommended correction | State | Now |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| **CC-01** | **High** | Security | Note attachments · `NoteAttachmentService.java:135-146, 210-219` | When link sharing is on for a note, **any** signed-in student can open its pictures and files. They need only the attachment number (numbers count up from 1), **not** the secret link. This also works while the note is in the Trash. | Probe test: stranger got 404 before sharing, **302 (signed link) after link sharing with no slug**, and 302 after the note was trashed | Private pictures or PDFs inside shared notes can be harvested by guessing numbers | Treat the slug as the key: allow link access only through `/notes/shared/{slug}` (e.g. a `?share=slug` on the file link, checked server-side), and refuse trashed notes. Add an IT. | Confirmed | **Fixed** `68e48ff` |
+| **CC-02** | **High** | Security / Documentation | Privacy policy · `static/privacy.html:64` vs `V15__assistant_chats.sql`, `docs/14` §(exception), ADR 0014 line 45 | The privacy page says the text sent to the AI assistant is **not stored**. V15 stores Quick Assistant chats (up to six per student). | Read directly in code and docs | Students are told something untrue about their data. This matters more because ADR 0011 allows real student data | Update `privacy.html` (and `terms.html` if relevant) to describe chat storage, the six-chat limit and deletion | Confirmed | **Fixed** `f7a4f41` |
+| **CC-03** | **High** | Architecture | Landing page · `landing-frontend/`, `static/js/landing/`, `docs/04-TRD.md:41`, `AGENTS.md` §2 | The landing page is React 19 + Vite + Tailwind + three.js + framer-motion. The project's rules forbid any frontend framework, bundler or CSS framework without an accepted decision record. None exists (ADR 0014 even rejects React for notes). `StaticFrontendRulesTest.java:50` exempts the bundle from the frontend rules. | Commit `4fd019e`; ADR list 0001–0014 | Viva risk ("why is there React in a Java project?"); a second toolchain (189 MB `node_modules`) to maintain; rules bypassed by a test exemption | Owner decides: either accept it in a new ADR (and update TRD, AGENTS, README) or rebuild the page in plain HTML/CSS/JS | Confirmed | **Fixed** `502b70c` (ADR 0015) |
+| **CC-04** | **High** | Performance | Every student page · `static/js/shell.js:128`, `application.yml` (no `server.compression`), security headers | About 3.1 MB per student page view, 2.6 MB of it the robot. Not compressed, never cached. The first dashboard load blocks the main thread for 1.4 s. | Section 6.3 measurements; response headers `Cache-Control: no-cache, no-store` | Slow on phones and mobile data; heavy for a free host | Enable `server.compression` for JS/CSS/JSON/wasm; allow long caching for fingerprinted and `vendor/` files; load the robot only after idle or on click | Confirmed | **Fixed** `af614a6` |
+| CC-05 | Medium | Security (privacy) | Note sharing · `NoteShareService.java:88-112` | Adding a "recipient" returns the full name for any roll number, so a student can look up classmates' names one by one. | Probe: adding roll numbers returned `200` with names | Personal data enumeration | Return a name only after the share is confirmed, or rate-limit and audit lookups | Confirmed | **Fixed** `bef4ee6` |
+| CC-06 | Medium | Functional | Note sharing + attachments · `NoteService.java:232` (adopt only for owner), `NoteAttachmentService.java:150-158` | A picture added by a shared **editor** stays owned by the editor and attached to nothing, so the **owner** (and other readers) get 404 for it. | Probe: owner opening the editor's picture → **404** | Broken images in shared notes | Adopt editor uploads into the note (owned by the note owner, or allow access by note) | Confirmed | **Fixed** `933f06d` |
+| CC-07 | Medium | Functional / Reliability | Notes autosave · `static/js/notes/autosave.js:70` | After a failed save (network, 429, server), the status shows "error" but nothing retries. If the student stops typing or closes the tab, the last edit is lost. | Code reading; 120/min session limit vs 800 ms debounce | Silent data loss in edge cases | Retry with backoff, honour `Retry-After`, flush on `visibilitychange`/`pagehide` | Suspected | **Fixed** `31b7ccc` |
+| CC-08 | Low | Data / Maintenance | `static/js/landing/` (8 × 1.3 MB), `static/css/landing/` (7) | 7 old JS bundles and 6 old CSS bundles are committed and packed into the JAR, about 9 MB of dead weight. | `static/index.html:12-13` references only one pair | Bigger repo and JAR | Delete the unreferenced bundles; have the build clean `js/landing` | Confirmed | **Fixed** `82bd52b` |
+| CC-09 | Medium | Testing | Frontend | There is no automated browser test and no JavaScript unit test. The notes editor (~3,000 lines across `js/notes`) is checked only by a static rules test. | Test inventory | Editor regressions go unnoticed | Add a small Playwright smoke suite (login, each page, save a note) — needs approval as a dependency | Confirmed | **Fixed** `c00a4f9` (rendering still manual) |
+| CC-10 | Medium | Documentation | `AGENTS.md:11`, `docs/decisions/0005-…`, README hosting, `docs/02-PRD.md` | Several documents are out of date. AGENTS.md lists only V1–V13 (V15 exists) and says the real AI provider is not done (a Gemini adapter exists). ADR 0005 does not mention Gemini. README and TRD say Heroku while `render.yaml` and doc 23 target Render. Notes, robot and Quick Assistant have no PRD requirement. | Read directly | Confusion in the viva and for future agents | Update the documents together; add PRD rows for the ADR 0014 features | Confirmed | **Fixed** `1d8c180` |
+| CC-11 | Medium | Testing | `application.yml:7` imports `.env`; `PostgresIntegrationTest.java:36-45` overrides only DB, domain and seed | Integration tests read the developer's `.env`. Storage is safely replaced by `InMemoryStorageClient` (`@Primary`), but `AI_PROVIDER`/`AI_API_KEY` are not overridden. If `.env` were set to `gemini` with a key, tests would call the real AI. | Code reading (today `.env` says `mock`, so it is not happening now) | Accidental paid/third-party calls; tests that pass only on one machine | Force `AI_PROVIDER=mock` (and empty Supabase settings) in the test base class | Suspected | **Fixed** `b92a2e3` |
+| CC-12 | Medium | Data | `NoteService.java:219-227` | When an autosave leaves the owner's note empty (title and content), the note is **permanently deleted** with its attachments, shares and links. Selecting all text, deleting it and pausing 0.8 s is enough. | Code reading | Shares, links and files lost after an accidental clear | Only delete a brand-new never-saved draft; otherwise keep the empty note | Suspected | **Fixed** `ce27473` |
+| CC-13 | Medium | Performance / Deployment | `Dockerfile` JAVA_OPTS, `render.yaml` plan free | The idle JVM used 461 MB RSS locally with `-Xmx256m`; the free 512 MB container leaves little headroom. Sessions, rate limits and the session registry live in memory, so every restart or free-tier sleep logs everyone out. | Section 6.1 | Crashes or logouts in production | Measure on the host; consider a JDBC session store later; document the trade-off | Confirmed (local) | **Open**: measure on the chosen host |
+| CC-14 | Low | UI | Robot · `vendor/spline/runtime.js:8117` | "Missing property" is logged as a console error on every student page load. | Playwright console log, 40 entries | Noise; possibly a broken scene property | Check the scene export against the runtime version | Confirmed | **Open**: cause found, fix in the Spline editor |
+| CC-15 | Low | Privacy | `privacy.html:95` | 90-day removal of AI usage logs is promised but not built (the page admits it). | Read directly; no scheduled job in code | Data kept longer than the policy aims | Add a scheduled cleanup | Confirmed | **Fixed** `f7a4f41` |
+| CC-16 | Low | Maintenance | `js/index.js`, `js/landing-grid.js`, `css/landing.css`, `landing-frontend/index.original.html`, `ui/demo.tsx` | Files left behind by the landing rewrite. | Section 5.4 | Confusion | Remove after the owner's decision on CC-03 | Confirmed | **Fixed** `82bd52b` (`css/landing.css` kept) |
+| CC-17 | Low | Code quality | `ai/AiRequestStatus.java:13`, `AiUsageService` | `countsTowardLimits()` exists but the usage service repeats the rule instead of calling it; 12 other methods are unused (section 5.4). | Search | Two places to change one rule | Use the enum method; delete truly dead getters | Confirmed | **Fixed** `448c84e` |
+| CC-18 | Low | Security | `ApiRateLimitFilter.java:49-58` | The per-session API limit can be reset by logging in again (new session). The login limit (20 per IP per 10 min) caps this. | Observed: a fresh login got a full allowance | Weak limit for a determined user | Key the limit by user ID as well as session | Confirmed | **Fixed** `f4c14da` |
+| CC-19 | Low | Documentation | `.env` sets `SPRING_PROFILES_ACTIVE=dev`; no `application-dev.yml` | The `dev` profile has no file. `AGENTS.md` §5 lists `application-dev.yml`. | File listing | Minor confusion | Add the file or fix the docs | Confirmed | **Fixed** `1d8c180` |
+| CC-20 | Low | Accessibility | `student/settings.html` | The password form has no (hidden) username field; Chrome warns. | Console verbose message | Password managers work less well | Add a hidden `autocomplete="username"` field | Confirmed | **Fixed** `7826b40` |
+| CC-21 | (High if open) | Security | `docs/21-security-review.md` F4, F5 | Credentials exposed during development were to be rotated. I cannot see whether that happened. | Doc only | Leaked credentials stay valid | Owner confirms rotation in the Supabase and AI consoles | Unverified | **Open**: owner must rotate |
+
+**Now:** 18 of the 20 fixed (all 4 High); CC-13 and CC-14 open; CC-21 is the owner's.
 
 **Count (20 unique):** High 4 (CC-01, 02, 03, 04) · Medium 8 (CC-05, 06, 07, 09, 10, 11, 12, 13) · Low 8 (CC-08, 14, 15, 16, 17, 18, 19, 20) · plus CC-21, which could not be verified.
 
@@ -491,25 +502,25 @@ Nothing was deleted, moved or renamed.
 
 Effort figures are **estimates**, not measurements.
 
-| Priority | Item | Files / feature | Why it matters | Depends on | Order | Effort (est.) |
-| --- | --- | --- | --- | --- | --- | --- |
-| **P0** | Fix attachment access (CC-01) + IT | `NoteAttachmentService`, `NoteAttachmentController`, note pages that build file links, `NotesIT` | Broken access control on student files | — | 1 | 0.5–1 day |
-| **P0** | Correct privacy page (CC-02, CC-15) | `privacy.html`, `docs/14` | Legal accuracy with real data | — | 2 | 1–2 h |
-| **P0** | Confirm credential rotation (CC-21) | Supabase / AI consoles | Leaked keys | Owner | 3 | 30 min (owner) |
-| P1 | Owner decision on landing stack (CC-03) | ADR, TRD, AGENTS, README or a plain-JS landing | Assignment rules and viva | Owner | 4 | 1 h (accept) / 2–4 days (rebuild) |
-| P1 | Fix shared-editor pictures (CC-06) and name lookup (CC-05) | `NoteService`, `NoteAttachmentService`, `NoteShareService` | Broken shared notes; privacy | CC-01 | 5 | 1 day |
-| P1 | Real AI provider acceptance (T5-06, T5-08) | config, ADR 0005 | P0 AI requirements | Owner key, OQ-1 | 6 | 1 day + owner run |
-| P1 | Storage bucket check (T3-01) | Supabase | P0 resources and photos | Owner | 7 | 2–4 h |
-| P1 | Deploy (T6-04 to T6-06), pick Heroku or Render | `Procfile`/`Dockerfile`/`render.yaml`, docs 18/23 | Nothing is live | Above | 8 | 1–2 days |
-| P2 | Compression, caching, lazy robot (CC-04) | `application.yml`, `SecurityConfig` headers, `shell.js` | 3 MB per page | — | 9 | 0.5–1 day |
-| P2 | Autosave retry and safe "empty note" (CC-07, CC-12) | `autosave.js`, `NoteService.update` | Data loss risk | — | 10 | 0.5–1 day |
-| P2 | Hermetic tests (CC-11) | `PostgresIntegrationTest` | Accidental external calls | — | 11 | 1 h |
-| P2 | Browser smoke tests (CC-09) | new test module | Frontend regressions | Dependency approval | 12 | 1–2 days |
-| P2 | Memory headroom and session store (CC-13) | Dockerfile, docs | Stability on 512 MB | Deployment | 13 | 0.5 day |
-| P2 | Remaining P1 backlog (T7-02, T7-04, T7-05, T7-06) | Phase 7 | Feature completion | — | 14 | 1–3 days each |
-| P3 | Docs refresh (CC-10, CC-19) | AGENTS, README, ADR 0005, PRD | Viva and onboarding | CC-03 decision | 15 | 2–4 h |
-| P3 | Cleanup (CC-08, CC-16, CC-17) | section 10 | Smaller repo and JAR | CC-03 | 16 | 1–2 h |
-| P3 | Robot console error, username field, limit by user (CC-14, CC-20, CC-18) | robot, settings, rate limiter | Polish | — | 17 | 2–4 h |
+| Priority | Item | Files / feature | Why it matters | Depends on | Order | Effort (est.) | Now |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| **P0** | Fix attachment access (CC-01) + IT | `NoteAttachmentService`, `NoteAttachmentController`, note pages that build file links, `NotesIT` | Broken access control on student files | — | 1 | 0.5–1 day | **Done** `68e48ff` |
+| **P0** | Correct privacy page (CC-02, CC-15) | `privacy.html`, `docs/14` | Legal accuracy with real data | — | 2 | 1–2 h | **Done** `f7a4f41` |
+| **P0** | Confirm credential rotation (CC-21) | Supabase / AI consoles | Leaked keys | Owner | 3 | 30 min (owner) | Open (owner) |
+| P1 | Owner decision on landing stack (CC-03) | ADR, TRD, AGENTS, README or a plain-JS landing | Assignment rules and viva | Owner | 4 | 1 h (accept) / 2–4 days (rebuild) | **Done**: accepted, ADR 0015 `502b70c` |
+| P1 | Fix shared-editor pictures (CC-06) and name lookup (CC-05) | `NoteService`, `NoteAttachmentService`, `NoteShareService` | Broken shared notes; privacy | CC-01 | 5 | 1 day | **Done** `933f06d`, `bef4ee6` |
+| P1 | Real AI provider acceptance (T5-06, T5-08) | config, ADR 0005 | P0 AI requirements | Owner key, OQ-1 | 6 | 1 day + owner run | Open (owner) |
+| P1 | Storage bucket check (T3-01) | Supabase | P0 resources and photos | Owner | 7 | 2–4 h | Open (owner) |
+| P1 | Deploy (T6-04 to T6-06), pick Heroku or Render | `Procfile`/`Dockerfile`/`render.yaml`, docs 18/23 | Nothing is live | Above | 8 | 1–2 days | Open (owner) |
+| P2 | Compression, caching, lazy robot (CC-04) | `application.yml`, `SecurityConfig` headers, `shell.js` | 3 MB per page | — | 9 | 0.5–1 day | **Done** `af614a6` |
+| P2 | Autosave retry and safe "empty note" (CC-07, CC-12) | `autosave.js`, `NoteService.update` | Data loss risk | — | 10 | 0.5–1 day | **Done** `31b7ccc`, `ce27473` |
+| P2 | Hermetic tests (CC-11) | `PostgresIntegrationTest` | Accidental external calls | — | 11 | 1 h | **Done** `b92a2e3` |
+| P2 | Browser smoke tests (CC-09) | new test module | Frontend regressions | Dependency approval | 12 | 1–2 days | **Done** without a new dependency `c00a4f9`; rendering still manual |
+| P2 | Memory headroom and session store (CC-13) | Dockerfile, docs | Stability on 512 MB | Deployment | 13 | 0.5 day | Open (after deployment) |
+| P2 | Remaining P1 backlog (T7-02, T7-04, T7-05, T7-06) | Phase 7 | Feature completion | — | 14 | 1–3 days each | Open (not part of this remediation) |
+| P3 | Docs refresh (CC-10, CC-19) | AGENTS, README, ADR 0005, PRD | Viva and onboarding | CC-03 decision | 15 | 2–4 h | **Done** `1d8c180` |
+| P3 | Cleanup (CC-08, CC-16, CC-17) | section 10 | Smaller repo and JAR | CC-03 | 16 | 1–2 h | **Done** `82bd52b`, `448c84e` |
+| P3 | Robot console error, username field, limit by user (CC-14, CC-20, CC-18) | robot, settings, rate limiter | Polish | — | 17 | 2–4 h | CC-20 `7826b40` and CC-18 `f4c14da` **done**; CC-14 open (Spline editor) |
 
 ---
 
@@ -519,25 +530,29 @@ Effort figures are **estimates**, not measurements.
 | --- | --- |
 | Production profile (`application-prod.yml`): HTTPS redirect, secure cookie, no stack traces | Present; `ProductionProfileIT` passes |
 | JAR builds and starts | Yes (4.25 s locally) |
-| Hosting target | **Undecided in docs**: README and TRD say Heroku (`Procfile`); `render.yaml` + `Dockerfile` + doc 23 target Render's free plan |
+| Hosting target | **Still undecided**, but the docs now say so consistently (README, TRD, AGENTS: Heroku via `Procfile` or Render via `Dockerfile`/`render.yaml`) |
 | Hosted app | **Not deployed** (T6-04 to T6-06 open) |
 | Database | Hosted Supabase already migrated by an earlier session (memory note; F5). Do not run migrations again without owner approval |
 | Storage bucket | T3-01 not signed off |
 | AI | Mock only; Gemini adapter needs key and acceptance run |
-| CI | `.github/workflows/ci.yml` runs `./mvnw -B verify` on push to `main`; does not build the landing bundle (it is committed instead) |
-| Memory | 461 MB idle locally vs 512 MB container (CC-13) |
+| CI | `.github/workflows/ci.yml` runs `./mvnw -B verify` and now also the Node browser-module tests on push to `main`; the landing bundle is committed, not built in CI (ADR 0015) |
+| Memory | 461 MB idle locally at the audit, 401 MB after remediation, vs a 512 MB container (CC-13, still open) |
 | Sessions | In memory: restarts and free-tier sleep log users out |
 
-**Blockers:** owner tasks T0-04 (GitHub security settings), T3-01, T5-06, T6-04 to T6-06, and fixes CC-01/CC-02 before real students use it.
+**Blockers now:** owner tasks T0-04 (GitHub security settings), credential rotation (CC-21), T3-01, T5-06, and T6-04 to T6-06. The code blockers CC-01 and CC-02 are fixed. Static files are now compressed and cached, which also helps on a small host.
 
 ---
 
 ## 14. Final verdict
 
-- **What works:** login and accounts, every student academic view, Quick Exam and progress, complaints, PYQs, resources, notes basics, and the full admin API. All of it passes 526 automated tests, with fast local APIs. The security foundation is strong and well documented.
-- **What is incomplete:** the real AI provider, real storage sign-off, deployment, five P1 backlog items, browser-level tests, and documentation for the ADR 0014 features.
-- **What is risky:** the note-attachment access hole (CC-01), the untrue privacy statement (CC-02), the unapproved React landing (CC-03), heavy uncached pages (CC-04), and silent autosave failures (CC-07, CC-12).
-- **What to do next:** fix CC-01 and CC-02 first, then get the owner's decisions on CC-03 and the hosting target, then finish T3-01, T5-06 and deployment, then do the performance work in CC-04.
+*As found (original audit):* the backend was strong and well tested, but the Notes feature had an access hole (CC-01), the privacy page was untrue (CC-02), the React landing page had no approval (CC-03), and pages were heavy and uncached (CC-04).
+
+*Now, after remediation (2026-10-23):*
+
+- **What works:** everything listed before, plus Notes sharing and attachments with correct access rules, autosave that retries and saves on page hide, an accurate privacy page, compressed and cached static files, and a robot that loads after the page. Java tests (265 unit, 282 integration) and Node tests (13) pass. The committed state was verified on its own.
+- **What is incomplete:** live AI provider acceptance, storage bucket sign-off, choosing a host and deploying, automated rendering checks, and the remaining P1 backlog (T7-02, T7-04 to T7-06, T7-09).
+- **What is still risky:** credentials not yet confirmed rotated (CC-21); memory on a 512 MB host not measured (CC-13); the robot scene's console error (CC-14, cosmetic); and the unverified chance that `.env`'s `dev` profile seeds demo data into the database `.env` points at (Part A, A.3).
+- **What to do next:** rotate the credentials, choose Heroku or Render and deploy, measure memory there, sign off storage and the AI provider, then fix the robot scene in the Spline editor.
 
 ---
 
