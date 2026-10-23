@@ -27,10 +27,10 @@ export function robotFallback() {
 }
 
 /**
- * Loads the scene into `container`. Calls `onLoad()` when it is drawn and `onFail(error)` if the
+ * Loads the scene into `container`. Calls `onMount()` once the canvas is on the page (the original's badge gives way to a blank canvas at that point, not when the scene is drawn), `onLoad()` when it is drawn and `onFail(error)` if the
  * runtime or the scene cannot be loaded. Returns { destroy } to stop it.
  */
-export function mountScene(container, { onLoad, onFail }) {
+export function mountScene(container, { onMount = () => {}, onLoad, onFail }) {
   let canvas = null;
   let application = null;
   let stopped = false;
@@ -49,6 +49,7 @@ export function mountScene(container, { onLoad, onFail }) {
       canvas = h("canvas.rb-scene__canvas");
       holder.append(canvas);
       container.append(holder);
+      onMount();
       application = new runtime.Application(canvas, { renderOnDemand: true, wasmPath: WASM_PATH });
       await application.load(SCENE_URL);
       if (!stopped) onLoad();

@@ -144,8 +144,7 @@ export function openQuickAssistant({ anchor, onClose }) {
       messages = [...messages.slice(0, -1), answer.question, answer.reply];
       history = [answer.conversation, ...history.filter((entry) => entry.id !== answer.conversation.id)].slice(0, 6);
     } catch (failure) {
-      messages = messages.slice(0, -1);
-      input.value = text;
+      // As in the original, the question stays on screen and the box stays empty; the error is shown below it.
       error = messageFor(failure);
     } finally {
       sending = false;

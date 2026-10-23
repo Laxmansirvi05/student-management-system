@@ -57,17 +57,20 @@
   width: 100%;
   height: 100%;
   border-radius: 999px;
-  filter: drop-shadow(0 10px 8px rgba(0, 0, 0, 0.04)) drop-shadow(0 4px 3px rgba(0, 0, 0, 0.1));
-  transition: transform 200ms ease;
+  /* Tailwind's drop-shadow-lg, as in the original. */
+  filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.15));
+  /* Hover and drag grow through the `scale` property, as Tailwind 4 does, so they still apply while
+     the float animation owns `transform`. */
+  transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1), scale 200ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .rb-robot__inner.is-hovered {
-  transform: scale(1.05);
-  filter: drop-shadow(0 20px 13px rgba(0, 0, 0, 0.03)) drop-shadow(0 8px 5px rgba(0, 0, 0, 0.08));
+  scale: 1.05;
+  filter: drop-shadow(0 9px 7px rgba(0, 0, 0, 0.1));
 }
 
 .rb-robot__inner.is-dragging {
-  transform: scale(1.1);
+  scale: 1.1;
   filter: drop-shadow(0 25px 25px rgba(0, 0, 0, 0.15));
 }
 
@@ -105,18 +108,12 @@
   border-radius: 999px;
   background: var(--nt-primary-container);
   color: var(--nt-on-primary-container);
-  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
 }
 
 .rb-fallback__icon {
   font-size: 32px;
   font-variation-settings: "FILL" 1;
-}
-
-@media (max-width: 767px) {
-  .rb-fallback__icon {
-    font-size: 24px;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -147,7 +144,7 @@
   flex-direction: column;
   overflow: hidden;
   border: 1px solid var(--nt-outline-variant);
-  border-radius: 16px;
+  border-radius: 18px;
   background: var(--nt-surface);
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   color: var(--nt-on-surface);
@@ -170,9 +167,27 @@
   touch-action: none;
 }
 
+.rb-panel--note {
+  gap: 12px;
+  padding: 16px;
+}
+
 .rb-panel--note .rb-panel__drag {
-  padding: 14px 16px 0;
+  justify-content: space-between;
+  margin: -4px;
+  padding: 4px;
   border-bottom: 0;
+  border-radius: 10px;
+}
+
+.rb-panel--note .rb-iconbtn {
+  width: auto;
+  height: auto;
+  padding: 4px;
+}
+
+.rb-panel--note .rb-iconbtn .material-symbols-outlined {
+  font-size: 18px;
 }
 
 .rb-panel__drag.is-grabbing {
@@ -199,8 +214,7 @@
 }
 
 .rb-panel--note .rb-panel__title {
-  flex: 1 1 auto;
-  justify-content: flex-start;
+  flex: 0 0 auto;
 }
 
 .rb-iconbtn {
@@ -240,7 +254,7 @@
   width: 20px;
   height: 20px;
   padding: 3px;
-  border-radius: 0 0 16px 0;
+  border-radius: 0 0 18px 0;
   color: color-mix(in srgb, var(--nt-on-variant) 50%, transparent);
   cursor: nwse-resize;
   touch-action: none;
@@ -272,7 +286,7 @@
   flex-direction: column;
   gap: 12px;
   min-height: 0;
-  padding: 12px 16px 12px;
+  padding: 0;
 }
 
 .rb-note__title {
@@ -397,7 +411,7 @@
 .rb-bubble {
   max-width: 85%;
   padding: 8px 12px;
-  border-radius: 16px;
+  border-radius: 18px;
   font: 400 16px/1.5 var(--nt-font);
   overflow-wrap: anywhere;
   white-space: pre-wrap;
@@ -405,14 +419,14 @@
 
 .rb-bubble--user {
   align-self: flex-end;
-  border-bottom-right-radius: 6px;
+  border-bottom-right-radius: 8px;
   background: var(--nt-primary);
   color: var(--nt-on-primary);
 }
 
 .rb-bubble--ai {
   align-self: flex-start;
-  border-bottom-left-radius: 6px;
+  border-bottom-left-radius: 8px;
   background: var(--nt-surface-container);
   color: var(--nt-on-surface);
 }

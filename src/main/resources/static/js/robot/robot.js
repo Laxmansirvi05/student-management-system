@@ -232,19 +232,25 @@ export function mountRobot() {
   document.body.append(wrapper);
 
   // The 3D scene replaces the badge once it is drawn, and is given up on after a few seconds.
+  // As in the original: the badge shows only until the scene's code is in, then the canvas takes its
+  // place (blank until drawn). If the scene fails, or is not drawn within LOAD_TIMEOUT_MS, the scene
+  // is dropped and the badge comes back for good.
+  function showBadge() {
+    scene.destroy();
+    inner.querySelector(".rb-scene")?.remove();
+    if (!fallback.isConnected) inner.append(fallback);
+  }
   const scene = mountScene(inner, {
+    onMount: () => fallback.remove(),
     onLoad: () => {
       sceneLoaded = true;
-      fallback.remove();
     },
     onFail: (error) => {
-      console.warn("The robot scene could not be loaded; the badge stays.", error?.message || "");
+      console.error("[FloatingRobot] Spline scene failed to render:", error);
+      showBadge();
     },
   });
   setTimeout(() => {
-    if (!sceneLoaded) {
-      scene.destroy();
-      inner.querySelector(".rb-scene")?.remove();
-    }
+    if (!sceneLoaded) showBadge();
   }, LOAD_TIMEOUT_MS);
 }
