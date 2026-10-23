@@ -20,14 +20,14 @@ export async function listNotes({ q, view, sort, folder, tag, attachmentsOnly } 
 
 export const getNote = (id) => api.get(`${BASE}/${id}`);
 
-export const createNote = (input) => api.post(BASE, input);
+export const createNote = (input, options) => api.post(BASE, input, options);
 
 /**
  * Returns the saved note, or null when the update left the note empty and the server deleted it:
  * the "draft became empty again" path of the quick-note composer.
  */
-export async function updateNote(id, input) {
-  const result = await api.patch(`${BASE}/${id}`, input);
+export async function updateNote(id, input, options) {
+  const result = await api.patch(`${BASE}/${id}`, input, options);
   return result.deleted ? null : result.note;
 }
 

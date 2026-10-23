@@ -17,7 +17,7 @@ const TARGET_HREFS = {
   folder: (id) => `/student/notes.html?folder=${id}`,
   resource: (id) => `/student/resource.html?id=${id}`,
 };
-const STATUS_LABELS = { saving: "Saving…", saved: "Saved", error: "Could not save", idle: "" };
+const STATUS_LABELS = { saving: "Saving…", saved: "Saved", error: "Could not save", retrying: "Not saved yet, trying again…", idle: "" };
 
 /**
  * Options: note (an existing note, or null), draft ({title, content} from a template), folderId

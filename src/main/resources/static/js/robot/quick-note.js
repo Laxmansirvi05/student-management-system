@@ -11,7 +11,7 @@ import { createFloatingPanel } from "./floating-panel.js";
 // way into the one API. A note written here is filed into the Quick Notes folder by the server.
 
 const DEFAULT_SIZE = { width: 340, height: 300 };
-const STATUS_LABELS = { saving: "Saving…", saved: "✓ Saved", error: "Unable to save", idle: "" };
+const STATUS_LABELS = { saving: "Saving…", saved: "✓ Saved", error: "Unable to save", retrying: "Not saved yet, trying again…", idle: "" };
 
 /** Options: anchor ({x, y, size}), onClose(). Returns { close }. */
 export function openQuickNote({ anchor, onClose }) {

@@ -36,7 +36,10 @@ async function csrfToken() {
   return readCookie(CSRF_COOKIE);
 }
 
-async function request(method, path, body, { redirectOnAuthFailure = true } = {}) {
+// Browsers refuse a keepalive request whose body passes 64 KB; leave room for the headers.
+const KEEPALIVE_MAX_BODY = 60000;
+
+async function request(method, path, body, { redirectOnAuthFailure = true, keepalive = false } = {}) {
   const headers = { Accept: "application/json" };
   const options = { method, headers, credentials: "same-origin" };
   if (method !== "GET") {
@@ -48,6 +51,10 @@ async function request(method, path, body, { redirectOnAuthFailure = true } = {}
   } else if (body !== undefined) {
     headers["Content-Type"] = "application/json";
     options.body = JSON.stringify(body);
+    // keepalive lets a save finish after the page is closed. A larger body goes without it.
+    if (keepalive && options.body.length < KEEPALIVE_MAX_BODY) {
+      options.keepalive = true;
+    }
   }
 
   let response;
