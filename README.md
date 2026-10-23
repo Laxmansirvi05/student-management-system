@@ -26,20 +26,20 @@ Students check attendance, marks, timetables and notices in different places. No
 | Layer | Choice |
 | --- | --- |
 | Backend | Java 21, Spring Boot (Web, Security, Data JPA, Validation), Maven |
-| Frontend | HTML, CSS and JavaScript, served by Spring Boot |
+| Frontend | HTML, CSS and JavaScript, served by Spring Boot. The public landing page alone is React and TypeScript, built ahead of time ([ADR 0015](docs/decisions/0015-react-landing-page.md)) |
 | Database | Supabase PostgreSQL through JDBC, migrations with Flyway |
 | File storage | Supabase Storage, private bucket |
-| AI | An external AI provider behind a Java interface; a mock provider until one is chosen |
+| AI | An external AI provider behind a Java interface: the mock provider by default; a Gemini adapter exists but is not yet accepted against the live service |
 | Tests | JUnit, Mockito, Spring Boot Test, Testcontainers (real PostgreSQL 17) |
-| Hosting | Heroku |
+| Hosting | Heroku (`Procfile`) or Render (`Dockerfile`, `render.yaml`): not yet chosen or deployed |
 
-There is no Node.js or Express backend. All application logic is Java.
+There is no Node.js or Express backend. All application logic is Java. Node is used only on a developer's machine, to build the landing page and to run the browser-module tests.
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-    B["Browser<br/>HTML, CSS, JavaScript"] -->|"HTTPS, REST /api/v1"| S["Spring Boot app on Heroku<br/>controllers, services, repositories"]
+    B["Browser<br/>HTML, CSS, JavaScript"] -->|"HTTPS, REST /api/v1"| S["Spring Boot app (one instance)<br/>controllers, services, repositories"]
     S -->|"JDBC, session pooler"| D[("Supabase PostgreSQL")]
     S -->|"HTTPS, service key"| F[("Supabase Storage<br/>private bucket")]
     S -->|"HTTPS, API key"| A["AI provider API"]

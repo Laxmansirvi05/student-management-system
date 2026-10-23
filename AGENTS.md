@@ -8,13 +8,15 @@ Instructions for any coding agent working in this repository. Human contributors
 
 The owner must be able to explain the Java code in a viva. Prefer clear, conventional Java over clever or generated code.
 
-**Current state (2026-10-14):** every P0 feature is built and tested, on the student side and the admin side: login and accounts, profile (with the student's own phone, text and photo), attendance, marks and results, timetable, notices, dashboard, the resource hub, Quick Exam with progress and recommendations, the AI study assistant on the mock provider, settings, and the privacy and terms pages. Migrations `V1` to `V13` exist. No page reads sample data any more. The production profile, the request limits, the generated access tests and the security review ([docs/21-security-review.md](docs/21-security-review.md)) are done. The public landing page and, from the P1 backlog, the CSV student import (`T7-07`) and the audit log viewer (`T7-03`) are built too, as is the Past papers (PYQ) library (FR-LIB-006, [ADR 0012](docs/decisions/0012-previous-year-question-papers.md)). **Not done:** the real AI provider (`T5-06`), the storage bucket (`T3-01`), deployment (`T6-04` to `T6-06`), and the rest of the P1 backlog (Phase 7). Those are owner tasks or later work; see [docs/16-implementation-plan.md](docs/16-implementation-plan.md) "Progress". Check the plan and the Git history before assuming anything else exists.
+**Current state (2026-10-23):** every P0 feature is built and tested, on the student side and the admin side: login and accounts, profile (with the student's own phone, text and photo), attendance, marks and results, timetable, notices, dashboard, the resource hub, Quick Exam with progress and recommendations, the AI study assistant, settings, and the privacy and terms pages. Also built: the public landing page (React, for that page only, [ADR 0015](docs/decisions/0015-react-landing-page.md)); from the P1 backlog, the CSV student import (`T7-07`), the audit log viewer (`T7-03`), the attendance calculator (`T7-01`), notice documents, the Past papers (PYQ) library ([ADR 0012](docs/decisions/0012-previous-year-question-papers.md)) and student complaints ([ADR 0013](docs/decisions/0013-student-complaints.md)); and, at the owner's request, Notes, the Quick Assistant chat and the floating 3D robot ([ADR 0014](docs/decisions/0014-notes-quick-assistant-and-robot.md)). Migrations `V1` to `V15` exist. The AI runs on the mock provider; a Gemini adapter (`GeminiAiProvider`, `AI_PROVIDER=gemini`) exists and is unit-tested but has not been accepted against the live service. The production profile, the request limits, the generated access tests and the security review ([docs/21-security-review.md](docs/21-security-review.md)) are done, and the 2026-10-23 audit and its remediation are in [PROJECT_AUDIT_REPORT.md](PROJECT_AUDIT_REPORT.md). **Not done:** live acceptance of a real AI provider (`T5-06`), the storage bucket sign-off (`T3-01`), choosing the host (Heroku or Render) and deploying (`T6-04` to `T6-06`), and the rest of the P1 backlog (Phase 7). Those are owner tasks or later work; see [docs/16-implementation-plan.md](docs/16-implementation-plan.md) "Progress". Check the plan and the Git history before assuming anything else exists.
 
 ## 2. Approved stack
 
 Java 21 · Spring Boot (Web, Security, Data JPA, Validation, Actuator) · Maven · PostgreSQL on Supabase · Flyway · Supabase Storage · JUnit 5, Mockito, Spring Boot Test, Testcontainers · plain HTML, CSS, JavaScript.
 
 **Not approved** without an accepted decision record: Node.js or Express, any second backend, any frontend framework or bundler, MySQL or H2, JWT authentication, the Supabase client in the browser, Lombok, CDN-loaded libraries. The full list and versions are in [docs/04-TRD.md](docs/04-TRD.md).
+
+**One accepted exception:** the public landing page (`/`) is built with React, TypeScript, Vite and Tailwind in `landing-frontend/` ([ADR 0015](docs/decisions/0015-react-landing-page.md)). Node is a development tool for that page only; its built files are committed. Every other page, and the whole backend, keeps the stack above. Do not use React or the landing build anywhere else.
 
 ## 3. The seven working principles
 
@@ -53,17 +55,24 @@ Then, by area:
 ├── AGENTS.md, SECURITY_RULES.md, AI_AGENT_SECURITY_RULES.md, CONTRIBUTING.md, README.md
 ├── .env.example                  // configuration names, no values
 ├── pom.xml, mvnw, system.properties, Procfile        (from T1-01 and T6-01)
+├── Dockerfile, render.yaml       // container build for Render (docs/23); Heroku uses the Procfile
 ├── docs/                         // specifications and decision records
+├── landing-frontend/             // React source of the landing page only (ADR 0015)
 └── src
     ├── main
     │   ├── java/com/campuscompanion/...
     │   └── resources
-    │       ├── application.yml, application-dev.yml, application-prod.yml
-    │       ├── db/migration/     // Flyway: V1__core.sql, ...
+    │       ├── application.yml, application-prod.yml
+    │       ├── db/migration/     // Flyway: V1__core.sql ... V15__assistant_chats.sql
     │       ├── prompts/          // versioned AI prompt templates
-    │       └── static/           // login.html, css/, js/, student/, admin/
-    └── test/java/com/campuscompanion/...
+    │       ├── demo/             // synthetic demo questions for the seeder
+    │       └── static/           // login.html, css/, js/, student/, admin/, vendor/, robot/
+    └── test
+        ├── java/com/campuscompanion/...
+        └── js/                   // tests of browser modules, Node's own runner
 ```
+
+There is no `application-dev.yml`. The `dev` profile has no settings file of its own: it only switches on the synthetic demo data (`DevDataSeeder`), which `DEMO_SEED_ENABLED=true` also does.
 
 Java packages are organised by feature. The layout and dependency rule are in [docs/05-architecture.md](docs/05-architecture.md#4-package-structure).
 
@@ -123,6 +132,8 @@ Available once task `T1-01` is complete.
 | Format | `./mvnw spotless:apply` |
 | Check formatting | `./mvnw spotless:check` |
 | Build the JAR | `./mvnw -DskipTests package` |
+| Browser-module tests (Node 20 or later, no packages) | `node --test "src/test/js/**/*.test.mjs"` |
+| Rebuild the landing page (ADR 0015) | `npm ci && npm run build` in `landing-frontend/`, then delete the old hash-named files in `static/js/landing/` and `static/css/landing/` |
 
 Integration tests need Docker running. If Docker is unavailable, say so in your report; do not skip the tests silently.
 

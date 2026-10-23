@@ -4,6 +4,8 @@
 - Date: 2026-10-10
 - Deciders: Laxman Sirvi
 
+> **Update, 2026-10-23 (from the code, CC-10).** A Gemini adapter, `GeminiAiProvider`, was added with ADR 0014 and is chosen with `AI_PROVIDER=gemini` plus `AI_API_KEY` (and optionally `AI_MODEL`); `AI_PROVIDER=mock` stays the default. The key is sent only in the `x-goog-api-key` header. The adapter is tested against a fake HTTP server only. Choosing Gemini as *the* provider (OQ-1), reviewing its data terms, setting the budget and the live acceptance run (T5-06, T5-08) are still open owner decisions, so the table below is unchanged.
+
 ## Context
 
 The study assistant needs a large language model to explain topics, summarize text and generate practice questions. Running a model ourselves is not practical. A hosted API costs money per use, needs a secret key, can be slow or unavailable, and returns text that cannot be trusted blindly. The assignment requires the integration to be in Java.

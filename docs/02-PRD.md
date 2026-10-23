@@ -51,6 +51,7 @@ A priority is changed only by editing this document, stating the reason, with th
 | FR-LIB-005 | Report a resource | P1 |
 | FR-LIB-006 | Previous-year question papers (PYQs) | P1 |
 | FR-CMP-001 to FR-CMP-004 | Student complaints: public, private and secure | P1 |
+| FR-NTE-001 to FR-NTE-003, FR-AST-001, FR-ROB-001 | Notes, the Quick Assistant and the floating robot | P1 |
 | FR-LIB-006 | Question paper analyzer | P2 |
 | FR-QZ-001 | Start a Quick Exam | P0 |
 | FR-QZ-002 | Timer and submission | P0 |
@@ -330,6 +331,40 @@ Added on 2026-10-23 at the owner's request. The decision and its reasons are in 
 ### FR-CMP-004 Handle complaints (P1)
 
 - **Acceptance criteria:** The administrator lists every complaint (open first), filters by type and status, opens one and sets a status (Open, In review, Resolved, Rejected) with an optional response. Each change is audited with the status only. A rejected public complaint leaves the public board.
+
+## 5c. Notes, the Quick Assistant and the floating robot
+
+Added on 2026-10-23 at the owner's request, as a port of the owner's Opportunity Radar features into this application's architecture. The decision and its reasons are in [ADR 0014](decisions/0014-notes-quick-assistant-and-robot.md). Written down here after they were built, from the code, during the 2026-10-23 audit remediation (CC-10).
+
+### FR-NTE-001 Notes and folders (P1)
+
+- **Story:** As a student, I want to write and organise my own notes next to my college records.
+- **Acceptance criteria:**
+  1. A student creates, edits, pins, archives, tags, duplicates and links notes, in folders, with a rich-text editor. Changes save automatically; a failed save is tried again, and unsaved text is sent when the page is hidden or closed.
+  2. Pictures (stored as new JPEGs) and PDFs can be attached. Note HTML is rebuilt from an allow-list on the server.
+  3. Deleting moves a note to the Trash; only "delete permanently" or emptying the Trash destroys it with its files. Clearing a note's text moves it to the Trash, never destroys it.
+  4. A note and its files are the student's own: another student's note or file is "not found".
+
+### FR-NTE-002 Sharing notes (P1)
+
+- **Acceptance criteria:**
+  1. The owner shares a note with named classmates (by roll number or college email), to read or to edit its title and text, and can share it by link, read-only, for any signed-in student who has the link.
+  2. The owner sees recipients by roll number only, never by name.
+  3. A file of a shared note opens for its uploader, the note's owner, a named recipient, or a student who presents the share link; never by its number alone, and for nobody but the owner while the note is in the Trash.
+
+### FR-NTE-003 Quick Note (P1)
+
+- **Acceptance criteria:** From the robot, a student writes a note in a small composer; it is filed in the "Quick Notes" folder with the same editor and autosave as FR-NTE-001.
+
+### FR-AST-001 Quick Assistant chat (P1)
+
+- **Acceptance criteria:**
+  1. From the robot, a student chats with the AI assistant, under the same limits and rules as FR-AI-004 and docs/13.
+  2. The questions and answers are stored so the student can read them again: only the six newest chats, read by that student only (never by an administrator), deletable by the student, and nothing is stored when an answer fails. The privacy policy says so.
+
+### FR-ROB-001 Floating robot (P1)
+
+- **Acceptance criteria:** Every student page shows a draggable 3D robot (with a plain badge until the scene is drawn, or for good if it cannot load) that opens the Quick Note (triple tap, Enter) and the Quick Assistant (double tap, A). Its scene loads after the page is usable and never from a CDN.
 
 ## 6. Learning resource hub
 
