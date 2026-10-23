@@ -156,7 +156,7 @@ Access: **Public**, **Any** (any logged-in user), **Student**, **Admin**. Detail
 | PUT | `/students/me/photo` | Student | Add or replace own photo: multipart part `file`, JPEG or PNG, at most 2 MB. The server stores a redrawn 512 by 512 JPEG. |
 | DELETE | `/students/me/photo` | Student | Remove own photo. Idempotent. |
 | GET | `/students/me/photo-url` | Student | Signed link to own photo, valid five minutes. `404` when there is none. |
-| GET | `/students/me/dashboard` | Student | Dashboard summary. |
+| GET | `/students/me/dashboard` | Student | Dashboard summary, including `nextExam` (8.22). |
 | GET | `/attendance/me` | Student | Subject-wise attendance. |
 | GET | `/attendance/me/subjects/{subjectId}` | Student | Dated history for one subject (paginated). |
 | GET | `/attendance/me/calculator` | Student | Classes needed for a target (P1). |
@@ -785,6 +785,17 @@ Student only ([ADR 0014](decisions/0014-notes-quick-assistant-and-robot.md)). Th
 - Attachments: `POST /notes/attachments?noteId=` (multipart part `file`, at most 10 MB) returns 201 with `{id, url, name, mimeType, sizeBytes, kind}`. A JPEG, PNG or GIF picture is stored as a new JPEG; a PDF is kept; other types are `415` unless switched on. `GET /notes/attachments?kind=` lists; `DELETE /{id}`; `GET /{id}/file[?download=true][&share=<slug>]` redirects (302) to a five-minute signed link, for the uploader or the note's owner (a picture a shared editor added belongs to the note), a named recipient of the note, or a student who presents the note's share link as `share` while that link is on. The attachment number alone opens nothing of someone else's, and while the note is in the Trash only the owner gets the file; everyone else gets 404.
 - Links: `POST /notes/{id}/links` `{targetType: note|folder|resource, targetId}` returns `{links}`; `GET /notes/link-targets?q=&exclude=`.
 - Sharing: `GET /notes/{id}/share` returns `{share}` (null when never shared), where `share` is `{slug, linkAccess, recipients: [{id, recipientId, rollNo, permission}]}`. A recipient is listed by roll number only, never by name, so sharing cannot be used to look up the name behind a roll number; `PUT` `{linkAccess: private|view}`; `POST /share/recipients` `{identifier (roll number or college email), permission: view|edit}`; `DELETE /share/recipients/{recipientId}`; `DELETE /share` stops all sharing. `GET /notes/shared/{slug}` opens a note read-only for any signed-in student while the link is on, otherwise `404`.
+
+### 8.22 Planner (students)
+
+Student only (T7-02, FR-PLN-001, FR-PLN-002). The student always comes from the session; another student's task or exam is `404`. An admin gets `403`.
+
+- `GET /planner/tasks?view=pending|overdue|done|all` (default `pending`; any other value `400`) returns `{tasks, counts: {pending, overdue, done}}`. A task is `{id, title, notes, subject: {id, code, name} | null, dueDate, status: PENDING|DONE, overdue, completedAt, createdAt}`. `overdue` is true for a pending task whose due date is before the campus date. Order: pending soonest due first (undated last, then newest); done latest completed first; `all` is pending then done.
+- `POST /planner/tasks` `{title, notes?, subjectId?, dueDate?}` returns 201 with the task. `PUT /planner/tasks/{id}` takes the same body and replaces those fields. `POST /planner/tasks/{id}/complete` and `/reopen` return the task (completing twice keeps the first completion time). `DELETE /planner/tasks/{id}` returns 204 and is permanent.
+- `GET /planner/exams` returns `{upcoming, past}`. An exam is `{id, source: MINE|COLLEGE, noticeId, name, subject, examDate, past}`. `upcoming` holds the student's own exams from today on and the published notices in the `EXAM` category with a due date from today up to 366 days ahead that target the student's class (`source: COLLEGE`, `id: null`, read-only), soonest first; `past` holds the student's own past exams, latest first, at most 20.
+- `POST /planner/exams` `{name, subjectId?, examDate}` returns 201; `PUT /planner/exams/{id}` takes the same body; `DELETE /planner/exams/{id}` returns 204.
+- Validation (`400 VALIDATION_FAILED`, field named): `title` 1 to 200 characters, `notes` at most 1,000, `name` 1 to 120, `examDate` required; `subjectId` must be one of the student's subjects; a new or changed `dueDate` or `examDate` must be from today to five years ahead (an unchanged date is accepted on edit); unknown fields are refused.
+- The number of days left is not sent: the pages count it from the date, like the notice deadlines, so it stays right after midnight.
 
 ## 9. AI endpoints
 

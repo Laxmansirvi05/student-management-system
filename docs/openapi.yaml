@@ -1284,6 +1284,113 @@ paths:
               schema: { $ref: "#/components/schemas/Notice" }
         "400": { $ref: "#/components/responses/Problem" }
 
+  /planner/tasks:
+    get:
+      tags: [Student]
+      summary: The student's study tasks, in one view, with the count of each view (T7-02)
+      parameters:
+        - { name: view, in: query, schema: { type: string, enum: [pending, overdue, done, all], default: pending } }
+      responses:
+        "200": { description: "{ tasks: [...], counts: { pending, overdue, done } }" }
+        "400": { $ref: "#/components/responses/Problem" }
+    post:
+      tags: [Student]
+      summary: Add a study task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StudyTaskRequest" }
+      responses:
+        "201": { description: The task. }
+        "400": { $ref: "#/components/responses/Problem" }
+
+  /planner/tasks/{id}:
+    put:
+      tags: [Student]
+      summary: Change a study task of the student's own
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StudyTaskRequest" }
+      responses:
+        "200": { description: The task. }
+        "400": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+    delete:
+      tags: [Student]
+      summary: Delete a study task of the student's own, for good
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      responses:
+        "204": { description: Deleted. }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /planner/tasks/{id}/complete:
+    post:
+      tags: [Student]
+      summary: Mark a task done (again changes nothing)
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      responses:
+        "200": { description: The task. }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /planner/tasks/{id}/reopen:
+    post:
+      tags: [Student]
+      summary: Mark a task not done
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      responses:
+        "200": { description: The task. }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /planner/exams:
+    get:
+      tags: [Student]
+      summary: The exam countdown, the student's own exams and the college's Exam notices
+      responses:
+        "200": { description: "{ upcoming: [...], past: [...] }" }
+    post:
+      tags: [Student]
+      summary: Add an exam date of the student's own
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ExamRequest" }
+      responses:
+        "201": { description: The exam. }
+        "400": { $ref: "#/components/responses/Problem" }
+
+  /planner/exams/{id}:
+    put:
+      tags: [Student]
+      summary: Change an exam date of the student's own
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ExamRequest" }
+      responses:
+        "200": { description: The exam. }
+        "400": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+    delete:
+      tags: [Student]
+      summary: Delete an exam date of the student's own
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      responses:
+        "204": { description: Deleted. }
+        "404": { $ref: "#/components/responses/Problem" }
+
   /complaints:
     post:
       tags: [Student]
@@ -2146,6 +2253,23 @@ components:
           schema: { $ref: "#/components/schemas/Problem" }
 
   schemas:
+    StudyTaskRequest:
+      type: object
+      additionalProperties: false
+      required: [title]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 200 }
+        notes: { type: string, maxLength: 1000, nullable: true }
+        subjectId: { type: integer, nullable: true }
+        dueDate: { type: string, format: date, nullable: true, description: "From today to five years ahead; an unchanged date is kept on edit." }
+    ExamRequest:
+      type: object
+      additionalProperties: false
+      required: [name, examDate]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 120 }
+        subjectId: { type: integer, nullable: true }
+        examDate: { type: string, format: date, description: "From today to five years ahead; an unchanged date is kept on edit." }
     Problem:
       type: object
       required: [type, title, status, code]

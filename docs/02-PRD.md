@@ -470,13 +470,17 @@ Added on 2026-10-18 at the owner's request. The decision is [ADR 0012](decisions
 
 ## 8. Planner
 
+Built on 2026-10-24 (T7-02), on the Planner page (`/student/planner.html`) and the dashboard.
+
 ### FR-PLN-001 Study tasks (P1)
 
 - **Acceptance criteria:** A student can add a task with an optional subject and due date, mark it done, edit it and delete it. Tasks are private to the student.
+- **As built (T7-02):** a task has a title (1 to 200 characters), optional notes (up to 1,000), an optional subject of the student's own, and an optional due date. The list has four views: To do (pending, soonest due first, undated last), Overdue (pending with a due date before today), Done (latest completed first) and All, each with its count. A done task can be reopened. Deleting asks first and is permanent. A new due date must be from today to five years ahead; an existing date may be kept when a task is edited, so an overdue task can still be renamed.
 
 ### FR-PLN-002 Exam countdown (P1)
 
 - **Acceptance criteria:** The dashboard shows the days remaining until the next notice in the "Exam" category that has a due date.
+- **Extended at the owner's request (T7-02, 2026-10-24):** a student can also add, edit and delete exam dates of their own (a name of 1 to 120 characters, an optional subject, a date from today to five years ahead). The countdown lists the student's own exams and the college's published Exam notices with a due date for the student's class (read-only, linked to the notice) together, soonest first; the student's own past exams are listed apart, latest first. The dashboard shows the next of them, whichever kind it is. Days are counted from the campus date; an exam is "Today" on its day and past from the next day.
 
 ## 9. AI study assistant
 

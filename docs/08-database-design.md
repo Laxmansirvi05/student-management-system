@@ -495,6 +495,23 @@ One student's support for one public complaint. Primary key (`complaint_id`, `st
 
 Index: (`student_id`, `status`, `due_date`).
 
+Built in V16 (T7-02). Also: `completed_at` is set exactly when `status` is `DONE` (check constraint), and the title cannot be blank. RLS on; `cc_app` has the grants and policies of the migration. Read and changed by the owning student only (the service filters by the student of the session).
+
+### 4.19b `student_exams` (P1)
+
+An exam date a student adds for their own countdown (FR-PLN-002, extended by T7-02). Exam dates the college publishes stay in `notices` (category `EXAM` with a due date) and are not copied here.
+
+| Column | Type | Constraints |
+| --- | --- | --- |
+| id | BIGINT | PK |
+| student_id | BIGINT | NOT NULL, FK → student_profiles |
+| name | VARCHAR(120) | NOT NULL, not blank |
+| subject_id | BIGINT | NULL, FK → subjects |
+| exam_date | DATE | NOT NULL |
+| created_at | TIMESTAMPTZ | NOT NULL |
+
+Index: (`student_id`, `exam_date`). Added in V16. RLS on; owning student only.
+
 ### 4.20 `resource_reports` (P1)
 
 | Column | Type | Constraints |
@@ -581,12 +598,13 @@ Flyway, versioned SQL files, forward-only. See [ADR 0006](decisions/0006-flyway-
 | V13 | `V13__complaints.sql` | Adds `complaints`, `complaint_owners` and `complaint_supports` (sections 4.23 to 4.25) | Added 2026-10-23 |
 | V14 | `V14__notes.sql` | Adds the notes tables (section 4.26) | Added 2026-10-23 |
 | V15 | `V15__assistant_chats.sql` | Adds the assistant chat tables and `QUICK_CHAT` (section 4.27) | Added 2026-10-23 |
+| V16 | `V16__planner.sql` | Adds `study_tasks` (section 4.19) and `student_exams` (section 4.19b) for T7-02 | Added 2026-10-24 |
 | V12 | `V12__notice_documents.sql` | Adds the official document columns to `notices` (section 4.10) | Added 2026-10-22 |
 | V11 | `V11__pyq_created_by_optional.sql` | Makes `pyq_papers.created_by` optional (section 4.21) | Added 2026-10-19 |
 | V10 | `V10__pyq.sql` | Adds `pyq_papers` and `pyq_bookmarks` (sections 4.21 and 4.22) | Added 2026-10-18 |
 | V9 | `V9__profile_links.sql` | Adds `personal_email`, `linkedin_url`, `github_url`, `portfolio_url` and `skills` to student_profiles (section 4.2) | Added 2026-10-18 |
 | V7 | `V7__attendance_reports.sql` | Adds `attendance_reports`, the college's totals per student and period (section 4.18a) | Added 2026-10-18 |
-| V7 | `V7__planner.sql` | study_tasks, resource_reports | P1, not built |
+| V7 (planned) | `V7__planner.sql` | study_tasks, resource_reports | study_tasks built in V16 instead (T7-02); resource_reports not built |
 
 Rules:
 
@@ -672,7 +690,8 @@ Schema: `USAGE` on `app`. No `CREATE`.
 | quiz_attempt_answers | ✓ | ✓ | ✓ | | Same. |
 | audit_logs | ✓ | ✓ | | | Append-only (section 12). |
 | ai_request_logs | ✓ | ✓ | | | Append-only. The P1 retention job (`T7-09`) must add `DELETE` in its own migration. |
-| study_tasks (P1) | ✓ | ✓ | ✓ | ✓ | |
+| study_tasks | ✓ | ✓ | ✓ | ✓ | |
+| student_exams | ✓ | ✓ | ✓ | ✓ | |
 | resource_reports (P1) | ✓ | ✓ | ✓ | | |
 
 `cc_app` is granted no `TRUNCATE`, `REFERENCES` or `TRIGGER` privilege on any table, and no privilege at all on `flyway_schema_history`.

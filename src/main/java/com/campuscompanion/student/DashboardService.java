@@ -8,6 +8,7 @@ import com.campuscompanion.attendance.dto.AttendanceSummaryResponse;
 import com.campuscompanion.common.config.CampusTime;
 import com.campuscompanion.common.security.CurrentUser;
 import com.campuscompanion.notice.NoticeService;
+import com.campuscompanion.planner.ExamCountdownService;
 import com.campuscompanion.progress.ProgressService;
 import com.campuscompanion.student.dto.DashboardResponse;
 import com.campuscompanion.student.dto.DashboardResponse.AttendanceCard;
@@ -38,6 +39,7 @@ public class DashboardService {
   private final TimetableService timetable;
   private final NoticeService notices;
   private final ProgressService progress;
+  private final ExamCountdownService exams;
   private final Clock clock;
 
   public DashboardService(
@@ -47,6 +49,7 @@ public class DashboardService {
       TimetableService timetable,
       NoticeService notices,
       ProgressService progress,
+      ExamCountdownService exams,
       Clock clock) {
     this.students = students;
     this.attendance = attendance;
@@ -54,6 +57,7 @@ public class DashboardService {
     this.timetable = timetable;
     this.notices = notices;
     this.progress = progress;
+    this.exams = exams;
     this.clock = clock;
   }
 
@@ -66,7 +70,8 @@ public class DashboardService {
         timetable.timetableFor(currentUser, today),
         notices.deadlinesFor(student, DEADLINE_DAYS),
         notices.recentFor(student, RECENT_NOTICES),
-        progress.recommendationsFor(student.studentId()).stream().limit(RECOMMENDATIONS).toList());
+        progress.recommendationsFor(student.studentId()).stream().limit(RECOMMENDATIONS).toList(),
+        exams.next(currentUser));
   }
 
   private static AttendanceCard attendanceCard(AttendanceSummaryResponse summary) {

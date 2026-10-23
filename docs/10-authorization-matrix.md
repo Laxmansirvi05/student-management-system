@@ -166,7 +166,9 @@ The AI component can read no table except its own usage log. It cannot look up m
 
 | Data | Action | Visitor | Student | Admin | System |
 | --- | --- | --- | --- | --- | --- |
-| Study tasks | Read, create, update, delete | ❌ | 🔒 own | ❌ | — |
+| Study tasks | Read, create, update, complete, reopen, delete | ❌ | 🔒 own | ❌ | — |
+| Own exam dates (countdown) | Read, create, update, delete | ❌ | 🔒 own | ❌ | — |
+| College exam dates in the countdown | Read | ❌ | ✅ published Exam notices of the student's class, as in Notices | ❌ | — |
 
 ### 4.8 Audit and operations
 

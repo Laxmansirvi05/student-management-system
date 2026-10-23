@@ -1,6 +1,7 @@
 package com.campuscompanion.student.dto;
 
 import com.campuscompanion.notice.dto.NoticeResponse;
+import com.campuscompanion.planner.dto.ExamResponse;
 import com.campuscompanion.progress.dto.RecommendationResponse;
 import com.campuscompanion.timetable.dto.TimetableEntryResponse;
 import java.math.BigDecimal;
@@ -13,7 +14,9 @@ public record DashboardResponse(
     List<TimetableEntryResponse> todayClasses,
     List<NoticeResponse> upcomingDeadlines,
     List<NoticeResponse> recentNotices,
-    List<RecommendationResponse> recommendations) {
+    List<RecommendationResponse> recommendations,
+    /** The next exam, the student's own or the college's (FR-PLN-002); null when none. */
+    ExamResponse nextExam) {
 
   public record AttendanceCard(
       BigDecimal overallPercent, BigDecimal requiredPercent, int subjectsBelowRequired) {}

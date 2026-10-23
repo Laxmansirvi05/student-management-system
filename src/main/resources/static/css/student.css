@@ -1591,3 +1591,73 @@ button.qdot:hover {
   background: var(--tint-primary);
   color: var(--on-tint-primary);
 }
+
+/* Planner (T7-02): study tasks and the exam countdown. */
+.planner-grid {
+  display: grid;
+  gap: var(--space-5);
+  align-items: start;
+}
+
+@media (min-width: 1100px) {
+  .planner-grid {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  }
+}
+
+.planner-next {
+  display: grid;
+  gap: var(--space-1);
+  padding-bottom: var(--space-3);
+}
+
+.planner-next__days {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.planner-task {
+  align-items: flex-start;
+}
+
+.planner-task__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.planner-notes {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.planner-check[aria-pressed="true"] {
+  color: var(--color-success);
+}
+
+.planner-row--done .row__title {
+  text-decoration: line-through;
+  color: var(--color-text-muted);
+}
+
+.planner-row--past {
+  opacity: 0.7;
+}
+
+.planner-overdue {
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+.planner-past summary {
+  cursor: pointer;
+  padding-top: var(--space-3);
+}
+
+/* Fields in the forms the planner opens, spaced as in the admin forms (admin.css). */
+dialog .form-grid {
+  display: grid;
+  gap: var(--space-4);
+  align-items: start;
+}

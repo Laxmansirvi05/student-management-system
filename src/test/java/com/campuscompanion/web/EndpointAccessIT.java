@@ -49,6 +49,7 @@ class EndpointAccessIT extends ApiIntegrationTest {
           "/api/v1/pyqs",
           "/api/v1/complaints",
           "/api/v1/notes",
+          "/api/v1/planner/",
           "/api/v1/assistant/",
           "/api/v1/quiz-attempts",
           "/api/v1/progress/",

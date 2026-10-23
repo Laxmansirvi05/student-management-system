@@ -111,7 +111,7 @@ com.campuscompanion
 ├── resource          // learning resources, question papers, bookmarks, storage
 ├── quiz              // question bank, attempts, evaluation
 ├── progress          // unit performance, recommendations
-├── planner           // study tasks (P1)
+├── planner           // study tasks and the exam countdown (P1, T7-02)
 ├── ai                // provider, prompts, parsing, usage
 └── audit
 ```

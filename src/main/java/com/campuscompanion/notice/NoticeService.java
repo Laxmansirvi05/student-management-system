@@ -129,6 +129,19 @@ public class NoticeService {
         .toList();
   }
 
+  /**
+   * The exam dates the college has published for a student's class: notices in the Exam category
+   * whose due date falls from {@code from} to {@code to}, soonest first (FR-PLN-002).
+   */
+  public List<NoticeResponse> examDatesFor(StudentContext student, LocalDate from, LocalDate to) {
+    return notices
+        .findDeadlines(student.branch(), (short) student.currentSemester(), from, to)
+        .stream()
+        .filter(notice -> notice.getCategory() == NoticeCategory.EXAM)
+        .map(NoticeService::toResponse)
+        .toList();
+  }
+
   /** Whose notices to show: a student's class, or everything for an admin. */
   private record Audience(String branch, Short semester) {}
 

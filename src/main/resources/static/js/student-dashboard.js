@@ -112,6 +112,29 @@ function deadlinesCard(upcomingDeadlines) {
   );
 }
 
+/** The next exam, the student's own or the college's (FR-PLN-002), counted down in days. */
+function nextExamCard(nextExam) {
+  if (!nextExam) {
+    return h(
+      "section.card.card--lift.reveal",
+      cardHead("timer", "Next exam", "/student/planner.html", "Planner"),
+      empty("timer", "No exams coming up", "Add your exam dates in the planner to count down to them."),
+    );
+  }
+  const days = daysUntil(nextExam.examDate);
+  const when = days === 0 ? "Today" : days === 1 ? "Tomorrow" : `In ${days} days`;
+  return h(
+    "section.card.card--lift.reveal",
+    cardHead("timer", "Next exam", "/student/planner.html", "Planner"),
+    h(
+      "div.planner-next",
+      h("p.planner-next__days.num" + (days <= 3 ? ".row__meta--warning" : ""), when),
+      h("p.row__title", nextExam.name),
+      h("p.row__meta", formatDate(nextExam.examDate) + (nextExam.source === "COLLEGE" ? " · from your college" : "")),
+    ),
+  );
+}
+
 function noticesCard(recentNotices) {
   const rows = recentNotices.slice(0, 4).map((notice) =>
     h(
@@ -154,6 +177,7 @@ loadInto(content, () => api.get("/students/me/dashboard"), (data) => {
       resultsCard(data.results),
       classesCard(data.todayClasses),
       deadlinesCard(data.upcomingDeadlines),
+      nextExamCard(data.nextExam),
       noticesCard(data.recentNotices),
       recommendationsCard(data.recommendations),
     ]),
