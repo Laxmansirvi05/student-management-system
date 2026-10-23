@@ -18,7 +18,9 @@ import com.campuscompanion.common.error.ErrorCode;
 import com.campuscompanion.support.MutableClock;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collection;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 /**
  * The limits of the AI assistant, one at a time and in their order (docs/12-AI-features-spec.md
@@ -207,5 +209,21 @@ class AiUsageServiceTest {
     assertThat(AiRequestStatus.DECLINED.countsTowardLimits()).isTrue();
     assertThat(AiRequestStatus.FAILED.countsTowardLimits()).isFalse();
     assertThat(AiRequestStatus.TIMEOUT.countsTowardLimits()).isFalse();
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  void theLimitsCountExactlyTheOutcomesThatTheStatusSaysCount() {
+    usedToday(0, 0);
+    service(true, 30, 500).usageFor(USER);
+    ArgumentCaptor<Collection<AiRequestStatus>> counted = ArgumentCaptor.forClass(Collection.class);
+    verify(logs)
+        .countByUserIdAndStatusInAndCreatedAtGreaterThanEqual(eq(USER), counted.capture(), any());
+    assertThat(counted.getValue())
+        .containsExactlyInAnyOrder(
+            java.util.Arrays.stream(AiRequestStatus.values())
+                .filter(AiRequestStatus::countsTowardLimits)
+                .toArray(AiRequestStatus[]::new))
+        .containsExactlyInAnyOrder(AiRequestStatus.SUCCESS, AiRequestStatus.DECLINED);
   }
 }

@@ -31,8 +31,8 @@ import org.springframework.stereotype.Service;
 public class AiUsageService {
 
   private static final Duration MINUTE = Duration.ofMinutes(1);
-  private static final Set<AiRequestStatus> COUNTED =
-      EnumSet.of(AiRequestStatus.SUCCESS, AiRequestStatus.DECLINED);
+  // Which outcomes use up a student's requests is decided in one place, AiRequestStatus.
+  private static final Set<AiRequestStatus> COUNTED = countedStatuses();
 
   static final String SWITCHED_OFF = "The assistant is unavailable right now.";
   static final String CEILING_REACHED =
@@ -143,5 +143,15 @@ public class AiUsageService {
   private Instant startOfTomorrow() {
     ZonedDateTime tomorrow = CampusTime.today(clock).plusDays(1).atStartOfDay(CampusTime.ZONE);
     return tomorrow.toInstant();
+  }
+
+  private static Set<AiRequestStatus> countedStatuses() {
+    Set<AiRequestStatus> counted = EnumSet.noneOf(AiRequestStatus.class);
+    for (AiRequestStatus status : AiRequestStatus.values()) {
+      if (status.countsTowardLimits()) {
+        counted.add(status);
+      }
+    }
+    return counted;
   }
 }
