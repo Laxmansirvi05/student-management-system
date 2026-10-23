@@ -4,6 +4,8 @@
 - Date: 2026-10-10
 - Deciders: Laxman Sirvi
 
+> **Update, 2026-10-23 (Phase 1).** Several providers now sit behind a router with automatic fallback: see [ADR 0016](0016-several-ai-providers-with-fallback.md). The provider table below is still to be completed by the owner's review of each provider's data terms.
+
 > **Update, 2026-10-23 (from the code, CC-10).** A Gemini adapter, `GeminiAiProvider`, was added with ADR 0014 and is chosen with `AI_PROVIDER=gemini` plus `AI_API_KEY` (and optionally `AI_MODEL`); `AI_PROVIDER=mock` stays the default. The key is sent only in the `x-goog-api-key` header. The adapter is tested against a fake HTTP server only. Choosing Gemini as *the* provider (OQ-1), reviewing its data terms, setting the budget and the live acceptance run (T5-06, T5-08) are still open owner decisions, so the table below is unchanged.
 
 ## Context

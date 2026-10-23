@@ -108,6 +108,13 @@ class PageRoutingIT extends PostgresIntegrationTest {
     assertThat(privacy.body())
         .contains("<h1>Privacy policy</h1>")
         .contains("must be reviewed and adopted by the college");
+    // It names every AI service the router may use (docs/12 section 2b).
+    assertThat(privacy.body())
+        .contains("Groq")
+        .contains("Ollama")
+        .contains("Gemini")
+        .contains("OpenRouter")
+        .contains("to another only if the first one fails");
     // It says what V15 really stores (CC-02) and promises no clean-up that does not exist (CC-15).
     assertThat(privacy.body())
         .contains("Your chats with the Quick Assistant")
