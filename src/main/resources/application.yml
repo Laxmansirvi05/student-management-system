@@ -106,6 +106,12 @@ app:
     connect-timeout: 5s
     response-timeout: 20s
     total-budget: 25s
+    # Used when AI_PROVIDER=router: the models to try, in order, and how hard to try (docs/12 2b).
+    # Each provider's keys come from <PROVIDER>_API_KEY, <PROVIDER>_API_KEY_2, ... in the environment.
+    routing:
+      routes: ${AI_ROUTES:}
+      max-attempts: 3
+      attempt-timeout: 15s
   bootstrap:
     admin-email: ${ADMIN_BOOTSTRAP_EMAIL:}
     admin-password: ${ADMIN_BOOTSTRAP_PASSWORD:}

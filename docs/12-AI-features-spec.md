@@ -85,6 +85,39 @@ Failures (`502`, `503`, `504`) do not count toward the daily limit.
 4. The application-wide daily ceiling (`AI_DAILY_LIMIT_GLOBAL`).
 5. The kill switch.
 6. A low-cost model by default (OQ-1).
+7. With the router (section 2b): at most three calls per student request, fallbacks included, and one usage row per request whatever happened inside.
+
+## 2b. Providers, routing and fallback
+
+Added on 2026-10-23 (Phase 1 of the multi-provider work). The services (`AiStudyService`, `AssistantService`) still talk to one `AiProvider`; what stands behind it is chosen by `AI_PROVIDER`.
+
+| `AI_PROVIDER` | Behaviour |
+| --- | --- |
+| `mock` (default) | Canned answers, no network. Every automated test runs with it (`PostgresIntegrationTest` pins it). |
+| `gemini` | One Gemini model: `AI_API_KEY`, `AI_MODEL`. |
+| `router` | `RoutingAiProvider` over the models in `AI_ROUTES`. |
+
+**Adapters.** `GeminiAiProvider` (Google's generateContent) and `OpenAiCompatibleAiProvider` (the chat-completions format, used for Groq, OpenRouter and Ollama's cloud; their addresses are fixed in `AiProviderConfig`). Both use Java's own `HttpClient`, send a `User-Agent`, keep the instructions and the student's text in separate messages, and send the key only in a header.
+
+**Routes.** `AI_ROUTES` lists `provider:model` entries in priority order, for example `groq:openai/gpt-oss-120b,ollama:gpt-oss:20b,gemini:gemini-3.5-flash-lite`. Each entry becomes one route per key of that provider, read from `<PROVIDER>_API_KEY`, `<PROVIDER>_API_KEY_2` … `_9`, in that order. An entry whose provider has no key is skipped with a warning; no usable route at all stops the start. The mock is never a route.
+
+**Choosing and falling back.** For each request the router takes the first route that is not paused, and moves to the next only after a failure:
+
+| Failure | Classified from | What is paused | For |
+| --- | --- | --- | --- |
+| Rate limit or used-up quota | `429` | **The whole provider**, every model and key | The provider's `Retry-After` (at most 10 min), else 60 s |
+| Refused key | `401`, `403` | That key only (the provider's next key may be tried) | 30 min |
+| Unknown or retired model, refused request | `404`, `400`, `422` | That model, for every key | 30 min |
+| Outage, unreachable, timeout | `5xx`, network, `408`, no answer in time | That model | 30 s |
+| Reply fails the feature's parser or validator | the caller's check | Nothing (next model is tried) | — |
+
+Several keys of one provider are **not** used to get around its rate limits or quotas: a `429` pauses the provider, and its other keys are tried only when a key itself is refused.
+
+**Bounds.** At most 3 calls per request (`app.ai.routing.max-attempts`), each at most 15 s (`attempt-timeout`), all within the 25 s total budget; no call starts with less than 2 s left. When every route is paused, the request fails at once without calling anyone, and paused routes come back by themselves. When everything fails, the student gets the documented error (`503 AI_UNAVAILABLE`, `504 AI_TIMEOUT`, or `502 AI_INVALID_RESPONSE` when every model answered but none passed the checks); never a made-up answer.
+
+**Checks.** A reply is accepted only if the feature's own parser accepts it (`AiResponseParser`, `GeneratedQuestionValidator`); a model's decline counts as an answer. The Quick Assistant accepts any non-empty text.
+
+**Usage and logs.** One usage row per student request, whichever model answered. Logs name a route as `provider:model (key n)` and the kind of failure; never a key, a prompt or a reply.
 
 ## 3. Feature 1: Explain a topic
 

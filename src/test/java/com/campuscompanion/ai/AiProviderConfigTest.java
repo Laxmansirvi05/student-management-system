@@ -3,15 +3,23 @@ package com.campuscompanion.ai;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.campuscompanion.ai.provider.AiProvider;
 import com.campuscompanion.ai.provider.AiProviderConfig;
 import com.campuscompanion.ai.provider.GeminiAiProvider;
 import com.campuscompanion.ai.provider.MockAiProvider;
+import com.campuscompanion.ai.provider.OpenAiCompatibleAiProvider;
+import com.campuscompanion.ai.provider.RoutingAiProvider;
 import com.campuscompanion.common.config.AiProperties;
+import com.campuscompanion.common.config.AiRoutingProperties;
+import java.time.Clock;
 import java.time.Duration;
 import org.junit.jupiter.api.Test;
+import org.springframework.mock.env.MockEnvironment;
 
 /** Which provider the application starts with, and the messages when the choice cannot be met. */
 class AiProviderConfigTest {
+
+  private static final String SECRET = "sk-secret-value";
 
   private static AiProperties properties(String provider, String key, String model) {
     return new AiProperties(
@@ -29,35 +37,101 @@ class AiProviderConfigTest {
         Duration.ofSeconds(25));
   }
 
+  private static AiRoutingProperties routing(String routes) {
+    return new AiRoutingProperties(routes, 3, Duration.ofSeconds(15));
+  }
+
   private final AiProviderConfig config = new AiProviderConfig();
+
+  private AiProvider start(String provider, String key, String routes, MockEnvironment keys) {
+    return config.aiProvider(
+        properties(provider, key, ""), routing(routes), keys, Clock.systemUTC());
+  }
+
+  private AiProvider start(String provider, String key) {
+    return start(provider, key, "", new MockEnvironment());
+  }
 
   @Test
   void mockIsTheDefaultAndNeedsNoKey() {
-    assertThat(config.aiProvider(properties("mock", "", ""))).isInstanceOf(MockAiProvider.class);
-    assertThat(config.aiProvider(properties("MOCK", null, null)))
-        .isInstanceOf(MockAiProvider.class);
+    assertThat(start("mock", "")).isInstanceOf(MockAiProvider.class);
+    assertThat(start("MOCK", null)).isInstanceOf(MockAiProvider.class);
   }
 
   @Test
   void geminiNeedsAKeyFromTheEnvironment() {
-    assertThat(config.aiProvider(properties("gemini", "a-made-up-key", "")))
-        .isInstanceOf(GeminiAiProvider.class);
-    assertThatThrownBy(() -> config.aiProvider(properties("gemini", "  ", "")))
+    assertThat(start("gemini", "a-made-up-key")).isInstanceOf(GeminiAiProvider.class);
+    assertThatThrownBy(() -> start("gemini", "  "))
         .isInstanceOf(IllegalStateException.class)
         .hasMessageContaining("AI_API_KEY");
   }
 
   @Test
   void anUnknownProviderStopsTheStartAndNeverShowsTheKey() {
-    assertThatThrownBy(() -> config.aiProvider(properties("openai", "sk-secret-value", "")))
+    assertThatThrownBy(() -> start("openai", SECRET))
         .isInstanceOf(IllegalStateException.class)
         .hasMessageContaining("'openai'")
-        .hasMessageNotContaining("sk-secret-value");
+        .hasMessageNotContaining(SECRET);
   }
 
   @Test
   void theKeyIsNotInThePropertiesText() {
-    assertThat(properties("gemini", "sk-secret-value", "m").toString())
-        .doesNotContain("sk-secret-value");
+    assertThat(properties("gemini", SECRET, "m").toString()).doesNotContain(SECRET);
+  }
+
+  @Test
+  void theRouterTriesTheListedModelsInOrderAndEachProvidersKeysInNumberOrder() {
+    MockEnvironment keys =
+        new MockEnvironment()
+            .withProperty("GROQ_API_KEY", "groq-one")
+            .withProperty("GROQ_API_KEY_3", "groq-three")
+            .withProperty("OLLAMA_API_KEY_2", "ollama-two")
+            .withProperty("GEMINI_API_KEY", "gemini-one");
+    AiProvider provider =
+        start(
+            "router",
+            "",
+            "groq:openai/gpt-oss-120b, ollama:gpt-oss:20b ,gemini:gemini-3.5-flash-lite,"
+                + " openrouter:some/model:free",
+            keys);
+
+    assertThat(provider).isInstanceOf(RoutingAiProvider.class);
+    var routes = ((RoutingAiProvider) provider).routes();
+    // OpenRouter has no key, so its entry is skipped; the mock is never a route.
+    assertThat(routes)
+        .extracting(RoutingAiProvider.Route::label)
+        .containsExactly(
+            "groq:openai/gpt-oss-120b (key 1)",
+            "groq:openai/gpt-oss-120b (key 3)",
+            "ollama:gpt-oss:20b (key 2)",
+            "gemini:gemini-3.5-flash-lite (key 1)");
+    assertThat(routes.get(0).adapter()).isInstanceOf(OpenAiCompatibleAiProvider.class);
+    assertThat(routes.get(3).adapter()).isInstanceOf(GeminiAiProvider.class);
+    assertThat(routes)
+        .extracting(RoutingAiProvider.Route::label)
+        .noneMatch(label -> label.contains("groq-one") || label.contains("gemini-one"));
+  }
+
+  @Test
+  void aRouterWithoutAnyUsableRouteStopsTheStart() {
+    assertThatThrownBy(() -> start("router", "", "", new MockEnvironment()))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("AI_ROUTES");
+    assertThatThrownBy(() -> start("router", "", "groq:openai/gpt-oss-20b", new MockEnvironment()))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("no model whose provider has a key");
+  }
+
+  @Test
+  void aMistypedRouteStopsTheStartWithoutShowingAnyKey() {
+    MockEnvironment keys = new MockEnvironment().withProperty("GROQ_API_KEY", SECRET);
+    assertThatThrownBy(() -> start("router", "", "groq-openai-model", keys))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("'provider:model'")
+        .hasMessageNotContaining(SECRET);
+    assertThatThrownBy(() -> start("router", "", "openai:gpt-9", keys))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("'openai'")
+        .hasMessageNotContaining(SECRET);
   }
 }
