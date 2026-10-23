@@ -107,8 +107,16 @@ class PageRoutingIT extends PostgresIntegrationTest {
     assertThat(privacy.statusCode()).isEqualTo(200);
     assertThat(privacy.body())
         .contains("<h1>Privacy policy</h1>")
-        .contains("The text you send to the AI assistant and the answer it gives are not stored.")
         .contains("must be reviewed and adopted by the college");
+    // It says what V15 really stores (CC-02) and promises no clean-up that does not exist (CC-15).
+    assertThat(privacy.body())
+        .contains("Your chats with the Quick Assistant")
+        .contains("Only your newest six chats are kept")
+        .contains("Only you can read them, not an administrator")
+        .contains("There is no automatic removal yet.")
+        .doesNotContain(
+            "The text you send to the AI assistant and the answer it gives are not stored")
+        .doesNotContain("removed after 90 days");
     assertThat(terms.statusCode()).isEqualTo(200);
     assertThat(terms.body())
         .contains("<h1>Terms of use</h1>")

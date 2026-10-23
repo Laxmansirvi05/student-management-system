@@ -559,7 +559,7 @@ The database is the last line of defence. Java gives the helpful message first.
 | --- | --- |
 | Academic records and content | Life of the project |
 | Quiz attempts | Life of the project |
-| `ai_request_logs` | 90 days; older rows may be deleted by a scheduled job (P1) |
+| `ai_request_logs` | Aim: 90 days. The scheduled clean-up job (P1, T7-09) is not built, so rows are kept until an administrator removes them |
 | `audit_logs` | Life of the project |
 | Deactivated accounts | Kept; never hard-deleted by the application |
 
