@@ -1,5 +1,5 @@
 import { api, messageFor } from "./api.js";
-import { toast } from "./dom.js";
+import { h, toast } from "./dom.js";
 import { clearErrorsOnInput, setFieldError } from "./forms.js";
 import { reduceMotionChosen, setReduceMotion } from "./preferences.js";
 import { currentUser } from "./shell.js";
@@ -16,10 +16,17 @@ const problem = document.getElementById("password-error");
 const fields = { currentPassword: current, newPassword: next, confirmNewPassword: confirm };
 const ROLES = { STUDENT: "Student", ADMIN: "Administrator" };
 
+// A password form should say whose password it is, so that a password manager stores the new one
+// for the right account (and the browser stops warning about it). The field is never shown or sent.
+const username = h("input", { type: "text", name: "username", autocomplete: "username", hidden: true, tabindex: "-1", "aria-hidden": "true", readonly: true });
+form.prepend(username);
+
 currentUser
   .then((user) => {
     document.getElementById("account-name").textContent = user.displayName;
     document.getElementById("account-email").textContent = user.email;
+    // As the field's default, so that resetting the form after a change keeps it.
+    username.setAttribute("value", user.email);
     document.getElementById("account-role").textContent = ROLES[user.role] || user.role;
   })
   .catch(() => {});

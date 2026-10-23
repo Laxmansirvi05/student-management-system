@@ -17,6 +17,16 @@ const banner = document.getElementById("banner");
 const intro = document.getElementById("intro");
 const fields = { currentPassword: current, newPassword: next, confirmNewPassword: confirm };
 
+// A password form should say whose password it is, so that a password manager stores the new one
+// for the right account (and the browser stops warning about it). The field is never shown or sent.
+const username = document.createElement("input");
+for (const [name, value] of Object.entries({ type: "text", name: "username", autocomplete: "username", tabindex: "-1", "aria-hidden": "true" })) {
+  username.setAttribute(name, value);
+}
+username.hidden = true;
+username.readOnly = true;
+form.prepend(username);
+
 startMascot({
   panel: document.querySelector(".auth-art"),
   passwordInputs: [current, next, confirm],
@@ -29,6 +39,7 @@ api
   .get("/auth/me")
   .then((me) => {
     user = me;
+    username.setAttribute("value", me.email);
     if (me.mustChangePassword) {
       intro.textContent =
         "You are using a temporary password. Choose your own before you continue.";
