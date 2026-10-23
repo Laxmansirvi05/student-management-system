@@ -38,6 +38,7 @@ class OpenAiCompatibleAiProviderTest {
   private volatile String answer = "{}";
   private volatile String retryAfter = null;
   private volatile long delayMs = 0;
+  private volatile long bodyDelayMs = 0;
 
   @BeforeEach
   void startServer() throws IOException {
@@ -60,7 +61,18 @@ class OpenAiCompatibleAiProviderTest {
             exchange.getResponseHeaders().add("Retry-After", retryAfter);
           }
           exchange.sendResponseHeaders(status, bytes.length);
-          exchange.getResponseBody().write(bytes);
+          exchange.getResponseBody().flush();
+          // Headers first, then a slow body, as some providers send a long answer.
+          try {
+            Thread.sleep(bodyDelayMs);
+          } catch (InterruptedException ignored) {
+            Thread.currentThread().interrupt();
+          }
+          try {
+            exchange.getResponseBody().write(bytes);
+          } catch (IOException clientGone) {
+            // The adapter gave up waiting, which is the point of the test.
+          }
           exchange.close();
         });
     server.start();
@@ -152,6 +164,18 @@ class OpenAiCompatibleAiProviderTest {
               AiProviderException.class,
               failure -> assertThat(failure.getKind()).isEqualTo(Kind.UNAVAILABLE));
     }
+  }
+
+  @Test
+  void theTimeoutCoversTheWholeAnswerNotJustItsHeaders() {
+    answer = "{\"choices\":[{\"message\":{\"content\":\"late\"}}]}";
+    bodyDelayMs = 3000;
+    long started = System.nanoTime();
+    assertThatThrownBy(() -> provider().complete(request(Duration.ofMillis(500))))
+        .isInstanceOfSatisfying(
+            AiProviderException.class,
+            failure -> assertThat(failure.getKind()).isEqualTo(Kind.TIMEOUT));
+    assertThat(Duration.ofNanos(System.nanoTime() - started)).isLessThan(Duration.ofMillis(1500));
   }
 
   @Test

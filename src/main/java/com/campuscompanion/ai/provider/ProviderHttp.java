@@ -1,6 +1,5 @@
 package com.campuscompanion.ai.provider;
 
-import java.io.IOException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -8,6 +7,10 @@ import java.net.http.HttpTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * What every HTTP adapter shares: sending one call and turning an unsuccessful answer into an
@@ -23,17 +26,29 @@ final class ProviderHttp {
 
   private ProviderHttp() {}
 
-  /** Sends the call and returns the body of a successful (2xx) answer. */
+  /**
+   * Sends the call and returns the body of a successful (2xx) answer. The call's timeout covers the
+   * whole answer, body included: Java's own request timeout stops at the headers, and some
+   * providers send the headers at once and then the body slowly.
+   */
   static String send(HttpClient http, HttpRequest call) throws AiProviderException {
+    Duration limit = call.timeout().orElse(Duration.ofSeconds(30));
+    CompletableFuture<HttpResponse<String>> pending =
+        http.sendAsync(call, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
     HttpResponse<String> response;
     try {
-      response = http.send(call, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-    } catch (HttpTimeoutException timeout) {
+      response = pending.get(limit.toMillis(), TimeUnit.MILLISECONDS);
+    } catch (TimeoutException tooSlow) {
+      pending.cancel(true);
       throw new AiProviderException(AiProviderException.Kind.TIMEOUT);
     } catch (InterruptedException interrupted) {
+      pending.cancel(true);
       Thread.currentThread().interrupt();
       throw new AiProviderException(AiProviderException.Kind.UNAVAILABLE);
-    } catch (IOException unreachable) {
+    } catch (ExecutionException failed) {
+      if (failed.getCause() instanceof HttpTimeoutException) {
+        throw new AiProviderException(AiProviderException.Kind.TIMEOUT);
+      }
       throw new AiProviderException(AiProviderException.Kind.UNAVAILABLE);
     }
     int status = response.statusCode();

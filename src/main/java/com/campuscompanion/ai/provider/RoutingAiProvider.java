@@ -3,8 +3,10 @@ package com.campuscompanion.ai.provider;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import org.slf4j.Logger;
@@ -26,7 +28,8 @@ import org.slf4j.LoggerFactory;
  *   <li>A refused key (401, 403) pauses only that key; the provider's next key may be tried.
  *   <li>An unknown model or a refused request pauses that model for a long while; an outage or a
  *       timeout pauses it briefly.
- *   <li>A reply that fails the caller's check moves on to the next model without a pause.
+ *   <li>A reply that fails the caller's check moves on to the next <em>model</em> (not the same
+ *       model with another key) without a pause.
  *   <li>When every model is paused, the request fails at once, without calling anyone; paused
  *       models come back by themselves when their pause ends.
  *   <li>The mock is never a route: when everything fails, the caller gets an error, never a made-up
@@ -94,11 +97,13 @@ public class RoutingAiProvider implements AiProvider {
     Instant deadline = clock.instant().plus(totalBudget);
     AiProviderException.Kind worst = null;
     int attempts = 0;
+    // A model that gave an unusable reply is not asked again with another key in this request.
+    Set<String> unusableModels = new HashSet<>();
     for (Route route : routes) {
       if (attempts >= maxAttempts) {
         break;
       }
-      if (isPaused(route)) {
+      if (isPaused(route) || unusableModels.contains(modelKey(route))) {
         continue;
       }
       Duration left = Duration.between(clock.instant(), deadline);
@@ -126,6 +131,7 @@ public class RoutingAiProvider implements AiProvider {
           return completion;
         }
         log.warn("AI reply from {} failed the checks; trying the next model", route.label());
+        unusableModels.add(modelKey(route));
         worst = worse(worst, AiProviderException.Kind.INVALID_OUTPUT);
       } catch (AiProviderException failure) {
         log.warn("AI call to {} failed: {}", route.label(), failure.getKind());

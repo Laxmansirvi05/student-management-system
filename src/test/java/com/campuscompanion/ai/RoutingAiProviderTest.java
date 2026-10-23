@@ -196,6 +196,22 @@ class RoutingAiProviderTest {
   }
 
   @Test
+  void anUnusableReplyIsNotAskedForAgainFromTheSameModelWithAnotherKey() throws Exception {
+    Scripted key1 = new Scripted("ollama#1", "bad");
+    Scripted key2 = new Scripted("ollama#2", "{}");
+    Scripted otherModel = new Scripted("groq", "{}");
+    RoutingAiProvider router =
+        router(
+            3,
+            route("ollama", "gpt-oss:20b", 1, key1),
+            route("ollama", "gpt-oss:20b", 2, key2),
+            route("groq", "b", 1, otherModel));
+
+    assertThat(router.complete(request(), reply -> reply.startsWith("{")).text()).isEqualTo("{}");
+    assertThat(calls).containsExactly("ollama#1", "groq");
+  }
+
+  @Test
   void whenEveryReplyIsUnusableTheCallerIsToldSo() {
     Scripted one = new Scripted("one", "bad");
     Scripted two = new Scripted("two", "bad");
