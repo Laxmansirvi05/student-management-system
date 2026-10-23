@@ -17,8 +17,23 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
  */
 // Every test comes from one address, so the per-IP login limit is lifted here. LoginRateLimitIT
 // lowers it again to test it.
+//
+// The application also reads a developer's .env file. These values win over it, so a test never
+// calls the real AI provider or Supabase Storage, and never creates the .env's administrator,
+// whatever that file says (CC-11). A test class may still override one of them.
 @SpringBootTest
-@TestPropertySource(properties = "app.security.login.max-attempts-per-ip=100000")
+@TestPropertySource(
+    properties = {
+      "app.security.login.max-attempts-per-ip=100000",
+      "AI_ENABLED=true",
+      "AI_PROVIDER=mock",
+      "AI_API_KEY=",
+      "AI_MODEL=",
+      "SUPABASE_URL=",
+      "SUPABASE_SERVICE_KEY=",
+      "ADMIN_BOOTSTRAP_EMAIL=",
+      "ADMIN_BOOTSTRAP_PASSWORD="
+    })
 public abstract class PostgresIntegrationTest {
 
   protected static final String APP_USER = "cc_app";
