@@ -122,7 +122,7 @@ class GeminiAiProviderTest {
   void everyFailureBecomesItsKindWithoutTheProvidersWords() {
     answer = "{\"error\":{\"message\":\"repeats the student's text here\"}}";
     for (int[] pair :
-        new int[][] {{429, 1}, {500, 2}, {503, 2}, {400, 3}, {401, 3}, {403, 3}, {404, 3}}) {
+        new int[][] {{429, 1}, {500, 2}, {503, 2}, {400, 3}, {401, 4}, {403, 4}, {404, 5}}) {
       status = pair[0];
       AiProviderException.Kind expected = AiProviderException.Kind.values()[pair[1]];
       assertThatThrownBy(() -> provider("m").complete(request(Duration.ofSeconds(5))))

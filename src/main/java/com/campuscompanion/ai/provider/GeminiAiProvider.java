@@ -1,12 +1,9 @@
 package com.campuscompanion.ai.provider;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.net.http.HttpTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import tools.jackson.databind.JsonNode;
@@ -16,9 +13,9 @@ import tools.jackson.databind.node.ObjectNode;
 
 /**
  * The adapter for Google's Gemini models, used when AI_PROVIDER is "gemini". It makes one call to
- * the generateContent method and returns the model's text. The key comes from AI_API_KEY, is sent
- * only in a request header, and is never logged. Nothing about any person is added to a request:
- * only the instructions and the student's text.
+ * the generateContent method and returns the model's text. The key comes from the environment, is
+ * sent only in a request header, and is never logged. Nothing about any person is added to a
+ * request: only the instructions and the student's text.
  *
  * <p>A failure becomes an {@link AiProviderException} that carries only its kind, because the
  * provider's own message can repeat the student's text.
@@ -63,33 +60,17 @@ public class GeminiAiProvider implements AiProvider {
                         + ":generateContent"))
             .timeout(request.timeout())
             .header("Content-Type", "application/json")
+            .header("User-Agent", ProviderHttp.USER_AGENT)
             .header("x-goog-api-key", apiKey)
             .POST(HttpRequest.BodyPublishers.ofString(body(request), StandardCharsets.UTF_8))
             .build();
-    HttpResponse<String> response;
-    try {
-      response = http.send(call, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-    } catch (HttpTimeoutException timeout) {
-      throw new AiProviderException(AiProviderException.Kind.TIMEOUT);
-    } catch (InterruptedException interrupted) {
-      Thread.currentThread().interrupt();
-      throw new AiProviderException(AiProviderException.Kind.UNAVAILABLE);
-    } catch (IOException unreachable) {
-      throw new AiProviderException(AiProviderException.Kind.UNAVAILABLE);
-    }
-    int status = response.statusCode();
-    if (status == 429) {
-      throw new AiProviderException(AiProviderException.Kind.RATE_LIMITED);
-    }
-    if (status >= 500) {
-      throw new AiProviderException(AiProviderException.Kind.UNAVAILABLE);
-    }
-    if (status >= 400) {
-      // A wrong key, a wrong model name or a refused request: the application is misconfigured.
-      throw new AiProviderException(AiProviderException.Kind.BAD_REQUEST);
-    }
-    String text = textOf(response.body());
+    String text = textOf(ProviderHttp.send(http, call));
     return new AiCompletion(text, request.userContent().length(), text.length());
+  }
+
+  /** The model this adapter asks, for logs and route names. */
+  public String model() {
+    return model;
   }
 
   private static String body(AiRequest request) {
