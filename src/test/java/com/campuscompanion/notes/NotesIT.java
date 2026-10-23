@@ -1017,4 +1017,53 @@ class NotesIT extends ApiIntegrationTest {
     assertThat(classmate.get(address).statusCode()).isEqualTo(302);
     assertThat(linkReader.get(address + "?share=" + slug).statusCode()).isEqualTo(302);
   }
+
+  @Test
+  void aPictureAddedByASharedEditorOpensForTheOwnerAndTheNotesReaders() throws Exception {
+    ApiTestClient owner = student("NTEH0017");
+    ApiTestClient editor = student("NTEH0018");
+    ApiTestClient viewer = student("NTEH0019");
+    ApiTestClient stranger = student("NTEH0020");
+    long id = createNote(owner, "Group page", "<p>v1</p>");
+    owner.post(
+        NOTES + "/" + id + "/share/recipients",
+        "{\"identifier\":\"NTEH0018\",\"permission\":\"edit\"}");
+    owner.post(NOTES + "/" + id + "/share/recipients", "{\"identifier\":\"NTEH0019\"}");
+
+    long picture =
+        uploadId(editor, "editor.png", "image/png", TestImages.pngWithTransparency(40, 40), null);
+    String editorFile = storage.lastWritten();
+    long foreign =
+        uploadId(
+            stranger, "foreign.png", "image/png", TestImages.pngWithTransparency(40, 40), null);
+    HttpResponse<String> saved =
+        editor.patch(
+            NOTES + "/" + id,
+            "{\"content\":\"<p><img src='/api/v1/notes/attachments/"
+                + picture
+                + "/file'><img src='/api/v1/notes/attachments/"
+                + foreign
+                + "/file'></p>\"}");
+    assertThat(saved.statusCode()).as(saved.body()).isEqualTo(200);
+
+    String address = FILES + "/" + picture + "/file";
+    assertThat(owner.get(address).statusCode()).isEqualTo(302);
+    assertThat(viewer.get(address).statusCode()).isEqualTo(302);
+    assertThat(editor.get(address).statusCode()).isEqualTo(302);
+    assertProblem(stranger.get(address), 404, "NOT_FOUND");
+    // The editor stays the uploader; the picture is now part of the note.
+    JsonNode editorFiles = json(editor.get(FILES)).get("attachments");
+    assertThat(texts(editorFiles, "url")).contains(address);
+
+    // An editor cannot pull somebody else's upload into the note by naming it.
+    assertProblem(owner.get(FILES + "/" + foreign + "/file"), 404, "NOT_FOUND");
+    assertThat(stranger.get(FILES + "/" + foreign + "/file").statusCode()).isEqualTo(302);
+
+    // Destroying the note destroys the picture with it.
+    owner.delete(NOTES + "/" + id);
+    owner.delete(NOTES + "/" + id + "?permanent=true");
+    assertProblem(editor.get(address), 404, "NOT_FOUND");
+    assertProblem(owner.get(address), 404, "NOT_FOUND");
+    assertThat(storage.paths()).doesNotContain(editorFile);
+  }
 }

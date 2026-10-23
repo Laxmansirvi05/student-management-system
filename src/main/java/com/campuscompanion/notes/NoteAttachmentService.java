@@ -10,6 +10,7 @@ import com.campuscompanion.student.StudentProfileService;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -140,6 +141,7 @@ public class NoteAttachmentService {
     NoteAttachment attachment =
         attachments.findById(id).orElseThrow(ResourceNotFoundException::new);
     if (!attachment.getStudentId().equals(studentId)
+        && !isInOwnNote(attachment, studentId)
         && !isSharedWith(attachment, studentId, shareSlug)) {
       throw new ResourceNotFoundException();
     }
@@ -151,25 +153,39 @@ public class NoteAttachmentService {
 
   // --- used by NoteService -------------------------------------------------------------------
 
-  /** Attaches the student's loose uploads that the content refers to to the note. */
+  /**
+   * Attaches the student's loose uploads that the content refers to to the note. A shared editor's
+   * uploads are attached the same way, so that the owner and the note's other readers can open
+   * them; the uploader stays the editor. Only the student's own unattached uploads are taken, so
+   * nobody can pull another student's file into a note by naming it.
+   */
   void adopt(Long studentId, Long noteId, String content) {
+    for (NoteAttachment attachment : looseUploadsIn(studentId, content)) {
+      attachment.setNoteId(noteId);
+    }
+  }
+
+  private List<NoteAttachment> looseUploadsIn(Long studentId, String content) {
+    List<NoteAttachment> found = new ArrayList<>();
     Matcher match = REFERENCE.matcher(content == null ? "" : content);
     while (match.find()) {
       attachments
           .findByIdAndStudentId(Long.parseLong(match.group(1)), studentId)
           .filter(attachment -> attachment.getNoteId() == null)
-          .ifPresent(attachment -> attachment.setNoteId(noteId));
+          .ifPresent(found::add);
     }
+    return found;
   }
 
   /**
-   * Removes the files of notes that are being destroyed for real. A storage failure is logged but
-   * does not stop the delete: an orphaned file costs a little space, whereas refusing would leave
-   * the student unable to remove their own note.
+   * Removes the files of notes that are being destroyed for real, including pictures a shared
+   * editor added; the caller has checked that the notes are the student's. A storage failure is
+   * logged but does not stop the delete: an orphaned file costs a little space, whereas refusing
+   * would leave the student unable to remove their own note.
    */
-  void deleteForNotes(Long studentId, Collection<Long> noteIds) {
+  void deleteForNotes(Collection<Long> noteIds) {
     for (Long noteId : noteIds) {
-      List<NoteAttachment> rows = attachments.findByNoteIdAndStudentId(noteId, studentId);
+      List<NoteAttachment> rows = attachments.findByNoteId(noteId);
       rows.forEach(this::removeFromStorage);
       attachments.deleteAll(rows);
     }
@@ -209,6 +225,12 @@ public class NoteAttachmentService {
               URL_PREFIX + source.getId() + "/file", URL_PREFIX + copy.getId() + "/file");
     }
     return result;
+  }
+
+  /** A file in one of the student's own notes, such as a picture a shared editor added. */
+  private boolean isInOwnNote(NoteAttachment attachment, Long studentId) {
+    Long noteId = attachment.getNoteId();
+    return noteId != null && notes.findByIdAndStudentId(noteId, studentId).isPresent();
   }
 
   /**

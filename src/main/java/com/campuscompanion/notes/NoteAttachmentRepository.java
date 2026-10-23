@@ -14,6 +14,8 @@ public interface NoteAttachmentRepository extends JpaRepository<NoteAttachment, 
 
   List<NoteAttachment> findByNoteIdAndStudentId(Long noteId, Long studentId);
 
+  List<NoteAttachment> findByNoteId(Long noteId);
+
   List<NoteAttachment> findByNoteIdIn(Collection<Long> noteIds);
 
   long countByStoragePath(String storagePath);

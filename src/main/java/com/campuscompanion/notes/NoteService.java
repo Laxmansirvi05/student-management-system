@@ -221,15 +221,17 @@ public class NoteService {
       if (!access.owner()) {
         throw new ApiException(ErrorCode.ACCESS_DENIED, "A shared note cannot be emptied.");
       }
-      attachments.deleteForNotes(studentId, List.of(id));
+      attachments.deleteForNotes(List.of(id));
       notes.delete(note);
       return NoteSaved.removed();
     }
 
     note.touch(clock.instant());
     Note saved = notes.save(note);
+    // The writer's own uploads join the note, for a shared editor as for the owner, so that
+    // everyone who can read the note can open its pictures.
+    attachments.adopt(studentId, id, saved.getContent());
     if (access.owner()) {
-      attachments.adopt(studentId, id, saved.getContent());
       return NoteSaved.of(assembler.one(saved, studentId));
     }
     return NoteSaved.of(
@@ -246,7 +248,7 @@ public class NoteService {
     Note note =
         notes.findByIdAndStudentId(id, studentId).orElseThrow(ResourceNotFoundException::new);
     if (permanent) {
-      attachments.deleteForNotes(studentId, List.of(id));
+      attachments.deleteForNotes(List.of(id));
       notes.delete(note);
       return;
     }
@@ -330,7 +332,7 @@ public class NoteService {
       return;
     }
     // The files first: once the rows are gone their storage paths are gone with them.
-    attachments.deleteForNotes(studentId, toDestroy.stream().map(Note::getId).toList());
+    attachments.deleteForNotes(toDestroy.stream().map(Note::getId).toList());
     notes.deleteAll(toDestroy);
   }
 

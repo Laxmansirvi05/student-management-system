@@ -116,7 +116,7 @@ In the first release, further admin accounts are created only by the owner direc
 | Note, folder, link, attachment | Create, read, change, delete | ❌ | 👤 own only | ❌ | — |
 | Note shared with a classmate | Read (view) or read and edit text (edit) | ❌ | ✅ named recipient | ❌ | — |
 | Note shared by link | Read | ❌ | ✅ any signed-in student with the link, read-only | ❌ | — |
-| Attachment file | Open through a signed link | ❌ | 👤 owner; a named recipient; or a student who presents the note's share link (`share=<slug>`). Not while the note is in the Trash, except the owner | ❌ | — |
+| Attachment file | Open through a signed link | ❌ | 👤 the uploader or the note's owner; a named recipient; or a student who presents the note's share link (`share=<slug>`). Not while the note is in the Trash, except the owner | ❌ | — |
 | Assistant chat | Send, read, delete | ❌ | 👤 own only | ❌ (never read) | Usage logged as numbers only |
 
 ### 4.4 Learning resources
