@@ -32,3 +32,12 @@ jobs:
 
       - name: Build, test and check formatting
         run: ./mvnw -B verify
+
+      # The browser-module tests use Node's own test runner and need no packages (docs/17 section 7).
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Browser-module tests
+        run: node --test "src/test/js/**/*.test.mjs"

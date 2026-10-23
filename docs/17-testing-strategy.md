@@ -164,12 +164,16 @@ Z1 and Z2 are generated from the application's own endpoint list, so a new endpo
 
 ## 7. Frontend validation tests
 
-There is no JavaScript test framework in the approved stack. Frontend behaviour is covered by:
+There is no JavaScript test framework in the approved stack, and none was added. Frontend behaviour is covered by:
 
 - The API tests above, since the server never relies on the frontend to validate.
+- **Browser-module unit tests** in `src/test/js/*.test.mjs`, run with Node's own test runner and no packages: `node --test "src/test/js/**/*.test.mjs"`. They import a page module directly and replace its server calls and page events with fakes. The first covers the notes autosave engine (retries, `Retry-After`, keepalive on page hide, no duplicate or out-of-order writes). CI runs them after `./mvnw verify`.
+- **`FrontendSmokeIT`** (part of `./mvnw verify`): as a visitor, a student and an administrator, every page opens and every script, style sheet, font and ES module it loads, directly, through an import or a dynamic `import()`, is served; the robot's 3D files and the landing bundle are served; a student logs in and saves a note. It fails on a deleted or renamed file, a broken import or a lost route. It does not render pages.
+- **`StaticFrontendRulesTest`**: no unsafe HTML insertion, no inline script or style, and the React bundle used by the landing page only (ADR 0015).
+- **A manual browser smoke check** before a release, for what only a real browser shows: the landing page's grid, globe and six-card carousel, the robot drawing and its two panels, a note saved and reopened, and no console error. Record the result in the release notes.
 - A manual checklist per form: required fields, length limits, error placement, focus on the first invalid field, values kept after failure, button disabled during submission.
 
-Adding a JavaScript test tool needs approval as a new dependency.
+A browser automation tool (for example Playwright) would make the manual browser check automatic. It is a new test dependency and needs the owner's approval first.
 
 ## 8. Upload and storage tests
 
