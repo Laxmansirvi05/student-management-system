@@ -2,7 +2,7 @@ package com.campuscompanion.notes.dto;
 
 /**
  * The answer to saving a note: the note, or {@code deleted: true} when an edit left it empty and it
- * was therefore removed instead of saved.
+ * was therefore moved to the Trash instead of saved.
  */
 public record NoteSaved(NoteResponse note, Boolean deleted) {
 

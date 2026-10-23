@@ -3,8 +3,9 @@ import { isEmptyDocument } from "./note-text.js";
 
 // The one autosave engine behind every note edit in the application: the notes workspace and the
 // quick-note composer both use this, not two separate implementations. It creates a draft row on
-// the first keystroke (so autosave has something to update from then on), and deletes the note
-// instead of saving it if the writer empties it again: it never leaves a meaningless empty record.
+// the first keystroke (so autosave has something to update from then on), and moves the note to
+// the Trash instead of saving it if the writer empties it again: it never leaves a meaningless
+// empty record, and an accidental clear can be restored.
 //
 // A save that fails for a passing reason (offline, rate limited, server busy) is tried again after
 // a growing wait, or after the server's Retry-After. When the page is hidden or closed, anything

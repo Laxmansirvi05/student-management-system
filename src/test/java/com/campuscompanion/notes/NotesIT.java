@@ -120,13 +120,51 @@ class NotesIT extends ApiIntegrationTest {
   }
 
   @Test
-  void anEditThatEmptiesANoteDeletesItInsteadOfSavingIt() throws Exception {
+  void anEditThatEmptiesANoteMovesItToTheTrashInsteadOfSavingIt() throws Exception {
     ApiTestClient me = student("NTEB0003");
     long id = createNote(me, "", "<p>draft</p>");
     HttpResponse<String> response = me.patch(NOTES + "/" + id, "{\"content\":\"<p></p>\"}");
     assertThat(response.statusCode()).isEqualTo(200);
     assertThat(json(response).get("deleted").asBoolean()).isTrue();
-    assertProblem(me.get(NOTES + "/" + id), 404, "NOT_FOUND");
+    assertThat(ids(list(me, ""))).doesNotContain(id);
+    assertThat(ids(list(me, "view=trash"))).contains(id);
+  }
+
+  @Test
+  void clearingASharedNoteByAccidentLosesNeitherItsFilesNorItsSharing() throws Exception {
+    ApiTestClient me = student("NTEB0005");
+    ApiTestClient classmate = student("NTEB0006");
+    long picture =
+        uploadId(me, "kept.png", "image/png", TestImages.pngWithTransparency(30, 30), null);
+    String stored = storage.lastWritten();
+    long id =
+        createNote(
+            me, "", "<p>text <img src='/api/v1/notes/attachments/" + picture + "/file'></p>");
+    long target = createNote(me, "Linked", "<p>x</p>");
+    me.post(NOTES + "/" + id + "/links", "{\"targetType\":\"note\",\"targetId\":" + target + "}");
+    me.post(NOTES + "/" + id + "/share/recipients", "{\"identifier\":\"NTEB0006\"}");
+    String slug =
+        json(me.put(NOTES + "/" + id + "/share", "{\"linkAccess\":\"view\"}"))
+            .get("share")
+            .get("slug")
+            .asString();
+    assertThat(json(me.get(NOTES + "/" + id + "/links")).get("links")).hasSize(1);
+
+    // Everything selected and deleted: the note goes to the Trash, nothing is destroyed (CC-12).
+    HttpResponse<String> cleared =
+        me.patch(NOTES + "/" + id, "{\"title\":\"\",\"content\":\"<p></p>\"}");
+    assertThat(json(cleared).get("deleted").asBoolean()).isTrue();
+    assertThat(storage.paths()).contains(stored);
+    assertThat(me.get(FILES + "/" + picture + "/file").statusCode()).isEqualTo(302);
+    assertProblem(classmate.get(NOTES + "/shared/" + slug), 404, "NOT_FOUND");
+
+    me.patch(NOTES + "/" + id, "{\"restore\":true}");
+    assertThat(ids(list(me, ""))).contains(id);
+    assertThat(classmate.get(NOTES + "/shared/" + slug).statusCode()).isEqualTo(200);
+    assertThat(classmate.get(FILES + "/" + picture + "/file").statusCode()).isEqualTo(302);
+    JsonNode share = json(me.get(NOTES + "/" + id + "/share")).get("share");
+    assertThat(texts(share.get("recipients"), "rollNo")).containsExactly("NTEB0006");
+    assertThat(json(me.get(NOTES + "/" + id + "/links")).get("links")).hasSize(1);
   }
 
   @Test

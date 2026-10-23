@@ -161,8 +161,8 @@ public class NoteService {
   /**
    * Changes a note: text, tags, pin, archive, folder, or a restore from the Trash. One write path
    * serves autosave and every toggle. A shared editor may change the title and content only. When
-   * an edit leaves the owner's note with no title and no content, the note is deleted instead of
-   * saved: that is the "draft became empty again" case.
+   * an edit leaves the owner's note with no title and no content, the note goes to the Trash
+   * instead of being saved: that is the "draft became empty again" case, and it can be restored.
    */
   @Transactional
   public NoteSaved update(CurrentUser user, Long id, UpdateNoteRequest request) {
@@ -217,12 +217,14 @@ public class NoteService {
     }
 
     if (touchesText && note.getTitle().isBlank() && !NoteText.hasContent(note.getContent())) {
-      // Only the owner can empty a note out of existence.
+      // Only the owner can empty a note away.
       if (!access.owner()) {
         throw new ApiException(ErrorCode.ACCESS_DENIED, "A shared note cannot be emptied.");
       }
-      attachments.deleteForNotes(List.of(id));
-      notes.delete(note);
+      // To the Trash, never destroyed: clearing the text by accident must not take the note's
+      // files, links and sharing with it. Restoring it brings all of them back.
+      note.setDeletedAt(clock.instant());
+      note.touch(clock.instant());
       return NoteSaved.removed();
     }
 
