@@ -103,9 +103,9 @@ export function openShareDialog({ noteId, noteTitle, onChanged = () => {} }) {
             ? recipients.map((person) =>
                 h(
                   "li.nt-share__person",
-                  h("span.nt-avatar", (person.name || person.rollNo || "?").charAt(0).toUpperCase()),
-                  h("span.nt-share__who", h("span.nt-share__name", person.name || person.rollNo || "Unknown"), h("span.nt-share__perm", `${person.rollNo ? person.rollNo + " · " : ""}${person.permission === "edit" ? "Can edit" : "Can view"}`)),
-                  h("button.nt-tool.nt-tool--small", { type: "button", "aria-label": `Remove ${person.name || person.rollNo}`, disabled: busy ? true : null, onclick: () => apply(() => removeShareRecipient(noteId, person.recipientId), "Access removed") }, symbol("close")),
+                  h("span.nt-avatar", (person.rollNo || "?").charAt(0).toUpperCase()),
+                  h("span.nt-share__who", h("span.nt-share__name", person.rollNo || "Unknown"), h("span.nt-share__perm", person.permission === "edit" ? "Can edit" : "Can view")),
+                  h("button.nt-tool.nt-tool--small", { type: "button", "aria-label": `Remove ${person.rollNo}`, disabled: busy ? true : null, onclick: () => apply(() => removeShareRecipient(noteId, person.recipientId), "Access removed") }, symbol("close")),
                 ),
               )
             : [h("li.nt-share__none", "Not shared with anyone yet.")],

@@ -175,6 +175,11 @@ public class NoteShareService {
     return value.toUpperCase(Locale.ROOT);
   }
 
+  /**
+   * The sharing state as the owner sees it. A classmate is listed by roll number only, which the
+   * owner typed: returning their name would let any student look up the name behind any roll number
+   * by "sharing" with it.
+   */
   private ShareResponse read(Long noteId) {
     NoteShare share = shares.findByNoteId(noteId).orElse(null);
     List<NoteShareRecipient> rows = recipients.findByNoteIdOrderByIdAsc(noteId);
@@ -191,7 +196,6 @@ public class NoteShareService {
                   return new ShareRecipientResponse(
                       row.getId(),
                       row.getRecipientId(),
-                      person == null ? null : person.fullName(),
                       person == null ? null : person.rollNo(),
                       row.getPermission());
                 })

@@ -825,6 +825,13 @@ class NotesIT extends ApiIntegrationTest {
     JsonNode state = json(byEmail).get("share");
     assertThat(state.get("recipients")).hasSize(2);
     assertThat(texts(state.get("recipients"), "rollNo")).containsExactly("NTEH0004", "NTEH0005");
+    // Sharing is no way to look up who is behind a roll number: no name comes back (CC-05).
+    for (JsonNode person : state.get("recipients")) {
+      assertThat(person.has("name")).isFalse();
+    }
+    assertThat(byEmail.body()).doesNotContain("Demo NTEH0004", "Demo NTEH0005");
+    assertThat(owner.get(NOTES + "/" + id + "/share").body())
+        .doesNotContain("Demo NTEH0004", "Demo NTEH0005");
 
     assertProblem(
         owner.post(NOTES + "/" + id + "/share/recipients", "{\"identifier\":\"nobody99\"}"),
