@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.context.TestPropertySource;
 
 /**
- * The general limits of the API (docs/09-api-contract.md section 6): calls per session per minute,
+ * The general limits of the API (docs/09-api-contract.md section 6): calls per account per minute,
  * and the size of a JSON body. The call limit is lowered to 5 here so the test stays short; the
  * rule is the same at 120.
  */
@@ -21,10 +21,11 @@ import org.springframework.test.context.TestPropertySource;
 class RequestLimitsIT extends ApiIntegrationTest {
 
   @Test
-  void theSixthCallOfASessionInAMinuteIsRefusedAndOtherSessionsAreNotAffected() throws Exception {
+  void theSixthCallOfAnAccountInAMinuteIsRefusedAndOtherAccountsAreNotAffected() throws Exception {
     accounts.student("23LIM001", "LIM", 3, "A");
+    accounts.student("23LIM005", "LIM", 3, "A");
     ApiTestClient first = studentClient("23LIM001");
-    ApiTestClient second = studentClient("23LIM001");
+    ApiTestClient classmate = studentClient("23LIM005");
 
     for (int call = 1; call <= 5; call++) {
       assertThat(first.get("/api/v1/students/me").statusCode()).as("call %s", call).isEqualTo(200);
@@ -34,8 +35,24 @@ class RequestLimitsIT extends ApiIntegrationTest {
     assertProblem(refused, 429, "RATE_LIMITED");
     long retryAfter = Long.parseLong(refused.headers().firstValue("Retry-After").orElseThrow());
     assertThat(retryAfter).isBetween(1L, 60L);
-    // The limit belongs to one session. The same student logged in elsewhere is not held back.
-    assertThat(second.get("/api/v1/students/me").statusCode()).isEqualTo(200);
+    // The limit belongs to the account: another student is not held back.
+    assertThat(classmate.get("/api/v1/students/me").statusCode()).isEqualTo(200);
+  }
+
+  @Test
+  void loggingInAgainDoesNotStartAFreshAllowance() throws Exception {
+    accounts.student("23LIM004", "LIM", 3, "A");
+    ApiTestClient first = studentClient("23LIM004");
+    for (int call = 1; call <= 5; call++) {
+      assertThat(first.get("/api/v1/students/me").statusCode()).as("call %s", call).isEqualTo(200);
+    }
+    assertProblem(first.get("/api/v1/students/me"), 429, "RATE_LIMITED");
+
+    // A new session of the same account, in another browser or after logging in again (CC-18).
+    ApiTestClient again = studentClient("23LIM004");
+    assertProblem(again.get("/api/v1/students/me"), 429, "RATE_LIMITED");
+    ApiTestClient andAgain = studentClient("23LIM004");
+    assertProblem(andAgain.get("/api/v1/auth/me"), 429, "RATE_LIMITED");
   }
 
   @Test

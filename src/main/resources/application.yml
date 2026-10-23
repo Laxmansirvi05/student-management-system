@@ -78,7 +78,8 @@ app:
     # Off on a developer's machine, which has no HTTPS. The prod profile switches it on.
     require-https: false
     api:
-      # Fixed defaults, defined in docs/09-api-contract.md section 6.
+      # Fixed defaults, defined in docs/09-api-contract.md section 6. Despite its name, the limit
+      # is counted per account once logged in, across all of its sessions (CC-18).
       max-requests-per-session: 120
       window: 1m
       max-json-body: 64KB

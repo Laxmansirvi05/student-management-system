@@ -194,7 +194,7 @@ Implemented as a small in-memory limiter in Java (`RateLimitFilter`), which is e
 | Login, per IP address | 20 attempts per 10 minutes |
 | Login, per account | 5 consecutive failures, then 15-minute lock |
 | AI | Per-user per-minute and per-day limits, a concurrency limit and an application-wide daily ceiling. The values are defined once, in [12-AI-features-spec.md](12-AI-features-spec.md) §2 |
-| Other API calls, per session | 120 per minute |
+| Other API calls, per account (all its sessions together) | 120 per minute |
 | Request body | 64 KB for JSON; 10 MB for uploads |
 
 `AI_ENABLED=false` switches the assistant off immediately without a deployment.

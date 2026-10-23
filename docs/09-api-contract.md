@@ -128,7 +128,7 @@ Filters are query parameters named after the field (`subjectId`, `type`, `examYe
 | Student CSV import | 1 MB and 100 students per file. Each new account needs a password hash of about 0.1 s, and a request must finish within Heroku's 30 seconds |
 | Login attempts | 5 consecutive failures for an email address block it for 15 minutes, whether or not an account exists; 20 attempts per IP address per 10 minutes |
 | AI requests | Per-user, per-minute and application-wide limits are defined once, in [12-AI-features-spec.md](12-AI-features-spec.md) §2 |
-| Other API calls | 120 per session per minute. Over the limit: `429 RATE_LIMITED` with `Retry-After`. A request without a session is refused as `401` before it is counted |
+| Other API calls | 120 per account per minute, counted across all of the account's sessions, so logging in again does not reset it (a session that is not logged in yet is counted on its own). Over the limit: `429 RATE_LIMITED` with `Retry-After`. A request without a session is refused as `401` before it is counted |
 | Search text `q` | 100 characters |
 
 AI input limits are in section 9.
