@@ -1,26 +1,51 @@
 /* Notes workspace, rich-text editor, quick note and assistant panels. Ported from the notes
-   workspace of Opportunity Radar (ADR 0014): the same layout, spacing, radii and motion, painted
-   with this application's colours. The names after --nt- are the original's design tokens. */
+   workspace of Opportunity Radar (ADR 0014): the same layout, spacing, radii, motion, colours and
+   type. The names after --nt- are the original's design tokens, with the original's values. Its
+   undefined type utilities (title, body-sm, label-lg) inherit 16px at weight 400 there, so they do
+   here; do not "tidy" those sizes. */
 
 :root {
-  --nt-surface: var(--color-surface);
-  --nt-surface-low: var(--color-bg-subtle);
-  --nt-surface-container: #ededf1;
-  --nt-surface-high: #e5e5ea;
-  --nt-surface-highest: #dcdce2;
-  --nt-on-surface: var(--color-text);
-  --nt-on-variant: var(--color-text-muted);
-  --nt-outline: var(--color-border-control);
-  --nt-outline-variant: var(--color-border);
-  --nt-primary: var(--color-primary);
-  --nt-on-primary: var(--color-on-primary);
-  --nt-primary-container: var(--tint-primary);
-  --nt-on-primary-container: var(--on-tint-primary);
-  --nt-error: var(--color-danger);
-  --nt-error-container: var(--tint-danger);
-  --nt-on-error-container: var(--on-tint-danger);
-  --nt-scrim: rgba(0, 0, 0, 0.5);
+  /* Opportunity Radar's own palette (its Material design tokens), so the notes workspace, the quick
+     panels and the robot look exactly as they do there, whatever the rest of this application uses. */
+  --nt-surface: #faf8ff;
+  --nt-surface-low: #f3f3fe;
+  --nt-surface-container: #ededf9;
+  --nt-surface-high: #e7e7f3;
+  --nt-surface-highest: #e1e2ed;
+  --nt-on-surface: #191b23;
+  --nt-on-variant: #434655;
+  --nt-outline: #737686;
+  --nt-outline-variant: #c3c6d7;
+  --nt-primary: #004ac6;
+  --nt-on-primary: #ffffff;
+  --nt-primary-container: #2563eb;
+  --nt-on-primary-container: #eeefff;
+  --nt-secondary-container: #6df5e1;
+  --nt-on-secondary-container: #006f64;
+  --nt-error: #ba1a1a;
+  --nt-error-container: #ffdad6;
+  --nt-on-error-container: #93000a;
+  --nt-scrim: #000000;
   --nt-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --nt-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --nt-shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  --nt-motion: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --nt-font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/inter-latin.woff2") format("woff2");
+}
+
+[class*="nt-"],
+[class*="rb-"],
+.note-rich-editor-content,
+.note-document {
+  font-family: var(--nt-font);
 }
 
 @font-face {
@@ -66,9 +91,9 @@
   padding: 0 18px;
   border: 0;
   border-radius: 999px;
-  font: 600 14px/20px var(--font);
+  font: 400 16px/1.5 var(--nt-font);
   cursor: pointer;
-  transition: opacity var(--motion), background-color var(--motion);
+  transition: opacity var(--nt-motion), background-color var(--nt-motion);
 }
 
 .nt-btn[disabled] {
@@ -108,7 +133,7 @@
 .nt-btn--small {
   height: 28px;
   padding: 0 12px;
-  font: 600 11px/16px var(--font);
+  font: 400 12px/1.5 var(--nt-font);
 }
 
 .nt-btn--block {
@@ -125,9 +150,9 @@
   border-radius: 8px;
   background: transparent;
   color: var(--nt-on-variant);
-  font: 500 11px/16px var(--font);
+  font: 400 12px/1.5 var(--nt-font);
   cursor: pointer;
-  transition: background-color var(--motion), color var(--motion);
+  transition: background-color var(--nt-motion), color var(--nt-motion);
 }
 
 .nt-chip:hover,
@@ -153,7 +178,7 @@
   color: var(--nt-on-variant);
   cursor: pointer;
   text-decoration: none;
-  transition: background-color var(--motion), color var(--motion);
+  transition: background-color var(--nt-motion), color var(--nt-motion);
 }
 
 .nt-tool:hover:not([disabled]) {
@@ -193,6 +218,14 @@
   border-radius: 16px;
   background: var(--nt-surface-low);
   border: 1px solid var(--nt-outline-variant);
+  box-shadow: var(--nt-shadow-2xl);
+  color: var(--nt-on-surface);
+}
+
+/* The original blurs the page behind a dialog and does not dim it. */
+.nt-modal::backdrop {
+  background: transparent;
+  backdrop-filter: blur(8px);
 }
 
 .nt-modal--wide {
@@ -213,7 +246,7 @@
 }
 
 .nt-modal h2 {
-  font: 600 16px/24px var(--font);
+  font: 400 16px/1.5 var(--nt-font);
   margin-bottom: 16px;
 }
 
@@ -255,7 +288,7 @@
   border-radius: 8px;
   background: transparent;
   color: var(--nt-on-surface);
-  font: 500 12px/16px var(--font);
+  font: 400 12px/1.5 var(--nt-font);
   cursor: pointer;
 }
 
@@ -277,7 +310,7 @@
   border-radius: 8px;
   background: transparent;
   color: var(--nt-on-variant);
-  font: 500 12px/16px var(--font);
+  font: 400 12px/1.5 var(--nt-font);
   cursor: pointer;
 }
 
@@ -295,7 +328,7 @@
 .nt-uploading {
   margin-left: 4px;
   color: var(--nt-on-variant);
-  font: 500 11px/16px var(--font);
+  font: 400 11px/1.5 var(--nt-font);
 }
 
 .nt-menu {
@@ -312,7 +345,7 @@
   border: 1px solid var(--nt-outline-variant);
   border-radius: 12px;
   background: var(--nt-surface);
-  box-shadow: var(--shadow-float);
+  box-shadow: var(--nt-shadow-2xl);
 }
 
 .nt-menu__row {
@@ -326,7 +359,7 @@
   flex: none;
   width: 5rem;
   color: var(--nt-on-variant);
-  font: 500 11px/16px var(--font);
+  font: 400 11px/1.5 var(--nt-font);
 }
 
 .nt-menu__tools {
@@ -346,7 +379,7 @@
   border-radius: 999px;
   color: var(--nt-on-variant);
   cursor: pointer;
-  transition: transform var(--motion);
+  transition: transform var(--nt-motion);
 }
 
 .nt-swatch:hover {
@@ -371,7 +404,7 @@
   outline: 0;
   background: transparent;
   color: var(--nt-on-surface);
-  font: 400 12px/16px var(--font);
+  font: 400 16px/1.5 var(--nt-font);
 }
 
 .nt-surface {
@@ -388,7 +421,7 @@
   padding: 2px;
   border-radius: 8px;
   background: var(--nt-surface);
-  box-shadow: var(--shadow-card), 0 0 0 1px var(--nt-outline-variant);
+  box-shadow: var(--nt-shadow-lg), 0 0 0 1px var(--nt-outline-variant);
 }
 
 .nt-resize-handle {
@@ -420,7 +453,7 @@
 
 .nt-drawing__title {
   margin-right: 8px;
-  font: 600 14px/20px var(--font);
+  font: 400 16px/1.5 var(--nt-font);
 }
 
 .nt-drawing__actions {
@@ -448,7 +481,7 @@
   border: 2px solid transparent;
   border-radius: 999px;
   cursor: pointer;
-  transition: transform var(--motion);
+  transition: transform var(--nt-motion);
 }
 
 .nt-pen.is-on {
@@ -475,7 +508,7 @@
 
 .note-rich-editor-content {
   outline: none;
-  font: 400 14px/1.65 var(--font);
+  font: 400 14px/1.65 var(--nt-font);
   color: var(--nt-on-surface);
 }
 
@@ -825,10 +858,10 @@
   border-radius: 12px;
   background: transparent;
   color: var(--nt-on-variant);
-  font: 500 12px/16px var(--font);
+  font: 400 12px/1.5 var(--nt-font);
   text-align: left;
   cursor: pointer;
-  transition: background-color var(--motion), color var(--motion);
+  transition: background-color var(--nt-motion), color var(--nt-motion);
 }
 
 .nt-nav__item:hover {
@@ -861,7 +894,7 @@
 }
 
 .nt-nav__count {
-  font: 500 11px/16px var(--font);
+  font: 400 11px/1.5 var(--nt-font);
   font-variant-numeric: tabular-nums;
   opacity: 0.7;
 }
@@ -869,7 +902,7 @@
 .nt-nav__none {
   padding: 8px 10px;
   color: var(--nt-on-variant);
-  font: 400 12px/16px var(--font);
+  font: 400 16px/1.5 var(--nt-font);
 }
 
 .nt-folders__head {
@@ -878,7 +911,7 @@
   justify-content: space-between;
   padding: 8px 16px 4px;
   color: var(--nt-on-variant);
-  font: 600 11px/16px var(--font);
+  font: 400 11px/1.5 var(--nt-font);
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -915,7 +948,7 @@
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
-  font: 600 18px/26px var(--font);
+  font: 400 18px/1.5 var(--nt-font);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -934,9 +967,9 @@
   border-radius: 999px;
   background: transparent;
   color: var(--nt-on-variant);
-  font: 500 12px/16px var(--font);
+  font: 400 12px/1.5 var(--nt-font);
   cursor: pointer;
-  transition: background-color var(--motion);
+  transition: background-color var(--nt-motion);
 }
 
 .nt-ghost:hover {
@@ -974,9 +1007,9 @@
   border: 0;
   background: transparent;
   color: inherit;
-  font: 500 12px/16px var(--font);
+  font: 400 12px/1.5 var(--nt-font);
   cursor: pointer;
-  transition: opacity var(--motion);
+  transition: opacity var(--nt-motion);
 }
 
 .nt-split__main {
@@ -1016,7 +1049,7 @@
   border-radius: 999px;
   background: var(--nt-surface-container);
   color: var(--nt-on-variant);
-  transition: border-color var(--motion);
+  transition: border-color var(--nt-motion);
 }
 
 .nt-search:focus-within {
@@ -1030,7 +1063,7 @@
   outline: 0;
   background: transparent;
   color: var(--nt-on-surface);
-  font: 400 14px/20px var(--font);
+  font: 400 14px/1.5 var(--nt-font);
 }
 
 .nt-select {
@@ -1040,7 +1073,7 @@
   border-radius: 999px;
   background: var(--nt-surface-container);
   color: var(--nt-on-surface);
-  font: 500 12px/16px var(--font);
+  font: 400 12px/1.5 var(--nt-font);
   cursor: pointer;
 }
 
@@ -1068,7 +1101,7 @@
 }
 
 .nt-bulk__count {
-  font: 500 12px/16px var(--font);
+  font: 400 12px/1.5 var(--nt-font);
 }
 
 .nt-bulk__btn {
@@ -1081,7 +1114,7 @@
   border-radius: 999px;
   background: transparent;
   color: inherit;
-  font: 500 12px/16px var(--font);
+  font: 400 12px/1.5 var(--nt-font);
   cursor: pointer;
 }
 
@@ -1103,14 +1136,14 @@
 .nt-loading {
   padding: 40px 0;
   color: var(--nt-on-variant);
-  font: 400 14px/20px var(--font);
+  font: 400 14px/1.5 var(--nt-font);
   text-align: center;
 }
 
 .nt-list__heading {
   margin-bottom: 12px;
   color: var(--nt-on-variant);
-  font: 600 14px/20px var(--font);
+  font: 400 16px/1.5 var(--nt-font);
 }
 
 .nt-empty {
@@ -1132,13 +1165,13 @@
 
 .nt-empty h2 {
   color: var(--nt-on-surface);
-  font: 600 16px/24px var(--font);
+  font: 400 16px/1.5 var(--nt-font);
 }
 
 .nt-empty p {
   max-width: 24rem;
   margin-top: 4px;
-  font: 400 14px/20px var(--font);
+  font: 400 14px/1.5 var(--nt-font);
 }
 
 .nt-empty .nt-btn {
@@ -1150,7 +1183,7 @@
   inset: 0;
   z-index: 30;
   border: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: transparent;
   cursor: default;
 }
 
@@ -1186,7 +1219,7 @@
 .nt-card:hover {
   border-color: color-mix(in srgb, var(--nt-primary) 50%, transparent);
   transform: translateY(-2px);
-  box-shadow: var(--shadow-hover);
+  box-shadow: var(--nt-shadow-lg);
 }
 
 .nt-card:focus-visible {
@@ -1234,7 +1267,7 @@
   min-width: 0;
   overflow: hidden;
   padding-right: 24px;
-  font: 600 14px/20px var(--font);
+  font: 400 16px/1.5 var(--nt-font);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1255,7 +1288,7 @@
 .nt-card__snippet {
   margin-top: 4px;
   color: var(--nt-on-variant);
-  font: 400 12px/18px var(--font);
+  font: 400 16px/1.5 var(--nt-font);
   overflow-wrap: anywhere;
 }
 
@@ -1281,7 +1314,7 @@
   gap: 8px;
   margin-top: 8px;
   color: var(--nt-on-variant);
-  font: 500 11px/16px var(--font);
+  font: 400 11px/1.5 var(--nt-font);
 }
 
 .nt-card__folder {
@@ -1315,7 +1348,7 @@
   color: var(--nt-on-variant);
   opacity: 0;
   cursor: pointer;
-  transition: opacity var(--motion);
+  transition: opacity var(--nt-motion);
 }
 
 .nt-card:hover .nt-card__check,
@@ -1418,7 +1451,7 @@
 
 .nt-folder__sheet-title {
   overflow: hidden;
-  font: 500 11px/16px var(--font);
+  font: 400 11px/1.5 var(--nt-font);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1429,7 +1462,7 @@
   -webkit-line-clamp: 4;
   overflow: hidden;
   color: var(--nt-on-variant);
-  font: 400 10px/12px var(--font);
+  font: 400 10px/1.25 var(--nt-font);
 }
 
 .nt-folder__front {
@@ -1454,7 +1487,7 @@
   position: absolute;
   right: 8%;
   bottom: 8%;
-  font: 500 11px/16px var(--font);
+  font: 400 11px/1.5 var(--nt-font);
   font-variant-numeric: tabular-nums;
   opacity: 0.8;
 }
@@ -1467,14 +1500,14 @@
 
 .nt-folder__name {
   overflow: hidden;
-  font: 600 14px/20px var(--font);
+  font: 400 16px/1.5 var(--nt-font);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .nt-folder__sub {
   color: var(--nt-on-variant);
-  font: 400 12px/18px var(--font);
+  font: 400 16px/1.5 var(--nt-font);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1500,7 +1533,7 @@
   border: 1px solid var(--nt-outline-variant);
   border-radius: 12px;
   background: var(--nt-surface);
-  box-shadow: var(--shadow-float);
+  box-shadow: var(--nt-shadow-2xl);
 }
 
 .nt-menu-panel--templates {
@@ -1511,7 +1544,7 @@
 .nt-menu-title {
   padding: 6px 12px;
   color: var(--nt-on-variant);
-  font: 500 11px/16px var(--font);
+  font: 400 11px/1.5 var(--nt-font);
 }
 
 .nt-context {
@@ -1522,7 +1555,7 @@
   border: 1px solid var(--nt-outline-variant);
   border-radius: 12px;
   background: var(--nt-surface);
-  box-shadow: var(--shadow-float);
+  box-shadow: var(--nt-shadow-2xl);
 }
 
 .nt-menuitem {
@@ -1534,10 +1567,10 @@
   border: 0;
   background: transparent;
   color: var(--nt-on-surface);
-  font: 500 12px/16px var(--font);
+  font: 400 12px/1.5 var(--nt-font);
   text-align: left;
   cursor: pointer;
-  transition: background-color var(--motion);
+  transition: background-color var(--nt-motion);
 }
 
 .nt-menuitem:hover {
@@ -1573,7 +1606,7 @@
 
 .nt-menuitem__hint {
   color: var(--nt-on-variant);
-  font: 400 12px/18px var(--font);
+  font: 400 16px/1.5 var(--nt-font);
 }
 
 .nt-menu-sep {
@@ -1592,7 +1625,7 @@
 .nt-field__label {
   display: block;
   margin-bottom: 4px;
-  font: 500 12px/16px var(--font);
+  font: 400 12px/1.5 var(--nt-font);
 }
 
 .nt-fieldset {
@@ -1609,7 +1642,7 @@
   border-radius: 12px;
   background: var(--nt-surface-container);
   color: var(--nt-on-surface);
-  font: 400 14px/20px var(--font);
+  font: 400 14px/1.5 var(--nt-font);
   outline: none;
 }
 
@@ -1687,7 +1720,7 @@
   border: 2px solid transparent;
   border-radius: 999px;
   cursor: pointer;
-  transition: transform var(--motion);
+  transition: transform var(--nt-motion);
 }
 
 .nt-colour:hover {
@@ -1715,7 +1748,7 @@
   overflow: hidden;
   max-width: 22rem;
   color: var(--nt-on-variant);
-  font: 400 12px/18px var(--font);
+  font: 400 16px/1.5 var(--nt-font);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1733,7 +1766,7 @@
   border: 1px solid var(--nt-outline-variant);
   border-radius: 12px;
   cursor: pointer;
-  transition: background-color var(--motion), border-color var(--motion);
+  transition: background-color var(--nt-motion), border-color var(--nt-motion);
 }
 
 .nt-radio:hover {
@@ -1752,13 +1785,13 @@
 
 .nt-radio__label {
   display: block;
-  font: 600 14px/20px var(--font);
+  font: 400 16px/1.5 var(--nt-font);
 }
 
 .nt-radio__hint {
   display: block;
   color: var(--nt-on-variant);
-  font: 400 12px/18px var(--font);
+  font: 400 16px/1.5 var(--nt-font);
 }
 
 .nt-share__link {
@@ -1777,7 +1810,7 @@
   min-width: 0;
   overflow: hidden;
   color: var(--nt-on-variant);
-  font: 400 12px/18px var(--font);
+  font: 400 16px/1.5 var(--nt-font);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1825,7 +1858,7 @@
   border-radius: 999px;
   background: var(--nt-primary-container);
   color: var(--nt-on-primary-container);
-  font: 600 12px/16px var(--font);
+  font: 400 12px/1.5 var(--nt-font);
 }
 
 .nt-share__who {
@@ -1842,18 +1875,18 @@
 }
 
 .nt-share__name {
-  font: 500 12px/16px var(--font);
+  font: 400 12px/1.5 var(--nt-font);
 }
 
 .nt-share__perm {
   color: var(--nt-on-variant);
-  font: 400 12px/18px var(--font);
+  font: 400 16px/1.5 var(--nt-font);
 }
 
 .nt-share__none {
   padding: 4px 8px;
   color: var(--nt-on-variant);
-  font: 400 12px/18px var(--font);
+  font: 400 16px/1.5 var(--nt-font);
 }
 
 .nt-picker__bar {
@@ -1872,7 +1905,7 @@
   outline: 0;
   background: transparent;
   color: var(--nt-on-surface);
-  font: 400 14px/20px var(--font);
+  font: 400 14px/1.5 var(--nt-font);
 }
 
 .nt-picker__results {
@@ -1884,14 +1917,14 @@
 .nt-picker__hint {
   padding: 24px 16px;
   color: var(--nt-on-variant);
-  font: 400 12px/18px var(--font);
+  font: 400 16px/1.5 var(--nt-font);
   text-align: center;
 }
 
 .nt-picker__group {
   padding: 8px 16px 4px;
   color: var(--nt-on-variant);
-  font: 500 11px/16px var(--font);
+  font: 400 11px/1.5 var(--nt-font);
 }
 
 .nt-picker__item {
@@ -1926,12 +1959,12 @@
 }
 
 .nt-picker__label {
-  font: 500 12px/16px var(--font);
+  font: 400 12px/1.5 var(--nt-font);
 }
 
 .nt-picker__sub {
   color: var(--nt-on-variant);
-  font: 400 12px/18px var(--font);
+  font: 400 16px/1.5 var(--nt-font);
 }
 
 /* --- attachments view ----------------------------------------------------------------------- */
@@ -1950,7 +1983,7 @@
   border-radius: 999px;
   background: transparent;
   color: var(--nt-on-variant);
-  font: 500 12px/16px var(--font);
+  font: 400 12px/1.5 var(--nt-font);
   cursor: pointer;
 }
 
@@ -2009,12 +2042,12 @@
 }
 
 .nt-attachment__name {
-  font: 500 12px/16px var(--font);
+  font: 400 12px/1.5 var(--nt-font);
 }
 
 .nt-attachment__sub {
   color: var(--nt-on-variant);
-  font: 400 12px/18px var(--font);
+  font: 400 16px/1.5 var(--nt-font);
 }
 
 .nt-linklike {
@@ -2042,7 +2075,7 @@
   color: var(--nt-error);
   opacity: 0;
   cursor: pointer;
-  transition: opacity var(--motion);
+  transition: opacity var(--nt-motion);
 }
 
 .nt-attachment:hover .nt-attachment__delete,
@@ -2076,7 +2109,7 @@
 .nt-pane__status {
   flex: none;
   color: var(--nt-on-variant);
-  font: 500 11px/16px var(--font);
+  font: 400 11px/1.5 var(--nt-font);
 }
 
 .nt-pane__status.is-error {
@@ -2087,9 +2120,9 @@
   flex: none;
   padding: 2px 8px;
   border-radius: 999px;
-  background: var(--tint-teal);
-  color: var(--on-tint-teal);
-  font: 500 11px/16px var(--font);
+  background: var(--nt-secondary-container);
+  color: var(--nt-on-secondary-container);
+  font: 400 11px/1.5 var(--nt-font);
 }
 
 .nt-badge--quiet {
@@ -2123,7 +2156,7 @@
   outline: 0;
   background: transparent;
   color: var(--nt-on-surface);
-  font: 700 22px/30px var(--font);
+  font: 400 18px/1.5 var(--nt-font);
 }
 
 .nt-title::placeholder {
@@ -2140,7 +2173,7 @@
 .nt-related__title {
   margin-bottom: 8px;
   color: var(--nt-on-variant);
-  font: 600 14px/20px var(--font);
+  font: 400 16px/1.5 var(--nt-font);
 }
 
 .nt-related__list {
@@ -2173,7 +2206,7 @@
 
 .nt-related__label {
   overflow: hidden;
-  font: 500 12px/16px var(--font);
+  font: 400 12px/1.5 var(--nt-font);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -2181,7 +2214,7 @@
 .nt-related__sub {
   overflow: hidden;
   color: var(--nt-on-variant);
-  font: 400 12px/18px var(--font);
+  font: 400 16px/1.5 var(--nt-font);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -2190,7 +2223,7 @@
   flex: 1 1 auto;
   padding: 6px 10px;
   color: var(--nt-on-variant);
-  font: italic 400 12px/18px var(--font);
+  font: italic 400 16px/1.5 var(--nt-font);
 }
 
 .nt-related__remove {
@@ -2210,13 +2243,13 @@
 }
 
 .nt-shared h2 {
-  font: 700 22px/30px var(--font);
+  font: 700 22px/30px var(--nt-font);
 }
 
 .nt-shared__meta {
   margin: 4px 0 24px;
   color: var(--nt-on-variant);
-  font: 400 12px/18px var(--font);
+  font: 400 12px/18px var(--nt-font);
 }
 
 /* --- responsive: the workspace answers to its own width, not the screen's ------------------- */
@@ -2263,7 +2296,7 @@
     position: absolute;
     inset: 0 auto 0 0;
     z-index: 40;
-    box-shadow: var(--shadow-float);
+    box-shadow: none;
     transform: translateX(-100%);
     transition: transform 300ms var(--nt-ease);
     visibility: hidden;

@@ -49,7 +49,7 @@ export function mountScene(container, { onLoad, onFail }) {
       canvas = h("canvas.rb-scene__canvas");
       holder.append(canvas);
       container.append(holder);
-      application = new runtime.Application(canvas, { wasmPath: WASM_PATH });
+      application = new runtime.Application(canvas, { renderOnDemand: true, wasmPath: WASM_PATH });
       await application.load(SCENE_URL);
       if (!stopped) onLoad();
     } catch (error) {

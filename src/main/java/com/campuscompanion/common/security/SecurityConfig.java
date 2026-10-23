@@ -178,9 +178,11 @@ public class SecurityConfig {
     boolean configured = StringUtils.hasText(url) && url.matches("^https://[a-z0-9.-]+$");
     // 'wasm-unsafe-eval' lets the robot's 3D scene compile its WebAssembly mesh decoder; it does
     // not
-    // allow eval() of text. The decoder runs in a worker made from a blob, hence worker-src.
+    // allow eval() of text. The decoder runs in a worker made from a blob, hence worker-src. The
+    // scene also draws its textures and lighting maps from in-page blob images, hence blob: in
+    // img-src.
     return "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:;"
-        + " style-src 'self'; img-src 'self' data:"
+        + " style-src 'self'; img-src 'self' data: blob:"
         + (configured ? " " + url : "")
         + "; frame-src "
         + (configured ? url : "'none'")

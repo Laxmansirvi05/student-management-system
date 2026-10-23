@@ -21,7 +21,7 @@ class ContentSecurityPolicyTest {
         .contains("default-src 'self'")
         .contains("script-src 'self'")
         .contains("style-src 'self'")
-        .contains("img-src 'self' data:;")
+        .contains("img-src 'self' data: blob:;")
         .contains("frame-src 'none'")
         .contains("object-src 'none'")
         .contains("frame-ancestors 'none'")
@@ -39,7 +39,7 @@ class ContentSecurityPolicyTest {
     String policy = policyFor("https://abcdefgh.supabase.co");
 
     assertThat(policy)
-        .contains("img-src 'self' data: https://abcdefgh.supabase.co;")
+        .contains("img-src 'self' data: blob: https://abcdefgh.supabase.co;")
         .contains("frame-src https://abcdefgh.supabase.co;")
         // Scripts, styles and requests made by scripts still come from our own origin only.
         .contains("default-src 'self'; script-src 'self' 'wasm-unsafe-eval';")
@@ -60,7 +60,10 @@ class ContentSecurityPolicyTest {
         }) {
       String policy = policyFor(bad);
 
-      assertThat(policy).as(bad).contains("img-src 'self' data:;").contains("frame-src 'none'");
+      assertThat(policy)
+          .as(bad)
+          .contains("img-src 'self' data: blob:;")
+          .contains("frame-src 'none'");
       assertThat(policy).as(bad).doesNotContain("evil").doesNotContain("script-src *");
     }
   }

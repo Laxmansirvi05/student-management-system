@@ -171,7 +171,7 @@ Enabled for all state-changing requests, using a cookie-to-header token (`XSRF-T
 
 | Header | Value |
 | --- | --- |
-| `Content-Security-Policy` (`'wasm-unsafe-eval'` and `worker-src blob:` exist only for the robot's WebAssembly mesh decoder; `eval()` of text and inline scripts and styles stay forbidden, ADR 0014) | `default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self'; img-src 'self' data: https://<project>.supabase.co; frame-src https://<project>.supabase.co; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'` |
+| `Content-Security-Policy` (`'wasm-unsafe-eval'` and `worker-src blob:` exist only for the robot's WebAssembly mesh decoder, and `blob:` in `img-src` only for the textures the scene builds in the page; `eval()` of text and inline scripts and styles stay forbidden, ADR 0014) | `default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self'; img-src 'self' data: blob: https://<project>.supabase.co; frame-src https://<project>.supabase.co; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'` |
 | `Strict-Transport-Security` | `max-age=31536000; includeSubDomains` (production) |
 | `X-Content-Type-Options` | `nosniff` |
 | `Referrer-Policy` | `no-referrer` |
