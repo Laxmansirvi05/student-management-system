@@ -69,14 +69,16 @@ public class NoteAttachmentController {
 
   /**
    * Sends the reader on to a short-lived signed link for the file. The address is the one written
-   * into the notes, so it keeps working for as long as the note can be read.
+   * into the notes, so it keeps working for as long as the note can be read. A reader who opened
+   * the note through its share link adds that link's slug as {@code share}.
    */
   @GetMapping("/{id}/file")
   public ResponseEntity<Void> file(
       @AuthenticationPrincipal CurrentUser user,
       @PathVariable Long id,
-      @RequestParam(defaultValue = "false") boolean download) {
-    String link = attachments.linkFor(user, id, download);
+      @RequestParam(defaultValue = "false") boolean download,
+      @RequestParam(required = false) String share) {
+    String link = attachments.linkFor(user, id, download, share);
     return ResponseEntity.status(HttpStatus.FOUND)
         .location(URI.create(link))
         // Shorter than the link's own life, so a cached redirect never points at an expired link.

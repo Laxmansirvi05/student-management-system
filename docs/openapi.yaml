@@ -784,8 +784,14 @@ paths:
     get:
       tags: [Student]
       summary: Redirect to a five-minute signed link
+      description: >-
+        For the uploader; a named recipient of the note; or, with `share`, a student who holds the
+        note's share link while it is on. Not for anyone else, and for nobody but the uploader
+        while the note is in the Trash.
       parameters:
         - { $ref: "#/components/parameters/IdPath" }
+        - { name: download, in: query, schema: { type: boolean, default: false } }
+        - { name: share, in: query, description: The slug of the note's share link, schema: { type: string } }
       responses:
         "302": { description: Redirect. }
         "404": { $ref: "#/components/responses/Problem" }

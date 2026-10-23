@@ -900,9 +900,114 @@ class NotesIT extends ApiIntegrationTest {
     owner.post(NOTES + "/" + id + "/share/recipients", "{\"identifier\":\"NTEH0008\"}");
     assertThat(classmate.get(FILES + "/" + picture + "/file").statusCode()).isEqualTo(302);
     assertProblem(stranger.get(FILES + "/" + picture + "/file"), 404, "NOT_FOUND");
-    owner.put(NOTES + "/" + id + "/share", "{\"linkAccess\":\"view\"}");
-    assertThat(stranger.get(FILES + "/" + picture + "/file").statusCode()).isEqualTo(302);
-    owner.delete(NOTES + "/" + id + "/share");
+    String slug =
+        json(owner.put(NOTES + "/" + id + "/share", "{\"linkAccess\":\"view\"}"))
+            .get("share")
+            .get("slug")
+            .asString();
+    // The link opens the pictures only for a reader who presents it, never by number alone.
     assertProblem(stranger.get(FILES + "/" + picture + "/file"), 404, "NOT_FOUND");
+    assertThat(stranger.get(FILES + "/" + picture + "/file?share=" + slug).statusCode())
+        .isEqualTo(302);
+    owner.delete(NOTES + "/" + id + "/share");
+    assertProblem(stranger.get(FILES + "/" + picture + "/file?share=" + slug), 404, "NOT_FOUND");
+  }
+
+  @Test
+  void anAttachmentNumberAloneNeverOpensALinkSharedNotesFile() throws Exception {
+    ApiTestClient owner = student("NTEH0010");
+    ApiTestClient stranger = student("NTEH0011");
+    long picture =
+        uploadId(owner, "secret.png", "image/png", TestImages.pngWithTransparency(40, 40), null);
+    long file = uploadId(owner, "secret.pdf", "application/pdf", TestPdfs.valid(1), null);
+    long id =
+        createNote(
+            owner,
+            "Link shared",
+            "<p><img src='/api/v1/notes/attachments/"
+                + picture
+                + "/file'><a href='/api/v1/notes/attachments/"
+                + file
+                + "/file'>pdf</a></p>");
+    String slug =
+        json(owner.put(NOTES + "/" + id + "/share", "{\"linkAccess\":\"view\"}"))
+            .get("share")
+            .get("slug")
+            .asString();
+
+    for (long attachment : new long[] {picture, file}) {
+      String address = FILES + "/" + attachment + "/file";
+      assertProblem(stranger.get(address), 404, "NOT_FOUND");
+      assertProblem(stranger.get(address + "?share="), 404, "NOT_FOUND");
+      assertProblem(stranger.get(address + "?share=" + "0".repeat(32)), 404, "NOT_FOUND");
+      assertProblem(stranger.get(address + "?share=" + slug + "x"), 404, "NOT_FOUND");
+      assertProblem(stranger.get(address + "?share=" + "a".repeat(5000)), 404, "NOT_FOUND");
+      assertThat(stranger.get(address + "?share=" + slug).statusCode()).isEqualTo(302);
+      assertThat(stranger.get(address + "?share=" + slug + "&download=true").statusCode())
+          .isEqualTo(302);
+    }
+    // The owner needs no token.
+    assertThat(owner.get(FILES + "/" + picture + "/file").statusCode()).isEqualTo(302);
+  }
+
+  @Test
+  void aShareLinkOpensOnlyTheFilesOfItsOwnNote() throws Exception {
+    ApiTestClient owner = student("NTEH0012");
+    ApiTestClient stranger = student("NTEH0013");
+    long sharedPicture =
+        uploadId(owner, "a.png", "image/png", TestImages.pngWithTransparency(30, 30), null);
+    long privatePicture =
+        uploadId(owner, "b.png", "image/png", TestImages.pngWithTransparency(30, 30), null);
+    long shared =
+        createNote(
+            owner,
+            "Shared",
+            "<p><img src='/api/v1/notes/attachments/" + sharedPicture + "/file'></p>");
+    createNote(
+        owner,
+        "Private",
+        "<p><img src='/api/v1/notes/attachments/" + privatePicture + "/file'></p>");
+    String slug =
+        json(owner.put(NOTES + "/" + shared + "/share", "{\"linkAccess\":\"view\"}"))
+            .get("share")
+            .get("slug")
+            .asString();
+
+    assertThat(stranger.get(FILES + "/" + sharedPicture + "/file?share=" + slug).statusCode())
+        .isEqualTo(302);
+    assertProblem(
+        stranger.get(FILES + "/" + privatePicture + "/file?share=" + slug), 404, "NOT_FOUND");
+  }
+
+  @Test
+  void theFilesOfANoteInTheTrashAreClosedToEveryoneButTheOwner() throws Exception {
+    ApiTestClient owner = student("NTEH0014");
+    ApiTestClient classmate = student("NTEH0015");
+    ApiTestClient linkReader = student("NTEH0016");
+    long picture =
+        uploadId(owner, "t.png", "image/png", TestImages.pngWithTransparency(30, 30), null);
+    long id =
+        createNote(
+            owner,
+            "Soon trashed",
+            "<p><img src='/api/v1/notes/attachments/" + picture + "/file'></p>");
+    owner.post(NOTES + "/" + id + "/share/recipients", "{\"identifier\":\"NTEH0015\"}");
+    String slug =
+        json(owner.put(NOTES + "/" + id + "/share", "{\"linkAccess\":\"view\"}"))
+            .get("share")
+            .get("slug")
+            .asString();
+    String address = FILES + "/" + picture + "/file";
+    assertThat(classmate.get(address).statusCode()).isEqualTo(302);
+    assertThat(linkReader.get(address + "?share=" + slug).statusCode()).isEqualTo(302);
+
+    owner.delete(NOTES + "/" + id);
+    assertProblem(classmate.get(address), 404, "NOT_FOUND");
+    assertProblem(linkReader.get(address + "?share=" + slug), 404, "NOT_FOUND");
+    assertThat(owner.get(address).statusCode()).isEqualTo(302);
+
+    owner.patch(NOTES + "/" + id, "{\"restore\":true}");
+    assertThat(classmate.get(address).statusCode()).isEqualTo(302);
+    assertThat(linkReader.get(address + "?share=" + slug).statusCode()).isEqualTo(302);
   }
 }

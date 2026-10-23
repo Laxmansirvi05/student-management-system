@@ -7,6 +7,8 @@ import com.campuscompanion.common.storage.StorageUnavailableException;
 import com.campuscompanion.notes.dto.AttachmentListResponse;
 import com.campuscompanion.notes.dto.AttachmentResponse;
 import com.campuscompanion.student.StudentProfileService;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.HashMap;
@@ -128,15 +130,17 @@ public class NoteAttachmentService {
   }
 
   /**
-   * A signed link to read the file, after checking that the student owns it or that the note it is
-   * in is shared with them.
+   * A signed link to read the file, after checking that the student owns it, that the note it is in
+   * is shared with them by name, or that they hold the note's share link ({@code shareSlug}). The
+   * attachment number alone never grants access to someone else's file.
    */
   @Transactional(readOnly = true)
-  public String linkFor(CurrentUser user, Long id, boolean download) {
+  public String linkFor(CurrentUser user, Long id, boolean download, String shareSlug) {
     Long studentId = students.currentStudent(user).studentId();
     NoteAttachment attachment =
         attachments.findById(id).orElseThrow(ResourceNotFoundException::new);
-    if (!attachment.getStudentId().equals(studentId) && !isSharedWith(attachment, studentId)) {
+    if (!attachment.getStudentId().equals(studentId)
+        && !isSharedWith(attachment, studentId, shareSlug)) {
       throw new ResourceNotFoundException();
     }
     return storage
@@ -207,16 +211,32 @@ public class NoteAttachmentService {
     return result;
   }
 
-  private boolean isSharedWith(NoteAttachment attachment, Long studentId) {
+  /**
+   * Whether another student may read a file of a note: the note must be live (not in the Trash),
+   * and either shared with them by name, or opened through its share link while that link is on.
+   * The link's slug is compared in constant time, like any other secret.
+   */
+  private boolean isSharedWith(NoteAttachment attachment, Long studentId, String shareSlug) {
     Long noteId = attachment.getNoteId();
-    if (noteId == null) {
+    if (noteId == null
+        || notes.findById(noteId).filter(note -> note.getDeletedAt() == null).isEmpty()) {
       return false;
     }
-    return recipients.findByNoteIdAndRecipientId(noteId, studentId).isPresent()
-        || shares
-            .findByNoteId(noteId)
-            .map(share -> NoteShare.VIEW.equals(share.getLinkAccess()))
-            .orElse(false);
+    if (recipients.findByNoteIdAndRecipientId(noteId, studentId).isPresent()) {
+      return true;
+    }
+    if (shareSlug == null || shareSlug.isBlank()) {
+      return false;
+    }
+    return shares
+        .findByNoteId(noteId)
+        .filter(share -> NoteShare.VIEW.equals(share.getLinkAccess()))
+        .map(
+            share ->
+                MessageDigest.isEqual(
+                    share.getSlug().getBytes(StandardCharsets.UTF_8),
+                    shareSlug.getBytes(StandardCharsets.UTF_8)))
+        .orElse(false);
   }
 
   private static AttachmentResponse respond(NoteAttachment a, String noteTitle) {

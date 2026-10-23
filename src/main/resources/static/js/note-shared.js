@@ -18,6 +18,21 @@ function showMissing() {
   );
 }
 
+// The server opens a picture or file of someone else's note only for a reader who holds the share
+// link, so every attachment address in the note carries this page's slug.
+const ATTACHMENT = /^\/api\/v1\/notes\/attachments\/\d+\/file$/;
+
+function addShareToAttachments(root) {
+  for (const element of root.querySelectorAll("img[src], a[href]")) {
+    const attribute = element.tagName === "IMG" ? "src" : "href";
+    const address = new URL(element.getAttribute(attribute), location.origin);
+    if (address.origin === location.origin && ATTACHMENT.test(address.pathname)) {
+      address.searchParams.set("share", slug);
+      element.setAttribute(attribute, address.pathname + address.search);
+    }
+  }
+}
+
 async function show() {
   if (!slug) {
     showMissing();
@@ -27,6 +42,7 @@ async function show() {
     const note = await openSharedNote(slug);
     const body = h("div.note-document");
     setHtml(body, note.content);
+    addShareToAttachments(body);
     fill(
       content,
       h(
