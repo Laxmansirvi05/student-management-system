@@ -35,6 +35,14 @@ spring:
       max-request-size: 11MB
 
 server:
+  # Pages, scripts, styles and the 3D decoder are sent compressed (the landing script falls from
+  # 1.3 MB to about 370 KB). JSON is left out on purpose: an API answer can hold a secret, such as
+  # the CSRF token, next to text the user typed, and compressing both together leaks the secret's
+  # length (BREACH).
+  compression:
+    enabled: true
+    min-response-size: 2KB
+    mime-types: text/html,text/css,text/javascript,application/javascript,image/svg+xml,application/wasm
   servlet:
     session:
       timeout: 30m

@@ -12,6 +12,9 @@ const STORAGE_KEY = "robot_position_v1";
 const EDGE_PADDING = 12;
 const DRAG_THRESHOLD_PX = 6;
 const LOAD_TIMEOUT_MS = 8000;
+// The 3D scene starts in the first idle moment after load, and at the latest this long after it.
+const IDLE_TIMEOUT_MS = 3000;
+const IDLE_FALLBACK_MS = 1500;
 const ROBOT_SIZE = 120;
 // On a phone the 120px robot covered card text and buttons on every page.
 const ROBOT_SIZE_COMPACT = 68;
@@ -236,21 +239,49 @@ export function mountRobot() {
   // place (blank until drawn). If the scene fails, or is not drawn within LOAD_TIMEOUT_MS, the scene
   // is dropped and the badge comes back for good.
   function showBadge() {
-    scene.destroy();
+    scene?.destroy();
     inner.querySelector(".rb-scene")?.remove();
     if (!fallback.isConnected) inner.append(fallback);
   }
-  const scene = mountScene(inner, {
-    onMount: () => fallback.remove(),
-    onLoad: () => {
-      sceneLoaded = true;
-    },
-    onFail: (error) => {
-      console.error("[FloatingRobot] Spline scene failed to render:", error);
-      showBadge();
-    },
-  });
-  setTimeout(() => {
-    if (!sceneLoaded) showBadge();
-  }, LOAD_TIMEOUT_MS);
+  let scene = null;
+  function startScene() {
+    if (scene) return;
+    scene = mountScene(inner, {
+      onMount: () => fallback.remove(),
+      onLoad: () => {
+        sceneLoaded = true;
+      },
+      onFail: (error) => {
+        console.error("[FloatingRobot] Spline scene failed to render:", error);
+        showBadge();
+      },
+    });
+    setTimeout(() => {
+      if (!sceneLoaded) showBadge();
+    }, LOAD_TIMEOUT_MS);
+  }
+
+  // The scene's runtime is about 2.5 MB and takes the main thread for a moment while it starts, so
+  // it waits until the page is usable: the browser's first idle moment after load, or at once if
+  // the student reaches for the robot. The badge and every gesture work before it arrives.
+  for (const type of ["pointerenter", "pointerdown", "focus"]) {
+    wrapper.addEventListener(type, startScene, { once: true });
+  }
+  whenIdle(startScene);
+}
+
+/** Runs `task` once the page has loaded and the browser has a quiet moment. */
+function whenIdle(task) {
+  const schedule = () => {
+    if ("requestIdleCallback" in window) {
+      window.requestIdleCallback(task, { timeout: IDLE_TIMEOUT_MS });
+    } else {
+      setTimeout(task, IDLE_FALLBACK_MS);
+    }
+  };
+  if (document.readyState === "complete") {
+    schedule();
+  } else {
+    window.addEventListener("load", schedule, { once: true });
+  }
 }
