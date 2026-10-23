@@ -25,9 +25,10 @@ This document sets the technical constraints every implementation must satisfy. 
 | Formatting | Spotless with google-java-format | Spotless 3.10.4, google-java-format 1.36.1 | google-java-format 1.37.0 fails under Spotless 3.10.4, so 1.36.1 is pinned. |
 | Tests | JUnit Jupiter, Mockito, Spring Boot Test, Spring Security Test | from Boot: JUnit Jupiter 6.0.3, Mockito 5.23.0 | Spring Boot 4.1 manages JUnit 6, the successor of JUnit 5. Earlier documents say "JUnit 5"; the annotations and style are the same. |
 | Database tests | Testcontainers for PostgreSQL | 2.0.5, from Boot | Needs Docker. Tests run on the `postgres:17-alpine` image. |
-| Frontend | HTML5, CSS3, JavaScript (ES modules) | browser-native | No framework, no bundler. |
+| Frontend | HTML5, CSS3, JavaScript (ES modules) | browser-native | No framework, no bundler. One exception: the public landing page only, see the next row. |
+| Landing page only | React, TypeScript, Vite, Tailwind CSS, three.js | from `landing-frontend/package.json` | [ADR 0015](decisions/0015-react-landing-page.md). Built at development time with Node; the built files are committed. Used by `static/index.html` and nothing else. |
 | Diagrams (P1) | Mermaid | **TBD** | Vendored into `static/`, not loaded from a CDN. |
-| Hosting | Heroku | | One web dyno. |
+| Hosting | Heroku or Render, **not yet chosen** (T6-04) | | Heroku runs the JAR from the `Procfile`; Render builds the `Dockerfile` from `render.yaml` ([doc 23](23-deploying-on-render.md)). Either way: one instance. |
 
 **TR-STACK-1.** Versions marked TBD MUST be chosen in the named task by checking the official documentation for mutual compatibility (Java 21, Spring Boot, Heroku runtime), then written into this table and `pom.xml` in the same change.
 
@@ -38,7 +39,7 @@ This document sets the technical constraints every implementation must satisfy. 
 The following MUST NOT be introduced without an accepted decision record in [docs/decisions](decisions/README.md):
 
 - Node.js, Express or any second backend or microservice.
-- React, Vue, Angular, or any frontend framework, bundler or CSS framework.
+- React, Vue, Angular, or any frontend framework, bundler or CSS framework. The one accepted exception is the public landing page ([ADR 0015](decisions/0015-react-landing-page.md)); it does not extend to any other page.
 - MySQL, MongoDB, or H2 as a substitute for PostgreSQL (including in tests).
 - The Supabase JavaScript client, Supabase Auth, or the Supabase Data API from anywhere. The Data API is switched off.
 - JWT-based authentication.

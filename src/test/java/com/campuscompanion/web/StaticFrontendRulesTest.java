@@ -138,6 +138,34 @@ class StaticFrontendRulesTest {
     }
   }
 
+  /**
+   * React is allowed for the public landing page only (ADR 0015): only index.html loads its built
+   * files, no other page or script refers to them, and the landing source is never served.
+   */
+  @Test
+  void theReactLandingBundleIsUsedByTheLandingPageAndNothingElse() throws IOException {
+    Pattern landing = Pattern.compile("/(js|css)/landing/|landing-frontend|from \"react");
+    for (Path file : filesEndingWith(".html", ".js")) {
+      if (file.startsWith(STATIC.resolve("js/landing"))
+          || file.startsWith(STATIC.resolve("vendor"))) {
+        continue;
+      }
+      boolean refers = landing.matcher(Files.readString(file)).find();
+      if (file.equals(STATIC.resolve("index.html"))) {
+        assertThat(refers).as("index.html loads the landing bundle").isTrue();
+      } else {
+        assertThat(refers).as("%s must not use the React landing bundle", file).isFalse();
+      }
+    }
+    try (Stream<Path> served = Files.walk(STATIC)) {
+      assertThat(
+              served.filter(
+                  path -> path.toString().endsWith(".tsx") || path.toString().endsWith(".ts")))
+          .as("TypeScript source is never served")
+          .isEmpty();
+    }
+  }
+
   private static List<Path> filesEndingWith(String... suffixes) throws IOException {
     try (Stream<Path> files = Files.walk(STATIC)) {
       List<Path> found =

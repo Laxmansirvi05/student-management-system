@@ -19,6 +19,8 @@ A decision record (ADR) captures one significant technical decision: the context
 | [0011](0011-real-student-data-for-the-demonstration.md) | Real student data in the demonstration deployment | Accepted |
 | [0012](0012-previous-year-question-papers.md) | Previous-year question papers as their own library | Accepted |
 | [0013](0013-student-complaints.md) | Student complaints: public, private and secure | Accepted |
+| [0014](0014-notes-quick-assistant-and-robot.md) | Notes, the Quick Assistant and the floating robot | Accepted |
+| [0015](0015-react-landing-page.md) | React and TypeScript for the public landing page only | Accepted |
 
 **Accepted** records reflect choices the owner has already made. **Proposed** records are recommendations written with the documentation and await the owner's approval.
 
