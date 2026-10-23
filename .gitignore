@@ -39,3 +39,7 @@ private-data/
 # Class notes and college notices the owner uploads (copyrighted material and circulars); never committed.
 /notes/
 /notices/
+
+# Isolated landing frontend
+landing-frontend/node_modules/
+landing-frontend/dist/

@@ -271,7 +271,7 @@ if (canvas instanceof HTMLCanvasElement) {
 }
 
 if ("IntersectionObserver" in window) {
-  const movingSections = document.querySelectorAll(".landing-preview, .landing-faq");
+  const movingSections = document.querySelectorAll(".landing-campus, .landing-faq");
   const animationVisibility = new IntersectionObserver((entries) => {
     for (const entry of entries) {
       entry.target.toggleAttribute("data-motion-offscreen", !entry.isIntersecting);
