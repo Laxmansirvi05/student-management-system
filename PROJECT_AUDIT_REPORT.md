@@ -15,6 +15,7 @@
 | **Student page weight** (local, cold → later page) | 3.1 MB on every page, no cache, no gzip | **1.2 MB first page → 15–41 KB on later pages** |
 | **Landing page** | 1.32 MB every visit | **370 KB first visit, 1 KB after** |
 | **Product completion** | ≈ 81 % | ≈ 81 %: unchanged on purpose. This phase fixed findings and added no PRD features. |
+| **AI assistants** (Phase 1, Part A2) | Mock only | **Real AI through a 19-route router** (Groq, Ollama, Gemini, OpenRouter) with automatic fallback; live-tested; data-terms review open |
 
 **What is left for the owner:** rotate the credentials in F4/CC-21; choose Heroku or Render and deploy (T6-04 to T6-06), then measure memory there (CC-13); sign off the storage bucket (T3-01); accept a real AI provider live (T5-06, T5-08); and fix the robot scene in the Spline editor (CC-14).
 
@@ -94,6 +95,91 @@ Same conditions as Part B section 6: MacBook (Apple Silicon), JAR with `-Xmx256m
 | App start / RSS after start | 4.25 s / 461 MB | 4.31 s / 401 MB (one run each; not a meaningful change) |
 
 **Not measured:** production or hosted numbers, real storage and AI latency, low-end phones, CPU under load.
+
+
+## Part A2 — Phase 1: several AI providers with automatic fallback (2026-10-23)
+
+Both assistants now use real AI models through a router with automatic fallback. The mock remains the default for every automated test. Local commits `406c309` to `d5be57f`; not pushed or deployed. Keys were never printed, logged, sent to the browser or committed. Keys are identified below only by variable name and the first 8 hex characters of their SHA-256 fingerprint.
+
+### A2.1 Configurations found and tested
+
+Found in the local `.env`: **15 AI keys** for 4 providers. Before this phase, only Gemini had an adapter; Groq, OpenRouter and Ollama now share one new adapter. Each key had one minimal request ("Reply with the single word OK"); model lists came from the providers' list endpoints (no generation cost).
+
+| Provider | Keys (fingerprint) | Result | Models that worked | Notes |
+| --- | --- | --- | --- | --- |
+| Groq | `GROQ_API_KEY` (7e3a641c), `_2` (d4d16a8e), `_3` (187d0aa3), `_4` (3e2ab1a7), `_5` (ee7e6b21) | **All 5 valid** | `openai/gpt-oss-120b` (698 ms), `openai/gpt-oss-20b` (482–615 ms), `qwen/qwen3.8-27b` (162 ms) | Groq's firewall refuses Python's and Java's default client name ("error code 1010"); the adapters now send a `User-Agent`. |
+| Ollama (cloud) | `OLLAMA_API_KEY` (4e8ecf67), `_2` (f006d80e) | **Both valid** | `gpt-oss:20b` (1.3–2.1 s), `gemma4:31b` (1.6 s) | — |
+| Gemini | `GEMINI_API_KEY` (36df8d6d) | **Unusable: disabled** | none | 403 "Your project has been denied access" on every model tried (3 models). Commented out in `.env` with a note; the original is kept in `.env.backup-2026-10-23` (git-ignored, mode 600). Owner: ask Google support or delete the project's key. |
+| Gemini | `_2` (68dfeb08), `_3` (f95c7d59), `_4` (050ac3b4) | **Valid** | `gemini-3.5-flash-lite` (1.3–8.1 s) | `gemini-2.5-flash` and `gemini-2.5-flash-lite` answer 404 "no longer available to new users" (unsupported model, not a bad key). |
+| OpenRouter | `OPENROUTER_API_KEY` (ac555b89), `_2` (99e6265d), `_3` (0dd98dd5), `_4` (0e6c8f75) | **All 4 valid** (key endpoint: free tier, no limit set) | `nvidia/nemotron-3.5-lightning:free` (2.5 s for "OK") | `google/gemma-4-31b-it:free`, `gemma-4-26b-a4b-it:free`, `poolside/laguna-xs-2.1:free`: 429 "temporarily rate-limited upstream" (temporary; keys kept). `nemotron-3-super-120b-a12b:free`: 404. `inkling-small:free`: 403 "only on agentic harnesses". |
+
+No key was removed for a rate limit or quota. Only the Gemini key refused for every model was set aside.
+
+### A2.2 Routing and fallback (what was built)
+
+Full rules: [docs/12](docs/12-AI-features-spec.md) §2b and [ADR 0016](docs/decisions/0016-several-ai-providers-with-fallback.md).
+
+- `AI_PROVIDER=router` with `AI_ROUTES` in priority order. The local `.env` now holds: `groq:openai/gpt-oss-120b, groq:qwen/qwen3.8-27b, ollama:gpt-oss:20b, gemini:gemini-3.5-flash-lite, openrouter:nvidia/nemotron-3.5-lightning:free`. That gives 19 routes (each entry × each key of its provider). Groq and Ollama come first; the free tiers with weaker data terms come last.
+- A request goes to the first route that is not paused; the next route is tried only after a failure, or after a reply that the feature's own parser/validator rejects.
+- **A 429 pauses the whole provider** (its `Retry-After`, capped at 10 min, else 60 s). A provider's other keys are tried only when a key itself is refused (401/403, 30-min pause for that key), never to get round a limit. A 404/400 pauses that model for 30 min; a 5xx, network failure or timeout pauses it for 30 s. An unusable reply moves on to the next *model* without a pause.
+- Bounds: at most 3 calls per request, 15 s each, within the 25 s budget; no call starts with under 2 s left. The time limit covers the whole answer, body included. When everything is paused, the request fails at once (measured: 17–28 ms) and calls nobody. The mock is never a route, so a failure is never disguised as an answer.
+- Both assistants (Explain, Summarize, practice questions, and the robot's Quick Assistant) go through the same router. One usage row is recorded per student request. Quotas, concurrency limits, history, deletion and privacy between students are unchanged.
+
+### A2.3 Real-provider acceptance (live, through the full application)
+
+The built JAR ran on port 8099 with a throw-away PostgreSQL. Each line is one real request through the router, the adapter and the feature's parser/validator; times are end-to-end HTTP times measured with curl. 30 feature requests in all, plus 2 in the browser.
+
+| Route(s) | Explain | Summarize | Practice questions (3 MCQ) | Quick Assistant |
+| --- | --- | --- | --- | --- |
+| Groq `gpt-oss-120b` only | 200, 1.66 s | 200, 1.57 s | 200, 2.00 s, 3×4 options | 200, 0.64 s |
+| Ollama `gpt-oss:20b` only | 200, 3.53 s | 200, 22.4 s (key 1's reply failed the checks; at the time, key 2 of the same model answered: fixed, see below) | 200, 6.07 s | 200, 1.72 s |
+| Gemini `gemini-3.5-flash-lite` only | 200, 1.71 s | 200, 1.48 s | 200, 2.97 s, 3×4 options | 200, 0.99 s |
+| OpenRouter `nemotron-3.5-lightning:free` only, first run | 504 after 38.7 s | 504 after 32.3 s | 504 after 30.8 s | 200, 13.3 s |
+| Same, after the fix | 504 at the 15 s limit | 503 in 18 ms (paused) | 503 in 18 ms (paused) | 503 in 29 ms (paused) |
+| **Fallback**: retired `gemini-2.5-flash` first, then Groq | 200, **2.68 s** (404, then Groq) | 200, 1.58 s (retired model skipped while paused) | 200, 2.11 s | 200, 0.79 s |
+| **Recommended order** (as in `.env`) | 200, 2.00 s | 200, 1.13 s | 200, 2.32 s, 3×4 options | 200, 0.85 s |
+| Browser (Playwright, recommended order) | Answer shown in the page, 3.1 s; no "Demo mode" notice | — | — | Real reply through the robot (A key); listed in Quick chat history; Quick Note still opens (Enter) |
+
+The OpenRouter free model is too slow, and its JSON replies failed the parser, for the three study tools; it worked for the Quick Assistant. It stays last in the order as a final fallback. Fallback overhead measured: about +1 s when the first route answers 404.
+
+**Two defects found by the live run and fixed** (`5d8dc6c`):
+1. Java's request timeout stops at the response headers, and OpenRouter sends its headers at once, so requests ran up to 39 s against the 25 s budget. Now a hard limit covers the whole answer.
+2. After an unusable reply, the router retried the same model with the provider's next key. Now a model whose reply failed is skipped for the rest of the request.
+
+### A2.4 Commits (Phase 1)
+
+| Commit | What |
+| --- | --- |
+| `406c309` | `OpenAiCompatibleAiProvider` (Groq, OpenRouter, Ollama), shared `ProviderHttp` classification (401/403, 404, 408, 429 + Retry-After, 5xx), User-Agent; tests |
+| `909f295` | `RoutingAiProvider` (order, pauses, bounds), `AI_PROVIDER=router`, `AI_ROUTES`, `AiRoutingProperties`, docs/12 §2b, `.env.example`; 11 router tests, 8 configuration tests |
+| `86571ab` | Explain, Summarize, practice questions and Quick Assistant pass their parser/validator as the "usable reply" check; all-invalid gives 502 |
+| `a2cc66e` | `AiRouterWorkflowIT`: both assistants end to end through real adapters and two local fake providers (fallback, 429 pause, invalid replies, all-fail, fail-fast, recovery, history privacy, usage counting, key redaction in responses and logs) |
+| `5d8dc6c` | Whole-answer time limit; skip a model's other keys after an unusable reply; regression tests |
+| `d5be57f` | Privacy page names the AI services and the fallback; ADR 0016; ADR 0005 note |
+
+### A2.5 Verification
+
+| Check | Result |
+| --- | --- |
+| AI unit and integration tests during the work | All passing (adapters, router, configuration, services, `AiApiIT`, `AssistantIT`, `AiRouterWorkflowIT`, `HermeticTestsIT`, `PageRoutingIT`) |
+| `./mvnw -B verify` on the committed `HEAD` alone (`git archive`) | **BUILD SUCCESS**: 287 unit, 289 integration, 0 failures, Spotless clean, 1 min 42 s |
+| Node browser-module tests | 13 pass, 0 fail |
+| `git diff --check` | Clean |
+| Secret scan | No key (in full, nor its first 12 or last 8 characters) in any Phase 1 commit or in any of the 8 live server logs; the disabled key is not in Git |
+| Landing page | Not affected by this phase; not rebuilt |
+
+### A2.6 Remaining blockers and owner actions
+
+| Item | Why |
+| --- | --- |
+| **Review each provider's data terms (OQ-1, ADR 0016)** before real students use the assistant | Student text may now go to Groq, Ollama, Google (free tier) or OpenRouter (free models). Free tiers may keep or train on prompts. Remove any provider you do not accept from `AI_ROUTES`. |
+| Gemini key `36df8d6d` | Project denied by Google; ask support or delete it. |
+| Several keys of one provider | Use them only within each provider's terms. The router never cycles through them to get round a limit. If they belong to separate accounts made only to multiply free quota, that may itself break the provider's terms. |
+| Restart the 8080 server to use the router | `.env` now has `AI_PROVIDER=router`; the running server still uses the mock until it is restarted (it was not restarted here). |
+| Models change | Free models appear and disappear; check `AI_ROUTES` when the logs show `MODEL_UNAVAILABLE`. |
+| Usage log has no provider column | Which model answered is in the application log only; storing it would need a migration. |
+| Deployment | Separate task: set `AI_PROVIDER`, `AI_ROUTES` and the keys as host secrets. |
+
 
 ---
 
