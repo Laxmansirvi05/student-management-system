@@ -16,6 +16,7 @@
 | **Landing page** | 1.32 MB every visit | **370 KB first visit, 1 KB after** |
 | **Product completion** | ≈ 81 % | ≈ 81 %: unchanged on purpose. This phase fixed findings and added no PRD features. |
 | **AI assistants** (Phase 1, Part A2) | Mock only | **Real AI through a 19-route router** (Groq, Ollama, Gemini, OpenRouter) with automatic fallback; live-tested; data-terms review open |
+| **Planner and production readiness** (Parts A3, A4) | — | Planner built (`c5c1c03`); readiness reviewed: **not ready for real students yet**, blockers in docs/24 §1; completion ≈ 88 % with FR-AI-005 dropped |
 
 **What is left for the owner:** rotate the credentials in F4/CC-21; choose Heroku or Render and deploy (T6-04 to T6-06), then measure memory there (CC-13); sign off the storage bucket (T3-01); accept a real AI provider live (T5-06, T5-08); and fix the robot scene in the Spline editor (CC-14).
 
@@ -180,6 +181,41 @@ The OpenRouter free model is too slow, and its JSON replies failed the parser, f
 | Usage log has no provider column | Which model answered is in the application log only; storing it would need a migration. |
 | Deployment | Separate task: set `AI_PROVIDER`, `AI_ROUTES` and the keys as host secrets. |
 
+
+
+## Part A3 — Planner, T7-02 (2026-10-24)
+
+Commit `c5c1c03`, local. Study tasks (FR-PLN-001) and the exam countdown (FR-PLN-002: the student's own exam dates plus the college's published Exam notices) on a new Planner page and a "Next exam" dashboard card. `V16__planner.sql` adds `study_tasks` and `student_exams` with RLS. It is **not yet applied to hosted Supabase**. Tested: `PlannerRulesTest` (4) and `PlannerIT` (8), plus the database-security, access and smoke tests; full `verify` passed (291 unit, 297 integration), and a browser check against a throw-away database. Details: [docs/02-PRD.md](docs/02-PRD.md) §8 and [docs/09-api-contract.md](docs/09-api-contract.md) §8.22.
+
+## Part A4 — Production readiness, phase 1 (2026-10-24)
+
+Full write-up: [docs/24-production-readiness.md](docs/24-production-readiness.md). **Verdict: not ready for real students yet.** The code is built and tested; the open blockers are mostly owner actions.
+
+| Item | Status |
+| --- | --- |
+| Secrets in Git | None. All 19 secret values in the local `.env` and its backup were searched for in tracked files and the full history; common key patterns too. |
+| Repository security defects needing a code change | None found. Sessions, CSRF, CORS (none), headers, logging, roles and RLS, and authorization were reviewed (doc 24 §2). |
+| Deliberate settings kept | `DEMO_SEED_ENABLED=true` also seeds under `prod` (the documented demonstration workflow, T6-06); `AI_PROVIDER=mock` works under `prod` (shown to students as demo mode). Both are deploy-checklist items. |
+| Unverified until first deploy | HTTPS behind the host's proxy (forwarded headers), memory on a 512 MB plan, real Storage bucket, V16 on the hosted database |
+| Credentials to rotate (owner) | **Required:** `DB_PASSWORD` (cc_app), `DB_MIGRATION_PASSWORD` (cc_migrator) (F4); remove `ADMIN_BOOTSTRAP_PASSWORD` after first login; delete Gemini key `36df8d6d`. **Recommended:** `SUPABASE_SERVICE_KEY`, and separate production AI keys. Then delete the local `.env.backup-2026-10-23`. Names only; where to rotate is in doc 24 §3. |
+| AI provider terms (checked 2026-10-24, official pages) | Groq: no training by contract, not retained by default, Zero Data Retention available. Ollama Cloud: transient, no training. **Gemini free tier: used to improve Google's products, human review, "do not submit personal information", users must be 18+.** **OpenRouter `:free`: upstream providers may train; the current model states no policy.** Recommendation (not applied): keep Groq and Ollama, drop Gemini free and OpenRouter free from student traffic. Doc 24 §4. |
+| Host | Not chosen. Recommendation (not applied): **Render Starter** ($7/month, 512 MB): `render.yaml` and the Dockerfile exist, deploys are health-checked, there is no daily restart, and there is no 30 s router limit. Heroku Basic ($7/month, 512 MB) is the alternative. No free or sleeping plan for students. Doc 24 §7. |
+| PDF Summarizer (FR-AI-005, T7-04) | **Dropped / out of scope** (PRD, plan). Not counted as outstanding. |
+
+### A4.1 Completion, recalculated (same method as Part B §3)
+
+| Change since the original audit | Effect |
+| --- | --- |
+| FR-LEG-001 privacy and terms: accurate now (CC-02, CC-15) | P0 item 50 % → 100 % |
+| FR-AI-001…003: real providers through the router, live-tested; the owner's behaviour run (T5-08) and the data-terms review are still open | P0 item 50 % → 75 % |
+| FR-PLN-001, FR-PLN-002: built, tested, browser-checked | P1 items 0 % → 100 % each |
+| FR-AI-005: dropped | Removed from the count (P1 now has 11 items) |
+
+P0 = 1575 / 17 = **92.6 %**. P1 = 750 / 11 = **68.2 %**. Overall = (1575 × 3 + 750) / (17 × 3 + 11) = 5475 / 62 ≈ **88 %** (was ≈ 81 %). Production readiness is a separate question: see the blockers above.
+
+### A4.2 Verification in this phase
+
+`./mvnw -B verify` in an isolated copy; Node tests; secret scan; documentation-only changes otherwise. Results are recorded in the commit message of this phase and in the final report to the owner.
 
 ---
 

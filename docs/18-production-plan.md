@@ -85,9 +85,11 @@ Names are defined in [.env.example](../.env.example). In production they are Her
 | `SUPABASE_SERVICE_KEY` | Yes | **Yes** | Full storage access. Server only. Either key style works: the new `sb_secret_…` key or the older `service_role` key. The application sends it in both the `apikey` and the `Authorization` headers, because the new style is accepted only in `apikey`. |
 | `SUPABASE_STORAGE_BUCKET` | Yes | No | |
 | `AI_ENABLED` | Yes | No | Kill switch |
-| `AI_PROVIDER` | Yes | No | `mock` or the real provider's name |
-| `AI_API_KEY` | With a real provider | **Yes** | |
-| `AI_MODEL` | With a real provider | No | |
+| `AI_PROVIDER` | Yes | No | `mock` (placeholder answers, shown to students as demo mode), `gemini` (one model) or `router` (several providers with fallback, [docs/12](12-AI-features-spec.md) §2b, [ADR 0016](decisions/0016-several-ai-providers-with-fallback.md)) |
+| `AI_API_KEY` | With `gemini` | **Yes** | Only for `AI_PROVIDER=gemini` |
+| `AI_MODEL` | With `gemini` | No | Only for `AI_PROVIDER=gemini` |
+| `AI_ROUTES` | With `router` | No | `provider:model` entries in priority order. Change it only after the provider data-terms review ([24-production-readiness.md](24-production-readiness.md) §4) |
+| `GROQ_API_KEY`, `OLLAMA_API_KEY`, `GEMINI_API_KEY`, `OPENROUTER_API_KEY` (and `_2` … `_9`) | With `router`, for each provider in `AI_ROUTES` | **Yes** | Read by name at start; not listed one by one in `.env.example` (shown there as comments) |
 | `AI_DAILY_LIMIT_PER_USER` | No | No | Default 30 |
 | `AI_DAILY_LIMIT_GLOBAL` | No | No | Application-wide daily ceiling across all users. Default 500, provisional (OQ-11). Set it deliberately before release |
 | `AI_MAX_OUTPUT_TOKENS` | No | No | Default 1200 |
@@ -98,7 +100,7 @@ Names are defined in [.env.example](../.env.example). In production they are Her
 | `JAVA_OPTS` | Recommended | No | Memory settings sized for the dyno |
 | `PORT` | Set by Heroku | No | Do not set it yourself |
 
-`.env.example` lists every variable above except `JAVA_OPTS` and `PORT`, which exist only on Heroku. Every variable in `.env.example` appears in this table. A variable that is in one and not the other is a defect.
+`.env.example` lists every variable above except `JAVA_OPTS` and `PORT`, which exist only on the host, and the provider key names, which appear there as comments. The host has not been chosen yet: [24-production-readiness.md](24-production-readiness.md) compares Heroku and Render and lists what is still needed. Every variable in `.env.example` appears in this table. A variable that is in one and not the other is a defect.
 
 ### Fixed defaults
 
@@ -137,6 +139,8 @@ These are set in `application.yml`, not by environment variables. Changing one i
 - Storage: private bucket named by `SUPABASE_STORAGE_BUCKET`; no public access; no policies for `anon` or `authenticated`.
 
 ## 7. Database migration procedure
+
+> **Pending on the hosted database (2026-10-24):** `V16__planner.sql` (T7-02, adds `study_tasks` and `student_exams`) has not been applied to hosted Supabase. It is additive. It will run automatically at the first start of a build that contains it, including a restart of a local server that reads `.env`. Back up first (section 12).
 
 Migrations are applied by Flyway when the application starts. With one dyno this is safe. Flyway uses the migration role's credentials (`DB_MIGRATION_*`); the running application uses the runtime role's.
 

@@ -65,7 +65,7 @@ A priority is changed only by editing this document, stating the reason, with th
 | FR-AI-002 | Summarize text | P0 |
 | FR-AI-003 | Generate practice questions | P0 |
 | FR-AI-004 | Usage limits and failure handling | P0 |
-| FR-AI-005 | Summarize a library PDF | P1 |
+| FR-AI-005 | Summarize a library PDF | **Dropped** (out of scope, 2026-10-24) |
 | FR-AI-006 | Flowchart generation | P1 |
 | FR-AI-007 | Flashcards | P2 |
 | FR-ADM-001 | Provision and manage student accounts | P0 |
@@ -519,7 +519,9 @@ Behaviour rules are in [13-AI-rules.md](13-AI-rules.md). Limits and formats are 
   4. A daily limit across all users (default 500) protects the budget. When it is reached, the assistant shows as unavailable to everyone until the next day.
 - **Edge cases:** A failed request does not consume the daily limit.
 
-### FR-AI-005 Summarize a library PDF (P1)
+### FR-AI-005 Summarize a library PDF (Dropped)
+
+- **Status:** Dropped by the owner on 2026-10-24; out of scope for this release. It is not outstanding work and is not counted in the completion figures. The text below is kept as the record of what was once planned. Students can still summarize text they paste (FR-AI-002).
 
 - **Acceptance criteria:** From a resource page, "Summarize" produces a summary from the PDF's extracted text. Scanned PDFs without text show "This PDF has no readable text".
 
@@ -647,4 +649,4 @@ Added on 2026-10-14 at the owner's request; the owner asked for it to be built l
 
 ## 12. Out of scope
 
-Faculty portal, fee payment, admissions, hostel, library lending, mobile apps, discussion forums, voice assistant, OCR for scanned papers, AI answers grounded in the whole resource library, and any prediction of exam questions. See [03-scope-and-roadmap.md](03-scope-and-roadmap.md).
+Faculty portal, fee payment, admissions, hostel, library lending, mobile apps, discussion forums, voice assistant, OCR for scanned papers, AI answers grounded in the whole resource library, summarizing a library PDF (FR-AI-005, dropped on 2026-10-24), and any prediction of exam questions. See [03-scope-and-roadmap.md](03-scope-and-roadmap.md).

@@ -176,7 +176,7 @@ Follow [15-AI-features-handoff.md](15-AI-features-handoff.md).
 | T7-01 ✅ | Attendance calculator, on the total attendance (targets 70 to 85%). Built on 2026-10-22 | FR-ATT-003 |
 | T7-02 ✅ | `V16__planner.sql`, study tasks, exam countdown (the student's own exam dates and the college's Exam notices). Built on 2026-10-24 | FR-PLN-001, FR-PLN-002 |
 | T7-03 ✅ | Audit log viewer. Built on 2026-10-17 | FR-ADM-009 |
-| T7-04 | PDF summarization, including the indirect-injection review required by the AI security document §3.3 | FR-AI-005 |
+| T7-04 ✗ | **Dropped** (2026-10-24, out of scope): PDF summarization. Not outstanding work | FR-AI-005 |
 | T7-05 | Flowchart generation (vendor Mermaid 👤) | FR-AI-006 |
 | T7-06 | Report a resource | FR-LIB-005 |
 | T7-07 ✅ | CSV student import, through `StudentProvisioningService` so the same rules apply. Built on 2026-10-14 | FR-ADM-010 |
