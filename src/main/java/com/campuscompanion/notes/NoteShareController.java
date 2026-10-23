@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Students: sharing a note with classmates. Contract: docs/09-api-contract.md section 8.20. */
+/** Students: sharing a note with classmates. Contract: docs/09-api-contract.md section 8.21. */
 @RestController
 @RequestMapping("/api/v1/notes")
 public class NoteShareController {

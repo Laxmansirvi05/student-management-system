@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Students: the robot's Quick Assistant. Contract: docs/09-api-contract.md section 9.4. */
+/** Students: the robot's Quick Assistant. Contract: docs/09-api-contract.md section 9.5. */
 @RestController
 @RequestMapping("/api/v1/assistant")
 public class AssistantController {

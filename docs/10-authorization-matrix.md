@@ -109,6 +109,16 @@ In the first release, further admin accounts are created only by the owner direc
 | Secure complaint | Read | ❌ | 👤 own only | ✅ **without** the student | — |
 | Complaint | Set status and response | ❌ | ❌ | ✅ | Audited |
 
+### 4.3c Notes and the Quick Assistant
+
+| Data | Action | Visitor | Student | Admin | System |
+| --- | --- | --- | --- | --- | --- |
+| Note, folder, link, attachment | Create, read, change, delete | ❌ | 👤 own only | ❌ | — |
+| Note shared with a classmate | Read (view) or read and edit text (edit) | ❌ | ✅ named recipient | ❌ | — |
+| Note shared by link | Read | ❌ | ✅ any signed-in student with the link, read-only | ❌ | — |
+| Attachment file | Open through a signed link | ❌ | 👤 owner, or a student the note is shared with | ❌ | — |
+| Assistant chat | Send, read, delete | ❌ | 👤 own only | ❌ (never read) | Usage logged as numbers only |
+
 ### 4.4 Learning resources
 
 | Data | Action | Visitor | Student | Admin | System |

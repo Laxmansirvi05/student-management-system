@@ -174,7 +174,9 @@ A provider failure affects only the AI endpoints. It is caught in the AI service
 | Provider error bodies | No (they can echo the input) |
 | API key, request headers | No |
 
-Responses are not cached or stored. A student who wants to keep a result copies it.
+Responses of the study tools are not cached or stored. A student who wants to keep a result copies it.
+
+**Exception, the Quick Assistant chat ([ADR 0014](decisions/0014-notes-quick-assistant-and-robot.md)).** The robot's chat keeps its messages so the student can read them again. They are stored in `assistant_messages`, read by that student only (never by an administrator), limited to the newest six chats, deletable by the student, and written only when an answer succeeds. The usage log still holds numbers and labels only. The chat follows the AI rules (docs/13) with a plain-text answer instead of JSON; the model itself remembers nothing, the application sends the earlier messages.
 
 ## 12. Adversarial testing
 

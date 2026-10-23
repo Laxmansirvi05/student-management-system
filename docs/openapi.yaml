@@ -661,6 +661,237 @@ paths:
         "503": { $ref: "#/components/responses/Problem" }
         "504": { $ref: "#/components/responses/Problem" }
 
+  /notes:
+    get:
+      tags: [Student]
+      summary: List notes of a view (all, recent, pinned, shared, attachments, trash, archived)
+      responses:
+        "200": { description: "{ notes: [...] }" }
+    post:
+      tags: [Student]
+      summary: Create a note (needs a title or content)
+      responses:
+        "201": { description: The note. }
+        "400": { $ref: "#/components/responses/Problem" }
+
+  /notes/{id}:
+    get:
+      tags: [Student]
+      summary: One note, own or shared with the student
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      responses:
+        "200": { description: The note. }
+        "404": { $ref: "#/components/responses/Problem" }
+    patch:
+      tags: [Student]
+      summary: Change a note; an edit that empties it deletes it
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      responses:
+        "200": { description: "{ note } or { deleted: true }" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+    delete:
+      tags: [Student]
+      summary: Move to the Trash, or destroy with permanent=true
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      responses:
+        "204": { description: Done. }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /notes/{id}/duplicate:
+    post:
+      tags: [Student]
+      summary: Copy a note
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      responses:
+        "201": { description: The copy. }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /notes/bulk:
+    post:
+      tags: [Student]
+      summary: One action on many notes
+      responses:
+        "200": { description: "{ success, count }" }
+        "400": { $ref: "#/components/responses/Problem" }
+
+  /notes/folders:
+    get:
+      tags: [Student]
+      summary: Folders with counts and previews
+      responses:
+        "200": { description: "{ folders: [...] }" }
+    post:
+      tags: [Student]
+      summary: Create a folder
+      responses:
+        "201": { description: The folder. }
+        "409": { $ref: "#/components/responses/Problem" }
+    patch:
+      tags: [Student]
+      summary: Reorder folders in one request
+      responses:
+        "204": { description: Done. }
+
+  /notes/folders/{id}:
+    patch:
+      tags: [Student]
+      summary: Rename, recolour, move a folder
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      responses:
+        "200": { description: The folder. }
+        "400": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+    delete:
+      tags: [Student]
+      summary: Delete a folder; its notes become unfiled
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      responses:
+        "204": { description: Deleted. }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /notes/attachments:
+    get:
+      tags: [Student]
+      summary: The student's pictures and files
+      responses:
+        "200": { description: "{ attachments: [...] }" }
+    post:
+      tags: [Student]
+      summary: Attach a picture (stored as JPEG) or a PDF
+      responses:
+        "201": { description: The attachment. }
+        "413": { $ref: "#/components/responses/Problem" }
+        "415": { $ref: "#/components/responses/Problem" }
+
+  /notes/attachments/{id}:
+    delete:
+      tags: [Student]
+      summary: Delete an attachment and its stored file
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      responses:
+        "204": { description: Deleted. }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /notes/attachments/{id}/file:
+    get:
+      tags: [Student]
+      summary: Redirect to a five-minute signed link
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      responses:
+        "302": { description: Redirect. }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /notes/{id}/links:
+    get:
+      tags: [Student]
+      summary: Links from a note
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      responses:
+        "200": { description: "{ links: [...] }" }
+    post:
+      tags: [Student]
+      summary: Link to a note, folder or resource
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      responses:
+        "200": { description: "{ links: [...] }" }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /notes/link-targets:
+    get:
+      tags: [Student]
+      summary: Search for something to link
+      responses:
+        "200": { description: "{ targets: [...] }" }
+
+  /notes/{id}/share:
+    get:
+      tags: [Student]
+      summary: Sharing state of an own note
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      responses:
+        "200": { description: "{ share }" }
+        "404": { $ref: "#/components/responses/Problem" }
+    put:
+      tags: [Student]
+      summary: Set link access (private or view)
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      responses:
+        "200": { description: "{ share }" }
+    delete:
+      tags: [Student]
+      summary: Stop all sharing
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      responses:
+        "200": { description: "{ share }" }
+
+  /notes/{id}/share/recipients:
+    post:
+      tags: [Student]
+      summary: Share with a classmate by roll number or college email
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      responses:
+        "200": { description: "{ share }" }
+        "400": { $ref: "#/components/responses/Problem" }
+
+  /notes/shared/{slug}:
+    get:
+      tags: [Student]
+      summary: Open a note through its share link (read-only)
+      responses:
+        "200": { description: The note. }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /assistant/chat:
+    post:
+      tags: [AI]
+      summary: One message to the Quick Assistant
+      responses:
+        "200": { description: "{ conversation, question, reply, notice }" }
+        "429": { $ref: "#/components/responses/Problem" }
+        "503": { $ref: "#/components/responses/Problem" }
+
+  /assistant/conversations:
+    get:
+      tags: [AI]
+      summary: The newest quick chats
+      responses:
+        "200": { description: "{ conversations: [...] }" }
+
+  /assistant/conversations/{id}/messages:
+    get:
+      tags: [AI]
+      summary: Messages of a chat
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      responses:
+        "200": { description: "{ messages: [...] }" }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /assistant/conversations/{id}:
+    delete:
+      tags: [AI]
+      summary: Delete a chat
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      responses:
+        "204": { description: Deleted. }
+        "404": { $ref: "#/components/responses/Problem" }
+
   /ai/usage/me:
     get:
       tags: [AI]

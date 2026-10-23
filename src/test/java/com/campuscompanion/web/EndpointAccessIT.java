@@ -48,6 +48,8 @@ class EndpointAccessIT extends ApiIntegrationTest {
           "/api/v1/bookmarks/",
           "/api/v1/pyqs",
           "/api/v1/complaints",
+          "/api/v1/notes",
+          "/api/v1/assistant/",
           "/api/v1/quiz-attempts",
           "/api/v1/progress/",
           "/api/v1/ai/");
@@ -95,6 +97,7 @@ class EndpointAccessIT extends ApiIntegrationTest {
       case "GET" -> client.get(endpoint.path());
       case "POST" -> client.post(endpoint.path(), "{}");
       case "PUT" -> client.put(endpoint.path(), "{}");
+      case "PATCH" -> client.patch(endpoint.path(), "{}");
       case "DELETE" -> client.delete(endpoint.path());
       default -> throw new IllegalStateException("No test for " + endpoint);
     };

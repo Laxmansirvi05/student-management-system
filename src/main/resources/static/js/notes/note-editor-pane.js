@@ -141,7 +141,6 @@ export function createEditorPane({ note, draft = null, folderId = null, folders 
   }
 
   function refreshHeader() {
-    const owner = current !== null && !readOnly;
     fill(
       header,
       h("button.nt-tool.nt-tool--round", { type: "button", "aria-label": "Back to notes", onclick: close }, symbol("arrow_back")),
@@ -155,9 +154,7 @@ export function createEditorPane({ note, draft = null, folderId = null, folders 
             h("button.nt-ghost", { type: "button", onclick: () => autosave.noteId && openShareDialog({ noteId: autosave.noteId, noteTitle: autosave.title }) }, symbol("share"), h("span.nt-hide-sm", "Share")),
             h("div.nt-more-anchor", h("button.nt-tool.nt-tool--round", { type: "button", "data-more": "", "aria-label": "More actions", "aria-haspopup": "menu", onclick: (event) => openMenu(event.currentTarget) }, symbol("more_vert"))),
           ]
-        : owner && current?.sharedPermission === "edit"
-          ? null
-          : null,
+        : null,
     );
   }
 

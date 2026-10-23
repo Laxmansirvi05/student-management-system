@@ -24,7 +24,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-/** Students: the images and files inside their notes. Contract: docs/09-api-contract.md 8.20. */
+/**
+ * Students: the images and files inside their notes. Contract: docs/09-api-contract.md section
+ * 8.21.
+ */
 @RestController
 @RequestMapping("/api/v1/notes/attachments")
 public class NoteAttachmentController {

@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Students: the folders of their notes. Contract: docs/09-api-contract.md section 8.20. */
+/** Students: the folders of their notes. Contract: docs/09-api-contract.md section 8.21. */
 @RestController
 @RequestMapping("/api/v1/notes/folders")
 public class NoteFolderController {

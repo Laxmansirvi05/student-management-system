@@ -506,6 +506,24 @@ Index: (`student_id`, `status`, `due_date`).
 | status | VARCHAR(10) | NOT NULL, CHECK in (`OPEN`, `RESOLVED`) |
 | created_at | TIMESTAMPTZ | NOT NULL |
 
+
+### 4.26 Notes tables
+
+Added in V14 ([ADR 0014](decisions/0014-notes-quick-assistant-and-robot.md)). Every row has `student_id` (foreign key → `student_profiles`). RLS on; `cc_app` has the grants and policies of the migration.
+
+| Table | Holds |
+| --- | --- |
+| `note_folders` | `name` (unique per student), `color` (11 values, CHECK), `icon`, `parent_id` (`ON DELETE CASCADE`), `position` |
+| `notes` | `title` (200), `content` (sanitized HTML), `source` (`manual`/`robot`), `folder_id` (`ON DELETE SET NULL`), `tags` (`varchar(40)[]`), `pinned`, `archived`, `deleted_at` (Trash); CHECK: title or content not blank |
+| `note_links` | `source_note_id` (cascade), `target_type` (`note`/`folder`/`resource`), `target_id` (no foreign key: a deleted target shows as unavailable); unique per source and target |
+| `note_attachments` | `note_id` (nullable, cascade), `storage_path` (not unique: a copy of a note shares the file; it is removed from storage with its last row), `name`, `mime_type`, `size_bytes`, `kind` |
+| `note_shares` | One row per shared note: `slug` (unguessable), `link_access` (`private`/`view`) |
+| `note_share_recipients` | `note_id`, `owner_id`, `recipient_id` (not the owner), `permission` (`view`/`edit`); unique per note and recipient |
+
+### 4.27 `assistant_conversations` and `assistant_messages`
+
+Added in V15. A chat of one student (`title` 60, `source` `assistant`/`quick`) and its messages (`role` `user`/`ai`, `content` 1 to 8,000 characters, `ON DELETE CASCADE`). The only place the text of an assistant chat is stored; read by its student only. V15 also adds `QUICK_CHAT` to the feature check of `ai_request_logs`, which still holds no text.
+
 ## 5. Validation: database and Java
 
 | Rule | Database | Java |
@@ -561,6 +579,8 @@ Flyway, versioned SQL files, forward-only. See [ADR 0006](decisions/0006-flyway-
 | V6 | `V6__profile_details.sql` | Adds `bio` and `photo_path` to student_profiles ([ADR 0009](decisions/0009-student-personal-details-and-photo.md)) | Added 2026-10-14 |
 | V8 | `V8__subject_results.sql` | Adds `subject_results`; lets `semester_results.sgpa` be empty for a semester that is not passed (sections 4.8, 4.8a) | Added 2026-10-18 |
 | V13 | `V13__complaints.sql` | Adds `complaints`, `complaint_owners` and `complaint_supports` (sections 4.23 to 4.25) | Added 2026-10-23 |
+| V14 | `V14__notes.sql` | Adds the notes tables (section 4.26) | Added 2026-10-23 |
+| V15 | `V15__assistant_chats.sql` | Adds the assistant chat tables and `QUICK_CHAT` (section 4.27) | Added 2026-10-23 |
 | V12 | `V12__notice_documents.sql` | Adds the official document columns to `notices` (section 4.10) | Added 2026-10-22 |
 | V11 | `V11__pyq_created_by_optional.sql` | Makes `pyq_papers.created_by` optional (section 4.21) | Added 2026-10-19 |
 | V10 | `V10__pyq.sql` | Adds `pyq_papers` and `pyq_bookmarks` (sections 4.21 and 4.22) | Added 2026-10-18 |

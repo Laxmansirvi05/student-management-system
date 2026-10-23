@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Students: notes, and the links between notes. Contract: docs/09-api-contract.md section 8.20. */
+/** Students: notes, and the links between notes. Contract: docs/09-api-contract.md section 8.21. */
 @RestController
 @Validated
 @RequestMapping("/api/v1/notes")

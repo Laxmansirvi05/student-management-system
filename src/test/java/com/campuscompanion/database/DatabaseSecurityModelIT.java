@@ -46,6 +46,14 @@ class DatabaseSecurityModelIT extends PostgresIntegrationTest {
           Map.entry("complaints", Set.of("SELECT", "INSERT", "UPDATE", "DELETE")),
           Map.entry("complaint_owners", Set.of("SELECT", "INSERT", "DELETE")),
           Map.entry("complaint_supports", Set.of("SELECT", "INSERT", "DELETE")),
+          Map.entry("notes", Set.of("SELECT", "INSERT", "UPDATE", "DELETE")),
+          Map.entry("note_folders", Set.of("SELECT", "INSERT", "UPDATE", "DELETE")),
+          Map.entry("note_links", Set.of("SELECT", "INSERT", "DELETE")),
+          Map.entry("note_attachments", Set.of("SELECT", "INSERT", "UPDATE", "DELETE")),
+          Map.entry("note_shares", Set.of("SELECT", "INSERT", "UPDATE", "DELETE")),
+          Map.entry("note_share_recipients", Set.of("SELECT", "INSERT", "UPDATE", "DELETE")),
+          Map.entry("assistant_conversations", Set.of("SELECT", "INSERT", "UPDATE", "DELETE")),
+          Map.entry("assistant_messages", Set.of("SELECT", "INSERT", "DELETE")),
           Map.entry("quiz_questions", Set.of("SELECT", "INSERT", "UPDATE")),
           Map.entry("quiz_attempts", Set.of("SELECT", "INSERT", "UPDATE")),
           Map.entry("quiz_attempt_answers", Set.of("SELECT", "INSERT", "UPDATE")),
@@ -79,7 +87,15 @@ class DatabaseSecurityModelIT extends PostgresIntegrationTest {
                 + " order by tablename");
 
     assertThat(tables)
-        .containsExactly(
+        .containsExactlyInAnyOrder(
+            "assistant_conversations,cc_migrator,true",
+            "assistant_messages,cc_migrator,true",
+            "notes,cc_migrator,true",
+            "note_folders,cc_migrator,true",
+            "note_links,cc_migrator,true",
+            "note_attachments,cc_migrator,true",
+            "note_shares,cc_migrator,true",
+            "note_share_recipients,cc_migrator,true",
             "ai_request_logs,cc_migrator,true",
             "assessments,cc_migrator,true",
             "attendance_records,cc_migrator,true",

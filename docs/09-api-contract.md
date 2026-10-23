@@ -243,6 +243,14 @@ All paths start with `/admin` and require the `ADMIN` role.
 | GET | `/complaints/mine`, `/complaints/{id}` | Own complaints; one complaint. |
 | DELETE | `/complaints/{id}` | Withdraw own open complaint. |
 | PUT, DELETE | `/complaints/{id}/support` | Support or unsupport a public complaint. |
+| GET, POST | `/notes` | List notes of a view; create a note. Student only. See 8.21. |
+| GET, PATCH, DELETE | `/notes/{id}` | Read, change (autosave, pin, archive, move, restore), trash or destroy a note. |
+| POST | `/notes/{id}/duplicate`, `/notes/bulk` | Copy a note; one action on many notes. |
+| GET, POST, DELETE | `/notes/{id}/links`, `/notes/{id}/links/{linkId}`; GET `/notes/link-targets` | Links from a note, and the picker's search. |
+| GET, PATCH, POST, DELETE | `/notes/folders`, `/notes/folders/{id}` | Folders. |
+| GET, POST, DELETE | `/notes/attachments`, `/notes/attachments/{id}`; GET `/notes/attachments/{id}/file` | Pictures and files; the file link redirects to a signed link. |
+| GET, PUT, DELETE, POST | `/notes/{id}/share`, `/notes/{id}/share/recipients[/{recipientId}]`; GET `/notes/shared/{slug}` | Sharing with classmates and by link. |
+| POST, GET, DELETE | `/assistant/chat`, `/assistant/conversations[/{id}[/messages]]` | The robot's Quick Assistant. Student only. See 9.5. |
 | GET | `/admin/complaints`, `/admin/complaints/{id}` | List and read complaints. See 8.20. |
 | PUT | `/admin/complaints/{id}` | Set status and response. |
 | GET | `/admin/audit-logs` | Read the audit log, newest first (P1). See 8.15. |
@@ -764,6 +772,20 @@ Student only. The student always comes from the session.
 - `PUT /admin/complaints/{id}` with `{status, response}` sets the handling and is audited as `COMPLAINT_UPDATED`.
 - A response has `student` (`rollNo, fullName, branch, semester, section`), `identityProtected` and `hiddenFromStudents`. **For a `SECURE` complaint `student` is always null, `identityProtected` is true, and `createdAt` is cut to the day.**
 
+### 8.21 Notes (students)
+
+Student only ([ADR 0014](decisions/0014-notes-quick-assistant-and-robot.md)). The student always comes from the session; another student's note, folder or file is `404`. JSON is `camelCase`. A note has `id, title, content (sanitized HTML), source (manual|robot), folderId, tags, pinned, archived, deletedAt, createdAt, updatedAt, folder, shared, sharedPermission, sharedBy`.
+
+- `GET /notes?view=all|recent|pinned|shared|attachments|trash|archived&sort=updated|created|alphabetical&q=&folder=<id>|unfiled&tag=&attachments=true` returns `{notes}`. Search treats `%` and `_` as plain text.
+- `POST /notes` with `{title?, content?, source?, folderId?, tags?}` returns 201. It needs a title or content (`400`). A `robot` note with no folder is filed into `Quick Notes`.
+- `PATCH /notes/{id}` with any of `{title, content, tags, pinned, archived, folderId, unfile, restore}` returns `{note}`, or `{deleted: true}` when the edit left the note empty. A classmate with edit permission may change `title` and `content` only. Content over 200,000 characters is `400`. This endpoint and `POST /notes` accept a body up to 1 MB.
+- `DELETE /notes/{id}` moves to the Trash; `?permanent=true` destroys it with its files. `POST /notes/{id}/duplicate` returns 201.
+- `POST /notes/bulk` with `{action: move|pin|unpin|archive|unarchive|trash|restore|delete|empty_trash, ids (at most 200), folderId?}` returns `{success, count}`.
+- Folders: `GET /notes/folders` (with `noteCount` and up to five `previews`; defaults are created on first use), `POST` `{name, color?, icon?, parentId?}` (`409` for a used name), `PATCH /{id}` `{name, color, icon, parentId, toTopLevel, position}` (`400` for a loop), `PATCH /notes/folders` `{order: [{id, position, parentId?, setParent?}]}`, `DELETE /{id}` (its notes become unfiled).
+- Attachments: `POST /notes/attachments?noteId=` (multipart part `file`, at most 10 MB) returns 201 with `{id, url, name, mimeType, sizeBytes, kind}`. A JPEG, PNG or GIF picture is stored as a new JPEG; a PDF is kept; other types are `415` unless switched on. `GET /notes/attachments?kind=` lists; `DELETE /{id}`; `GET /{id}/file[?download=true]` redirects (302) to a five-minute signed link, for the owner or a student the note is shared with.
+- Links: `POST /notes/{id}/links` `{targetType: note|folder|resource, targetId}` returns `{links}`; `GET /notes/link-targets?q=&exclude=`.
+- Sharing: `GET /notes/{id}/share` returns `{share}` (null when never shared); `PUT` `{linkAccess: private|view}`; `POST /share/recipients` `{identifier (roll number or college email), permission: view|edit}`; `DELETE /share/recipients/{recipientId}`; `DELETE /share` stops all sharing. `GET /notes/shared/{slug}` opens a note read-only for any signed-in student while the link is on, otherwise `404`.
+
 ## 9. AI endpoints
 
 Behaviour is specified in [12-AI-features-spec.md](12-AI-features-spec.md). This section is the wire contract.
@@ -894,6 +916,10 @@ For `SHORT` and `LONG`, `options` and `correctOption` are `null`. `returned` can
 `demo` is `true` while the built-in mock provider answers (`AI_PROVIDER=mock`). The assistant page then shows a "Demo mode" note, because the answers are placeholders and not the work of an AI model.
 
 The day resets at midnight in `Asia/Kolkata`. `enabled` is `false` when AI is switched off (`AI_ENABLED=false`) or when the application-wide daily ceiling has been reached. In both cases the AI endpoints return `503 AI_UNAVAILABLE`.
+
+### 9.5 Quick Assistant chat
+
+Student only. `POST /assistant/chat` with `{conversationId?, message (1-4000), mode: "quick"}` returns `{conversation, question, reply, notice}`; the reply is plain text of a few sentences. Up to twenty earlier messages of the chat are sent with it. It counts as one AI request against the same daily and per-minute limits; a failed answer stores nothing and does not count. Errors are those of section 9: `503 AI_UNAVAILABLE`, `504 AI_TIMEOUT`, `502 AI_INVALID_RESPONSE`, `429`. `GET /assistant/conversations?source=quick` lists the newest six chats; `GET /assistant/conversations/{id}/messages`; `DELETE /assistant/conversations/{id}` returns 204. A chat is read by its student only.
 
 ## 10. Changing the API
 
