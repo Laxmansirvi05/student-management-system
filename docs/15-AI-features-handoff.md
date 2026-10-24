@@ -29,7 +29,7 @@ Do not start AI work before M4 is complete.
 | 6 | `T5-06` | Real provider adapter. **Needs OQ-1 decided and the owner's approval.** |
 | 7 | `T5-07` | Assistant page and "Ask AI to explain". |
 | 8 | `T5-08` | Adversarial tests and behaviour run. |
-| 9 | `T7-04`, `T7-05` | P1 backlog: PDF summarization, flowchart. |
+| 9 | `T7-05` | P1 backlog: flowchart. (`T7-04` PDF summarization was dropped on 2026-10-24.) |
 
 Everything up to step 5 is built and tested with the mock, so progress never depends on a key or on spend.
 

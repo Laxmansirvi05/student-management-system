@@ -58,7 +58,7 @@ In this order, because each is small and independent:
 1. FR-ATT-003 Attendance calculator.
 2. FR-PLN-001 Study tasks and FR-PLN-002 Exam countdown.
 3. FR-ADM-009 Audit log viewer.
-4. FR-AI-005 Summarize a library PDF.
+4. ~~FR-AI-005 Summarize a library PDF.~~ Dropped on 2026-10-24 (out of scope); not outstanding work.
 5. FR-AI-006 Flowchart generation.
 6. FR-LIB-005 Report a resource.
 7. FR-ADM-010 CSV bulk import. Built on 2026-10-14, ahead of the others, so the owner can load the students in one step.

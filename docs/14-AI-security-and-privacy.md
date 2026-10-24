@@ -60,7 +60,7 @@ No automated check of meaning exists in the first release. An earlier draft said
 | --- | --- | --- | --- |
 | A student receives misleading or off-policy text | In the first release, only the student whose own input caused it | Accepted: no data, action or other user is reachable | The notice on every reply; the rules in the prompt; the behaviour tests; the kill switch |
 | Wrong academic content, with or without injection | The student who asked | Accepted | AI is never used for scoring or records; on quiz results the official explanation is shown first |
-| Indirect injection through a shared library document (P1, PDF summarization) | **Every** student who summarises that resource | **Not accepted without review** | Only admins upload. Task `T7-04` must reassess this before the feature ships; at minimum the result names its source resource and keeps the AI notice |
+| Indirect injection through a shared library document (PDF summarization: **dropped** 2026-10-24, so this threat does not apply) | **Every** student who summarises that resource | **Not accepted without review** | Only admins upload. Task `T7-04` must reassess this before the feature ships; at minimum the result names its source resource and keeps the AI notice |
 
 ### 3.4 How it is tested
 
@@ -133,7 +133,9 @@ AI output is **never**:
 - executed, evaluated or used as a URL to fetch,
 - inserted into SQL, file paths or shell commands.
 
-## 8. Files (P1 PDF summarization)
+## 8. Files (PDF summarization: dropped)
+
+> PDF summarization (FR-AI-005) was dropped on 2026-10-24. Students cannot send files to the assistant at all. The rules below are kept as history.
 
 - Only resources already accepted by the upload validation ([11-security-plan.md](11-security-plan.md) §9) can be summarized. Students cannot upload files to the assistant.
 - Text extraction limits: at most 50 pages read, at most 12,000 characters kept, a hard time limit on parsing, and PDFBox configured to bound memory use.

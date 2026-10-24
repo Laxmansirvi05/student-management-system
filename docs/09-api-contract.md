@@ -200,7 +200,7 @@ Access: **Public**, **Any** (any logged-in user), **Student**, **Admin**. Detail
 | POST | `/ai/summarize` | Student | Summarize pasted text. |
 | POST | `/ai/generate-quiz` | Student | Generate practice questions. |
 | GET | `/ai/usage/me` | Student | Requests used and remaining today. |
-| POST | `/ai/summarize-resource` | Student | Summarize a library PDF (P1). |
+| ~~POST~~ | ~~`/ai/summarize-resource`~~ | — | **Dropped** (FR-AI-005, 2026-10-24): never built, not planned. |
 | POST | `/ai/flowchart` | Student | Generate a flowchart (P1). |
 
 ### 7.6 Administration

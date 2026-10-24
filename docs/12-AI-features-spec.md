@@ -12,7 +12,7 @@ This document defines exactly what the AI study assistant does. How it must beha
 | 2 | Summarize text | FR-AI-002 | MVP (P0) | `POST /api/v1/ai/summarize` |
 | 3 | Generate practice questions | FR-AI-003 | MVP (P0) | `POST /api/v1/ai/generate-quiz` |
 | 4 | Explain a quiz answer | FR-QZ-003 | MVP (P0) | Reuses `/ai/explain` |
-| 5 | Summarize a library PDF | FR-AI-005 | P1 | `POST /api/v1/ai/summarize-resource` |
+| 5 | ~~Summarize a library PDF~~ | FR-AI-005 | **Dropped** | Not built; Dropped on 2026-10-24 (out of scope); not outstanding work |
 | 6 | Flowchart generation | FR-AI-006 | P1 | `POST /api/v1/ai/flowchart` |
 | 7 | Flashcards | FR-AI-007 | P2 | TBD |
 | 8 | Questions grounded in the resource library | | Future | TBD |
@@ -195,7 +195,9 @@ On a quiz result, "Ask AI to explain" opens the Explain tab pre-filled with the 
 
 The official explanation stored with the question is always shown first; the AI explanation is additional.
 
-## 7. Feature 5: Summarize a library PDF (P1)
+## 7. Feature 5: Summarize a library PDF (Dropped)
+
+> Dropped on 2026-10-24 (out of scope); not outstanding work. This section is kept as the record of what was once planned; nothing in it is to be built.
 
 | | |
 | --- | --- |
