@@ -1,6 +1,6 @@
 # Campus Companion — Project Audit Report
 
-> **Part A** (this first section) is the remediation status of 2026-10-23, written after the fixes. **Part B** (sections 1 to 14 and Appendix A) is the original audit. Its findings, measurements and evidence are kept as found, so the "before" stays readable, but the issue register (§7), readiness (§3.4), roadmap (§12), deployment (§13) and verdict (§14) now also show the current status. Original audit: `main` at `4fd019e`. Remediation: commits `82bd52b` to `c00a4f9` on `main`, local only (not pushed, not deployed). The owner's 23 uncommitted frontend files were never staged or changed (checked byte for byte against a backup taken before the work).
+> **Part A** (this first section) is the remediation status of 2026-10-23, written after the fixes; Parts A2 to A5 add the later phases, the newest being the autonomous completion run of 2026-10-24 (Part A5, full report in [docs/26](docs/26-final-project-completion-report.md)). **Part B** (sections 1 to 14 and Appendix A) is the original audit. Its findings, measurements and evidence are kept as found, so the "before" stays readable, but the issue register (§7), readiness (§3.4), roadmap (§12), deployment (§13) and verdict (§14) now also show the current status. Original audit: `main` at `4fd019e`. Remediation: commits `82bd52b` to `c00a4f9` on `main`, local only (not pushed, not deployed). The owner's 23 uncommitted frontend files were never staged or changed (checked byte for byte against a backup taken before the work).
 
 ## Part A — Remediation status (2026-10-23)
 
@@ -10,15 +10,16 @@
 | --- | --- | --- |
 | **Findings** | 0 Critical · 4 High · 8 Medium · 8 Low (20) + CC-21 unverified | **Fixed 18** · **Open 2** (CC-13 deployment memory, CC-14 robot scene) · CC-21 still owner-only |
 | **High findings** | CC-01, CC-02, CC-03, CC-04 open | **All 4 fixed** |
-| **Tests** | 263 unit + 263 integration | **265 unit + 282 integration** (Java), **13** browser-module tests (Node), all passing |
+| **Tests** | 263 unit + 263 integration | **265 unit + 282 integration** (Java), **13** browser-module tests (Node), all passing. On 2026-10-24: **295 unit + 305 integration**, 13 Node, all passing (Part A5) |
 | **`./mvnw verify`** | passed | **passed** on the working tree and, separately, on the committed `HEAD` alone (section A.4) |
 | **Student page weight** (local, cold → later page) | 3.1 MB on every page, no cache, no gzip | **1.2 MB first page → 15–41 KB on later pages** |
 | **Landing page** | 1.32 MB every visit | **370 KB first visit, 1 KB after** |
-| **Product completion** | ≈ 81 % | ≈ 81 %: unchanged on purpose. This phase fixed findings and added no PRD features. |
+| **Product completion** | ≈ 81 % | ≈ 81 % after remediation (no PRD features added); ≈ 88 % after the planner and readiness phase; **≈ 94 %** after the completion run (Part A5.1) |
 | **AI assistants** (Phase 1, Part A2) | Mock only | **Real AI through a 19-route router** (Groq, Ollama, Gemini, OpenRouter) with automatic fallback; live-tested; data-terms review open |
 | **Planner and production readiness** (Parts A3, A4) | — | Planner built (`c5c1c03`); readiness reviewed: **not ready for real students yet**, blockers in docs/24 §1; completion ≈ 88 % with FR-AI-005 dropped |
+| **Completion run** (Part A5) | — | Report a resource (FR-LIB-005), flowchart (FR-AI-006), AI usage-log retention (T7-09, off by default); all 31 pages browser-checked; every approved P0/P1 requirement built and integration tested, 47 of 59 browser verified |
 
-**What is left for the owner:** rotate the credentials in F4/CC-21; choose Heroku or Render and deploy (T6-04 to T6-06), then measure memory there (CC-13); sign off the storage bucket (T3-01); accept a real AI provider live (T5-06, T5-08); and fix the robot scene in the Spline editor (CC-14).
+**What is left for the owner** (one checklist: [docs/26](docs/26-final-project-completion-report.md) §18): rotate the credentials in F4/CC-21; decide the AI providers and `AI_ROUTES` (T5-06, T5-08); sign off the storage bucket (T3-01); turn on the GitHub security settings (T0-04); back up hosted Supabase and approve V16 to V18; choose the host (Render Starter recommended), deploy (T6-04 to T6-06) and measure memory there (CC-13); get the college's approval of the privacy policy and terms; and fix the robot scene in the Spline editor (CC-14).
 
 ### A.2 Finding by finding
 
@@ -372,6 +373,8 @@ Uncertainty: about ±5 points. Admin UI, real storage and real AI were not exerc
 | Security and privacy | ✓ CC-01, CC-05, CC-18 fixed · ✓ privacy page accurate (CC-02, CC-15) · ✗ credential rotation (F4/CC-21) unverified · ✗ no automatic AI-log clean-up (stated honestly) | **≈ 85 %** |
 | Documentation and deployment | ✓ docs match the code (CC-10, CC-19) · ✓ landing exception recorded (ADR 0015) · ✗ host not chosen, not deployed | **≈ 60 %** |
 
+**On 2026-10-24** (judgement): integration and testing ≈ 85 % (every page browser-checked; real storage and live AI still not exercised in tests); security ≈ 85 % (unchanged: rotation still unconfirmed; the AI log clean-up now exists but is off); documentation and deployment ≈ 70 % (migration, memory and deployment plans written; host not chosen, not deployed). Performance unchanged.
+
 ---
 
 ## 4. Feature-by-feature status and integration map
@@ -678,16 +681,16 @@ Effort figures are **estimates**, not measurements.
 | --- | --- |
 | Production profile (`application-prod.yml`): HTTPS redirect, secure cookie, no stack traces | Present; `ProductionProfileIT` passes |
 | JAR builds and starts | Yes (4.25 s locally) |
-| Hosting target | **Still undecided**, but the docs now say so consistently (README, TRD, AGENTS: Heroku via `Procfile` or Render via `Dockerfile`/`render.yaml`) |
+| Hosting target | **Not chosen.** Recommendation (docs/24 §7): Render Starter; `render.yaml` still says `plan: free`, to be changed by the owner. Heroku via `Procfile` remains possible |
 | Hosted app | **Not deployed** (T6-04 to T6-06 open) |
-| Database | Hosted Supabase already migrated by an earlier session (memory note; F5). Do not run migrations again without owner approval |
+| Database | Hosted Supabase is at **V15**. V16 to V18 (planner, resource reports, log retention) wait for a backup and the owner's approval; procedure in docs/24 §6 |
 | Storage bucket | T3-01 not signed off |
-| AI | Mock only; Gemini adapter needs key and acceptance run |
+| AI | Router over Groq, Ollama Cloud, Gemini and OpenRouter, live-tested locally (Part A2); mock is the default. Which providers may receive student text is the owner's decision (docs/24 §4) |
 | CI | `.github/workflows/ci.yml` runs `./mvnw -B verify` and now also the Node browser-module tests on push to `main`; the landing bundle is committed, not built in CI (ADR 0015) |
-| Memory | 461 MB idle locally at the audit, 401 MB after remediation, vs a 512 MB container (CC-13, still open) |
+| Memory | 461 MB idle locally at the audit, 401 MB after remediation, vs a 512 MB container (CC-13, still open; measurement plan in docs/24 §6a) |
 | Sessions | In memory: restarts and free-tier sleep log users out |
 
-**Blockers now:** owner tasks T0-04 (GitHub security settings), credential rotation (CC-21), T3-01, T5-06, and T6-04 to T6-06. The code blockers CC-01 and CC-02 are fixed. Static files are now compressed and cached, which also helps on a small host.
+**Blockers now (2026-10-24):** owner tasks only: T0-04 (GitHub security settings), credential rotation (CC-21), T3-01, T5-06, the backup and approval of V16 to V18, and T6-04 to T6-06. The code blockers CC-01 and CC-02 are fixed. Static files are now compressed and cached, which also helps on a small host.
 
 ---
 
@@ -701,6 +704,13 @@ Effort figures are **estimates**, not measurements.
 - **What is incomplete:** live AI provider acceptance, storage bucket sign-off, choosing a host and deploying, automated rendering checks, and the remaining P1 backlog (T7-02, T7-04 to T7-06, T7-09).
 - **What is still risky:** credentials not yet confirmed rotated (CC-21); memory on a 512 MB host not measured (CC-13); the robot scene's console error (CC-14, cosmetic); and the unverified chance that `.env`'s `dev` profile seeds demo data into the database `.env` points at (Part A, A.3).
 - **What to do next:** rotate the credentials, choose Heroku or Render and deploy, measure memory there, sign off storage and the AI provider, then fix the robot scene in the Spline editor.
+
+*Now, after the completion run (2026-10-24):*
+
+- **What works:** all of the above, plus the planner, report a resource, flowchart generation and the (switched-off) AI usage-log retention. Every approved P0 and P1 requirement is built and integration tested; 295 unit and 305 integration tests and 13 Node tests pass on the committed state; all 17 student and 14 admin pages were checked in a browser, desktop and phone width. Completion ≈ 94 %.
+- **What is incomplete:** 12 requirements are not browser verified because they need the real storage bucket (8) or an approved AI provider (4); the orphaned-file clean-up (T7-09) is deferred; nothing is staging or production verified.
+- **What is still risky:** the same as before (CC-21, CC-13, CC-14), plus HTTPS behind the host's proxy, which can only be checked on the first deploy.
+- **Verdict:** **not ready for real students yet.** The repository work is done; the owner actions in [docs/26](docs/26-final-project-completion-report.md) §18 remain.
 
 ---
 
