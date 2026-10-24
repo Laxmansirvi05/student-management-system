@@ -258,7 +258,7 @@ Details: [docs/26](docs/26-final-project-completion-report.md) §0. Commits `cb6
 | Links | 82 page links and every relative doc link checked: none broken |
 | Verification | 296 unit + 307 integration tests pass on the committed state (`63191bc`) |
 
-Completion is unchanged at about 94 %: these change existing P0 requirements at the owner's request rather than add new ones, and they are verified the same way. The hosted database still needs the backup and the approval of V16 to V19.
+Completion is unchanged at about 94 %: these change existing P0 requirements at the owner's request rather than add new ones, and they are verified the same way. Since then the owner took the backup and approved: V16 to V19 are applied on hosted, and the exam papers are loaded.
 
 ---
 
@@ -699,7 +699,7 @@ Effort figures are **estimates**, not measurements.
 | JAR builds and starts | Yes (4.25 s locally) |
 | Hosting target | **Not chosen.** Recommendation (docs/24 §7): Render Starter; `render.yaml` still says `plan: free`, to be changed by the owner. Heroku via `Procfile` remains possible |
 | Hosted app | **Not deployed** (T6-04 to T6-06 open) |
-| Database | Hosted Supabase is at **V15**. V16 to V18 (planner, resource reports, log retention) wait for a backup and the owner's approval; procedure in docs/24 §6 |
+| Database | Hosted Supabase is at **V19** (V16 to V18 applied 09:53 IST and V19 13:50 IST on 2026-10-24, after the owner's backup); question banks and the December exam papers loaded |
 | Storage bucket | T3-01 not signed off |
 | AI | Router over Groq, Ollama Cloud, Gemini and OpenRouter, live-tested locally (Part A2); mock is the default. Which providers may receive student text is the owner's decision (docs/24 §4) |
 | CI | `.github/workflows/ci.yml` runs `./mvnw -B verify` and now also the Node browser-module tests on push to `main`; the landing bundle is committed, not built in CI (ADR 0015) |

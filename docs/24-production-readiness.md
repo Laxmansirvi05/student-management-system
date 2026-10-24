@@ -100,7 +100,7 @@ With only Groq and Ollama the router keeps a fallback, so it still works when on
 **Database (built and tested):**
 - 18 migrations, V1 to V18. Each table has RLS, `cc_app` grants and policies, and the expected privileges are pinned in `DatabaseSecurityModelIT`.
 - Isolation between students is tested per feature: notes, attachments, sharing, the planner, the assistant chats, complaints and quiz attempts.
-- V16 to V19 are **not yet applied to the hosted database** (it is at V15); see section 6.
+- V16 to V19 are **applied to the hosted database** (2026-10-24); see section 6.
 
 **Storage (built and tested against an in-memory stand-in; the real bucket is unverified):**
 - The bucket is meant to be private. The service key is used only by the server. Every file is reached through a signed link that lives 5 minutes, issued only after the application's own access check.
@@ -123,7 +123,7 @@ With only Groq and Ollama the router keeps a fallback, so it still works when on
 
 ## 6. Hosted database migration (V16 to V19)
 
-The hosted database is at **V15** (seen in the 8080 log on 2026-10-24, and in `flyway_schema_history`). Four migrations are waiting. Flyway applies them, in order and each in its own transaction, the first time a build that reads the hosted settings starts: a deployment, or a restart of the local 8080 server. **Do not start such a build until the owner has taken the backup and approved.**
+**Applied on 2026-10-24** (owner's backup taken first): `flyway_schema_history` shows V16 to V18 installed at 09:53 IST and V19 at 13:50 IST, all successful, by restarts of the local 8080 server. The 135 bundled questions were loaded (45 per subject), and `private-data/load-exam-papers.sql` was run the same afternoon (six papers on notice 1; notice 2 now General). The steps below stay as the record and for any future migration. Flyway applies them, in order and each in its own transaction, the first time a build that reads the hosted settings starts: a deployment, or a restart of the local 8080 server. **Do not start such a build until the owner has taken the backup and approved.**
 
 **Expected changes (all additive; no existing row is changed or removed):**
 

@@ -15,7 +15,7 @@ Status words used throughout, never one for another:
 
 ## 0. Update: owner-requested changes (later on 2026-10-24)
 
-After the run above, the owner asked for four changes. All are built, tested and checked in the browser on a throw-away database; none is on the hosted database yet (it needs V19).
+After the run above, the owner asked for four changes. All are built, tested and checked in the browser on a throw-away database; since 2026-10-24 they are on the hosted database: V16 to V19 applied, the question banks loaded (45 per subject) and the six December papers added.
 
 | Change | What a user sees | Commit |
 | --- | --- | --- |
@@ -91,7 +91,7 @@ Browser pass on 2026-10-24, on a JAR built from the commits of this run, against
 | `V17__resource_reports.sql` | `resource_reports` with RLS, a one-open-report-per-student unique index | Tested in isolation; **not applied to hosted** |
 | `V18__ai_log_retention.sql` | Lets `cc_app` delete from `ai_request_logs` (one policy) | Tested in isolation; **not applied to hosted** |
 
-The hosted database is at V15. The backup, validation, expected changes, rollback and post-checks are in [24](24-production-readiness.md) §6. The migrations run only after owner approval.
+Update: V16 to V19 were applied to the hosted database on 2026-10-24 after the owner's backup. The backup, validation, expected changes, rollback and post-checks are in [24](24-production-readiness.md) §6. The migrations run only after owner approval.
 
 ## 8. API changes
 
@@ -223,8 +223,8 @@ Nothing below has been done by the developer, and none of it may be claimed as d
 - [ ] Then check the Security tab for any alert already raised.
 
 **Database and deployment:**
-- [ ] Back up hosted Supabase, then approve V16 to V19 ([24](24-production-readiness.md) §6). Until then, do not restart the 8080 server or deploy, because either applies them.
-- [ ] After V19: run `private-data/load-exam-papers.sql` (the six December papers and the fee notice as a deadline), then check a CSE(AI&ML) semester 3 dashboard.
+- [x] Back up hosted Supabase, then approve V16 to V19 (done 2026-10-24; applied) ([24](24-production-readiness.md) §6). Until then, do not restart the 8080 server or deploy, because either applies them.
+- [x] After V19: run `private-data/load-exam-papers.sql` (done 2026-10-24) (the six December papers and the fee notice as a deadline), then check a CSE(AI&ML) semester 3 dashboard.
 - [ ] Review the 135 bundled Quick Exam questions (`src/main/resources/question-bank/`); retire or correct any in the admin question bank.
 - [ ] Choose the host. Recommended: Render Starter. Then change `plan: free` in `render.yaml` to the paid plan; that is a deliberate owner change. Create the service, and set every variable of [18](18-production-plan.md) §5 with `SPRING_PROFILES_ACTIVE=prod` and **`DEMO_SEED_ENABLED` not set**.
 - [ ] Approve the first deployment, then run the first-start checks and the memory measurement ([24](24-production-readiness.md) §6a and §8).
@@ -242,7 +242,7 @@ Nothing below has been done by the developer, and none of it may be claimed as d
 | Configuration | Every variable is documented in `.env.example` and [18](18-production-plan.md) §5 |
 | Demo data | Seeds only when `DEMO_SEED_ENABLED=true` or the `dev` profile is active; must stay unset for students |
 | Health | `/actuator/health` |
-| Migrations | V16 to V19 pending on hosted; procedure ready |
+| Migrations | V16 to V19 applied on hosted (2026-10-24); exam papers loaded |
 | Host | Not chosen, not purchased, not deployed |
 
 ## 20. Explicit final verdict
