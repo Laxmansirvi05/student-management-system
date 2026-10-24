@@ -128,6 +128,8 @@ Status values: **Draft** (written, not yet reviewed by the owner), **Approved**,
 | 27 | [Final pre-deployment QA report](docs/27-final-predeployment-qa-report.md) | Uncommitted-change audit, Playwright results at five screen sizes, security and cleanup, the push, the verdict | 2026-10-24 |
 | | [Decision records](docs/decisions/README.md) | Why key choices were made | See index |
 | | [Demo and viva guide](docs/demo-and-viva-guide.md) | Presentation preparation | Draft |
+| | [Agent tooling inventory](docs/mcp-manifest.md) | The agent skills and MCP servers used to build the project, with their status | 2026-10-11 |
+| | [Tooling setup record](docs/tooling-setup.md) | How the development tools and `.agents/skills/` were set up, and what was left out | 2026-10-13 |
 
 Rules for everyone working in this repository:
 
