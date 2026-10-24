@@ -181,7 +181,7 @@ Follow [15-AI-features-handoff.md](15-AI-features-handoff.md).
 | T7-06 ✅ | Report a resource (`V17__resource_reports.sql`). Built on 2026-10-24 | FR-LIB-005 |
 | T7-07 ✅ | CSV student import, through `StudentProvisioningService` so the same rules apply. Built on 2026-10-14 | FR-ADM-010 |
 | T7-08 | Database-backed sessions 👤 new dependency | |
-| T7-09 | Orphaned-file cleanup and AI log retention jobs | |
+| T7-09 ◐ | AI log retention: **built** on 2026-10-24 (`AiUsageLogRetention`, V18, off by default). Orphaned-file cleanup: **deferred**; it deletes from the real storage bucket, which cannot be verified here and needs the owner's approval | |
 | T7-12 ✅ | Notes workspace, Quick Note, Quick Assistant and floating robot, ported from Opportunity Radar ([ADR 0014](decisions/0014-notes-quick-assistant-and-robot.md)), V14 and V15. Built on 2026-10-23 | — |
 | T7-11 ✅ | Student complaints (public, private, secure), V13. Built on 2026-10-23 | FR-CMP-001 to FR-CMP-004 |
 | T7-10 ✅ | Past papers (PYQ) library: `V10__pyq.sql`, student search, filter, save and signed viewing, admin upload and folder import. Built on 2026-10-18 | FR-LIB-006 |

@@ -33,6 +33,9 @@ public sealed interface AuditSnapshot {
   /** A report on a resource: its status only. Never the reason or the student. */
   record ResourceReportStatus(String status) implements AuditSnapshot {}
 
+  /** A clean-up of the AI usage log: how many rows went, and the cutoff. No row content. */
+  record UsageLogPurge(long rowsRemoved, String olderThan) implements AuditSnapshot {}
+
   record Profile(
       String fullName,
       String branch,

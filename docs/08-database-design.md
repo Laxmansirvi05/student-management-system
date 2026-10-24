@@ -579,7 +579,7 @@ The database is the last line of defence. Java gives the helpful message first.
 | --- | --- |
 | Academic records and content | Life of the project |
 | Quiz attempts | Life of the project |
-| `ai_request_logs` | Aim: 90 days. The scheduled clean-up job (P1, T7-09) is not built, so rows are kept until an administrator removes them |
+| `ai_request_logs` | 90 days, removed nightly by `AiUsageLogRetention` (T7-09, V18) **when `AI_LOG_RETENTION_ENABLED=true`**; off by default, so rows stay until the owner switches it on |
 | `audit_logs` | Life of the project |
 | Deactivated accounts | Kept; never hard-deleted by the application |
 
@@ -603,6 +603,7 @@ Flyway, versioned SQL files, forward-only. See [ADR 0006](decisions/0006-flyway-
 | V15 | `V15__assistant_chats.sql` | Adds the assistant chat tables and `QUICK_CHAT` (section 4.27) | Added 2026-10-23 |
 | V16 | `V16__planner.sql` | Adds `study_tasks` (section 4.19) and `student_exams` (section 4.19b) for T7-02 | Added 2026-10-24 |
 | V17 | `V17__resource_reports.sql` | Adds `resource_reports` (section 4.20) for FR-LIB-005 | Added 2026-10-24 |
+| V18 | `V18__ai_log_retention.sql` | Grants `DELETE` on `ai_request_logs` to `cc_app`, with its policy, for the retention job (T7-09) | Added 2026-10-24 |
 | V12 | `V12__notice_documents.sql` | Adds the official document columns to `notices` (section 4.10) | Added 2026-10-22 |
 | V11 | `V11__pyq_created_by_optional.sql` | Makes `pyq_papers.created_by` optional (section 4.21) | Added 2026-10-19 |
 | V10 | `V10__pyq.sql` | Adds `pyq_papers` and `pyq_bookmarks` (sections 4.21 and 4.22) | Added 2026-10-18 |
@@ -693,7 +694,7 @@ Schema: `USAGE` on `app`. No `CREATE`.
 | quiz_attempts | ✓ | ✓ | ✓ | | Attempts are kept. |
 | quiz_attempt_answers | ✓ | ✓ | ✓ | | Same. |
 | audit_logs | ✓ | ✓ | | | Append-only (section 12). |
-| ai_request_logs | ✓ | ✓ | | | Append-only. The P1 retention job (`T7-09`) must add `DELETE` in its own migration. |
+| ai_request_logs | ✓ | ✓ | | ✓ | `DELETE` added in V18 for the retention job (T7-09) only; nothing else deletes. |
 | study_tasks | ✓ | ✓ | ✓ | ✓ | |
 | student_exams | ✓ | ✓ | ✓ | ✓ | |
 | resource_reports (P1) | ✓ | ✓ | ✓ | | |

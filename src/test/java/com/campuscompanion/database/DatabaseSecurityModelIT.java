@@ -61,7 +61,7 @@ class DatabaseSecurityModelIT extends PostgresIntegrationTest {
           Map.entry("quiz_attempts", Set.of("SELECT", "INSERT", "UPDATE")),
           Map.entry("quiz_attempt_answers", Set.of("SELECT", "INSERT", "UPDATE")),
           Map.entry("audit_logs", Set.of("SELECT", "INSERT")),
-          Map.entry("ai_request_logs", Set.of("SELECT", "INSERT")));
+          Map.entry("ai_request_logs", Set.of("SELECT", "INSERT", "DELETE")));
 
   @Test
   void flywayRanAsTheMigrationRole() throws SQLException {

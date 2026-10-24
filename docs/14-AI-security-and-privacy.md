@@ -170,7 +170,7 @@ A provider failure affects only the AI endpoints. It is caught in the AI service
 
 | Item | Logged? |
 | --- | --- |
-| User ID, feature, prompt version, input and output character counts, status, duration | Yes, in `ai_request_logs`. The aim is 90 days, but no clean-up job exists yet (T7-09, P1), so rows stay until an administrator removes them; the privacy policy says so |
+| User ID, feature, prompt version, input and output character counts, status, duration | Yes, in `ai_request_logs`, 90 days: a nightly job removes older rows in batches and audits each run (T7-09), but only when `AI_LOG_RETENTION_ENABLED=true`; off by default, and the privacy policy says so |
 | Prompt text, pasted material, AI response text | **No** |
 | Provider error status and a short error type | Yes, in application logs |
 | Provider error bodies | No (they can echo the input) |

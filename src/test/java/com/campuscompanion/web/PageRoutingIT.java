@@ -120,10 +120,10 @@ class PageRoutingIT extends PostgresIntegrationTest {
         .contains("Your chats with the Quick Assistant")
         .contains("Only your newest six chats are kept")
         .contains("Only you can read them, not an administrator")
-        .contains("There is no automatic removal yet.")
+        .contains("once the college switches on the nightly clean-up")
         .doesNotContain(
             "The text you send to the AI assistant and the answer it gives are not stored")
-        .doesNotContain("removed after 90 days");
+        .doesNotContain("There is no automatic removal yet.");
     assertThat(terms.statusCode()).isEqualTo(200);
     assertThat(terms.body())
         .contains("<h1>Terms of use</h1>")

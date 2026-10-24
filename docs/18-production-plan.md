@@ -93,6 +93,8 @@ Names are defined in [.env.example](../.env.example). In production they are Her
 | `AI_DAILY_LIMIT_PER_USER` | No | No | Default 30 |
 | `AI_DAILY_LIMIT_GLOBAL` | No | No | Application-wide daily ceiling across all users. Default 500, provisional (OQ-11). Set it deliberately before release |
 | `AI_MAX_OUTPUT_TOKENS` | No | No | Default 1200 |
+| `AI_LOG_RETENTION_ENABLED` | No | No | Default `false`. `true` removes AI usage-log rows older than `AI_LOG_RETENTION_DAYS` nightly (T7-09). Switch on only after the owner decides to delete old rows |
+| `AI_LOG_RETENTION_DAYS` | No | No | Default 90, at least 30 |
 | `ADMIN_BOOTSTRAP_EMAIL` | First start | No | Login email of the first admin. Not a student address |
 | `ADMIN_BOOTSTRAP_PASSWORD` | First start | **Yes** | A strong password chosen by the owner, never a roll number. Remove after the admin has changed it |
 | `DEMO_SEED_ENABLED` | No | No | Default `false`. Set to `true` for one start to load synthetic demo data, then remove it |

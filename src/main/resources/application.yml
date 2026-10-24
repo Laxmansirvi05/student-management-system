@@ -108,6 +108,13 @@ app:
     total-budget: 25s
     # Used when AI_PROVIDER=router: the models to try, in order, and how hard to try (docs/12 2b).
     # Each provider's keys come from <PROVIDER>_API_KEY, <PROVIDER>_API_KEY_2, ... in the environment.
+    # T7-09: removes AI usage-log rows (numbers only) older than the retention period, nightly.
+    # Off unless AI_LOG_RETENTION_ENABLED is true: the owner decides when rows may be deleted.
+    log-retention:
+      enabled: ${AI_LOG_RETENTION_ENABLED:false}
+      days: ${AI_LOG_RETENTION_DAYS:90}
+      batch-size: 1000
+      max-batches: 50
     routing:
       routes: ${AI_ROUTES:}
       max-attempts: 3
