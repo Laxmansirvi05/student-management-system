@@ -3,6 +3,8 @@ package com.campuscompanion.ai;
 import com.campuscompanion.ai.dto.AiUsageResponse;
 import com.campuscompanion.ai.dto.ExplainRequest;
 import com.campuscompanion.ai.dto.ExplainResponse;
+import com.campuscompanion.ai.dto.FlowchartRequest;
+import com.campuscompanion.ai.dto.FlowchartResponse;
 import com.campuscompanion.ai.dto.GenerateQuizRequest;
 import com.campuscompanion.ai.dto.GenerateQuizResponse;
 import com.campuscompanion.ai.dto.SummarizeRequest;
@@ -48,6 +50,12 @@ public class AiController {
   public GenerateQuizResponse generateQuiz(
       @Valid @RequestBody GenerateQuizRequest request, @AuthenticationPrincipal CurrentUser user) {
     return study.generateQuiz(request, user);
+  }
+
+  @PostMapping("/flowchart")
+  public FlowchartResponse flowchart(
+      @Valid @RequestBody FlowchartRequest request, @AuthenticationPrincipal CurrentUser user) {
+    return study.flowchart(request, user);
   }
 
   @GetMapping("/usage/me")

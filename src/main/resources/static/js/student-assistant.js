@@ -4,14 +4,14 @@ import { reveal, ring, segmented, swap } from "./motion.js";
 import { loadInto } from "./parts.js";
 import "./shell.js";
 
-// The AI study assistant (FR-AI-001 to FR-AI-004): three small forms, not a chat. Each request
+// The AI study assistant (FR-AI-001 to FR-AI-004, FR-AI-006): four small forms, not a chat. Each request
 // stands alone and nothing is remembered. The server calls the AI provider; the browser never
 // does, and never holds a key. Every answer is labelled as AI-generated and is put on the page as
 // plain text, so nothing the AI writes can run as markup.
 
 const content = document.getElementById("content");
 const PREFILL = "assistant-prefill";
-const LIMITS = { topic: 200, context: 2000, text: 12000, sourceText: 8000 };
+const LIMITS = { topic: 200, context: 2000, text: 12000, sourceText: 8000, processText: 3000 };
 const BASIS = {
   GENERAL_KNOWLEDGE: "Based on general knowledge",
   PROVIDED_TEXT: "Based on the text you provided",
@@ -111,7 +111,7 @@ function subjectAndUnit(withUnit, chosenSubject = "", chosenUnit = "") {
   };
 }
 
-// ---------------------------------------------------------------- The three tools
+// ---------------------------------------------------------------- The four tools
 const TOOLS = {
   explain() {
     const prefill = state.prefill;
@@ -169,6 +169,27 @@ const TOOLS = {
       render: questionsBody,
     };
   },
+  flowchart() {
+    const topic = textField({ name: "topic", label: "Topic", limit: LIMITS.topic, placeholder: "For example: binary search" });
+    const processText = textField({ name: "processText", label: "Or describe a process", limit: LIMITS.processText, area: true, placeholder: "Describe the steps in your own words", hint: "Give a topic or describe a process, not both. A description needs 20 to 3,000 characters." });
+    const place = subjectAndUnit(false);
+    return {
+      title: "Make a flowchart",
+      button: "Make flowchart",
+      path: "/ai/flowchart",
+      fields: [topic, processText],
+      elements: [topic.element, processText.element, ...place.elements],
+      body: () => ({ topic: topic.value() || null, processText: processText.value() || null, subjectId: place.subjectId() }),
+      check() {
+        if (Boolean(topic.value()) === Boolean(processText.value())) {
+          topic.fail("Give a topic or describe a process, but not both.");
+          return false;
+        }
+        return true;
+      },
+      render: flowchartBody,
+    };
+  },
 };
 
 // ---------------------------------------------------------------- Results, as plain text
@@ -218,6 +239,50 @@ function questionsBody(answer) {
           h("p", h("strong", "Why: "), question.explanation),
         ),
       ),
+    ),
+  );
+}
+
+/**
+ * The chart drawn with plain boxes, in reading order. The server has already checked the graph
+ * and numbered the nodes; where a step does not simply lead to the next one, its arrows are
+ * written out ("Yes → step 5").
+ */
+function flowchartBody(answer) {
+  const number = new Map(answer.nodes.map((node, index) => [node.id, index + 1]));
+  const label = new Map(answer.nodes.map((node) => [node.id, node.label]));
+  const items = answer.nodes.map((node, index) => {
+    const next = answer.edges.filter((edge) => edge.from === node.id);
+    const straight = next.length === 1 && !next[0].label && number.get(next[0].to) === index + 2;
+    const links = straight || !next.length
+      ? null
+      : h("ul.flowchart__links", next.map((edge) => h("li", h("strong", (edge.label || "Then") + " → "), `step ${number.get(edge.to)}: ${label.get(edge.to)}`)));
+    return h(
+      "li.flowchart__item" + (straight ? ".flowchart__item--straight" : ""),
+      h("div.flowchart__node.flowchart__node--" + node.type.toLowerCase(), h("span.flowchart__num.num", number.get(node.id)), h("span", node.label)),
+      links,
+    );
+  });
+  const copyMermaid = h("button.button.button--quiet.button--small", { type: "button" }, icon("copy"), "Copy Mermaid text");
+  copyMermaid.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(answer.mermaid);
+      toast("Mermaid text copied");
+    } catch {
+      toast("Could not copy");
+    }
+  });
+  return h(
+    "div.answer-text",
+    h("h2.answer-text__title", answer.title),
+    h("ol.flowchart", { "aria-label": "Flowchart" }, items),
+    part("As numbered steps", h("ol", answer.steps.map((step) => h("li", step)))),
+    h(
+      "details.reveal-answer",
+      h("summary", "Mermaid text"),
+      h("p.row__meta", "Paste it into any Mermaid editor to draw the chart there."),
+      h("pre.flowchart__code", answer.mermaid),
+      copyMermaid,
     ),
   );
 }

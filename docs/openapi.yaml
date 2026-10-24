@@ -661,6 +661,28 @@ paths:
         "503": { $ref: "#/components/responses/Problem" }
         "504": { $ref: "#/components/responses/Problem" }
 
+  /ai/flowchart:
+    post:
+      tags: [AI]
+      summary: Generate a flowchart of a topic or a described process (P1, FR-AI-006)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FlowchartRequest" }
+      responses:
+        "200":
+          description: A checked flowchart.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FlowchartResponse" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+        "429": { $ref: "#/components/responses/Problem" }
+        "502": { $ref: "#/components/responses/Problem" }
+        "503": { $ref: "#/components/responses/Problem" }
+        "504": { $ref: "#/components/responses/Problem" }
+
   /notes:
     get:
       tags: [Student]
@@ -3182,6 +3204,52 @@ components:
               explanation: { type: string }
         requested: { type: integer }
         returned: { type: integer }
+        basis: { $ref: "#/components/schemas/AiBasis" }
+        notice: { type: string }
+        promptVersion: { type: string }
+
+    FlowchartRequest:
+      type: object
+      description: Exactly one of topic or processText is required.
+      properties:
+        topic: { type: string, minLength: 3, maxLength: 200, nullable: true }
+        processText: { type: string, minLength: 20, maxLength: 3000, nullable: true }
+        subjectId: { type: integer, format: int64, nullable: true }
+
+    FlowchartResponse:
+      type: object
+      required: [title, nodes, edges, steps, mermaid, basis, notice, promptVersion]
+      properties:
+        title: { type: string, maxLength: 80 }
+        nodes:
+          type: array
+          minItems: 2
+          maxItems: 20
+          description: In reading order; the position numbers the steps.
+          items:
+            type: object
+            required: [id, label, type]
+            properties:
+              id: { type: string }
+              label: { type: string, maxLength: 80 }
+              type: { type: string, enum: [START, END, STEP, DECISION] }
+        edges:
+          type: array
+          minItems: 1
+          maxItems: 40
+          items:
+            type: object
+            required: [from, to]
+            properties:
+              from: { type: string }
+              to: { type: string }
+              label: { type: string, maxLength: 30, nullable: true }
+        steps:
+          type: array
+          items: { type: string }
+        mermaid:
+          type: string
+          description: Mermaid flowchart text built by the server, with its own ids and escaped labels.
         basis: { $ref: "#/components/schemas/AiBasis" }
         notice: { type: string }
         promptVersion: { type: string }

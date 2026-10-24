@@ -21,6 +21,7 @@ public class PromptLibrary {
   private final PromptTemplate summarize = load("summarize-v1");
   private final PromptTemplate quiz = load("quiz-v1");
   private final PromptTemplate quickChat = load("assistant-quick-v1");
+  private final PromptTemplate flowchart = load("flowchart-v1");
 
   public PromptTemplate explain() {
     return explain;
@@ -32,6 +33,11 @@ public class PromptLibrary {
 
   public PromptTemplate quiz() {
     return quiz;
+  }
+
+  /** A topic or a process as the nodes and edges of a flowchart (FR-AI-006). */
+  public PromptTemplate flowchart() {
+    return flowchart;
   }
 
   /** The robot's short chat: plain text answers of a few sentences. */

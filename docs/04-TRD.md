@@ -27,7 +27,7 @@ This document sets the technical constraints every implementation must satisfy. 
 | Database tests | Testcontainers for PostgreSQL | 2.0.5, from Boot | Needs Docker. Tests run on the `postgres:17-alpine` image. |
 | Frontend | HTML5, CSS3, JavaScript (ES modules) | browser-native | No framework, no bundler. One exception: the public landing page only, see the next row. |
 | Landing page only | React, TypeScript, Vite, Tailwind CSS, three.js | from `landing-frontend/package.json` | [ADR 0015](decisions/0015-react-landing-page.md). Built at development time with Node; the built files are committed. Used by `static/index.html` and nothing else. |
-| Diagrams (P1) | Mermaid | **TBD** | Vendored into `static/`, not loaded from a CDN. |
+| Diagrams (P1) | None | — | Not used: the flowchart (T7-05) is drawn with plain HTML and CSS from the graph Java has checked, and the Mermaid text Java builds is only offered for copying. Vendoring Mermaid would need the owner's approval. |
 | Hosting | Heroku or Render, **not yet chosen** (T6-04) | | Heroku runs the JAR from the `Procfile`; Render builds the `Dockerfile` from `render.yaml` ([doc 23](23-deploying-on-render.md)). Either way: one instance. |
 
 **TR-STACK-1.** Versions marked TBD MUST be chosen in the named task by checking the official documentation for mutual compatibility (Java 21, Spring Boot, Heroku runtime), then written into this table and `pom.xml` in the same change.

@@ -809,7 +809,7 @@ Student only (T7-02, FR-PLN-001, FR-PLN-002). The student always comes from the 
 
 Behaviour is specified in [12-AI-features-spec.md](12-AI-features-spec.md). This section is the wire contract.
 
-Common to all three:
+Common to all of them:
 
 - Time budget 25 seconds. On expiry: `504 AI_TIMEOUT`.
 - Failures: `400`, `422 AI_REQUEST_DECLINED`, `429 AI_QUOTA_EXCEEDED`, `429 RATE_LIMITED`, `502 AI_INVALID_RESPONSE`, `503 AI_UNAVAILABLE`, `504 AI_TIMEOUT`.
@@ -923,6 +923,45 @@ Common to all three:
 ```
 
 For `SHORT` and `LONG`, `options` and `correctOption` are `null`. `returned` can be less than `requested` when invalid questions were discarded. If none survive, the response is `502 AI_INVALID_RESPONSE`.
+
+### 9.3a Flowchart (P1, FR-AI-006)
+
+`POST /api/v1/ai/flowchart`
+
+| Field | Type | Rule |
+| --- | --- | --- |
+| `topic` | string | 3 to 200 characters. Required if `processText` is absent. |
+| `processText` | string | 20 to 3,000 characters. Required if `topic` is absent. |
+| `subjectId` | integer | Optional. Must be a subject the student can see. |
+
+Giving both, or neither, is `400 VALIDATION_FAILED`.
+
+`200 OK`
+
+```json
+{
+  "title": "Binary search",
+  "nodes": [
+    { "id": "n1", "label": "Start", "type": "START" },
+    { "id": "n2", "label": "Is the middle element the key?", "type": "DECISION" },
+    { "id": "n3", "label": "Search the half that can hold it", "type": "STEP" },
+    { "id": "n4", "label": "Found", "type": "END" }
+  ],
+  "edges": [
+    { "from": "n1", "to": "n2", "label": null },
+    { "from": "n2", "to": "n3", "label": "No" },
+    { "from": "n2", "to": "n4", "label": "Yes" },
+    { "from": "n3", "to": "n2", "label": null }
+  ],
+  "steps": ["Start", "Is the middle element the key? (No: go to step 3; Yes: go to step 4)", "Search the half that can hold it", "Found"],
+  "mermaid": "flowchart TD\n  N1([\"Start\"])\n  ...",
+  "basis": "GENERAL_KNOWLEDGE",
+  "notice": "AI-generated. Check it against your course material.",
+  "promptVersion": "flowchart-v1"
+}
+```
+
+`nodes` are in reading order (breadth-first from the start) and number the `steps`. `type` is `START`, `END`, `STEP` or `DECISION`. The `mermaid` text is built by the server with its own node IDs and escaped labels. A graph that fails the checks of [12-AI-features-spec.md](12-AI-features-spec.md) §8 is `502 AI_INVALID_RESPONSE`.
 
 ### 9.4 Usage
 

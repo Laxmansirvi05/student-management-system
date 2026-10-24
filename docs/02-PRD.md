@@ -529,6 +529,7 @@ Behaviour rules are in [13-AI-rules.md](13-AI-rules.md). Limits and formats are 
 ### FR-AI-006 Flowchart generation (P1)
 
 - **Acceptance criteria:** A topic or process description becomes a rendered flowchart of at most 20 steps.
+- **As built (2026-10-24):** a fourth tab, "Flowchart", on the AI assistant page. The student gives a topic or describes a process (not both). Java checks the graph the model returns and refuses any that does not hold together; the page draws it as boxes and arrows, lists it as numbered steps, and offers Mermaid text to copy. It counts as one AI request. See [12-AI-features-spec.md](12-AI-features-spec.md) §8.
 
 ### FR-AI-007 Flashcards (P2)
 

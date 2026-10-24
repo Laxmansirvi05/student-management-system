@@ -81,6 +81,16 @@ public class AiResponseParser {
     return new Summary(summary, keyPoints, definitions);
   }
 
+  /** A flowchart that passed every check of {@link FlowchartRenderer} (FR-AI-006). */
+  public FlowchartRenderer.Flowchart parseFlowchart(String raw) {
+    JsonNode reply = answerObject(raw);
+    try {
+      return FlowchartRenderer.from(reply);
+    } catch (IllegalArgumentException unusable) {
+      throw invalid();
+    }
+  }
+
   /**
    * The questions that pass every check, at most as many as were asked for. Questions that fail a
    * check are dropped. If none is left, the whole reply is invalid.

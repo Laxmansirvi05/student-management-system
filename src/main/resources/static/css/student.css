@@ -1036,6 +1036,80 @@ button.qdot:hover {
   font: var(--text-small);
 }
 
+/* FR-AI-006: the flowchart, drawn as plain boxes with arrows between them. */
+.flowchart {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.flowchart__item {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: center;
+}
+
+.flowchart__item--straight::after {
+  content: "↓";
+  color: var(--color-text-muted);
+  line-height: 1;
+}
+
+.flowchart__node {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  max-width: 100%;
+  padding: var(--space-2) var(--space-4);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-input);
+  background: var(--color-surface);
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.flowchart__node--start,
+.flowchart__node--end {
+  border-color: var(--color-primary);
+  border-radius: var(--radius-pill);
+}
+
+.flowchart__node--decision {
+  border-style: dashed;
+  border-color: var(--color-warning);
+}
+
+.flowchart__num {
+  flex: none;
+  min-width: 1.6em;
+  color: var(--color-text-muted);
+  font: var(--text-small);
+}
+
+.flowchart__links {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--color-text-muted);
+  font: var(--text-small);
+  text-align: center;
+}
+
+.flowchart__code {
+  max-height: 240px;
+  overflow: auto;
+  padding: var(--space-3);
+  border-radius: var(--radius-input);
+  background: var(--color-bg-subtle);
+  font: var(--text-small);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  white-space: pre;
+}
+
 .card > .skeleton {
   width: var(--w, 100%);
 }

@@ -3,6 +3,8 @@ package com.campuscompanion.ai;
 import com.campuscompanion.ai.dto.AiBasis;
 import com.campuscompanion.ai.dto.ExplainRequest;
 import com.campuscompanion.ai.dto.ExplainResponse;
+import com.campuscompanion.ai.dto.FlowchartRequest;
+import com.campuscompanion.ai.dto.FlowchartResponse;
 import com.campuscompanion.ai.dto.GenerateQuizRequest;
 import com.campuscompanion.ai.dto.GenerateQuizResponse;
 import com.campuscompanion.ai.dto.SummarizeRequest;
@@ -10,6 +12,7 @@ import com.campuscompanion.ai.dto.SummarizeResponse;
 import com.campuscompanion.ai.parse.AiResponseParser;
 import com.campuscompanion.ai.parse.AiResponseParser.Explanation;
 import com.campuscompanion.ai.parse.AiResponseParser.Summary;
+import com.campuscompanion.ai.parse.FlowchartRenderer;
 import com.campuscompanion.ai.prompt.PromptBuilder;
 import com.campuscompanion.ai.prompt.PromptLibrary;
 import com.campuscompanion.ai.provider.AiCompletion;
@@ -116,6 +119,37 @@ public class AiStudyService {
           parsed.keyPoints(),
           parsed.definitions(),
           AiBasis.PROVIDED_TEXT,
+          NOTICE,
+          prompt.promptVersion());
+    } finally {
+      usage.end(user.id());
+    }
+  }
+
+  /** FR-AI-006: a topic or a described process as a checked flowchart of at most 20 steps. */
+  public FlowchartResponse flowchart(FlowchartRequest request, CurrentUser user) {
+    usage.begin(user.id());
+    try {
+      boolean hasTopic = request.topic() != null && !request.topic().isBlank();
+      boolean hasText = request.processText() != null && !request.processText().isBlank();
+      if (hasTopic == hasText) {
+        throw new ValidationException("topic", "Give a topic or describe a process, but not both.");
+      }
+      Map<String, String> values = names(user, request.subjectId(), null);
+      values.put("topic", request.topic());
+      values.put("processText", request.processText());
+      AiRequest prompt = prompt(templates.flowchart(), values);
+
+      FlowchartRenderer.Flowchart chart =
+          ask(user, AiFeature.FLOWCHART, prompt, parser::parseFlowchart);
+      // Java sets the basis: the student's own description, or general knowledge for a topic.
+      return new FlowchartResponse(
+          chart.title(),
+          chart.nodes(),
+          chart.edges(),
+          chart.steps(),
+          chart.mermaid(),
+          hasText ? AiBasis.PROVIDED_TEXT : AiBasis.GENERAL_KNOWLEDGE,
           NOTICE,
           prompt.promptVersion());
     } finally {

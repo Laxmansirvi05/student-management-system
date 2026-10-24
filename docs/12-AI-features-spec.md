@@ -212,12 +212,15 @@ The official explanation stored with the question is always shown first; the AI 
 
 | | |
 | --- | --- |
-| **Input** | `topic` (3 to 200) or `processText` (up to 3,000). |
+| **Input** | Exactly one of `topic` (3 to 200) or `processText` (20 to 3,000), and an optional `subjectId` of the student's own. |
 | **Model output** | A JSON graph: up to 20 `nodes` (`id`, `label` up to 80 characters, `type` of `START`, `END`, `STEP`, `DECISION`) and `edges` (`from`, `to`, optional `label`). |
-| **Java processing** | `FlowchartRenderer` validates the graph (known node IDs, one start, at least one end, no dangling edges) and builds Mermaid text itself with escaped labels. |
-| **API output** | `title`, `mermaid` (built by Java, not by the model), and `steps[]` as a text list. |
+| **Java processing** | `FlowchartRenderer` validates the graph: 2 to 20 nodes with unique IDs of letters, digits and `_`; labels of 1 to 80 characters with control characters removed; exactly one `START` and at least one `END`; 1 to 40 edges between known nodes, edge labels up to 30 characters; every node except an `END` leads somewhere and no `END` does; every node is reachable from the start. A graph that fails any check is `502 AI_INVALID_RESPONSE` and is never shown. It then orders the nodes as they are read (breadth-first from the start) and builds Mermaid text itself, with its own IDs (`N1`, `N2`, ...) and every label quoted and escaped. |
+| **API output** | `title`, `nodes[]` and `edges[]` (checked, in reading order), `steps[]` (numbered text; a decision names where each answer goes), `mermaid` (built by Java, not by the model), `basis`, `notice`, `promptVersion` (`flowchart-v1`). |
+| **Basis** | `PROVIDED_TEXT` for a description, `GENERAL_KNOWLEDGE` for a topic. |
 
 The model never writes diagram syntax directly. This keeps untrusted text out of the renderer's syntax.
+
+**As built (2026-10-24), without Mermaid in the browser.** The page draws the checked graph with plain HTML boxes and arrows (`textContent` only) and lists the steps. The Mermaid text is offered for copying into any Mermaid editor; nothing on the page parses it. Vendoring the Mermaid library would add a large third-party script and needs the owner's approval as a new dependency (AGENTS.md §11); it is not needed for the acceptance criterion. Tests: `FlowchartRendererTest`, `AiFlowchartIT`.
 
 ## 9. Future: questions grounded in the resource library
 

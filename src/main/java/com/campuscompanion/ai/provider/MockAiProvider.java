@@ -57,6 +57,9 @@ public class MockAiProvider implements AiProvider {
     if (promptVersion.startsWith("summarize")) {
       return summary(content);
     }
+    if (promptVersion.startsWith("flowchart")) {
+      return flowchart(content);
+    }
     return promptVersion.startsWith("quiz") ? questions(content) : explanation(content);
   }
 
@@ -98,6 +101,40 @@ public class MockAiProvider implements AiProvider {
         + topic
         + "\" will appear. Once a provider is connected, the explanation is written here in"
         + " plain words, in the answer format you chose.";
+  }
+
+  /** A small demo chart with one decision, about the topic or process that was asked for. */
+  private static String flowchart(String content) {
+    String topic = between(TOPIC, content);
+    String subject = NOT_GIVEN.equals(topic) ? "your process" : topic;
+    ObjectNode reply = JSON.createObjectNode();
+    reply.put("declined", false);
+    String title = "Demo flowchart: " + subject;
+    reply.put("title", title.length() > 80 ? title.substring(0, 80) : title);
+    var nodes = reply.putArray("nodes");
+    nodes.addObject().put("id", "n1").put("label", "Start").put("type", "START");
+    nodes
+        .addObject()
+        .put("id", "n2")
+        .put("label", "Read about " + subject.substring(0, Math.min(60, subject.length())))
+        .put("type", "STEP");
+    nodes.addObject().put("id", "n3").put("label", "Is it clear?").put("type", "DECISION");
+    nodes
+        .addObject()
+        .put("id", "n4")
+        .put("label", "Ask a question or revise again")
+        .put("type", "STEP");
+    nodes.addObject().put("id", "n5").put("label", "Done").put("type", "END");
+    var edges = reply.putArray("edges");
+    edges.addObject().put("from", "n1").put("to", "n2").put("label", "");
+    edges.addObject().put("from", "n2").put("to", "n3").put("label", "");
+    edges.addObject().put("from", "n3").put("to", "n4").put("label", "No");
+    edges.addObject().put("from", "n3").put("to", "n5").put("label", "Yes");
+    // A chart whose "No" branch leads nowhere: Java must refuse it.
+    if (!content.contains("[[mock:badchart]]")) {
+      edges.addObject().put("from", "n4").put("to", "n2").put("label", "");
+    }
+    return reply.toString();
   }
 
   private static String summary(String content) {
