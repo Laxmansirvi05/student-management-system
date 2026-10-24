@@ -3,22 +3,29 @@ package com.campuscompanion.resource;
 import com.campuscompanion.common.security.CurrentUser;
 import com.campuscompanion.common.web.PageResponse;
 import com.campuscompanion.resource.dto.DownloadUrlResponse;
+import com.campuscompanion.resource.dto.ResourceReportRequest;
+import com.campuscompanion.resource.dto.ResourceReportResponse;
 import com.campuscompanion.resource.dto.ResourceResponse;
 import com.campuscompanion.resource.dto.ResourceSubjectResponse;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.util.List;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -32,10 +39,13 @@ public class ResourceController {
 
   private final ResourceService resources;
   private final BookmarkService bookmarks;
+  private final ResourceReportService reports;
 
-  public ResourceController(ResourceService resources, BookmarkService bookmarks) {
+  public ResourceController(
+      ResourceService resources, BookmarkService bookmarks, ResourceReportService reports) {
     this.resources = resources;
     this.bookmarks = bookmarks;
+    this.reports = reports;
   }
 
   @GetMapping("/resources")
@@ -106,5 +116,15 @@ public class ResourceController {
       @AuthenticationPrincipal CurrentUser currentUser, @PathVariable Long resourceId) {
     bookmarks.remove(currentUser, resourceId);
     return ResponseEntity.noContent().build();
+  }
+
+  /** A student reports a problem with a resource (FR-LIB-005). */
+  @PostMapping("/resources/{id}/reports")
+  @ResponseStatus(HttpStatus.CREATED)
+  public ResourceReportResponse report(
+      @AuthenticationPrincipal CurrentUser currentUser,
+      @PathVariable Long id,
+      @Valid @RequestBody ResourceReportRequest request) {
+    return reports.report(currentUser, id, request);
   }
 }

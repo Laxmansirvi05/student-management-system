@@ -252,6 +252,8 @@ All paths start with `/admin` and require the `ADMIN` role.
 | GET, PUT, DELETE, POST | `/notes/{id}/share`, `/notes/{id}/share/recipients[/{recipientId}]`; GET `/notes/shared/{slug}` | Sharing with classmates and by link. |
 | POST, GET, DELETE | `/assistant/chat`, `/assistant/conversations[/{id}[/messages]]` | The robot's Quick Assistant. Student only. See 9.5. |
 | GET | `/admin/complaints`, `/admin/complaints/{id}` | List and read complaints. See 8.20. |
+| POST | `/resources/{id}/reports` | Student: report a problem with a resource. See 8.23. |
+| GET, POST | `/admin/resource-reports`, `/admin/resource-reports/{id}/resolve` | Admin: list and resolve reports. See 8.23. |
 | PUT | `/admin/complaints/{id}` | Set status and response. |
 | GET | `/admin/audit-logs` | Read the audit log, newest first (P1). See 8.15. |
 | GET | `/admin/audit-logs/actions` | The actions that can appear, for the filter. |
@@ -796,6 +798,12 @@ Student only (T7-02, FR-PLN-001, FR-PLN-002). The student always comes from the 
 - `POST /planner/exams` `{name, subjectId?, examDate}` returns 201; `PUT /planner/exams/{id}` takes the same body; `DELETE /planner/exams/{id}` returns 204.
 - Validation (`400 VALIDATION_FAILED`, field named): `title` 1 to 200 characters, `notes` at most 1,000, `name` 1 to 120, `examDate` required; `subjectId` must be one of the student's subjects; a new or changed `dueDate` or `examDate` must be from today to five years ahead (an unchanged date is accepted on edit); unknown fields are refused.
 - The number of days left is not sent: the pages count it from the date, like the notice deadlines, so it stays right after midnight.
+
+### 8.23 Resource reports (FR-LIB-005)
+
+- `POST /resources/{id}/reports` `{reason}` (student only): `reason` is 5 to 500 characters of plain text. Returns 201 with `{id, resourceId, resourceTitle, reason, status: OPEN, reportedBy: null, createdAt, resolvedAt: null}`. A resource that does not exist or is hidden is `404`. A second open report of the same resource by the same student is `409 CONFLICT`. An admin gets `403`.
+- `GET /admin/resource-reports?status=OPEN|RESOLVED|ALL&page&size` (admin only, default `OPEN`, size 1 to 50) returns a page of reports, newest first, each with `resourceTitle` and `reportedBy` (the student's roll number).
+- `POST /admin/resource-reports/{id}/resolve` (admin only) returns the report with `status: RESOLVED` and `resolvedAt`. Resolving again changes nothing. Each first resolve is audited as `RESOURCE_REPORT_RESOLVED`, with the status only.
 
 ## 9. AI endpoints
 

@@ -1,3 +1,4 @@
+import { field, openForm, textarea } from "./admin-kit.js";
 import { api, messageFor } from "./api.js";
 import { fill, formatDate, formatSize, h, icon, toast } from "./dom.js";
 import { reveal } from "./motion.js";
@@ -72,7 +73,23 @@ function actions(resource) {
       toast(reasonFor(failure));
     }
   });
-  return h("div.resource-head__actions", download, open, bookmark);
+  const report = h("button.button.button--quiet", { type: "button" }, icon("alert"), "Report a problem");
+  report.addEventListener("click", () => reportForm(resource));
+  return h("div.resource-head__actions", download, open, bookmark, report);
+}
+
+/** FR-LIB-005: tell the administrators what is wrong with this resource. */
+function reportForm(resource) {
+  openForm({
+    title: "Report a problem",
+    intro: `What is wrong with “${resource.title}”? For example a missing page, the wrong subject or a file that does not open. An administrator will look at it.`,
+    submitLabel: "Send report",
+    fields: [field("What is wrong", textarea("reason", { maxlength: 500, rows: 4, required: true }), "5 to 500 characters. Plain text.")],
+    onSubmit: async (values) => {
+      await api.post(`/resources/${resource.id}/reports`, values);
+      toast("Report sent. Thank you.");
+    },
+  });
 }
 
 function details(resource) {

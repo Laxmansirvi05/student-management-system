@@ -242,8 +242,40 @@ function start(loaded) {
   const add = h("button.button.button--primary", { type: "button" }, icon("upload"), "Upload resource");
   add.addEventListener("click", () => resourceForm(null));
   fill(document.getElementById("actions"), add);
-  fill(content, filterBar(), h("section.card", { id: "list", "aria-label": "Resources" }, h("div.skeleton")));
+  fill(content, reportsBox, filterBar(), h("section.card", { id: "list", "aria-label": "Resources" }, h("div.skeleton")));
+  loadReports();
   load();
+}
+
+// FR-LIB-005: what students reported about resources. Only open reports are shown; resolving one
+// takes it off the list.
+const reportsBox = h("section.card", { "aria-label": "Reported resources" });
+
+function loadReports() {
+  loadInto(reportsBox, () => api.get("/admin/resource-reports?status=OPEN&size=50"), (page) => {
+    const columns = [
+      { label: "Resource", cell: (report) => report.resourceTitle || "(deleted)" },
+      { label: "What is wrong", cell: (report) => report.reason },
+      { label: "Reported by", cell: (report) => h("span.mono", report.reportedBy || "—") },
+      { label: "Date", cell: (report) => formatDate(report.createdAt) },
+      { label: "", align: "end", cell: (report) => rowAction("Resolve", "check", () => resolveReport(report)) },
+    ];
+    fill(
+      reportsBox,
+      h("div.card__head", h("h2.card__title", icon("alert"), "Reported resources"), page.totalElements ? tag(`${page.totalElements} open`, "warning") : null),
+      dataTable(columns, page.content, "No open reports. Students can report a problem from a resource's page."),
+    );
+  });
+}
+
+async function resolveReport(report) {
+  try {
+    await api.post(`/admin/resource-reports/${report.id}/resolve`);
+    toast("Report resolved");
+    loadReports();
+  } catch (failure) {
+    toast(messageFor(failure));
+  }
 }
 
 loadInto(content, () => api.get("/admin/subjects"), start);

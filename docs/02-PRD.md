@@ -415,6 +415,7 @@ Added on 2026-10-18 at the owner's request. The decision is [ADR 0012](decisions
 ### FR-LIB-005 Report a resource (P1)
 
 - **Acceptance criteria:** A student can report a resource with a short reason. Admins see open reports.
+- **As built (2026-10-24):** "Report a problem" on a resource's page; the reason is 5 to 500 characters; one open report per student and resource. Admins see open reports at the top of the Resources page, with the reporter's roll number, and resolve them (audited).
 
 ### FR-LIB-006 Question paper analyzer (P2)
 

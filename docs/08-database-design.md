@@ -522,6 +522,9 @@ Index: (`student_id`, `exam_date`). Added in V16. RLS on; owning student only.
 | reason | VARCHAR(500) | NOT NULL |
 | status | VARCHAR(10) | NOT NULL, CHECK in (`OPEN`, `RESOLVED`) |
 | created_at | TIMESTAMPTZ | NOT NULL |
+| resolved_at | TIMESTAMPTZ | NULL; set exactly when `status` is `RESOLVED` (added in V17) |
+
+Built in V17 (FR-LIB-005). A partial unique index allows one `OPEN` report per student and resource; the reason is 5 to 500 characters. RLS on; `cc_app` has `SELECT, INSERT, UPDATE` (no delete: reports are kept). A student only creates reports; the administrator lists and resolves them.
 
 
 ### 4.26 Notes tables
@@ -599,6 +602,7 @@ Flyway, versioned SQL files, forward-only. See [ADR 0006](decisions/0006-flyway-
 | V14 | `V14__notes.sql` | Adds the notes tables (section 4.26) | Added 2026-10-23 |
 | V15 | `V15__assistant_chats.sql` | Adds the assistant chat tables and `QUICK_CHAT` (section 4.27) | Added 2026-10-23 |
 | V16 | `V16__planner.sql` | Adds `study_tasks` (section 4.19) and `student_exams` (section 4.19b) for T7-02 | Added 2026-10-24 |
+| V17 | `V17__resource_reports.sql` | Adds `resource_reports` (section 4.20) for FR-LIB-005 | Added 2026-10-24 |
 | V12 | `V12__notice_documents.sql` | Adds the official document columns to `notices` (section 4.10) | Added 2026-10-22 |
 | V11 | `V11__pyq_created_by_optional.sql` | Makes `pyq_papers.created_by` optional (section 4.21) | Added 2026-10-19 |
 | V10 | `V10__pyq.sql` | Adds `pyq_papers` and `pyq_bookmarks` (sections 4.21 and 4.22) | Added 2026-10-18 |
@@ -786,6 +790,7 @@ If custom roles cannot be used through the pooler, stop and report it. Do not fa
 | `MARKS_UPDATED` | A saved mark changes | Marks obtained and absent flag, before and after |
 | `ATTENDANCE_CORRECTED` | A saved attendance status changes | Status, before and after |
 | `COMPLAINT_UPDATED` | The administrator handles a complaint | Status and whether there is a response, before and after. Never the student |
+| `RESOURCE_REPORT_RESOLVED` | The administrator resolves a report on a resource (FR-LIB-005) | Status before and after only. Never the reason or the student |
 | `RESULT_UPDATED` | A semester result is created or changed | SGPA, credits registered, credits earned, status, published flag |
 | `ACCOUNT_CREATED` | An admin provisions a student, or the system creates the first admin | New: role, login email and active flag. Never the temporary password |
 | `ACCOUNT_DEACTIVATED`, `ACCOUNT_ACTIVATED` | An admin changes account status | Active flag, before and after |

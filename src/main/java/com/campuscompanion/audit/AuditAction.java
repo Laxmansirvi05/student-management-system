@@ -11,7 +11,8 @@ public enum AuditAction {
   PROFILE_UPDATED,
   PASSWORD_RESET,
   PASSWORD_CHANGED,
-  COMPLAINT_UPDATED;
+  COMPLAINT_UPDATED,
+  RESOURCE_REPORT_RESOLVED;
 
   /** Password events record only that they happened: no old value and no new value, ever. */
   public boolean isPasswordEvent() {

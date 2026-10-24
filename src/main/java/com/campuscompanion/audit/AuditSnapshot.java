@@ -30,6 +30,9 @@ public sealed interface AuditSnapshot {
   /** A complaint's handling. Never the student: the audit log must not reveal a secure author. */
   record ComplaintHandling(String status, boolean hasResponse) implements AuditSnapshot {}
 
+  /** A report on a resource: its status only. Never the reason or the student. */
+  record ResourceReportStatus(String status) implements AuditSnapshot {}
+
   record Profile(
       String fullName,
       String branch,

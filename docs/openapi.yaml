@@ -1284,6 +1284,44 @@ paths:
               schema: { $ref: "#/components/schemas/Notice" }
         "400": { $ref: "#/components/responses/Problem" }
 
+  /resources/{id}/reports:
+    post:
+      tags: [Student]
+      summary: Report a problem with a published resource (FR-LIB-005)
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ResourceReportRequest" }
+      responses:
+        "201": { description: The report. }
+        "400": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+
+  /admin/resource-reports:
+    get:
+      tags: [Admin]
+      summary: Reports on resources, newest first
+      parameters:
+        - { name: status, in: query, schema: { type: string, enum: [OPEN, RESOLVED, ALL], default: OPEN } }
+        - { name: page, in: query, schema: { type: integer, minimum: 0, default: 0 } }
+        - { name: size, in: query, schema: { type: integer, minimum: 1, maximum: 50, default: 20 } }
+      responses:
+        "200": { description: A page of reports. }
+
+  /admin/resource-reports/{id}/resolve:
+    post:
+      tags: [Admin]
+      summary: Resolve a report (audited; again changes nothing)
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      responses:
+        "200": { description: The report. }
+        "404": { $ref: "#/components/responses/Problem" }
+
   /planner/tasks:
     get:
       tags: [Student]
@@ -2253,6 +2291,12 @@ components:
           schema: { $ref: "#/components/schemas/Problem" }
 
   schemas:
+    ResourceReportRequest:
+      type: object
+      additionalProperties: false
+      required: [reason]
+      properties:
+        reason: { type: string, minLength: 5, maxLength: 500 }
     StudyTaskRequest:
       type: object
       additionalProperties: false
