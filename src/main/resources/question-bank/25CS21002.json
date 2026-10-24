@@ -3,7 +3,7 @@
  "questions": [
   {
    "difficulty": "EASY",
-   "text": "Which feature of OOP hides the internal details of an object and exposes only what is needed?",
+   "text": "Which OOP feature wraps an object's data and the methods that use it into one unit and restricts direct access to that data?",
    "options": [
     "Inheritance",
     "Encapsulation",
@@ -11,7 +11,7 @@
     "Compilation"
    ],
    "correct": "B",
-   "explanation": "Encapsulation binds data and methods together and hides the data behind access control."
+   "explanation": "Encapsulation keeps the data and its methods together in a class and hides the data behind access control, such as private fields with public methods."
   },
   {
    "difficulty": "EASY",

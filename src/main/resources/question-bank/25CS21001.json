@@ -471,7 +471,7 @@
   },
   {
    "difficulty": "MEDIUM",
-   "text": "Every non-root node of a B-tree of order m has at least",
+   "text": "In a B-tree of order m, every internal node other than the root has at least",
    "options": [
     "1 child",
     "⌈m/2⌉ children",
@@ -479,7 +479,7 @@
     "2 children"
    ],
    "correct": "B",
-   "explanation": "Nodes other than the root must be at least half full: ⌈m/2⌉ children."
+   "explanation": "Internal nodes other than the root must be at least half full: ⌈m/2⌉ children. The root needs only 2 children, and leaves have none."
   },
   {
    "difficulty": "MEDIUM",
