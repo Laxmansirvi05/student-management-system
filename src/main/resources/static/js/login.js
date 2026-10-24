@@ -8,6 +8,15 @@ import {
 } from "./forms.js";
 import { startMascot } from "./mascot.js";
 
+// The pages cache the signed-in user's name and photo link for this tab (shell.js). Whoever logs in
+// next must not see them, even when the last session ended by timing out rather than by Log out.
+try {
+  sessionStorage.removeItem("cc_user");
+  sessionStorage.removeItem("cc_photo");
+} catch {
+  // Storage unavailable: nothing is cached either.
+}
+
 const form = document.getElementById("login-form");
 const email = document.getElementById("email");
 const password = document.getElementById("password");
