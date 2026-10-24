@@ -11,7 +11,7 @@ Status words used throughout, never one for another:
 | **Integration tested** | Tests pass over real HTTP against PostgreSQL 17 in Docker (Testcontainers), with the project's real roles and RLS. |
 | **Browser verified** | Exercised in a browser against a locally running build with a throw-away database. |
 | **Staging verified** | Exercised on a hosted test environment. **No staging environment exists.** |
-| **Production verified** | Exercised on the real host with the real database, bucket and providers. **Nothing is deployed.** |
+| **Production verified** | Exercised on the real host with the real database, bucket and providers. Deployed to Render on 2026-10-24 (section 19). |
 
 ## 0. Update: owner-requested changes (later on 2026-10-24)
 
@@ -243,7 +243,7 @@ Nothing below has been done by the developer, and none of it may be claimed as d
 | Demo data | Seeds only when `DEMO_SEED_ENABLED=true` or the `dev` profile is active; must stay unset for students |
 | Health | `/actuator/health` |
 | Migrations | V16 to V19 applied on hosted (2026-10-24); exam papers loaded |
-| Host | Not chosen, not purchased, not deployed |
+| Host | **Deployed on 2026-10-24** to Render (Free plan, Singapore): https://campus-companion-go4c.onrender.com; first-start checks in [24](24-production-readiness.md) §8a |
 
 ## 20. Explicit final verdict
 
@@ -254,7 +254,7 @@ Nothing below has been done by the developer, and none of it may be claimed as d
 | Integration tested | **Yes**: see the final run below |
 | Browser verified | **47 of 59**. The rest need the real bucket or an approved provider. |
 | Staging verified | **No**: there is no staging environment |
-| Production verified | **No**: not deployed |
+| Production verified | **Partly**: deployed and checked while signed out (health, HTTPS, headers, access rules, pages); a signed-in check on the live data is the owner's |
 
 **Latest verification (after the section 0 changes):** `./mvnw -B verify` on a `git archive` of `63191bc`: **296 unit and 307 integration tests, 0 failures, 0 errors, 0 skipped, BUILD SUCCESS**.
 

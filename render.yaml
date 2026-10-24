@@ -7,6 +7,7 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     plan: free
+    region: singapore
     healthCheckPath: /actuator/health
     autoDeploy: true
     envVars:
@@ -15,9 +16,11 @@ services:
       # Students log in as <roll number in lower case>@this domain (OQ-15).
       - key: STUDENT_EMAIL_DOMAIN
         value: gcet.edu.in
-      # The mock AI answers with canned text until a provider is chosen (ADR 0005).
+      # The owner's decision of 2026-10-24 (docs/24 section 4): Groq and Ollama only, through the router.
       - key: AI_PROVIDER
-        value: mock
+        value: router
+      - key: AI_ROUTES
+        value: groq:openai/gpt-oss-120b,groq:qwen/qwen3.8-27b,ollama:gpt-oss:20b
       - key: AI_ENABLED
         value: "true"
       - key: SUPABASE_STORAGE_BUCKET
@@ -37,4 +40,9 @@ services:
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_KEY
+        sync: false
+      # One or more keys per provider: GROQ_API_KEY, GROQ_API_KEY_2, ... and OLLAMA_API_KEY, ...
+      - key: GROQ_API_KEY
+        sync: false
+      - key: OLLAMA_API_KEY
         sync: false

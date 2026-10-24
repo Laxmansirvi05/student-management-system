@@ -210,6 +210,37 @@ Do not use either free or sleeping plan for students. Before the first deploy, c
 - A log retention choice.
 - An uptime check.
 
+## 8a. First deployment: Render (2026-10-24)
+
+Created at the owner's request, through Render's API, as **`campus-companion`**: https://campus-companion-go4c.onrender.com. It runs on the **Free plan** (the owner's choice) in **Singapore**, the region nearest the Mumbai database. Docker builds from GitHub `main`, with auto-deploy on every push.
+
+**Configuration:**
+- **Non-secret settings, set through the API:** `SPRING_PROFILES_ACTIVE=prod`, `STUDENT_EMAIL_DOMAIN`, the bucket name, the AI limits, and `QUESTION_BANK_ENABLED=true`.
+- **AI:** `AI_PROVIDER=router` with **`AI_ROUTES` limited to Groq and Ollama** (the owner's decision on section 4).
+- **Secrets:** the database, Supabase, Groq and Ollama values were typed into the Render dashboard by the owner; they never passed through the developer session.
+- **Not set:** `DEMO_SEED_ENABLED`, `ADMIN_BOOTSTRAP_*` (the admin already exists), and the Gemini and OpenRouter keys.
+
+| First-start check (section 8) | Result |
+| --- | --- |
+| Flyway | `Current version of schema "app": 19`, "No migration necessary". The hosted data was not changed |
+| Profile and AI | `prod` active; `AI router: 12 routes` (3 Groq and Ollama models × their keys) |
+| Health | `/actuator/health` returns `{"status":"UP"}` |
+| HTTPS | `http://` gets a 301 to `https://`; the login page loads with **0 redirects**, so there is no forwarded-header loop (the section 2 risk is closed) |
+| Headers | HSTS, CSP, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, `Permissions-Policy`, `nosniff` |
+| Access | Every API returns 401 without a login; student and admin pages redirect to login; `/actuator/env` is closed; error responses show no internals |
+| Browser (Playwright) | Landing page (globe, no overflow) and login at 1440 and 390 px; a wrong password gives "Incorrect email or password" |
+| Startup time | **223 s**: the Free plan's 0.15 CPU |
+| Memory (section 6a) | **445 MB of 512 MB (83 %)** a minute after start, idle |
+
+**Not verified by the developer:** a logged-in session on the live data. It needs a real account, and the developer does not use those; the owner should log in once as admin and once as a student.
+
+**Free plan limits, as measured:**
+- The service sleeps after 15 minutes idle, and waking it takes about 4 minutes at this CPU.
+- Sessions are lost on every sleep.
+- Memory is already at 83 % when idle, at the edge of the section 6a threshold.
+
+For real students, move to Starter (or larger) before inviting them. In the dashboard, also set **Health Check Path** to `/actuator/health`; the API used to create the service cannot set it.
+
 ## 9. What was verified in this phase
 
 - `./mvnw -B verify` passes in an isolated copy (no `.env`, Testcontainers PostgreSQL), including the planner tests.
