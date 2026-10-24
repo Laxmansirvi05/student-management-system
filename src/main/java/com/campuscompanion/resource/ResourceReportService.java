@@ -110,7 +110,7 @@ public class ResourceReportService {
       report.resolve(clock.instant());
       audit.record(
           AuditAction.RESOURCE_REPORT_RESOLVED,
-          "resource_report",
+          "RESOURCE_REPORT",
           report.getId(),
           new AuditSnapshot.ResourceReportStatus(ResourceReportStatus.OPEN.name()),
           new AuditSnapshot.ResourceReportStatus(ResourceReportStatus.RESOLVED.name()));

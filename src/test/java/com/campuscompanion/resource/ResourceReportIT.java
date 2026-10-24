@@ -103,7 +103,7 @@ class ResourceReportIT extends ApiIntegrationTest {
     java.util.List<String> audited =
         jdbc.queryForList(
             "select new_value::text from app.audit_logs where action = 'RESOURCE_REPORT_RESOLVED'"
-                + " and entity_id = ?",
+                + " and entity_type = 'RESOURCE_REPORT' and entity_id = ?",
             String.class,
             String.valueOf(reportId));
     assertThat(audited).hasSize(1);

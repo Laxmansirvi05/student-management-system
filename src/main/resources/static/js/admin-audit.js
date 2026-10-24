@@ -19,11 +19,14 @@ const ENTITY_TYPES = [
   ["ATTENDANCE_RECORD", "Attendance"],
   ["MARK", "Marks"],
   ["SEMESTER_RESULT", "Result"],
+  ["COMPLAINT", "Complaint"],
+  ["RESOURCE_REPORT", "Resource report"],
+  ["AI_REQUEST_LOGS", "AI usage log"],
 ];
 
-/** "PASSWORD_RESET" becomes "Password reset". */
+/** "PASSWORD_RESET" becomes "Password reset"; "AI" keeps its capitals. */
 function actionLabel(action) {
-  const text = action.toLowerCase().replaceAll("_", " ");
+  const text = action.toLowerCase().replaceAll("_", " ").replace(/^ai\b/, "AI");
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
