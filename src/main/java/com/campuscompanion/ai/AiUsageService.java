@@ -116,6 +116,14 @@ public class AiUsageService {
         "mock".equalsIgnoreCase(properties.provider()));
   }
 
+  /**
+   * Removes up to {@code limit} usage rows created before the cutoff and returns how many went.
+   * Used by the nightly retention job (T7-09).
+   */
+  public int removeLogsOlderThan(Instant cutoff, int limit) {
+    return logs.deleteOlderThan(cutoff, limit);
+  }
+
   private long usedToday(long userId, Instant dayStart) {
     return logs.countByUserIdAndStatusInAndCreatedAtGreaterThanEqual(userId, COUNTED, dayStart);
   }

@@ -1,4 +1,4 @@
-package com.campuscompanion.ai;
+package com.campuscompanion.retention;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -6,6 +6,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
+import com.campuscompanion.ai.AiUsageService;
 import com.campuscompanion.audit.AuditService;
 import com.campuscompanion.common.config.AiLogRetentionProperties;
 import java.time.Clock;
@@ -17,10 +18,10 @@ class AiUsageLogRetentionTest {
 
   @Test
   void whenSwitchedOffTheNightlyRunDeletesNothing() {
-    AiRequestLogRepository logs = mock(AiRequestLogRepository.class);
+    AiUsageService usage = mock(AiUsageService.class);
     AiUsageLogRetention retention =
         new AiUsageLogRetention(
-            logs,
+            usage,
             new AiLogRetentionProperties(false, 90, 1000, 50),
             mock(AuditService.class),
             mock(TransactionTemplate.class),
@@ -28,6 +29,6 @@ class AiUsageLogRetentionTest {
 
     retention.nightly();
 
-    verify(logs, never()).deleteOlderThan(any(), anyInt());
+    verify(usage, never()).removeLogsOlderThan(any(), anyInt());
   }
 }

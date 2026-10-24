@@ -113,6 +113,7 @@ com.campuscompanion
 ├── progress          // unit performance, recommendations
 ├── planner           // study tasks and the exam countdown (P1, T7-02)
 ├── ai                // provider, prompts, parsing, usage
+├── retention         // nightly clean-up jobs (T7-09); off by default
 └── audit
 ```
 

@@ -1,5 +1,6 @@
-package com.campuscompanion.ai;
+package com.campuscompanion.retention;
 
+import com.campuscompanion.ai.AiUsageService;
 import com.campuscompanion.audit.AuditAction;
 import com.campuscompanion.audit.AuditService;
 import com.campuscompanion.audit.AuditSnapshot;
@@ -18,25 +19,28 @@ import org.springframework.transaction.support.TransactionTemplate;
  * (feature, sizes, status, timing), never a prompt or a reply. It runs once a night when
  * AI_LOG_RETENTION_ENABLED is true, in small batches up to a fixed number per run, and records each
  * run that removed rows in the audit log, with the count and the cutoff only.
+ *
+ * <p>It lives outside the ai package because the AI code may not use the audit log
+ * (AiArchitectureTest); it reaches the usage log through {@link AiUsageService}.
  */
 @Component
 public class AiUsageLogRetention {
 
   private static final Logger log = LoggerFactory.getLogger(AiUsageLogRetention.class);
 
-  private final AiRequestLogRepository logs;
+  private final AiUsageService usage;
   private final AiLogRetentionProperties properties;
   private final AuditService audit;
   private final TransactionTemplate transactions;
   private final Clock clock;
 
   public AiUsageLogRetention(
-      AiRequestLogRepository logs,
+      AiUsageService usage,
       AiLogRetentionProperties properties,
       AuditService audit,
       TransactionTemplate transactions,
       Clock clock) {
-    this.logs = logs;
+    this.usage = usage;
     this.properties = properties;
     this.audit = audit;
     this.transactions = transactions;
@@ -56,7 +60,7 @@ public class AiUsageLogRetention {
     Instant cutoff = clock.instant().minus(Duration.ofDays(properties.days()));
     long removed = 0;
     for (int batch = 0; batch < properties.maxBatches(); batch++) {
-      int deleted = logs.deleteOlderThan(cutoff, properties.batchSize());
+      int deleted = usage.removeLogsOlderThan(cutoff, properties.batchSize());
       removed += deleted;
       if (deleted < properties.batchSize()) {
         break;

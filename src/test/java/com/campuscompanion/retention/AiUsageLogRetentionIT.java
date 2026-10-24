@@ -1,4 +1,4 @@
-package com.campuscompanion.ai;
+package com.campuscompanion.retention;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
