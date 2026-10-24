@@ -1125,7 +1125,8 @@ button.qdot:hover {
   }
 
   .resource-head {
-    grid-template-columns: minmax(0, 1fr) auto;
+    /* The buttons may take at most half the width and wrap; the title keeps the rest. */
+    grid-template-columns: minmax(0, 1fr) fit-content(50%);
     align-items: end;
   }
 
