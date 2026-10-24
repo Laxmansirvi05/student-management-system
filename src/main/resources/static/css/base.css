@@ -652,7 +652,7 @@ a {
   place-items: center;
 }
 
-.ring svg {
+.ring > svg {
   display: block;
   transform: rotate(-90deg);
 }
@@ -682,8 +682,12 @@ a {
   inset: 0;
   display: grid;
   place-content: center;
-  justify-items: center;
+  place-items: center;
   text-align: center;
+}
+
+.ring__label svg {
+  transform: none;
 }
 
 /* Grey shapes shown while content is loading. */
@@ -919,33 +923,30 @@ a {
     animation: 360ms var(--ease) both page-in;
   }
 
-  /* The sidebar does not animate: its items stay exactly where they are. Only the blue highlight
-     (named nav-pill) glides from the old page's item to the new one. */
+  /* The sidebar stays rock-solid stationary across page navigations.
+     Both old and new snapshots remain visible without blinking or disappearing. */
   ::view-transition-group(sidebar) {
     animation: none;
+    z-index: 3;
   }
 
-  ::view-transition-old(sidebar) {
-    display: none;
-  }
-
+  ::view-transition-old(sidebar),
   ::view-transition-new(sidebar) {
-    animation: none;
-  }
-
-  ::view-transition-group(nav-pill) {
-    animation-duration: 360ms;
-    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-  }
-
-  ::view-transition-old(nav-pill),
-  ::view-transition-new(nav-pill) {
     animation: none;
     mix-blend-mode: normal;
   }
 
-  ::view-transition-old(nav-pill) {
-    display: none;
+  /* The active highlight glides smoothly between the old and new menu items */
+  ::view-transition-group(nav-active) {
+    animation-duration: 240ms;
+    animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+    z-index: 4;
+  }
+
+  ::view-transition-old(nav-active),
+  ::view-transition-new(nav-active) {
+    animation: none;
+    mix-blend-mode: normal;
   }
 }
 

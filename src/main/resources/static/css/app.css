@@ -17,22 +17,29 @@ body.app {
 .sidebar {
   display: none;
   flex-direction: column;
-  gap: var(--space-2);
-  padding: 20px 12px 16px;
+  padding: 16px 12px 14px;
   background: var(--color-surface);
   border-right: 1px solid var(--color-hairline);
+  box-sizing: border-box;
+  width: var(--sidebar-width);
+  max-width: var(--sidebar-width);
+  overflow: hidden;
   view-transition-name: sidebar;
+  contain: layout paint;
 }
 
 .brand {
   display: flex;
   gap: var(--space-3);
   align-items: center;
-  padding: 4px 10px 12px;
+  padding: 6px 10px 14px;
   color: var(--color-text);
   font: 600 17px/22px var(--font);
   letter-spacing: -0.02em;
   text-decoration: none;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--color-hairline);
+  margin-bottom: 8px;
 }
 
 .brand__mark {
@@ -46,6 +53,7 @@ body.app {
     0 6px 14px rgba(0, 113, 227, 0.32),
     inset 0 1px 0 rgba(255, 255, 255, 0.35);
   color: #ffffff;
+  flex-shrink: 0;
   transition: transform 320ms var(--ease);
 }
 
@@ -55,94 +63,160 @@ body.app {
 
 .nav {
   position: relative;
-  display: grid;
-  flex: 1;
-  gap: 2px;
-  align-content: start;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: 3px;
   overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
+  margin-right: -4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.16) transparent;
 }
 
-/* The blue highlight is its own element, so only it moves between pages; the items stay put. */
-.nav__pill {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 40px;
-  background: var(--tint-primary);
+.nav::-webkit-scrollbar {
+  width: 5px;
+}
+
+.nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.nav::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.16);
   border-radius: 10px;
-  pointer-events: none;
-  view-transition-name: nav-pill;
+}
+
+.nav::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.28);
+}
+
+.nav__heading {
+  margin: 14px 12px 4px;
+  padding: 0;
+  font: 600 11px/14px var(--font);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.nav__heading:first-of-type {
+  margin-top: 4px;
 }
 
 .nav__item {
   position: relative;
-}
-
-.nav__heading {
-  margin: 18px 12px 6px;
-}
-
-.nav__item {
   display: flex;
-  gap: var(--space-3);
+  gap: 12px;
   align-items: center;
-  min-height: 40px;
+  height: 38px;
+  min-height: 38px;
   padding: 0 12px;
   border-radius: 10px;
   color: var(--color-text);
-  font: 500 15px/20px var(--font);
+  font: 500 14.5px/20px var(--font);
   text-decoration: none;
+  box-sizing: border-box;
+  flex-shrink: 0;
   transition:
     background-color var(--motion),
     color var(--motion);
 }
 
 .nav__item .icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
   color: var(--color-text-muted);
-  transition:
-    color var(--motion),
-    transform 260ms var(--ease);
+  transition: color var(--motion);
 }
 
-.nav__item:hover {
+.nav__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Inactive item hover: subtle and distinct */
+.nav__item:hover:not([aria-current="page"]) {
   background: var(--color-bg-subtle);
-}
-
-.nav__item:hover .icon {
   color: var(--color-text);
-  transform: scale(1.1);
 }
 
+.nav__item:hover:not([aria-current="page"]) .icon {
+  color: var(--color-text);
+}
+
+/* Keyboard focus */
+.nav__item:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+}
+
+/* Active item state: refined light-blue background and blue icon/text */
 .nav__item[aria-current="page"] {
   background: var(--tint-primary);
   color: var(--on-tint-primary);
   font-weight: 600;
-}
-
-/* With the moving highlight in place, the item itself needs no background of its own. */
-.nav--pill .nav__item[aria-current="page"] {
-  background: transparent;
-  /* No fade between the item's own highlight and the pill: they are the same colour. */
-  transition: color var(--motion);
+  view-transition-name: nav-active;
 }
 
 .nav__item[aria-current="page"] .icon {
   color: var(--color-primary);
 }
 
+/* Hover on active item stays distinct and refined blue */
+.nav__item[aria-current="page"]:hover {
+  background: #dbeafe;
+  color: var(--on-tint-primary);
+}
+
+.nav__item[aria-current="page"]:hover .icon {
+  color: var(--color-primary);
+}
+
 .nav__item[aria-disabled="true"] {
   color: var(--color-text-muted);
   opacity: 0.55;
+  pointer-events: none;
 }
 
 .usercard {
   display: flex;
   gap: var(--space-2);
   align-items: center;
-  padding: 8px;
+  padding: 8px 10px;
   background: var(--color-bg-subtle);
+  border: 1px solid var(--color-hairline);
   border-radius: 14px;
+  flex-shrink: 0;
+  margin-top: 10px;
+  box-sizing: border-box;
+  transition:
+    background-color var(--motion),
+    border-color var(--motion);
+}
+
+.usercard:hover {
+  background: #ececf0;
+  border-color: #d8d8de;
+}
+
+.usercard--active,
+.usercard:has(.usercard__who[aria-current="page"]) {
+  background: var(--tint-primary);
+  border-color: #bcd9fb;
+}
+
+.usercard--active .usercard__name,
+.usercard:has(.usercard__who[aria-current="page"]) .usercard__name {
+  color: var(--on-tint-primary);
 }
 
 .usercard__who {
@@ -152,9 +226,14 @@ body.app {
   align-items: center;
   min-width: 0;
   padding: 2px;
-  border-radius: 10px;
+  border-radius: 8px;
   color: var(--color-text);
   text-decoration: none;
+}
+
+.usercard__who:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
 }
 
 .usercard__text {
@@ -573,33 +652,6 @@ body.app {
   color: inherit;
 }
 
-.chip--action {
-  min-height: 44px;
-  cursor: pointer;
-  transition:
-    background var(--motion),
-    border-color var(--motion),
-    transform var(--motion);
-}
-
-.chip--action:hover {
-  background: rgba(255, 255, 255, 0.16);
-  border-color: rgba(255, 255, 255, 0.4);
-  transform: translateY(-1px);
-}
-
-.chip--action:focus-visible {
-  outline: 2px solid var(--color-inverse-accent);
-  outline-offset: 2px;
-}
-
-.chip__hint {
-  padding-left: var(--space-2);
-  border-left: 1px solid rgba(255, 255, 255, 0.24);
-  color: var(--color-inverse-accent);
-  font: var(--text-caption);
-}
-
 /* Buttons on the hero. */
 .hero .button--glass {
   background: rgba(255, 255, 255, 0.12);
@@ -841,19 +893,6 @@ body.app {
   margin-top: 1px;
 }
 
-.inset--link {
-  color: inherit;
-  text-decoration: none;
-  transition:
-    background-color var(--motion),
-    transform 260ms var(--ease);
-}
-
-.inset--link:hover {
-  background: #ececf1;
-  transform: translateX(2px);
-}
-
 .figure {
   font: 700 44px/48px var(--font);
   letter-spacing: -0.04em;
@@ -863,10 +902,6 @@ body.app {
 .figure--small {
   font: 700 28px/32px var(--font);
   letter-spacing: -0.03em;
-}
-
-.figure--danger {
-  color: var(--color-danger);
 }
 
 /* Rows separated by hairlines. */
