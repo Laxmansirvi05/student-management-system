@@ -13,6 +13,19 @@ Status words used throughout, never one for another:
 | **Staging verified** | Exercised on a hosted test environment. **No staging environment exists.** |
 | **Production verified** | Exercised on the real host with the real database, bucket and providers. **Nothing is deployed.** |
 
+## 0. Update: owner-requested changes (later on 2026-10-24)
+
+After the run above, the owner asked for four changes. All are built, tested and checked in the browser on a throw-away database; none is on the hosted database yet (it needs V19).
+
+| Change | What a user sees | Commit |
+| --- | --- | --- |
+| Results on the dashboard (FR-STU-001 changed) | The CGPA on top, then every published semester's SGPA, with a Backlog tag for a failed semester | `cb62d6f` |
+| "Revise next" card removed | Not on the dashboard any more; recommendations stay on Progress | `cb62d6f` |
+| Deadlines and exams | Deadlines over the next 30 days (was 14), up to six shown, so the exam-fee date (10 Nov) appears. An Exam notice can list its papers; each paper is one exam in "Upcoming exams" and the countdown. The December 2026 time table (6 papers) and the fee notice's move to General are in `private-data/load-exam-papers.sql`, to run after V19 | `cb62d6f`, `63191bc` |
+| Quick Exam by subject (FR-QZ-001 changed) | No unit picker: a test covers the whole subject, drawn at random from its questions. 45 questions each for Advanced Data Structures, OOP through Java and DBMS (135), written from the course notes and previous-year papers, are loaded once at start into subjects 25CS21001 to 25CS21003. The owner should review them. Progress groups these answers under the subject | `cb62d6f`, `63191bc` |
+
+Migration **V19** adds `notice_exam_papers` (RLS on) and makes the quiz `unit_id` columns nullable. Tests added: `CourseQuestionBankTest`, `CourseQuestionBankIT`, an exam-papers case in `PlannerIT`, and updates to `TimetableNoticesDashboardIT`, `QuizApiIT` and `DatabaseSecurityModelIT`. Final verify on a `git archive` of `63191bc`: **296 unit and 307 integration tests, 0 failures, BUILD SUCCESS**. Every local link on the 38 pages loads (82 checked) and no relative link in the docs is broken.
+
 ## 1. Executive summary
 
 Every approved P0 and P1 requirement (59 requirement IDs) is code complete, locally tested and integration tested. 47 of them are also browser verified end to end. The other 12 depend on an external service that has not been signed off: the real Storage bucket (8) or an approved AI provider (4). They are built and tested against stand-ins. Nothing is staging or production verified, because nothing is deployed.
@@ -158,7 +171,11 @@ Defects the browser pass found, both fixed and committed: the cramped resource h
 | `9e965be` | feat(ai): flowchart generation, without a new dependency (FR-AI-006) |
 | `8a6e44f` | fix(audit): upper-case entity type for resource reports; readable AI label |
 | `758a693` | fix(resources): keep the resource title readable beside four buttons |
-| (this commit) | docs: final report, owner checklist, audit and plan updates |
+| `06b2059` | docs: final report, owner checklist, audit and plan updates |
+| `1fd66af` | docs(audit): summary brought up to date |
+| `cb62d6f` | feat: semester results and exam papers on the dashboard; Quick Exam by subject with course question banks |
+| `63191bc` | fix(dashboard, progress): up to six deadlines; whole-subject wording |
+| `a33f8f3` | docs(deploy): V19 in the migration plan; QUESTION_BANK_ENABLED; exam-paper data step |
 
 All local. None is pushed.
 
@@ -206,7 +223,9 @@ Nothing below has been done by the developer, and none of it may be claimed as d
 - [ ] Then check the Security tab for any alert already raised.
 
 **Database and deployment:**
-- [ ] Back up hosted Supabase, then approve V16 to V18 ([24](24-production-readiness.md) §6). Until then, do not restart the 8080 server or deploy, because either applies them.
+- [ ] Back up hosted Supabase, then approve V16 to V19 ([24](24-production-readiness.md) §6). Until then, do not restart the 8080 server or deploy, because either applies them.
+- [ ] After V19: run `private-data/load-exam-papers.sql` (the six December papers and the fee notice as a deadline), then check a CSE(AI&ML) semester 3 dashboard.
+- [ ] Review the 135 bundled Quick Exam questions (`src/main/resources/question-bank/`); retire or correct any in the admin question bank.
 - [ ] Choose the host. Recommended: Render Starter. Then change `plan: free` in `render.yaml` to the paid plan; that is a deliberate owner change. Create the service, and set every variable of [18](18-production-plan.md) §5 with `SPRING_PROFILES_ACTIVE=prod` and **`DEMO_SEED_ENABLED` not set**.
 - [ ] Approve the first deployment, then run the first-start checks and the memory measurement ([24](24-production-readiness.md) §6a and §8).
 - [ ] Optionally set `AI_LOG_RETENTION_ENABLED=true` once the privacy page's 90-day statement should take effect.
@@ -223,7 +242,7 @@ Nothing below has been done by the developer, and none of it may be claimed as d
 | Configuration | Every variable is documented in `.env.example` and [18](18-production-plan.md) §5 |
 | Demo data | Seeds only when `DEMO_SEED_ENABLED=true` or the `dev` profile is active; must stay unset for students |
 | Health | `/actuator/health` |
-| Migrations | V16 to V18 pending on hosted; procedure ready |
+| Migrations | V16 to V19 pending on hosted; procedure ready |
 | Host | Not chosen, not purchased, not deployed |
 
 ## 20. Explicit final verdict
@@ -237,6 +256,8 @@ Nothing below has been done by the developer, and none of it may be claimed as d
 | Staging verified | **No**: there is no staging environment |
 | Production verified | **No**: not deployed |
 
-**Final verification on the committed state:** `./mvnw -B verify` on a `git archive` of `758a693` (all code of this run; the closing commit changes documents only), with no `.env` and Testcontainers PostgreSQL 17: **295 unit tests and 305 integration tests, 0 failures, 0 errors, 0 skipped, BUILD SUCCESS** (186 s). Node module tests: 13 passed.
+**Latest verification (after the section 0 changes):** `./mvnw -B verify` on a `git archive` of `63191bc`: **296 unit and 307 integration tests, 0 failures, 0 errors, 0 skipped, BUILD SUCCESS**.
+
+**Earlier final verification on the committed state:** `./mvnw -B verify` on a `git archive` of `758a693` (all code of this run; the closing commit changes documents only), with no `.env` and Testcontainers PostgreSQL 17: **295 unit tests and 305 integration tests, 0 failures, 0 errors, 0 skipped, BUILD SUCCESS** (186 s). Node module tests: 13 passed.
 
 **Is Campus Companion ready for real students? No, not yet.** The repository work that can be done safely without the owner is complete. Real students should use it only after the owner actions of §18 are done: credentials rotated, providers decided, bucket signed off, backup taken and migrations approved, host purchased and deployed, first-start and memory checks passed, and the college's approval.

@@ -244,6 +244,22 @@ Full write-up: [docs/26-final-project-completion-report.md](docs/26-final-projec
 
 P0 = 1625 / 17 = **95.6 %**. P1 = 975 / 11 = **88.6 %**. Overall = (1625 × 3 + 975) / 62 = 5850 / 62 ≈ **94 %** (was ≈ 88 %). Production readiness is still separate: **not ready for real students** until the owner actions of doc 26 §18 are done.
 
+## Part A6 — Owner-requested changes (2026-10-24, later)
+
+Details: [docs/26](docs/26-final-project-completion-report.md) §0. Commits `cb62d6f`, `63191bc`, `a33f8f3`, local only.
+
+| Item | Result |
+| --- | --- |
+| Dashboard results | CGPA on top and every semester's SGPA; browser verified |
+| "Revise next" card | Removed from the dashboard |
+| Fee deadline | Was hidden by the 14-day window and filed as an Exam; window now 30 days (up to six shown); data step moves it to General |
+| Semester exam dates | Exam notices carry papers (V19); "Upcoming exams" lists them; the six December papers wait in `private-data/load-exam-papers.sql` for V19 |
+| Quick Exam | Whole-subject tests, random draw; 135 bundled questions for ADS, Java and DBMS; owner review advised |
+| Links | 82 page links and every relative doc link checked: none broken |
+| Verification | 296 unit + 307 integration tests pass on the committed state (`63191bc`) |
+
+Completion is unchanged at about 94 %: these change existing P0 requirements at the owner's request rather than add new ones, and they are verified the same way. The hosted database still needs the backup and the approval of V16 to V19.
+
 ---
 
 # Part B — Original audit (before remediation)
