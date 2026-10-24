@@ -108,7 +108,7 @@ function classesCard(todayClasses) {
 }
 
 function deadlinesCard(upcomingDeadlines) {
-  const rows = upcomingDeadlines.slice(0, 4).map((notice) =>
+  const rows = upcomingDeadlines.slice(0, 6).map((notice) =>
     h(
       "li.row",
       h("div.row__top", categoryTag(notice.category), h("span.row__meta.num", formatDate(notice.dueDate))),

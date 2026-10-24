@@ -17,7 +17,7 @@ const LEVELS = {
   NOT_ENOUGH_DATA: { label: "Not enough data", kind: "", iconName: "", bar: "neutral" },
 };
 
-const quizLink = (unit) => `/student/quiz.html?subjectId=${unit.subjectId}&unitId=${unit.unitId}`;
+const quizLink = (unit) => `/student/quiz.html?subjectId=${unit.subjectId}`;
 const rounded = (value) => Math.round(value) + "%";
 
 function hero(progress) {
@@ -72,7 +72,7 @@ function subjectCard(subject) {
         );
       }),
     ),
-    h("div.card__foot", h("span", subject.units.length === 1 ? "1 unit practised" : subject.units.length + " units practised"), h("a.more", { href: "/student/quiz.html?subjectId=" + subject.id }, "Practise", icon("chevron-right"))),
+    h("div.card__foot", h("span", subject.units.length === 1 ? "1 area practised" : subject.units.length + " areas practised"), h("a.more", { href: "/student/quiz.html?subjectId=" + subject.id }, "Practise", icon("chevron-right"))),
   );
 }
 
@@ -87,7 +87,7 @@ function recommendation(item) {
       "div.stack",
       h("div.line.line--start.line--wrap", h("span.tag.mono", item.subjectCode), tag(`Accuracy ${rounded(item.accuracyPercent)}`, "danger")),
       h("h3.subject__name", item.unitNo ? `Unit ${item.unitNo}: ${item.unitTitle}` : `${item.subjectCode}: the whole subject`),
-      links.length ? null : h("p.row__meta", "No study material has been uploaded for this unit yet."),
+      links.length ? null : h("p.row__meta", "No study material has been uploaded for this yet."),
     ),
     h("div.recommend__actions", links, h("a.button.button--primary.button--small", { href: quizLink(item) }, icon("refresh"), "Retake test")),
   );
@@ -105,7 +105,7 @@ function render(progress) {
     hero(progress),
     h(
       "div.section-head.reveal",
-      h("div.section-head__text", h("h2", "Strengths and weak areas"), h("p.row__meta", "Judged on your latest 20 answers in each unit, once you have answered 5.")),
+      h("div.section-head__text", h("h2", "Strengths and weak areas"), h("p.row__meta", "Judged on your latest 20 answers in each subject or unit, once you have answered 5.")),
       h("div.line.line--start.line--wrap", tag("Strong · 80% or more", "success"), tag("Improving · 60 to 79%"), tag("Needs revision · below 60%", "danger")),
     ),
     // One subject fills the row; two or more sit side by side.
@@ -117,7 +117,7 @@ function render(progress) {
     h(
       "section.card.card--tinted.reveal.recommend",
       h("span.badge-icon.badge-icon--round.badge-icon--neutral", icon("bolt")),
-      h("div.stack.stack--tight", h("h3", "Try a unit you have not practised"), h("p.row__meta", "A five-minute test is enough to see where you stand.")),
+      h("div.stack.stack--tight", h("h3", "Try a subject you have not practised"), h("p.row__meta", "A five-minute test is enough to see where you stand.")),
       h("div.recommend__actions", h("a.button.button--primary.button--small", { href: "/student/quiz.html" }, icon("play"), "Start a quick test")),
     ),
   );
