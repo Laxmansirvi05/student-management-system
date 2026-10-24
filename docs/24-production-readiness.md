@@ -21,7 +21,7 @@ How to read the status words:
 | B2 | Decide which AI providers may receive student text, after reading their terms; adjust `AI_ROUTES` | Owner decision | 4 |
 | B3 | Confirm students are 18 or over, or stop using Gemini (its terms forbid apps likely used by under-18s) | Owner decision | 4 |
 | B4 | Sign off the storage bucket (private, file types, size limit, links work) | Owner, with a developer | 5 |
-| B5 | Back up hosted Supabase, then let `V16__planner.sql` run at the first start of the new build | Owner, deployment | 6 |
+| B5 | Back up hosted Supabase, then let `V16` to `V18` run at the first start of the new build | Owner, deployment | 6 |
 | B6 | Choose the host and create the service; set every variable of [18](18-production-plan.md) §5 | Owner, deployment | 7, 8 |
 | B7 | First-deploy checks: HTTPS without a redirect loop, health, memory, login, one AI request | Deployment | 8 |
 | B8 | The college reviews and adopts the privacy policy and terms (the pages say they must be) | Owner | — |
@@ -98,9 +98,9 @@ With only Groq and Ollama the router keeps a fallback, so it still works when on
 ## 5. Supabase database and Storage
 
 **Database (built and tested):**
-- 16 migrations, V1 to V16. Each table has RLS, `cc_app` grants and policies, and the expected privileges are pinned in `DatabaseSecurityModelIT`.
+- 18 migrations, V1 to V18. Each table has RLS, `cc_app` grants and policies, and the expected privileges are pinned in `DatabaseSecurityModelIT`.
 - Isolation between students is tested per feature: notes, attachments, sharing, the planner, the assistant chats, complaints and quiz attempts.
-- V16 adds `study_tasks` and `student_exams` and is **not yet applied to the hosted database**.
+- V16 to V18 are **not yet applied to the hosted database** (it is at V15); see section 6.
 
 **Storage (built and tested against an in-memory stand-in; the real bucket is unverified):**
 - The bucket is meant to be private. The service key is used only by the server. Every file is reached through a signed link that lives 5 minutes, issued only after the application's own access check.
@@ -121,13 +121,40 @@ With only Groq and Ollama the router keeps a fallback, so it still works when on
 - [ ] The CSP lets the PDF preview frame and photos load from the storage host (no console errors).
 - [ ] Old files from earlier tests are cleared, or known.
 
-## 6. Hosted database migration (V16)
+## 6. Hosted database migration (V16 to V18)
 
-1. Back up the hosted database (Supabase dashboard → Database → Backups, or `pg_dump` as the owner).
-2. Deploy, or restart a local server that reads `.env`: Flyway, connecting as `cc_migrator`, applies V16 at startup. Restarting the local 8080 server does exactly this.
-3. Check the log line "Successfully applied 1 migration … now at version v16", and that the planner page loads.
+The hosted database is at **V15** (seen in the 8080 log on 2026-10-24). Three migrations are waiting. Flyway applies them, in order and each in its own transaction, the first time a build that reads the hosted settings starts: a deployment, or a restart of the local 8080 server. **Do not start such a build until the owner has taken the backup and approved.**
 
-V16 only creates two tables, so nothing existing is changed. Rollback: restore the backup, or drop the two empty tables and the history row as the owner.
+**Expected changes (all additive; no existing row is changed or removed):**
+
+| Migration | Creates or changes | Grants to `cc_app` | RLS |
+| --- | --- | --- | --- |
+| `V16__planner.sql` | Tables `study_tasks`, `student_exams`, two indexes | select, insert, update, delete on both | Enabled, one policy per privilege |
+| `V17__resource_reports.sql` | Table `resource_reports`, a partial unique index (one open report per student and resource), two indexes | select, insert, update | Enabled, three policies |
+| `V18__ai_log_retention.sql` | No table; lets the app delete from `ai_request_logs` (for the nightly clean-up, which stays **off** until `AI_LOG_RETENTION_ENABLED=true`) | delete on `ai_request_logs` | One delete policy |
+
+**1. Backup (owner).** Supabase dashboard → Database → Backups: note the newest daily backup, or take one now. With the Supabase CLI or as the database owner, a logical copy also works: `pg_dump --schema=app --format=custom` to a file kept off the repository. Write down the time.
+
+**2. Validate before applying (developer, no hosted access needed).** Already done for this build: every migration runs from an empty database in `./mvnw verify` (Testcontainers PostgreSQL 17, the real role model) and `DatabaseSecurityModelIT` pins the resulting tables, grants and policies. Right before the real run, confirm the hosted history ends at version 15 with no failed row: in the SQL editor, `select version, success from app.flyway_schema_history order by installed_rank desc limit 3;`.
+
+**3. Apply (owner approves).** Deploy, or restart the 8080 server. Watch the log for `Successfully applied 3 migrations to schema "app", now at version v18`. A failure stops the start-up and Flyway reports which migration failed; nothing after it runs.
+
+**4. Post-migration checks.**
+- `select version, success from app.flyway_schema_history order by installed_rank desc limit 3;` shows 16, 17, 18, all `true`.
+- `select relname, relrowsecurity from pg_class where relnamespace = 'app'::regnamespace and relname in ('study_tasks','student_exams','resource_reports');` shows RLS on for all three.
+- In the app: the planner page loads and a task can be added and deleted; a resource page shows "Report a problem"; the admin Resources page shows "Reported resources".
+- The Supabase Data API is still off (section 5).
+
+**5. Rollback and recovery.** All three are additive, so the old build keeps working against the new schema: rolling the application back needs no database change. To undo the schema itself (only if needed, as the owner): restore the backup; or drop the three new tables and `drop policy ai_request_logs_runtime_delete on app.ai_request_logs; revoke delete on app.ai_request_logs from cc_app;`, then delete the rows for versions 16 to 18 from `app.flyway_schema_history`. Any planner tasks or reports students made in between are lost by either route.
+
+## 6a. Memory measurement plan (512 MB host)
+
+The local figure (about 400 to 460 MB resident with `-Xmx256m`) is not production evidence: the host's JVM, container limits and traffic differ.
+
+1. Deploy to the paid 512 MB plan with the Dockerfile's default `JAVA_OPTS` (`-Xmx256m -Xss512k -XX:MaxMetaspaceSize=128m -XX:ReservedCodeCacheSize=64m -XX:+UseSerialGC`). Adding `-XX:+ExitOnOutOfMemoryError` through the host's `JAVA_OPTS` setting makes an out-of-memory failure restart the service instead of leaving it half-working.
+2. Read the host's memory graph right after start, after one hour idle, and during a short load: ten test students using the dashboard, notes, a resource preview and the assistant at the same time for ten minutes.
+3. **Acceptable:** the peak stays at or under 85% of the plan (about 435 MB of 512 MB) with no out-of-memory restart. Between 85% and 95%: watch for a week before inviting more students. Above 95%, or any OOM restart: move to the next plan size before students arrive.
+4. Record the numbers in this document with the date and the plan.
 
 ## 7. Host comparison: Render or Heroku
 
@@ -168,7 +195,7 @@ Do not use either free or sleeping plan for students. Before the first deploy, c
 3. `JAVA_OPTS` sized for the plan (the Dockerfile default is `-Xmx256m` for 512 MB).
 
 **First start:**
-1. Watch the log for Flyway reaching version 16, "Started CampusCompanionApplication", and "AI router: N routes" (or the mock).
+1. Watch the log for Flyway reaching version 18, "Started CampusCompanionApplication", and "AI router: N routes" (or the mock).
 2. Open `https://<host>/actuator/health`: expect `{"status":"UP"}`.
 3. Open `https://<host>/login.html`. It must load once, not redirect again and again (section 2, forwarded headers). Also check that `http://` redirects to `https://`.
 4. Log in as the bootstrap admin, change the password, then remove `ADMIN_BOOTSTRAP_*`.

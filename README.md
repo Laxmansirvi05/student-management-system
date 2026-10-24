@@ -122,7 +122,9 @@ Status values: **Draft** (written, not yet reviewed by the owner), **Approved**,
 | 21 | [Security review](docs/21-security-review.md) | Rule-by-rule review and open findings | Review of 2026-10-14 |
 | 22 | [Loading real data](docs/22-loading-real-data.md) | What to do before and after loading the real students | Draft |
 | 23 | [Deploying on Render](docs/23-deploying-on-render.md) | Free hosting steps with Supabase | Draft |
-| 24 | [Production readiness](docs/24-production-readiness.md) | Blockers, security review, credentials to rotate, AI provider terms, Storage sign-off, Render vs Heroku, host-independent deploy steps | Draft |
+| 24 | [Production readiness](docs/24-production-readiness.md) | Blockers, security review, credentials to rotate, AI provider terms, Storage sign-off, the V16 to V18 migration plan, memory measurement plan, Render vs Heroku, host-independent deploy steps | Draft |
+| 25 | [Autonomous completion plan](docs/25-autonomous-completion-plan.md) | Requirement matrix with evidence, and the work packages of the completion run | 2026-10-24 |
+| 26 | [Final completion report](docs/26-final-project-completion-report.md) | What is complete and verified, the commits, remaining issues, the one owner checklist and the verdict | 2026-10-24 |
 | | [Decision records](docs/decisions/README.md) | Why key choices were made | See index |
 | | [Demo and viva guide](docs/demo-and-viva-guide.md) | Presentation preparation | Draft |
 

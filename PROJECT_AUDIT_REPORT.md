@@ -217,6 +217,32 @@ P0 = 1575 / 17 = **92.6 %**. P1 = 750 / 11 = **68.2 %**. Overall = (1575 × 3 + 
 
 `./mvnw -B verify` in an isolated copy; Node tests; secret scan; documentation-only changes otherwise. Results are recorded in the commit message of this phase and in the final report to the owner.
 
+## Part A5 — Autonomous completion run (2026-10-24)
+
+Full write-up: [docs/26-final-project-completion-report.md](docs/26-final-project-completion-report.md); plan and matrix: [docs/25-autonomous-completion-plan.md](docs/25-autonomous-completion-plan.md). Commits `a4471f6` to `758a693` plus the closing docs commit, local only.
+
+| Item | Result |
+| --- | --- |
+| FR-LIB-005 report a resource | Built (V17), integration tested, browser verified (`93b24f3`) |
+| FR-AI-006 flowchart | Built, graph checked in Java, drawn without Mermaid, integration tested, browser verified on the mock (`9e965be`) |
+| T7-09 AI usage-log retention | Built (V18), off by default (`81f6416`); moved to its own `retention` package after `AiArchitectureTest` failed (`f55c24c`). Orphaned-file clean-up deferred |
+| FR-AI-005 PDF summarizer | Dropped; excluded everywhere (`a4471f6`) |
+| Browser pass | 17 student and 14 admin pages, desktop and 375 px; attendance planner figures checked by hand. Two defects found and fixed (`8a6e44f`, `758a693`) |
+| Hosted database | Still at V15; V16 to V18 wait for backup and approval (doc 24 §6) |
+
+### A5.1 Completion, recalculated (same method as Part B §3, from A4.1)
+
+| Change | Effect |
+| --- | --- |
+| P0 #15 admin pages: every page now browser verified (resource upload still depends on the bucket, which item 10 already discounts) | 75 % → 100 % |
+| P0 #17 error, empty and loading states: checked page by page | 75 % → 100 % |
+| FR-ATT-003: browser verified, figures checked | 75 % → 100 % |
+| FR-LIB-005: built and browser verified | 0 % → 100 % |
+| FR-AI-006: built, verified on the mock only (no live provider run) | 0 % → 75 % |
+| FR-ADM-009 viewer: browser verified | 75 % → 100 % |
+
+P0 = 1625 / 17 = **95.6 %**. P1 = 975 / 11 = **88.6 %**. Overall = (1625 × 3 + 975) / 62 = 5850 / 62 ≈ **94 %** (was ≈ 88 %). Production readiness is still separate: **not ready for real students** until the owner actions of doc 26 §18 are done.
+
 ---
 
 # Part B — Original audit (before remediation)
