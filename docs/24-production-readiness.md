@@ -241,6 +241,45 @@ Created at the owner's request, through Render's API, as **`campus-companion`**:
 
 For real students, move to Starter (or larger) before inviting them. In the dashboard, also set **Health Check Path** to `/actuator/health`; the API used to create the service cannot set it.
 
+## 8b. Azure App Service deployment (2026-10-24), primary
+
+Created at the owner's request with the Azure CLI, on the owner's **Azure for Students** subscription. The subscription's policy allows only five regions; Central India is one, and it is next to the Mumbai database.
+
+| Item | Value |
+| --- | --- |
+| URL | **https://campus-companion.azurewebsites.net** |
+| Resources | Resource group `rg-campus-companion`; plan `plan-campus-companion` (Linux, **B1 Basic**: 1 core, 1.75 GB); web app `campus-companion` (Java 21, `JAVA|21-java21`) |
+| Cost | About $13 a month, from the student credit. The owner wants it **for one month**: scale it down or delete it by **2026-11-24** (commands below) |
+| Platform settings | HTTPS only; always on; health check `/actuator/health`; TLS 1.2 minimum; FTPS only |
+| Build | The JAR is built from a clean `git archive` of the pushed commit (`5cc908e`) and deployed with `az webapp deploy --type jar`. There is no auto-deploy: redeploy the same way after each change |
+| Settings | Twelve non-secret settings set by the CLI (as on Render, plus `JAVA_OPTS=-Xmx768m -XX:MaxMetaspaceSize=192m -XX:+ExitOnOutOfMemoryError` for the larger memory). Fourteen secrets **piped from `.env` by a shell command without being printed**, at the owner's request. Not set: `DEMO_SEED_ENABLED`, `ADMIN_BOOTSTRAP_*`, and the Gemini and OpenRouter keys |
+
+| First-start check | Result |
+| --- | --- |
+| Start-up log | `prod` active; schema at **19**, "No migration necessary"; `AI router: 12 routes`; started in **164 s** |
+| Health | `{"status":"UP"}` |
+| HTTPS | `http://` gets a 301 to `https://`; the login page loads with **0 redirects** (Azure's front end is trusted, so there is no forwarded-header loop) |
+| Headers | HSTS, CSP, `X-Frame-Options: DENY`, `Referrer-Policy`, `Permissions-Policy`, `nosniff` |
+| Access | APIs return 401 when signed out; student and admin pages redirect to login; `/actuator/env` returns 401; a wrong password gives "Incorrect email or password" |
+| Speed | Public pages 0.2 to 0.9 s from India |
+| Plan memory and CPU | Memory 80 % average, 86 % peak of 1.75 GB; CPU up to 99 % during start-up. Whole-machine figures, including Azure's own processes. Watch them for a day. If memory stays above 85 %, lower `-Xmx` to 512m (the app ran in 256m on Render) |
+
+**Not verified by the developer:** a signed-in session on the live data. The owner should log in once as admin and once as a student.
+
+**After one month (by 2026-11-24):**
+
+```bash
+az appservice plan update -g rg-campus-companion -n plan-campus-companion --sku F1
+```
+
+or remove everything:
+
+```bash
+az group delete -n rg-campus-companion
+```
+
+**Render stays as a backup:** see section 8a; it has the same settings and runs on the Free plan.
+
 ## 9. What was verified in this phase
 
 - `./mvnw -B verify` passes in an isolated copy (no `.env`, Testcontainers PostgreSQL), including the planner tests.

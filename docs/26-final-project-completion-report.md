@@ -243,7 +243,7 @@ Nothing below has been done by the developer, and none of it may be claimed as d
 | Demo data | Seeds only when `DEMO_SEED_ENABLED=true` or the `dev` profile is active; must stay unset for students |
 | Health | `/actuator/health` |
 | Migrations | V16 to V19 applied on hosted (2026-10-24); exam papers loaded |
-| Host | **Deployed on 2026-10-24** to Render (Free plan, Singapore): https://campus-companion-go4c.onrender.com; first-start checks in [24](24-production-readiness.md) §8a |
+| Host | **Deployed on 2026-10-24.** Primary: Azure App Service B1, Central India, https://campus-companion.azurewebsites.net (student credit, for one month; [24](24-production-readiness.md) §8b). Backup: Render Free, Singapore, https://campus-companion-go4c.onrender.com (§8a) |
 
 ## 20. Explicit final verdict
 
