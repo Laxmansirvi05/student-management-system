@@ -27,6 +27,9 @@ logs/
 # Local agent tooling
 .claude/
 
+# Browser-test evidence (screenshots, console logs) from Playwright runs; never committed.
+.playwright-mcp/
+
 # Design exports from Google Stitch: reference only, not part of the application
 stitch_file_based_generator*
 
