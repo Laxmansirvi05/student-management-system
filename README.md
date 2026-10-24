@@ -2,7 +2,7 @@
 
 A Java-first student management and learning platform. It combines a student's academic records with study resources, practice tests and an AI study assistant in one web application.
 
-> **Project status (2026-10-14): every P0 feature is built and tested; not deployed yet.** Students see their records, find and bookmark study material and past question papers, take timed practice tests, follow their progress and use the AI study assistant; administrators manage accounts, subjects, attendance, marks, results, timetables, notices, resources and the question bank. 220 unit tests and 221 integration tests pass. What is still open, mostly for the owner (AI provider, storage bucket, deployment), is in the [implementation plan](docs/16-implementation-plan.md#progress-on-2026-10-14) and the [security review](docs/21-security-review.md).
+> **Project status (2026-10-24): built, tested and deployed.** Live at **https://campus-companion.azurewebsites.net** (Azure App Service, Central India; primary) with a backup at https://campus-companion-go4c.onrender.com (Render Free). Students see their records, results with CGPA, timetable, notices and upcoming exams; find and bookmark study material and past papers; take timed Quick Exams from course question banks; follow their progress; plan tasks and exams; keep notes; raise complaints; and use the AI study assistant (explain, summarise, practice questions, flowcharts). Administrators manage accounts, subjects, attendance, marks, results, timetables, notices with exam papers, resources, past papers, the question bank, complaints and the audit log. 296 unit, 307 integration and 13 browser-module tests pass. What remains are owner actions (credential rotation, storage sign-off, GitHub security settings, college approval): see the [final report](docs/26-final-project-completion-report.md) and the [QA report](docs/27-final-predeployment-qa-report.md).
 >
 > Students log in with an institutional email address. A new student's first password is the roll number and must be changed at first login; that rule is a recorded security exception for demonstration with **synthetic data only** ([decision 0008](docs/decisions/0008-institutional-email-login.md)). The AI assistant runs on a built-in mock provider until a real one is chosen.
 
@@ -29,9 +29,9 @@ Students check attendance, marks, timetables and notices in different places. No
 | Frontend | HTML, CSS and JavaScript, served by Spring Boot. The public landing page alone is React and TypeScript, built ahead of time ([ADR 0015](docs/decisions/0015-react-landing-page.md)) |
 | Database | Supabase PostgreSQL through JDBC, migrations with Flyway |
 | File storage | Supabase Storage, private bucket |
-| AI | An external AI provider behind a Java interface: the mock provider by default; a Gemini adapter exists but is not yet accepted against the live service |
+| AI | External providers behind a Java interface, through a router with automatic fallback ([ADR 0016](docs/decisions/0016-several-ai-providers-with-fallback.md)); production uses Groq and Ollama only. The mock provider is the default for development and every test |
 | Tests | JUnit, Mockito, Spring Boot Test, Testcontainers (real PostgreSQL 17) |
-| Hosting | Heroku (`Procfile`) or Render (`Dockerfile`, `render.yaml`): not yet chosen or deployed |
+| Hosting | Azure App Service B1, Central India (primary); Render Free, Singapore (backup, `Dockerfile`, `render.yaml`). Details and first-start checks: [docs/24](docs/24-production-readiness.md) sections 8a and 8b |
 
 There is no Node.js or Express backend. All application logic is Java. Node is used only on a developer's machine, to build the landing page and to run the browser-module tests.
 

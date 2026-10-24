@@ -260,6 +260,13 @@ Details: [docs/26](docs/26-final-project-completion-report.md) §0. Commits `cb6
 
 Completion is unchanged at about 94 %: these change existing P0 requirements at the owner's request rather than add new ones, and they are verified the same way. Since then the owner took the backup and approved: V16 to V19 are applied on hosted, and the exam papers are loaded.
 
+## Part A7 — Final QA and deployment (2026-10-24)
+
+- **Final QA** ([docs/27](docs/27-final-predeployment-qa-report.md)): the owner's 23 uncommitted frontend files were reviewed, corrected and committed; Playwright covered 18 student and 14 admin pages at five screen sizes plus the main workflows; verdict CONDITIONAL PASS.
+- **Deployed:** Azure App Service B1, Central India, https://campus-companion.azurewebsites.net (primary, student credit, one month; scale-down reminder set for 2026-11-24), and Render Free, Singapore, https://campus-companion-go4c.onrender.com (backup). On both: schema at V19 with no migration, `prod` profile, AI router with Groq and Ollama only, health UP, HTTPS without a redirect loop, security headers, every API 401 when signed out ([docs/24](docs/24-production-readiness.md) sections 8a and 8b).
+- **Production verified:** partly. All signed-out checks pass on the live hosts; a signed-in check on the real data is the owner's.
+- **Remaining owner actions:** credential rotation, Groq Zero Data Retention and the privacy page's provider list, storage-bucket sign-off, GitHub security settings, college approval of the privacy policy and terms, a teacher's review of the Quick Exam questions, the Spline scene fix.
+
 ---
 
 # Part B — Original audit (before remediation)
