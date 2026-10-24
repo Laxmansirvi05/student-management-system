@@ -85,8 +85,9 @@ public class QuizService {
   }
 
   /**
-   * Starts a test: picks the questions at random from the published questions of the unit, and
-   * returns them with their options in random order and without their answers.
+   * Starts a test: picks the questions at random from the published questions of the subject (or of
+   * one unit, when the request names it), and returns them with their options in random order and
+   * without their answers.
    */
   @Transactional
   public QuizAttemptStartedResponse start(CurrentUser currentUser, StartQuizRequest request) {
@@ -94,12 +95,19 @@ public class QuizService {
     if (!LENGTHS.contains(request.questionCount())) {
       throw new ValidationException("questionCount", "Choose 5, 10 or 20 questions.");
     }
-    subjects
-        .findUnit(request.unitId())
-        .filter(unit -> unit.subjectId().equals(request.subjectId()))
-        .orElseThrow(ResourceNotFoundException::new);
+    subjects.find(request.subjectId()).orElseThrow(ResourceNotFoundException::new);
+    if (request.unitId() != null) {
+      subjects
+          .findUnit(request.unitId())
+          .filter(unit -> unit.subjectId().equals(request.subjectId()))
+          .orElseThrow(ResourceNotFoundException::new);
+    }
 
-    List<Long> available = new ArrayList<>(questions.findPublishedIds(request.unitId()));
+    List<Long> available =
+        new ArrayList<>(
+            request.unitId() == null
+                ? questions.findPublishedIdsOfSubject(request.subjectId())
+                : questions.findPublishedIds(request.unitId()));
     if (available.size() < request.questionCount()) {
       throw new QuizNotEnoughQuestionsException(available.size());
     }

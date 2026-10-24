@@ -1,0 +1,545 @@
+{
+ "subject": "25CS21002",
+ "questions": [
+  {
+   "difficulty": "EASY",
+   "text": "Which feature of OOP hides the internal details of an object and exposes only what is needed?",
+   "options": [
+    "Inheritance",
+    "Encapsulation",
+    "Polymorphism",
+    "Compilation"
+   ],
+   "correct": "B",
+   "explanation": "Encapsulation binds data and methods together and hides the data behind access control."
+  },
+  {
+   "difficulty": "EASY",
+   "text": "A class in Java is",
+   "options": [
+    "an instance of an object",
+    "a blueprint from which objects are created",
+    "a primitive data type",
+    "a method that returns an object"
+   ],
+   "correct": "B",
+   "explanation": "A class defines the fields and methods; objects are created from it with new."
+  },
+  {
+   "difficulty": "EASY",
+   "text": "Which keyword creates a new object in Java?",
+   "options": [
+    "class",
+    "new",
+    "this",
+    "create"
+   ],
+   "correct": "B",
+   "explanation": "new allocates memory for an object and calls its constructor."
+  },
+  {
+   "difficulty": "EASY",
+   "text": "Java source code is compiled into",
+   "options": [
+    "machine code for one processor",
+    "bytecode that runs on the JVM",
+    "assembly language",
+    "HTML"
+   ],
+   "correct": "B",
+   "explanation": "javac produces .class files of bytecode, which the Java Virtual Machine runs on any platform."
+  },
+  {
+   "difficulty": "EASY",
+   "text": "Which of these is NOT a primitive type in Java?",
+   "options": [
+    "int",
+    "boolean",
+    "String",
+    "char"
+   ],
+   "correct": "C",
+   "explanation": "String is a class in java.lang; the eight primitives are byte, short, int, long, float, double, char and boolean."
+  },
+  {
+   "difficulty": "EASY",
+   "text": "What is the size of an int in Java?",
+   "options": [
+    "16 bits",
+    "32 bits",
+    "64 bits",
+    "It depends on the platform"
+   ],
+   "correct": "B",
+   "explanation": "Java fixes int at 32 bits on every platform."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "What is the default value of a boolean field of a class?",
+   "options": [
+    "true",
+    "false",
+    "null",
+    "0"
+   ],
+   "correct": "B",
+   "explanation": "Fields of a class get default values; a boolean field defaults to false."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Which statement about constructors is true?",
+   "options": [
+    "A constructor must have a return type",
+    "A constructor has the same name as its class and no return type",
+    "A class can have only one constructor",
+    "Constructors are inherited by subclasses"
+   ],
+   "correct": "B",
+   "explanation": "A constructor is named after the class, has no return type, and can be overloaded; it is not inherited."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "The keyword 'this' refers to",
+   "options": [
+    "the parent class",
+    "the current object",
+    "a static method",
+    "the main method"
+   ],
+   "correct": "B",
+   "explanation": "this is a reference to the object on which the method or constructor was called."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Which access modifier makes a member visible only inside its own class?",
+   "options": [
+    "public",
+    "protected",
+    "private",
+    "default (no modifier)"
+   ],
+   "correct": "C",
+   "explanation": "private members are accessible only within the declaring class."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "A member with no access modifier (default) is visible",
+   "options": [
+    "everywhere",
+    "only in the same class",
+    "in the same package",
+    "only in subclasses"
+   ],
+   "correct": "C",
+   "explanation": "Default (package-private) access allows any class in the same package."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "A static method",
+   "options": [
+    "needs an object to be called",
+    "belongs to the class and can be called without an object",
+    "can use this",
+    "cannot be public"
+   ],
+   "correct": "B",
+   "explanation": "Static members belong to the class itself, so they are called as ClassName.method()."
+  },
+  {
+   "difficulty": "EASY",
+   "text": "Which keyword is used to inherit from a class in Java?",
+   "options": [
+    "implements",
+    "extends",
+    "inherits",
+    "super"
+   ],
+   "correct": "B",
+   "explanation": "class B extends A makes B a subclass of A."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Java does not support multiple inheritance of classes. Which construct gives a form of multiple inheritance?",
+   "options": [
+    "Abstract classes",
+    "Interfaces",
+    "Packages",
+    "Static nested classes"
+   ],
+   "correct": "B",
+   "explanation": "A class can implement many interfaces, though it extends only one class."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "The keyword 'super' is used to",
+   "options": [
+    "call a method of the same class",
+    "refer to the immediate parent class's members or constructor",
+    "create a superclass object",
+    "stop inheritance"
+   ],
+   "correct": "B",
+   "explanation": "super() calls the parent constructor and super.method() calls the parent's version."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Method overloading means",
+   "options": [
+    "same name, different parameter lists in one class",
+    "same signature in parent and child classes",
+    "a method that calls itself",
+    "a method with no body"
+   ],
+   "correct": "A",
+   "explanation": "Overloaded methods share a name but differ in the number or types of parameters; it is resolved at compile time."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Method overriding is an example of",
+   "options": [
+    "compile-time polymorphism",
+    "run-time polymorphism",
+    "encapsulation",
+    "abstraction by packages"
+   ],
+   "correct": "B",
+   "explanation": "Which overridden method runs is decided at run time by the actual object (dynamic method dispatch)."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "A final method",
+   "options": [
+    "cannot be overridden",
+    "cannot be called",
+    "must be static",
+    "cannot have parameters"
+   ],
+   "correct": "A",
+   "explanation": "final on a method prevents subclasses from overriding it; final on a class prevents inheritance."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "An abstract class",
+   "options": [
+    "can be instantiated with new",
+    "cannot be instantiated and may have abstract methods",
+    "must have only abstract methods",
+    "cannot have constructors"
+   ],
+   "correct": "B",
+   "explanation": "An abstract class can have both abstract and concrete methods and constructors, but no objects of it can be created."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Since Java 8, an interface can contain",
+   "options": [
+    "only abstract methods",
+    "abstract, default and static methods",
+    "constructors",
+    "instance variables that can change"
+   ],
+   "correct": "B",
+   "explanation": "Java 8 added default and static methods to interfaces; their fields are implicitly public static final."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Fields declared in an interface are implicitly",
+   "options": [
+    "private",
+    "public static final",
+    "protected",
+    "volatile"
+   ],
+   "correct": "B",
+   "explanation": "Interface fields are constants: public, static and final."
+  },
+  {
+   "difficulty": "EASY",
+   "text": "Which package is imported automatically into every Java program?",
+   "options": [
+    "java.util",
+    "java.io",
+    "java.lang",
+    "java.net"
+   ],
+   "correct": "C",
+   "explanation": "java.lang (String, Math, Object, System and others) is always available without import."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Which is the root class of every class in Java?",
+   "options": [
+    "Class",
+    "Object",
+    "System",
+    "Main"
+   ],
+   "correct": "B",
+   "explanation": "Every class directly or indirectly extends java.lang.Object."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "What does the following print? String s1 = \"java\"; String s2 = new String(\"java\"); System.out.println(s1 == s2);",
+   "options": [
+    "true",
+    "false",
+    "java",
+    "It does not compile"
+   ],
+   "correct": "B",
+   "explanation": "== compares references; new String creates a different object, so it prints false. equals() would compare content."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Strings in Java are",
+   "options": [
+    "mutable",
+    "immutable",
+    "primitive",
+    "stored only on the stack"
+   ],
+   "correct": "B",
+   "explanation": "A String object cannot change; operations like concat return a new String. StringBuilder is the mutable alternative."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Which class should be used to build a string in a loop efficiently in a single thread?",
+   "options": [
+    "String",
+    "StringBuilder",
+    "StringBuffer",
+    "Character"
+   ],
+   "correct": "B",
+   "explanation": "StringBuilder is mutable and not synchronized, so it is the fastest for single-threaded building."
+  },
+  {
+   "difficulty": "EASY",
+   "text": "Which block always runs, whether or not an exception occurs?",
+   "options": [
+    "try",
+    "catch",
+    "finally",
+    "throw"
+   ],
+   "correct": "C",
+   "explanation": "finally runs after try and catch, used to release resources."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Which of these is a checked exception?",
+   "options": [
+    "ArithmeticException",
+    "NullPointerException",
+    "IOException",
+    "ArrayIndexOutOfBoundsException"
+   ],
+   "correct": "C",
+   "explanation": "IOException must be caught or declared; the others are unchecked RuntimeExceptions."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "The 'throws' keyword is used to",
+   "options": [
+    "throw an exception object",
+    "declare that a method may throw exceptions",
+    "catch an exception",
+    "define a custom exception"
+   ],
+   "correct": "B",
+   "explanation": "throws in a method signature declares the checked exceptions it may pass to the caller; throw raises one."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "What happens with: int[] a = new int[3]; a[3] = 5;",
+   "options": [
+    "The array grows to 4 elements",
+    "ArrayIndexOutOfBoundsException is thrown",
+    "It compiles to an error",
+    "a[0] is set to 5"
+   ],
+   "correct": "B",
+   "explanation": "Valid indexes are 0 to 2, so index 3 throws ArrayIndexOutOfBoundsException at run time."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Which is the superclass of all exceptions and errors?",
+   "options": [
+    "Exception",
+    "RuntimeException",
+    "Throwable",
+    "Error"
+   ],
+   "correct": "C",
+   "explanation": "Throwable is the root; Exception and Error both extend it."
+  },
+  {
+   "difficulty": "HARD",
+   "text": "A custom checked exception is created by",
+   "options": [
+    "extending RuntimeException",
+    "extending Exception",
+    "implementing Throwable",
+    "extending Error"
+   ],
+   "correct": "B",
+   "explanation": "Extending Exception (but not RuntimeException) makes a checked exception."
+  },
+  {
+   "difficulty": "EASY",
+   "text": "Which method starts a new thread of execution?",
+   "options": [
+    "run()",
+    "start()",
+    "execute()",
+    "init()"
+   ],
+   "correct": "B",
+   "explanation": "start() creates the new thread, which then calls run(); calling run() directly runs on the current thread."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "A thread can be created in Java by",
+   "options": [
+    "extending Thread or implementing Runnable",
+    "implementing Serializable",
+    "extending Object only",
+    "calling System.thread()"
+   ],
+   "correct": "A",
+   "explanation": "The two classic ways are subclassing Thread and passing a Runnable to a Thread."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "The 'synchronized' keyword is used to",
+   "options": [
+    "make a method run faster",
+    "let only one thread at a time execute a block on the same lock",
+    "start a thread",
+    "stop a thread"
+   ],
+   "correct": "B",
+   "explanation": "synchronized makes threads acquire an object's monitor, preventing race conditions."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Which method makes the current thread wait until another thread finishes?",
+   "options": [
+    "sleep()",
+    "join()",
+    "yield()",
+    "notify()"
+   ],
+   "correct": "B",
+   "explanation": "t.join() blocks until thread t has finished."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "wait(), notify() and notifyAll() are methods of",
+   "options": [
+    "Thread",
+    "Runnable",
+    "Object",
+    "System"
+   ],
+   "correct": "C",
+   "explanation": "They are defined in java.lang.Object and must be called while holding the object's lock."
+  },
+  {
+   "difficulty": "HARD",
+   "text": "Which thread state is entered after calling sleep(1000)?",
+   "options": [
+    "NEW",
+    "RUNNABLE",
+    "TIMED_WAITING",
+    "TERMINATED"
+   ],
+   "correct": "C",
+   "explanation": "A thread sleeping for a set time is in TIMED_WAITING until the time passes."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Which collection does NOT allow duplicate elements?",
+   "options": [
+    "ArrayList",
+    "LinkedList",
+    "HashSet",
+    "Vector"
+   ],
+   "correct": "C",
+   "explanation": "A Set holds each element once; Lists allow duplicates."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Which Map implementation keeps its keys sorted?",
+   "options": [
+    "HashMap",
+    "LinkedHashMap",
+    "TreeMap",
+    "Hashtable"
+   ],
+   "correct": "C",
+   "explanation": "TreeMap is a red-black tree that keeps keys in their natural or a given order."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "ArrayList gives fast",
+   "options": [
+    "insertion at the front",
+    "random access by index",
+    "automatic sorting",
+    "thread safety"
+   ],
+   "correct": "B",
+   "explanation": "ArrayList is backed by an array, so get(i) is O(1); inserting at the front shifts every element."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Which interface must a class implement to be sorted by Collections.sort() using its natural order?",
+   "options": [
+    "Comparator",
+    "Comparable",
+    "Iterable",
+    "Cloneable"
+   ],
+   "correct": "B",
+   "explanation": "Comparable's compareTo defines the natural order; a Comparator is a separate ordering object."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Which stream class reads characters from a file?",
+   "options": [
+    "FileInputStream",
+    "FileReader",
+    "ObjectOutputStream",
+    "DataOutputStream"
+   ],
+   "correct": "B",
+   "explanation": "Reader classes like FileReader handle characters; InputStream classes handle bytes."
+  },
+  {
+   "difficulty": "HARD",
+   "text": "What is the output of: System.out.println(10 / 4 + 10 % 4);",
+   "options": [
+    "4",
+    "4.5",
+    "2",
+    "5"
+   ],
+   "correct": "A",
+   "explanation": "10 / 4 is integer division = 2, and 10 % 4 = 2, so 2 + 2 = 4."
+  },
+  {
+   "difficulty": "HARD",
+   "text": "Which statement about garbage collection is true?",
+   "options": [
+    "System.gc() frees memory immediately and always",
+    "An object becomes eligible when no live reference points to it",
+    "Programmers must free memory with delete",
+    "Garbage collection runs only when the program ends"
+   ],
+   "correct": "B",
+   "explanation": "The JVM reclaims objects that are no longer reachable; System.gc() is only a request."
+  }
+ ]
+}

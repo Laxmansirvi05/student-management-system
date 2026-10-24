@@ -303,6 +303,57 @@ class PlannerIT extends ApiIntegrationTest {
         .isTrue();
   }
 
+  @Test
+  void aTimeTableWithPapersGivesOneCollegeExamPerPaper() throws Exception {
+    ApiTestClient admin = adminClient(ADMIN);
+    ApiTestClient me = student("23PLN010");
+    String papers =
+        "[{\"examDate\":\"%s\",\"subject\":\"  Advanced Data Structures \"},{\"examDate\":\"%s\",\"subject\":\"Java\"},{\"examDate\":\"%s\",\"subject\":\"Already written\"}]"
+            .formatted(today().plusDays(5), today().plusDays(3), today().minusDays(1));
+    HttpResponse<String> created =
+        admin.post(
+            "/api/v1/admin/notices",
+            "{\"title\":\"Semester exams: time table\",\"body\":\"Synthetic text.\",\"category\":\"EXAM\",\"targetBranch\":\"PLN\",\"targetSemester\":3,\"dueDate\":\"%s\",\"examPapers\":%s}"
+                .formatted(today().plusDays(3), papers));
+    assertThat(created.statusCode()).as(created.body()).isEqualTo(201);
+    JsonNode notice = json(created);
+    assertThat(notice.get("examPapers").size()).isEqualTo(3);
+    assertThat(notice.get("examPapers").get(0).get("subject").asString())
+        .as("in date order, trimmed")
+        .isEqualTo("Already written");
+    publish(admin, notice.get("id").asLong());
+
+    JsonNode upcoming = json(me.get(EXAMS)).get("upcoming");
+    assertThat(upcoming.valueStream().map(e -> e.get("name").asString()).toList())
+        .as("one exam per paper still to come, not the notice's own date")
+        .containsSubsequence("Java", "Advanced Data Structures")
+        .doesNotContain("Semester exams: time table", "Already written");
+    JsonNode onDashboard = json(me.get("/api/v1/students/me/dashboard")).get("upcomingExams");
+    assertThat(onDashboard.valueStream().map(e -> e.get("name").asString()).toList())
+        .contains("Java", "Advanced Data Structures");
+
+    // Editing without the field keeps the papers; only exam notices may have them.
+    long id = notice.get("id").asLong();
+    HttpResponse<String> kept =
+        admin.put(
+            "/api/v1/admin/notices/" + id,
+            "{\"title\":\"Semester exams: time table\",\"body\":\"Edited.\",\"category\":\"EXAM\",\"targetBranch\":\"PLN\",\"targetSemester\":3}");
+    assertThat(json(kept).get("examPapers").size()).isEqualTo(3);
+    assertProblem(
+        admin.put(
+            "/api/v1/admin/notices/" + id,
+            "{\"title\":\"t\",\"body\":\"b\",\"category\":\"GENERAL\",\"examPapers\":%s}"
+                .formatted(papers)),
+        400,
+        "VALIDATION_FAILED");
+    assertProblem(
+        admin.put(
+            "/api/v1/admin/notices/" + id,
+            "{\"title\":\"t\",\"body\":\"b\",\"category\":\"EXAM\",\"examPapers\":[{\"examDate\":null,\"subject\":\"x\"}]}"),
+        400,
+        "VALIDATION_FAILED");
+  }
+
   private static long notice(
       ApiTestClient admin,
       String title,

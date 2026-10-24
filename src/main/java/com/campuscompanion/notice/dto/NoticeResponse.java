@@ -4,6 +4,7 @@ import com.campuscompanion.notice.NoticeCategory;
 import com.campuscompanion.notice.NoticeStatus;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 
 public record NoticeResponse(
     Long id,
@@ -15,4 +16,5 @@ public record NoticeResponse(
     LocalDate dueDate,
     NoticeStatus status,
     Instant publishedAt,
-    String documentType) {}
+    String documentType,
+    List<ExamPaperResponse> examPapers) {}

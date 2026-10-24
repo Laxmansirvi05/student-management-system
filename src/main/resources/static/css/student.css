@@ -1680,6 +1680,26 @@ button.qdot:hover {
   }
 }
 
+/* Dashboard results: the CGPA on top, then one row per semester. */
+.results-cgpa .figure {
+  margin: 0;
+}
+
+.results-row {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.results-row__sgpa {
+  margin-left: auto;
+  color: var(--color-text-muted);
+}
+
+.results-row__sgpa strong {
+  color: var(--color-text);
+}
+
 .planner-next {
   display: grid;
   gap: var(--space-1);

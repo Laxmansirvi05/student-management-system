@@ -124,9 +124,10 @@ public class ResourceService {
   }
 
   /** A few published resources of a unit to revise from: notes first, then the newest. */
-  public List<ResourceResponse> forRevision(Long unitId, int limit) {
+  /** Resources to revise a unit, or a whole subject when {@code unitId} is null. */
+  public List<ResourceResponse> forRevision(Long subjectId, Long unitId, int limit) {
     return assembler.toResponses(
-        resources.findForRevision(unitId, PageRequest.of(0, limit)), null, false);
+        resources.findForRevision(subjectId, unitId, PageRequest.of(0, limit)), null, false);
   }
 
   public ResourceResponse get(CurrentUser currentUser, Long id) {

@@ -64,6 +64,13 @@ function detail(notice) {
       ? h("div.inset.inset--row", h("span.line.line--start", icon("calendar"), h("strong.num", "Due " + formatDate(notice.dueDate))), h("span.eyebrow", dueText(notice.dueDate)))
       : null,
     h("div.notice__body", notice.body.split(/\n\s*\n/).map((paragraph) => h("p", paragraph))),
+    notice.examPapers?.length
+      ? h(
+          "div.stack.stack--tight",
+          h("p.eyebrow", "Exam papers"),
+          h("ul.rows", notice.examPapers.map((paper) => h("li.row.results-row", h("span.row__meta.num", formatDate(paper.examDate)), h("span.row__title", paper.subject)))),
+        )
+      : null,
     notice.documentType ? officialDocument(notice) : null,
     h("p.note", icon("clock"), "Published " + formatDate(notice.publishedAt)),
   ];

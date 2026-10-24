@@ -1,6 +1,7 @@
 package com.campuscompanion.notice;
 
 import com.campuscompanion.common.error.ResourceNotFoundException;
+import com.campuscompanion.common.error.ValidationException;
 import com.campuscompanion.common.security.CurrentUser;
 import com.campuscompanion.common.storage.StorageClient;
 import com.campuscompanion.common.web.PageResponse;
@@ -8,6 +9,7 @@ import com.campuscompanion.notice.dto.NoticeDocumentLinkResponse;
 import com.campuscompanion.notice.dto.NoticeResponse;
 import com.campuscompanion.notice.dto.NoticeWriteRequest;
 import java.time.Clock;
+import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -62,6 +64,7 @@ public class AdminNoticeService {
             request.targetSemester(),
             request.dueDate(),
             admin.id());
+    notice.replaceExamPapers(papers(request, List.of()));
     return NoticeService.toResponse(notices.save(notice));
   }
 
@@ -75,6 +78,7 @@ public class AdminNoticeService {
         branch(request.targetBranch()),
         request.targetSemester(),
         request.dueDate());
+    notice.replaceExamPapers(papers(request, notice.getExamPapers()));
     return NoticeService.toResponse(notice);
   }
 
@@ -169,6 +173,25 @@ public class AdminNoticeService {
   }
 
   /** A blank target means "all branches". Branch codes are stored in upper case. */
+  /**
+   * The papers to save: only an exam notice has them. Null in the request keeps what is saved, so
+   * an older client cannot wipe a time table by leaving the field out.
+   */
+  private static List<ExamPaper> papers(NoticeWriteRequest request, List<ExamPaper> saved) {
+    if (request.category() != NoticeCategory.EXAM) {
+      if (request.examPapers() != null && !request.examPapers().isEmpty()) {
+        throw new ValidationException("examPapers", "Only an exam notice can list exam papers.");
+      }
+      return List.of();
+    }
+    if (request.examPapers() == null) {
+      return saved;
+    }
+    return request.examPapers().stream()
+        .map(paper -> new ExamPaper(paper.examDate(), paper.subject().strip()))
+        .toList();
+  }
+
   private static String branch(String targetBranch) {
     return targetBranch == null || targetBranch.isBlank()
         ? null

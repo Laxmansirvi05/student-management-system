@@ -206,7 +206,8 @@ class TimetableNoticesDashboardIT extends ApiIntegrationTest {
         "{\"studentId\":%d,\"semester\":2,\"sgpa\":8.5,\"creditsRegistered\":20,\"creditsEarned\":20,\"resultStatus\":\"PASS\",\"published\":true}"
             .formatted(studentId));
     publish(notice("TTND due soon", "ASSIGNMENT", "TTND", 3, today().plusDays(3)));
-    publish(notice("TTND due later", "ASSIGNMENT", "TTND", 3, today().plusDays(20)));
+    publish(notice("TTND due in three weeks", "ASSIGNMENT", "TTND", 3, today().plusDays(20)));
+    publish(notice("TTND due later", "ASSIGNMENT", "TTND", 3, today().plusDays(40)));
     publish(notice("TTND was due", "ASSIGNMENT", "TTND", 3, today().minusDays(1)));
     for (int number = 1; number <= 4; number++) {
       publish(notice("TTND notice " + number, "GENERAL", "TTND", 3, null));
@@ -222,14 +223,20 @@ class TimetableNoticesDashboardIT extends ApiIntegrationTest {
     assertThat(dashboard.get("results").get("latestSgpa").decimalValue())
         .isEqualByComparingTo("8.5");
     assertThat(dashboard.get("results").get("cgpa").decimalValue()).isEqualByComparingTo("8.00");
+    assertThat(dashboard.get("results").get("semesters").size()).isEqualTo(2);
+    assertThat(dashboard.get("results").get("semesters").get(0).get("semester").asInt())
+        .isEqualTo(1);
+    assertThat(dashboard.get("results").get("semesters").get(0).get("sgpa").decimalValue())
+        .isEqualByComparingTo("7.5");
+    assertThat(dashboard.get("upcomingExams").isArray()).isTrue();
     assertThat(dashboard.get("todayClasses").size())
         .as("one class every day in this test")
         .isEqualTo(1);
     assertThat(dashboard.get("todayClasses").get(0).get("subjectCode").asString())
         .isEqualTo("TTN301");
     assertThat(texts(dashboard.get("upcomingDeadlines"), "title"))
-        .as("due within the next 14 days, and not yet passed")
-        .contains("TTND due soon")
+        .as("due within the next 30 days, and not yet passed")
+        .contains("TTND due soon", "TTND due in three weeks")
         .doesNotContain("TTND due later", "TTND was due");
     assertThat(dashboard.get("recentNotices").size()).as("the five newest").isEqualTo(5);
     assertThat(texts(dashboard.get("recentNotices"), "title"))

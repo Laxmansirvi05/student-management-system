@@ -31,7 +31,7 @@ public class QuizAttempt {
   @Column(name = "subject_id", nullable = false, updatable = false)
   private Long subjectId;
 
-  @Column(name = "unit_id", nullable = false, updatable = false)
+  @Column(name = "unit_id", updatable = false)
   private Long unitId;
 
   @JdbcTypeCode(SqlTypes.SMALLINT)

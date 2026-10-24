@@ -156,7 +156,7 @@ Access: **Public**, **Any** (any logged-in user), **Student**, **Admin**. Detail
 | PUT | `/students/me/photo` | Student | Add or replace own photo: multipart part `file`, JPEG or PNG, at most 2 MB. The server stores a redrawn 512 by 512 JPEG. |
 | DELETE | `/students/me/photo` | Student | Remove own photo. Idempotent. |
 | GET | `/students/me/photo-url` | Student | Signed link to own photo, valid five minutes. `404` when there is none. |
-| GET | `/students/me/dashboard` | Student | Dashboard summary, including `nextExam` (8.22). |
+| GET | `/students/me/dashboard` | Student | Dashboard summary: `results` `{latestSgpa, cgpa, semesters: [{semester, sgpa, resultStatus}]}`, deadlines due in the next 30 days, `nextExam` and `upcomingExams` (up to 8, soonest first; 8.22). `recommendations` is still sent but no longer shown on the page. |
 | GET | `/attendance/me` | Student | Subject-wise attendance. |
 | GET | `/attendance/me/subjects/{subjectId}` | Student | Dated history for one subject (paginated). |
 | GET | `/attendance/me/calculator` | Student | Classes needed for a target (P1). |
@@ -164,7 +164,7 @@ Access: **Public**, **Any** (any logged-in user), **Student**, **Admin**. Detail
 | GET | `/results/me` | Student | Semester results and CGPA. |
 | GET | `/timetable/me` | Student | Weekly timetable. Filter: `day`. |
 | GET | `/notices` | Any | Published notices (paginated). Filter: `category`. |
-| GET | `/notices/{id}` | Any | One published notice. `documentType` is `application/pdf`, `image/jpeg` or null. |
+| GET | `/notices/{id}` | Any | One published notice. `documentType` is `application/pdf`, `image/jpeg` or null. Every notice carries `examPapers: [{examDate, subject}]` in date order (empty unless it is an Exam time table). |
 | GET | `/notices/{id}/document` | Any | Five-minute signed link to the notice's official document: `{url, expiresAt, contentType}`. `download=true` saves it as `Notice - <title>.pdf/.jpg`. 404 when the notice is not visible to the user or has no document. |
 | GET | `/subjects` | Any | Subjects (a student sees their branch). Filter: `semester`. |
 | GET | `/subjects/{id}/units` | Any | Units of a subject. |
@@ -226,7 +226,7 @@ All paths start with `/admin` and require the `ADMIN` role.
 | GET, POST | `/admin/timetable` | List and create timetable entries. |
 | PUT, DELETE | `/admin/timetable/{id}` | Update or delete an entry. |
 | GET, POST | `/admin/notices` | List all notices (including drafts) and create. |
-| PUT, DELETE | `/admin/notices/{id}` | Update or delete a notice. |
+| PUT, DELETE | `/admin/notices/{id}` | Update or delete a notice. The write body takes optional `examPapers: [{examDate, subject (1-120)}]`, at most 30, for `EXAM` notices only (another category with papers is `400`); on update, leaving the field out keeps the saved papers and `[]` removes them. |
 | POST | `/admin/notices/{id}/publish`, `/admin/notices/{id}/unpublish` | Change status. |
 | POST, DELETE, GET | `/admin/notices/{id}/document` | Attach or replace the official document (multipart part `file`: PDF, JPEG or PNG, at most 10 MB; 413 too large, 415 not a valid file, 503 storage unavailable), remove it (404 when there is none), or get a signed link (drafts included). POST and DELETE return the notice. |
 | GET, POST | `/admin/resources` | List all resources and upload (multipart). |
@@ -440,10 +440,10 @@ Failures: `404 NOT_FOUND` (missing or hidden), `503 STORAGE_UNAVAILABLE`.
 `POST /api/v1/quiz-attempts`
 
 ```json
-{ "subjectId": 12, "unitId": 31, "questionCount": 10 }
+{ "subjectId": 12, "questionCount": 10 }
 ```
 
-Validation: `questionCount` is 5, 10 or 20.
+Validation: `questionCount` is 5, 10 or 20. `unitId` is optional (since 2026-10-24): without it, the questions are drawn from every published question of the subject, which is what the page does; with it, from that unit only. A test of the whole subject has `unitId`, `unitNo` and `unitTitle` null in its history and result, and progress lists it under the subject with `unitId` and `unitNo` null.
 
 `201 Created`
 
@@ -794,7 +794,7 @@ Student only (T7-02, FR-PLN-001, FR-PLN-002). The student always comes from the 
 
 - `GET /planner/tasks?view=pending|overdue|done|all` (default `pending`; any other value `400`) returns `{tasks, counts: {pending, overdue, done}}`. A task is `{id, title, notes, subject: {id, code, name} | null, dueDate, status: PENDING|DONE, overdue, completedAt, createdAt}`. `overdue` is true for a pending task whose due date is before the campus date. Order: pending soonest due first (undated last, then newest); done latest completed first; `all` is pending then done.
 - `POST /planner/tasks` `{title, notes?, subjectId?, dueDate?}` returns 201 with the task. `PUT /planner/tasks/{id}` takes the same body and replaces those fields. `POST /planner/tasks/{id}/complete` and `/reopen` return the task (completing twice keeps the first completion time). `DELETE /planner/tasks/{id}` returns 204 and is permanent.
-- `GET /planner/exams` returns `{upcoming, past}`. An exam is `{id, source: MINE|COLLEGE, noticeId, name, subject, examDate, past}`. `upcoming` holds the student's own exams from today on and the published notices in the `EXAM` category with a due date from today up to 366 days ahead that target the student's class (`source: COLLEGE`, `id: null`, read-only), soonest first; `past` holds the student's own past exams, latest first, at most 20.
+- `GET /planner/exams` returns `{upcoming, past}`. An exam is `{id, source: MINE|COLLEGE, noticeId, name, subject, examDate, past}`. `upcoming` holds the student's own exams from today on and the college's exams from today up to 366 days ahead for the student's class (`source: COLLEGE`, `id: null`, read-only): each paper of a published `EXAM` notice, named by its subject, or the due date of an `EXAM` notice without papers, named by its title; soonest first; `past` holds the student's own past exams, latest first, at most 20.
 - `POST /planner/exams` `{name, subjectId?, examDate}` returns 201; `PUT /planner/exams/{id}` takes the same body; `DELETE /planner/exams/{id}` returns 204.
 - Validation (`400 VALIDATION_FAILED`, field named): `title` 1 to 200 characters, `notes` at most 1,000, `name` 1 to 120, `examDate` required; `subjectId` must be one of the student's subjects; a new or changed `dueDate` or `examDate` must be from today to five years ahead (an unchanged date is accepted on edit); unknown fields are refused.
 - The number of days left is not sent: the pages count it from the date, like the notice deadlines, so it stays right after midnight.

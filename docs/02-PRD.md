@@ -189,6 +189,7 @@ A priority is changed only by editing this document, stating the reason, with th
   4. The five most recent notices.
   5. Upcoming deadlines in the next 14 days.
   6. Up to three revision recommendations.
+- **Changed on 2026-10-24 at the owner's request:** the Results card shows the CGPA on top and the SGPA of every published semester below it (criterion 2); deadlines are shown for the next **30** days (criterion 5), so a fee deadline appears in time; the revision-recommendations card is removed from the dashboard (criterion 6; recommendations stay on the Progress page); and an "Upcoming exams" card lists the next exams, soonest first (FR-PLN-002).
 - **Edge cases:** Each card has its own empty state. A failure in one card does not blank the others. The recommendations card stays in its empty state until Quick Exam is built (milestone M4).
 - **Depends on:** FR-ATT-001, FR-MRK-002, FR-TT-001, FR-NOT-001, FR-PRG-002.
 
@@ -432,6 +433,7 @@ Added on 2026-10-18 at the owner's request. The decision is [ADR 0012](decisions
   3. Answer options are shown in random order.
   4. The correct answers are not present anywhere in the page before submission.
 - **Edge cases:** If the unit has fewer questions than requested, say how many are available and offer that length.
+- **Changed on 2026-10-24 at the owner's request:** a test is started for a **whole subject**; the student chooses the subject and the length only, and the questions are drawn at random from all the subject's published questions, so each test differs. A question's unit is optional. The college's course question banks (40 to 50 questions each for Advanced Data Structures, OOP through Java and DBMS, written from the course notes and previous-year papers) are bundled with the application and loaded once into the subjects with those codes. Progress groups whole-subject answers under the subject.
 - **Depends on:** FR-ADM-008.
 
 ### FR-QZ-002 Timer and submission (P0)
@@ -481,7 +483,8 @@ Built on 2026-10-24 (T7-02), on the Planner page (`/student/planner.html`) and t
 ### FR-PLN-002 Exam countdown (P1)
 
 - **Acceptance criteria:** The dashboard shows the days remaining until the next notice in the "Exam" category that has a due date.
-- **Extended at the owner's request (T7-02, 2026-10-24):** a student can also add, edit and delete exam dates of their own (a name of 1 to 120 characters, an optional subject, a date from today to five years ahead). The countdown lists the student's own exams and the college's published Exam notices with a due date for the student's class (read-only, linked to the notice) together, soonest first; the student's own past exams are listed apart, latest first. The dashboard shows the next of them, whichever kind it is. Days are counted from the campus date; an exam is "Today" on its day and past from the next day.
+- **Extended at the owner's request (T7-02, 2026-10-24):** a student can also add, edit and delete exam dates of their own (a name of 1 to 120 characters, an optional subject, a date from today to five years ahead). The countdown lists the student's own exams and the college's published Exam notices with a due date for the student's class (read-only, linked to the notice) together, soonest first; the student's own past exams are listed apart, latest first. The dashboard shows the next of them, whichever kind it is.
+- **Exam papers (2026-10-24, owner's request):** an Exam notice can list its papers (date and subject, up to 30), entered by the admin on the notice form. Each paper still to come is one college exam in the countdown, named by its subject; an Exam notice without papers still counts by its due date. The dashboard lists up to eight upcoming exams. The notice page shows the papers. Days are counted from the campus date; an exam is "Today" on its day and past from the next day.
 
 ## 9. AI study assistant
 

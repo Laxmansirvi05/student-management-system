@@ -11,6 +11,28 @@ import "./shell.js";
 const content = document.getElementById("content");
 let pageNumber = 0;
 
+/** "2026-12-07 Advanced Data Structures" or "07.12.2026 Advanced Data Structures", one per line. */
+const PAPER_LINE = /^\s*(?:(\d{4})-(\d{2})-(\d{2})|(\d{2})[./-](\d{2})[./-](\d{4}))\s*[-–:,|]?\s*(.+?)\s*$/;
+
+function papersToText(papers = []) {
+  return papers.map((paper) => `${paper.examDate} ${paper.subject}`).join("\n");
+}
+
+/** Lines become papers. A line without a date is sent as it is, and the server says what is wrong. */
+function textToPapers(text) {
+  return text
+    .split("\n")
+    .filter((line) => line.trim())
+    .map((line) => {
+      const match = line.match(PAPER_LINE);
+      if (!match) {
+        return { examDate: null, subject: line.trim() };
+      }
+      const [, y1, m1, d1, d2, m2, y2, subject] = match;
+      return { examDate: y1 ? `${y1}-${m1}-${d1}` : `${y2}-${m2}-${d2}`, subject };
+    });
+}
+
 function noticeForm(notice) {
   // The file is sent separately after the notice is saved, so it has no "name" in the form.
   const file = h("input.textbox", { id: "f-document", type: "file", accept: "application/pdf,image/jpeg,image/png,.pdf,.jpg,.jpeg,.png" });
@@ -28,12 +50,22 @@ function noticeForm(notice) {
       field("Semester (optional)", numberSelect("targetSemester", semesterOptions("All semesters"), notice?.targetSemester || "")),
       h(
         "div.field--wide",
+        field(
+          "Exam papers (exam notices only, optional)",
+          textarea("examPapersText", { rows: 4, placeholder: "2026-12-07 Advanced Data Structures\n2026-12-09 Object Oriented Programming through Java" }),
+          "One paper per line: the date, then the subject. Students see each paper in their exam countdown.",
+        ),
+      ),
+      h(
+        "div.field--wide",
         field(notice?.documentType ? "Replace the official document (optional)" : "Official document (optional)", file, "The college's circular as a PDF, or a photo or scan (JPEG or PNG), up to 10 MB. Students open it from the notice."),
       ),
       removeBox ? h("label.line.line--start.field--wide", { for: "f-remove-document" }, removeBox, "Remove the current official document") : null,
     ],
     wide: true,
-    onSubmit: async (values) => {
+    onSubmit: async (form) => {
+      const { examPapersText, ...values } = form;
+      values.examPapers = values.category === "EXAM" ? textToPapers(examPapersText || "") : [];
       const saved = notice ? await api.put("/admin/notices/" + notice.id, values) : await api.post("/admin/notices", values);
       if (file.files[0]) {
         try {
@@ -50,6 +82,7 @@ function noticeForm(notice) {
       load();
     },
   }).querySelector("textarea").value = notice?.body || "";
+  document.getElementById("f-examPapersText").value = papersToText(notice?.examPapers);
 }
 
 async function openDocument(notice) {
@@ -94,7 +127,7 @@ function load() {
         [
           { label: "Notice", cell: (notice) => h("div.stack.stack--tight", h("strong", notice.title), h("span.row__meta", audience(notice))) },
           { label: "Category", cell: (notice) => categoryTag(notice.category) },
-          { label: "Due", cell: (notice) => (notice.dueDate ? formatDate(notice.dueDate) : "—") },
+          { label: "Due", cell: (notice) => (notice.dueDate ? formatDate(notice.dueDate) : "—") + (notice.examPapers?.length ? ` · ${notice.examPapers.length} papers` : "") },
           { label: "Official notice", cell: (notice) => (notice.documentType ? tag(notice.documentType === "application/pdf" ? "PDF" : "Picture", "primary", "file") : "—") },
           { label: "Status", cell: (notice) => (notice.status === "PUBLISHED" ? tag("Published", "success", "eye") : tag("Draft", "", "edit")) },
           {

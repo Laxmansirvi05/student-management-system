@@ -10,7 +10,8 @@ import jakarta.validation.constraints.Size;
 /** A question as an admin writes it. */
 public record QuizQuestionWriteRequest(
     @NotNull(message = "Choose a subject.") Long subjectId,
-    @NotNull(message = "Choose a unit.") Long unitId,
+    /** Optional: a question may belong to the whole subject. */
+    Long unitId,
     @NotBlank(message = "Enter the question.")
         @Size(max = 1000, message = "Use at most 1,000 characters.")
         String questionText,

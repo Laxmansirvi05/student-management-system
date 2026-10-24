@@ -10,6 +10,7 @@ import com.campuscompanion.subject.dto.UnitResponse;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -86,6 +87,9 @@ public class SubjectService {
 
   /** The unit with this ID, with the subject it belongs to. */
   public Optional<UnitOfSubject> findUnit(Long unitId) {
+    if (unitId == null) {
+      return Optional.empty();
+    }
     return units
         .findById(unitId)
         .map(
@@ -96,7 +100,7 @@ public class SubjectService {
 
   /** Units by ID, for naming the unit of a record. */
   public Map<Long, UnitOfSubject> unitsByIds(Collection<Long> unitIds) {
-    return units.findAllById(unitIds).stream()
+    return units.findAllById(unitIds.stream().filter(Objects::nonNull).toList()).stream()
         .map(
             unit ->
                 new UnitOfSubject(

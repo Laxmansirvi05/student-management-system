@@ -24,7 +24,7 @@ public class QuizQuestion {
   @Column(name = "subject_id", nullable = false)
   private Long subjectId;
 
-  @Column(name = "unit_id", nullable = false)
+  @Column(name = "unit_id")
   private Long unitId;
 
   @Column(name = "question_text", nullable = false, length = 1000)

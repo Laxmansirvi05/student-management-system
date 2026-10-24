@@ -10,7 +10,8 @@ public record RecommendationResponse(
     Long subjectId,
     String subjectCode,
     Long unitId,
-    int unitNo,
+    /** Null for a whole-subject test. */
+    Integer unitNo,
     String unitTitle,
     BigDecimal accuracyPercent,
     List<ResourceLink> resources) {

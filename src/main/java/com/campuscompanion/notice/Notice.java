@@ -1,15 +1,22 @@
 package com.campuscompanion.notice;
 
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * An announcement. It starts as a draft that only admins see, and reaches students when it is
@@ -68,6 +75,12 @@ public class Notice {
   @Column(name = "document_size")
   private Integer documentSize;
 
+  /** The papers of an exam time table, in date order; empty for every other notice. */
+  @ElementCollection
+  @CollectionTable(name = "notice_exam_papers", joinColumns = @JoinColumn(name = "notice_id"))
+  @OrderBy("examDate, subject")
+  private List<ExamPaper> examPapers = new ArrayList<>();
+
   /** Required by JPA. */
   protected Notice() {}
 
@@ -97,6 +110,19 @@ public class Notice {
     this.targetSemester = targetSemester == null ? null : targetSemester.shortValue();
     this.dueDate = dueDate;
     this.updatedAt = Instant.now();
+  }
+
+  /** Replaces the papers of the time table. */
+  public void replaceExamPapers(List<ExamPaper> papers) {
+    examPapers.clear();
+    papers.stream()
+        .sorted(Comparator.comparing(ExamPaper::getExamDate).thenComparing(ExamPaper::getSubject))
+        .forEach(examPapers::add);
+    updatedAt = Instant.now();
+  }
+
+  public List<ExamPaper> getExamPapers() {
+    return List.copyOf(examPapers);
   }
 
   public void publish(Instant now) {

@@ -65,26 +65,34 @@ public class ProgressService {
     return recommendationsFrom(unitsOf(studentId));
   }
 
-  /** The student's level in every unit they have answered questions in. */
+  /** What answers are grouped by: a unit, or the whole subject for a test without a unit. */
+  private record Topic(Long subjectId, Long unitId) {}
+
+  /**
+   * The student's level in every unit they have answered questions in, and in every subject they
+   * have taken whole-subject tests in (shown with no unit).
+   */
   private List<UnitProgress> unitsOf(Long studentId) {
-    // The answers arrive newest first, and each unit's list keeps that order.
-    Map<Long, List<Boolean>> answersOfUnit = new LinkedHashMap<>();
-    Map<Long, Long> subjectOfUnit = new LinkedHashMap<>();
+    // The answers arrive newest first, and each topic's list keeps that order.
+    Map<Topic, List<Boolean>> answersOf = new LinkedHashMap<>();
     for (AnsweredQuestion answer : quiz.answeredBy(studentId)) {
-      answersOfUnit
-          .computeIfAbsent(answer.unitId(), unit -> new ArrayList<>())
+      answersOf
+          .computeIfAbsent(
+              new Topic(answer.subjectId(), answer.unitId()), topic -> new ArrayList<>())
           .add(answer.isCorrect());
-      subjectOfUnit.put(answer.unitId(), answer.subjectId());
     }
     Map<Long, SubjectResponse> subjectOf =
-        subjects.byIds(subjectOfUnit.values().stream().distinct().toList());
-    Map<Long, UnitOfSubject> unitOf = subjects.unitsByIds(List.copyOf(answersOfUnit.keySet()));
+        subjects.byIds(answersOf.keySet().stream().map(Topic::subjectId).distinct().toList());
+    Map<Long, UnitOfSubject> unitOf =
+        subjects.unitsByIds(
+            answersOf.keySet().stream().map(Topic::unitId).filter(id -> id != null).toList());
 
     List<UnitProgress> units = new ArrayList<>();
-    for (Map.Entry<Long, List<Boolean>> entry : answersOfUnit.entrySet()) {
-      UnitOfSubject unit = unitOf.get(entry.getKey());
-      SubjectResponse subject = subjectOf.get(subjectOfUnit.get(entry.getKey()));
-      if (unit == null || subject == null) {
+    for (Map.Entry<Topic, List<Boolean>> entry : answersOf.entrySet()) {
+      Topic topic = entry.getKey();
+      SubjectResponse subject = subjectOf.get(topic.subjectId());
+      UnitOfSubject unit = topic.unitId() == null ? null : unitOf.get(topic.unitId());
+      if (subject == null || (topic.unitId() != null && unit == null)) {
         continue;
       }
       UnitPerformance performance = ProgressCalculator.of(entry.getValue());
@@ -93,15 +101,17 @@ public class ProgressService {
               subject.id(),
               subject.code(),
               subject.name(),
-              unit.id(),
-              unit.unitNo(),
-              unit.title(),
+              unit == null ? null : unit.id(),
+              unit == null ? null : unit.unitNo(),
+              unit == null ? null : unit.title(),
               performance.answered(),
               performance.correct(),
               performance.accuracyPercent(),
               performance.level()));
     }
-    units.sort(Comparator.comparing(UnitProgress::subjectCode).thenComparing(UnitProgress::unitNo));
+    units.sort(
+        Comparator.comparing(UnitProgress::subjectCode)
+            .thenComparing(UnitProgress::unitNo, Comparator.nullsFirst(Comparator.naturalOrder())));
     return units;
   }
 
@@ -119,7 +129,9 @@ public class ProgressService {
                     unit.unitNo(),
                     unit.unitTitle(),
                     unit.accuracyPercent(),
-                    resources.forRevision(unit.unitId(), RESOURCES_PER_UNIT).stream()
+                    resources
+                        .forRevision(unit.subjectId(), unit.unitId(), RESOURCES_PER_UNIT)
+                        .stream()
                         .map(
                             resource ->
                                 new ResourceLink(

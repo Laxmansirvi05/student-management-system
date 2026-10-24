@@ -124,3 +124,7 @@ app:
     admin-password: ${ADMIN_BOOTSTRAP_PASSWORD:}
   seed:
     demo-enabled: ${DEMO_SEED_ENABLED:false}
+  question-bank:
+    # The course question banks bundled in question-bank/*.json: added once to the subjects with
+    # matching codes at start-up, published, for Quick Exam.
+    enabled: ${QUESTION_BANK_ENABLED:true}

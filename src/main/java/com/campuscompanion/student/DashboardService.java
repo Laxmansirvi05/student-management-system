@@ -13,6 +13,7 @@ import com.campuscompanion.progress.ProgressService;
 import com.campuscompanion.student.dto.DashboardResponse;
 import com.campuscompanion.student.dto.DashboardResponse.AttendanceCard;
 import com.campuscompanion.student.dto.DashboardResponse.ResultsCard;
+import com.campuscompanion.student.dto.DashboardResponse.SemesterSgpa;
 import com.campuscompanion.timetable.TimetableService;
 import java.math.BigDecimal;
 import java.time.Clock;
@@ -30,7 +31,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class DashboardService {
 
   private static final int RECENT_NOTICES = 5;
-  private static final int DEADLINE_DAYS = 14;
+  private static final int DEADLINE_DAYS = 30;
+  private static final int UPCOMING_EXAMS = 8;
   private static final int RECOMMENDATIONS = 3;
 
   private final StudentProfileService students;
@@ -71,7 +73,8 @@ public class DashboardService {
         notices.deadlinesFor(student, DEADLINE_DAYS),
         notices.recentFor(student, RECENT_NOTICES),
         progress.recommendationsFor(student.studentId()).stream().limit(RECOMMENDATIONS).toList(),
-        exams.next(currentUser));
+        exams.next(currentUser),
+        exams.list(currentUser).upcoming().stream().limit(UPCOMING_EXAMS).toList());
   }
 
   private static AttendanceCard attendanceCard(AttendanceSummaryResponse summary) {
@@ -87,6 +90,13 @@ public class DashboardService {
   private static ResultsCard resultsCard(ResultsResponse published) {
     List<SemesterResultResponse> semesters = published.semesters();
     BigDecimal latest = semesters.isEmpty() ? null : semesters.get(semesters.size() - 1).sgpa();
-    return new ResultsCard(latest, published.cgpa());
+    List<SemesterSgpa> each =
+        semesters.stream()
+            .map(
+                semester ->
+                    new SemesterSgpa(
+                        semester.semester(), semester.sgpa(), semester.resultStatus().name()))
+            .toList();
+    return new ResultsCard(latest, published.cgpa(), each);
   }
 }

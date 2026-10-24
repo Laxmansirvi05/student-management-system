@@ -66,7 +66,7 @@ function subjectCard(subject) {
         const state = LEVELS[unit.level] || LEVELS.NOT_ENOUGH_DATA;
         return h(
           "li.row.unit",
-          h("div.line", h("span.row__title", `Unit ${unit.unitNo}: ${unit.unitTitle}`), h("span.line.line--start.unit__score", h("strong.num", rounded(unit.accuracyPercent)), tag(state.label, state.kind, state.iconName))),
+          h("div.line", h("span.row__title", unit.unitNo ? `Unit ${unit.unitNo}: ${unit.unitTitle}` : "Whole subject"), h("span.line.line--start.unit__score", h("strong.num", rounded(unit.accuracyPercent)), tag(state.label, state.kind, state.iconName))),
           bar(unit.accuracyPercent, state.bar),
           h("p.row__meta.num", `${unit.correct} of ${unit.answered} recent answers correct`),
         );
@@ -86,7 +86,7 @@ function recommendation(item) {
     h(
       "div.stack",
       h("div.line.line--start.line--wrap", h("span.tag.mono", item.subjectCode), tag(`Accuracy ${rounded(item.accuracyPercent)}`, "danger")),
-      h("h3.subject__name", `Unit ${item.unitNo}: ${item.unitTitle}`),
+      h("h3.subject__name", item.unitNo ? `Unit ${item.unitNo}: ${item.unitTitle}` : `${item.subjectCode}: the whole subject`),
       links.length ? null : h("p.row__meta", "No study material has been uploaded for this unit yet."),
     ),
     h("div.recommend__actions", links, h("a.button.button--primary.button--small", { href: quizLink(item) }, icon("refresh"), "Retake test")),

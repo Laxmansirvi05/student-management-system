@@ -1,0 +1,545 @@
+{
+ "subject": "25CS21001",
+ "questions": [
+  {
+   "difficulty": "EASY",
+   "text": "Which notation gives an asymptotic upper bound on the running time of an algorithm?",
+   "options": [
+    "Big-O",
+    "Big-Omega",
+    "Big-Theta",
+    "Little-omega"
+   ],
+   "correct": "A",
+   "explanation": "Big-O bounds the growth of a function from above; Big-Omega bounds it from below and Big-Theta from both sides."
+  },
+  {
+   "difficulty": "EASY",
+   "text": "What is the Big-O of f(n) = 3n² + 5n + 7?",
+   "options": [
+    "O(n)",
+    "O(n²)",
+    "O(n³)",
+    "O(n log n)"
+   ],
+   "correct": "B",
+   "explanation": "The highest-order term 3n² dominates for large n, and constants are dropped, so f(n) = O(n²)."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Which of these best describes Big-Theta notation?",
+   "options": [
+    "Only an upper bound",
+    "Only a lower bound",
+    "A tight bound: both upper and lower",
+    "The average case only"
+   ],
+   "correct": "C",
+   "explanation": "f(n) = Θ(g(n)) when g bounds f from above and from below within constant factors."
+  },
+  {
+   "difficulty": "EASY",
+   "text": "The space complexity of an algorithm is the amount of",
+   "options": [
+    "time it takes to run",
+    "memory it needs while it runs",
+    "code lines in the program",
+    "input it reads"
+   ],
+   "correct": "B",
+   "explanation": "Space complexity measures the memory an algorithm needs as a function of the input size."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "What is the time complexity of finding the maximum element in an unsorted array of n elements?",
+   "options": [
+    "O(1)",
+    "O(log n)",
+    "O(n)",
+    "O(n log n)"
+   ],
+   "correct": "C",
+   "explanation": "Every element must be looked at once, so the work grows linearly with n."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Which growth rate is the slowest for large n?",
+   "options": [
+    "O(n)",
+    "O(log n)",
+    "O(n log n)",
+    "O(√n)"
+   ],
+   "correct": "B",
+   "explanation": "log n grows more slowly than √n, n and n log n."
+  },
+  {
+   "difficulty": "EASY",
+   "text": "Which two operations define the Disjoint Set ADT?",
+   "options": [
+    "Push and Pop",
+    "Find and Union",
+    "Insert and Delete-min",
+    "Enqueue and Dequeue"
+   ],
+   "correct": "B",
+   "explanation": "A disjoint set structure supports Find (which set holds an element) and Union (merge two sets)."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "In a disjoint-set forest, what does 'path compression' do during Find?",
+   "options": [
+    "Deletes the found element",
+    "Makes every node on the path point directly to the root",
+    "Merges the two smallest trees",
+    "Sorts the elements of the set"
+   ],
+   "correct": "B",
+   "explanation": "Path compression re-points the visited nodes to the root, so later Finds on them are faster."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Union by rank attaches",
+   "options": [
+    "the taller tree under the shorter one",
+    "the shorter tree under the root of the taller one",
+    "both trees under a new root",
+    "the trees in alphabetical order"
+   ],
+   "correct": "B",
+   "explanation": "Attaching the shorter tree below the taller one keeps the trees shallow."
+  },
+  {
+   "difficulty": "HARD",
+   "text": "With both union by rank and path compression, the amortised cost of each disjoint-set operation is",
+   "options": [
+    "O(n)",
+    "O(log n)",
+    "O(α(n)), almost constant",
+    "O(n log n)"
+   ],
+   "correct": "C",
+   "explanation": "Together they give an amortised bound of the inverse Ackermann function α(n), which is below 5 for any practical n."
+  },
+  {
+   "difficulty": "EASY",
+   "text": "A sparse matrix is a matrix in which",
+   "options": [
+    "most elements are zero",
+    "all elements are equal",
+    "the number of rows equals the columns",
+    "no element is zero"
+   ],
+   "correct": "A",
+   "explanation": "When most entries are zero, storing only the non-zero ones saves memory."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "In the triplet (array) representation of a sparse matrix, each non-zero element is stored as",
+   "options": [
+    "(value only)",
+    "(row, column, value)",
+    "(row, value)",
+    "(column, value, next)"
+   ],
+   "correct": "B",
+   "explanation": "Each non-zero entry is kept as its row index, column index and value; the first triplet usually holds the matrix size and count."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "In row-major order, the address of A[i][j] in an m × n array with base address B and element size w (0-based) is",
+   "options": [
+    "B + (j·m + i)·w",
+    "B + (i·n + j)·w",
+    "B + (i + j)·w",
+    "B + (i·m + j)·w"
+   ],
+   "correct": "B",
+   "explanation": "In row-major order the i full rows before row i hold i·n elements, then j more elements come before column j."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Which language stores two-dimensional arrays in column-major order?",
+   "options": [
+    "C",
+    "Java",
+    "FORTRAN",
+    "Python lists"
+   ],
+   "correct": "C",
+   "explanation": "FORTRAN uses column-major order; C stores arrays row by row."
+  },
+  {
+   "difficulty": "EASY",
+   "text": "What is the worst-case time of the brute-force string matching algorithm for a text of length n and a pattern of length m?",
+   "options": [
+    "O(n + m)",
+    "O(n·m)",
+    "O(log n)",
+    "O(m)"
+   ],
+   "correct": "B",
+   "explanation": "For each of the about n starting positions it may compare up to m characters."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "The Knuth-Morris-Pratt algorithm avoids re-examining text characters by using",
+   "options": [
+    "a hash of the pattern",
+    "the failure (prefix) function of the pattern",
+    "a bad-character table",
+    "a suffix tree of the text"
+   ],
+   "correct": "B",
+   "explanation": "The failure function says how far the pattern can shift after a mismatch, so the text pointer never moves back."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "The time complexity of KMP string matching is",
+   "options": [
+    "O(n·m)",
+    "O(n + m)",
+    "O(n²)",
+    "O(m²)"
+   ],
+   "correct": "B",
+   "explanation": "Building the prefix table takes O(m) and scanning the text O(n)."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Which algorithm compares the pattern from right to left and uses bad-character and good-suffix rules?",
+   "options": [
+    "Rabin-Karp",
+    "Knuth-Morris-Pratt",
+    "Boyer-Moore",
+    "Brute force"
+   ],
+   "correct": "C",
+   "explanation": "Boyer-Moore scans the pattern from its last character and skips ahead using the two heuristics."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Rabin-Karp string matching relies on",
+   "options": [
+    "a rolling hash of text windows",
+    "a balanced search tree",
+    "dynamic programming tables",
+    "sorting the text"
+   ],
+   "correct": "A",
+   "explanation": "It compares hash values of the pattern and each text window, updating the hash in constant time as the window slides."
+  },
+  {
+   "difficulty": "HARD",
+   "text": "What is the KMP failure (prefix) function of the pattern 'ABABC'?",
+   "options": [
+    "0 0 1 2 0",
+    "0 1 0 1 2",
+    "0 0 0 0 0",
+    "1 2 3 4 5"
+   ],
+   "correct": "A",
+   "explanation": "For A,AB,ABA,ABAB,ABABC the longest proper prefix that is also a suffix has length 0,0,1,2,0."
+  },
+  {
+   "difficulty": "EASY",
+   "text": "What is the worst-case time complexity of Merge Sort?",
+   "options": [
+    "O(n)",
+    "O(n log n)",
+    "O(n²)",
+    "O(log n)"
+   ],
+   "correct": "B",
+   "explanation": "Merge Sort always splits in half (log n levels) and merges each level in O(n)."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "What is the worst-case time complexity of Quick Sort with the first element as pivot?",
+   "options": [
+    "O(n log n)",
+    "O(n)",
+    "O(n²)",
+    "O(log n)"
+   ],
+   "correct": "C",
+   "explanation": "On an already sorted array each partition removes only the pivot, giving n levels of O(n) work."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Which sort is NOT comparison-based?",
+   "options": [
+    "Quick Sort",
+    "Merge Sort",
+    "Counting Sort",
+    "Shell Sort"
+   ],
+   "correct": "C",
+   "explanation": "Counting Sort counts occurrences of each key value instead of comparing elements."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Radix Sort processes the keys",
+   "options": [
+    "by comparing whole keys",
+    "digit by digit, using a stable sort for each digit",
+    "by building a heap",
+    "by choosing a random pivot"
+   ],
+   "correct": "B",
+   "explanation": "LSD Radix Sort sorts on each digit from least to most significant with a stable sort such as Counting Sort."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Shell Sort is a generalisation of",
+   "options": [
+    "Selection Sort",
+    "Insertion Sort",
+    "Merge Sort",
+    "Heap Sort"
+   ],
+   "correct": "B",
+   "explanation": "Shell Sort runs insertion sort on elements a gap apart, with the gap shrinking to 1."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Tree Sort produces the sorted order by",
+   "options": [
+    "a preorder traversal of a BST",
+    "an inorder traversal of a BST",
+    "a level-order traversal of a heap",
+    "a postorder traversal of an AVL tree"
+   ],
+   "correct": "B",
+   "explanation": "Inserting all keys into a binary search tree and reading them in inorder gives ascending order."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Interpolation search works best when the sorted keys are",
+   "options": [
+    "all equal",
+    "uniformly distributed",
+    "in random order",
+    "stored in a linked list"
+   ],
+   "correct": "B",
+   "explanation": "It estimates the position from the key's value, which is accurate when values are spread evenly."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Jump Search on a sorted array of n elements uses an optimal block size of",
+   "options": [
+    "n/2",
+    "log n",
+    "√n",
+    "1"
+   ],
+   "correct": "C",
+   "explanation": "Jumping √n at a time and then searching linearly within a block gives O(√n) steps."
+  },
+  {
+   "difficulty": "HARD",
+   "text": "A skip list gives expected search time of",
+   "options": [
+    "O(n)",
+    "O(log n)",
+    "O(1)",
+    "O(n log n)"
+   ],
+   "correct": "B",
+   "explanation": "Its random levels of express lanes halve the remaining distance on average at each level."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Which of these sorts is stable?",
+   "options": [
+    "Quick Sort",
+    "Heap Sort",
+    "Merge Sort",
+    "Shell Sort"
+   ],
+   "correct": "C",
+   "explanation": "Merge Sort keeps equal keys in their original order when it merges from the left half first."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Bucket Sort has an average time of O(n + k) when",
+   "options": [
+    "the input is already sorted",
+    "the input is uniformly distributed over the range",
+    "all keys are equal",
+    "the buckets are linked lists of length n"
+   ],
+   "correct": "B",
+   "explanation": "Uniform input spreads evenly over the buckets, so each holds few elements."
+  },
+  {
+   "difficulty": "EASY",
+   "text": "An AVL tree is a binary search tree in which the heights of the two subtrees of every node differ by at most",
+   "options": [
+    "0",
+    "1",
+    "2",
+    "log n"
+   ],
+   "correct": "B",
+   "explanation": "The balance factor of every node must be -1, 0 or +1."
+  },
+  {
+   "difficulty": "EASY",
+   "text": "The balance factor of a node in an AVL tree is",
+   "options": [
+    "height(left) − height(right)",
+    "number of left children − right children",
+    "depth of the node",
+    "height(left) + height(right)"
+   ],
+   "correct": "A",
+   "explanation": "It is the height of the left subtree minus the height of the right subtree."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Inserting into the left subtree of the left child of an unbalanced node needs",
+   "options": [
+    "an LR double rotation",
+    "a single right rotation (LL case)",
+    "a single left rotation (RR case)",
+    "no rotation"
+   ],
+   "correct": "B",
+   "explanation": "The LL case is fixed by one right rotation about the unbalanced node."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "The LR imbalance case is fixed by",
+   "options": [
+    "one right rotation",
+    "one left rotation",
+    "a left rotation on the child, then a right rotation on the node",
+    "recolouring"
+   ],
+   "correct": "C",
+   "explanation": "LR is a double rotation: rotate the left child left, then the unbalanced node right."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "What is the worst-case height of an AVL tree with n nodes?",
+   "options": [
+    "O(n)",
+    "O(log n)",
+    "O(√n)",
+    "O(1)"
+   ],
+   "correct": "B",
+   "explanation": "AVL balancing keeps the height at most about 1.44 log₂ n."
+  },
+  {
+   "difficulty": "HARD",
+   "text": "Inserting 10, 20, 30 in that order into an empty AVL tree causes which rotation?",
+   "options": [
+    "LL (right rotation)",
+    "RR (left rotation)",
+    "LR",
+    "RL"
+   ],
+   "correct": "B",
+   "explanation": "30 goes to the right of 20, the right of 10; node 10 becomes right-heavy, the RR case, fixed by a left rotation."
+  },
+  {
+   "difficulty": "HARD",
+   "text": "After deleting a node from an AVL tree, how many rotations may be needed in the worst case?",
+   "options": [
+    "At most one",
+    "Exactly two",
+    "Up to O(log n), one per level",
+    "None"
+   ],
+   "correct": "C",
+   "explanation": "Unlike insertion, a deletion can unbalance each ancestor in turn, up to the root."
+  },
+  {
+   "difficulty": "EASY",
+   "text": "In a B-tree of order m, every node has at most",
+   "options": [
+    "m keys",
+    "m children",
+    "2m children",
+    "m/2 children"
+   ],
+   "correct": "B",
+   "explanation": "A node of a B-tree of order m has at most m children and m − 1 keys."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Every non-root node of a B-tree of order m has at least",
+   "options": [
+    "1 child",
+    "⌈m/2⌉ children",
+    "m children",
+    "2 children"
+   ],
+   "correct": "B",
+   "explanation": "Nodes other than the root must be at least half full: ⌈m/2⌉ children."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "In a B+ tree, where are all the data records (or pointers to them) kept?",
+   "options": [
+    "Only in the root",
+    "In the internal nodes only",
+    "In the leaf nodes, which are linked together",
+    "In every node equally"
+   ],
+   "correct": "C",
+   "explanation": "Internal nodes hold only routing keys; the leaves hold the records and are chained for range scans."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "A 2-3 tree is a B-tree of order",
+   "options": [
+    "2",
+    "3",
+    "4",
+    "5"
+   ],
+   "correct": "B",
+   "explanation": "Each node of a 2-3 tree has 2 or 3 children, which is a B-tree of order 3."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "When a key is inserted into a full B-tree node, the node",
+   "options": [
+    "is deleted",
+    "splits, and the middle key moves up to the parent",
+    "becomes a leaf",
+    "rotates left"
+   ],
+   "correct": "B",
+   "explanation": "A full node splits in two and pushes its median key up, which can split the parent in turn."
+  },
+  {
+   "difficulty": "HARD",
+   "text": "How does a B* tree differ from a B-tree?",
+   "options": [
+    "It allows nodes to be empty",
+    "Nodes are kept at least two-thirds full, sharing keys with a sibling before splitting",
+    "It has no root",
+    "Its leaves are not at the same level"
+   ],
+   "correct": "B",
+   "explanation": "A B* tree redistributes keys to a sibling first and splits two nodes into three, keeping nodes about two-thirds full."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Why are B-trees used for database indexes on disk?",
+   "options": [
+    "They use the least memory in RAM",
+    "Their high fan-out keeps the tree shallow, so few disk blocks are read",
+    "They never need splitting",
+    "They store keys unsorted"
+   ],
+   "correct": "B",
+   "explanation": "A node fills a disk block and has many children, so a search reads only a few blocks."
+  }
+ ]
+}

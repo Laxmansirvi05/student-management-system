@@ -54,7 +54,7 @@ function questionForm(question) {
     wide: true,
     fields: [
       field("Subject", numberSelect("subjectId", subjectOptions("Choose a subject"), question?.subjectId || filters.subjectId)),
-      field("Unit", numberSelect("unitId", [["", "Choose a unit"]])),
+      field("Unit (optional)", numberSelect("unitId", [["", "Whole subject"]]), "Leave as Whole subject unless the question belongs to one unit."),
       h("div.field--wide", field("Question", textarea("questionText", { maxlength: 1000, ...lock }))),
       ...OPTIONS.map((letter) => field("Option " + letter, input("option" + letter, { value: question?.["option" + letter] || "", maxlength: 300, ...lock }))),
       field("Correct option", select("correctOption", OPTIONS.map((letter) => [letter, "Option " + letter]), question?.correctOption || "A")),
@@ -77,8 +77,8 @@ function questionForm(question) {
 
   const subject = dialog.querySelector('[name="subjectId"]');
   const unit = dialog.querySelector('[name="unitId"]');
-  subject.addEventListener("change", () => fillUnits(unit, subject.value, "Choose a unit"));
-  fillUnits(unit, subject.value, "Choose a unit", question?.unitId || filters.unitId);
+  subject.addEventListener("change", () => fillUnits(unit, subject.value, "Whole subject"));
+  fillUnits(unit, subject.value, "Whole subject", question?.unitId || filters.unitId);
   if (locked) {
     for (const control of [subject, unit, dialog.querySelector('[name="correctOption"]')]) {
       control.disabled = true;
@@ -129,7 +129,7 @@ function load() {
             cell: (question) =>
               h("div.stack.stack--tight", h("strong.clamp-2", question.questionText), h("span.row__meta", `Correct: ${question.correctOption}. ${question["option" + question.correctOption]}`)),
           },
-          { label: "Unit", cell: (question) => h("span.num", `${question.subjectCode} · Unit ${question.unitNo}`) },
+          { label: "Unit", cell: (question) => h("span.num", `${question.subjectCode} · ${question.unitNo ? "Unit " + question.unitNo : "Whole subject"}`) },
           { label: "Difficulty", cell: (question) => DIFFICULTIES.find(([value]) => value === question.difficulty)?.[1] || question.difficulty },
           {
             label: "Status",

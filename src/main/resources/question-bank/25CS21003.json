@@ -1,0 +1,545 @@
+{
+ "subject": "25CS21003",
+ "questions": [
+  {
+   "difficulty": "EASY",
+   "text": "DBMS stands for",
+   "options": [
+    "Data Backup Management System",
+    "Database Management System",
+    "Distributed Binary Management System",
+    "Data Block Mapping System"
+   ],
+   "correct": "B",
+   "explanation": "A Database Management System is software that stores, retrieves and manages data in databases."
+  },
+  {
+   "difficulty": "EASY",
+   "text": "Which level of the three-schema architecture describes how data is physically stored?",
+   "options": [
+    "External level",
+    "Conceptual level",
+    "Internal level",
+    "View level"
+   ],
+   "correct": "C",
+   "explanation": "The internal (physical) level describes storage structures; the conceptual level describes the whole logical database."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Physical data independence means",
+   "options": [
+    "changing the physical storage does not require changing the conceptual schema",
+    "users can see all data",
+    "data has no physical form",
+    "views cannot change"
+   ],
+   "correct": "A",
+   "explanation": "Programs and the logical schema stay the same when storage structures or indexes change."
+  },
+  {
+   "difficulty": "EASY",
+   "text": "In an ER diagram, an entity set is drawn as a",
+   "options": [
+    "diamond",
+    "rectangle",
+    "ellipse",
+    "double line"
+   ],
+   "correct": "B",
+   "explanation": "Rectangles are entity sets, diamonds relationships, and ellipses attributes."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "A weak entity set is one that",
+   "options": [
+    "has no attributes",
+    "cannot be uniquely identified by its own attributes alone",
+    "has only one row",
+    "is never used"
+   ],
+   "correct": "B",
+   "explanation": "A weak entity depends on an identifying owner entity and has only a partial key."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "A multivalued attribute in an ER diagram is shown as",
+   "options": [
+    "a dashed ellipse",
+    "a double ellipse",
+    "a double rectangle",
+    "an underlined attribute"
+   ],
+   "correct": "B",
+   "explanation": "Double ellipses mark multivalued attributes; dashed ellipses mark derived attributes."
+  },
+  {
+   "difficulty": "EASY",
+   "text": "A primary key is",
+   "options": [
+    "any column with numbers",
+    "a minimal set of attributes that uniquely identifies each row and is not null",
+    "a key from another table",
+    "a column that allows duplicates"
+   ],
+   "correct": "B",
+   "explanation": "The chosen candidate key that identifies each tuple uniquely; its values cannot be null."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "A foreign key",
+   "options": [
+    "uniquely identifies a row in its own table",
+    "refers to the primary key of another (or the same) table",
+    "must always be unique",
+    "can never be null"
+   ],
+   "correct": "B",
+   "explanation": "A foreign key enforces referential integrity by matching a key in the referenced table."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "A candidate key is",
+   "options": [
+    "any superset of the primary key",
+    "a minimal superkey",
+    "a non-unique column",
+    "an index"
+   ],
+   "correct": "B",
+   "explanation": "A candidate key is a superkey from which no attribute can be removed; one is chosen as the primary key."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Which relational algebra operation selects rows that satisfy a condition?",
+   "options": [
+    "Projection (π)",
+    "Selection (σ)",
+    "Union (∪)",
+    "Cartesian product (×)"
+   ],
+   "correct": "B",
+   "explanation": "σ condition (R) keeps the tuples of R that satisfy the condition; π keeps columns."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "The projection operation (π) in relational algebra",
+   "options": [
+    "selects rows",
+    "selects columns and removes duplicate rows",
+    "joins two tables",
+    "renames a table"
+   ],
+   "correct": "B",
+   "explanation": "π attribute-list (R) returns only the listed attributes, as a set without duplicates."
+  },
+  {
+   "difficulty": "HARD",
+   "text": "A natural join of R and S",
+   "options": [
+    "pairs every row of R with every row of S",
+    "joins on all attributes with the same name and keeps one copy of them",
+    "returns only R's rows",
+    "is the same as union"
+   ],
+   "correct": "B",
+   "explanation": "It equates the common attributes and removes the duplicate columns from the result."
+  },
+  {
+   "difficulty": "EASY",
+   "text": "Which SQL command is part of the Data Definition Language (DDL)?",
+   "options": [
+    "SELECT",
+    "INSERT",
+    "CREATE",
+    "UPDATE"
+   ],
+   "correct": "C",
+   "explanation": "DDL commands define structure: CREATE, ALTER, DROP, TRUNCATE."
+  },
+  {
+   "difficulty": "EASY",
+   "text": "Which SQL command is part of DML?",
+   "options": [
+    "GRANT",
+    "UPDATE",
+    "COMMIT",
+    "CREATE"
+   ],
+   "correct": "B",
+   "explanation": "DML commands change data: INSERT, UPDATE, DELETE (and SELECT is often grouped with them)."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "GRANT and REVOKE belong to",
+   "options": [
+    "DDL",
+    "DML",
+    "DCL",
+    "TCL"
+   ],
+   "correct": "C",
+   "explanation": "Data Control Language manages privileges."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "COMMIT, ROLLBACK and SAVEPOINT belong to",
+   "options": [
+    "DDL",
+    "DCL",
+    "TCL",
+    "DML"
+   ],
+   "correct": "C",
+   "explanation": "Transaction Control Language ends or undoes transactions."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Which clause filters groups after GROUP BY?",
+   "options": [
+    "WHERE",
+    "HAVING",
+    "ORDER BY",
+    "DISTINCT"
+   ],
+   "correct": "B",
+   "explanation": "WHERE filters rows before grouping; HAVING filters the groups using aggregates."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Which aggregate function ignores NULL values and counts only non-null entries in a column?",
+   "options": [
+    "COUNT(*)",
+    "COUNT(column)",
+    "SUM(*)",
+    "MAX(*)"
+   ],
+   "correct": "B",
+   "explanation": "COUNT(column) skips NULLs; COUNT(*) counts every row."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "What does DELETE FROM student; do?",
+   "options": [
+    "Drops the table",
+    "Removes all rows but keeps the table",
+    "Removes the first row only",
+    "Causes an error"
+   ],
+   "correct": "B",
+   "explanation": "DELETE without WHERE removes every row; the table structure remains."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "How does TRUNCATE differ from DELETE?",
+   "options": [
+    "TRUNCATE removes the table structure",
+    "TRUNCATE removes all rows quickly as DDL and cannot use WHERE",
+    "TRUNCATE removes one row",
+    "There is no difference"
+   ],
+   "correct": "B",
+   "explanation": "TRUNCATE is DDL that deallocates all rows at once; DELETE is DML and can filter with WHERE."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Which join returns all rows of the left table and matching rows of the right table?",
+   "options": [
+    "INNER JOIN",
+    "LEFT OUTER JOIN",
+    "RIGHT OUTER JOIN",
+    "CROSS JOIN"
+   ],
+   "correct": "B",
+   "explanation": "A left outer join keeps unmatched left rows, filling the right columns with NULL."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Which keyword removes duplicate rows from a SELECT result?",
+   "options": [
+    "UNIQUE",
+    "DISTINCT",
+    "DIFFERENT",
+    "SINGLE"
+   ],
+   "correct": "B",
+   "explanation": "SELECT DISTINCT returns each different row once."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Which operator checks for a pattern in a string column?",
+   "options": [
+    "IN",
+    "BETWEEN",
+    "LIKE",
+    "EXISTS"
+   ],
+   "correct": "C",
+   "explanation": "LIKE with % and _ wildcards matches patterns, e.g. name LIKE 'A%'."
+  },
+  {
+   "difficulty": "HARD",
+   "text": "A view in SQL is",
+   "options": [
+    "a physical copy of a table",
+    "a stored query that acts as a virtual table",
+    "an index",
+    "a trigger"
+   ],
+   "correct": "B",
+   "explanation": "A view stores a SELECT; querying the view runs it against the base tables."
+  },
+  {
+   "difficulty": "HARD",
+   "text": "A trigger is",
+   "options": [
+    "a stored procedure called by the user",
+    "code run automatically when an event such as INSERT happens on a table",
+    "a type of index",
+    "a constraint on a column"
+   ],
+   "correct": "B",
+   "explanation": "Triggers fire before or after INSERT, UPDATE or DELETE on a table."
+  },
+  {
+   "difficulty": "EASY",
+   "text": "Normalisation is mainly used to",
+   "options": [
+    "speed up every query",
+    "reduce redundancy and update anomalies",
+    "add more tables for security",
+    "encrypt data"
+   ],
+   "correct": "B",
+   "explanation": "Decomposing relations by functional dependencies removes redundancy and anomalies."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "A relation is in First Normal Form (1NF) if",
+   "options": [
+    "it has a primary key of one column",
+    "all attribute values are atomic",
+    "it has no transitive dependencies",
+    "it has no foreign keys"
+   ],
+   "correct": "B",
+   "explanation": "1NF forbids repeating groups and multivalued attributes in a cell."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "A relation is in 2NF if it is in 1NF and",
+   "options": [
+    "has no partial dependency of a non-prime attribute on a candidate key",
+    "has no transitive dependency",
+    "has only one candidate key",
+    "every determinant is a key"
+   ],
+   "correct": "A",
+   "explanation": "2NF removes partial dependencies on part of a composite key."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "A relation is in 3NF if it is in 2NF and",
+   "options": [
+    "has no partial dependencies",
+    "has no transitive dependency of non-prime attributes on a key",
+    "has no multivalued dependencies",
+    "has no NULLs"
+   ],
+   "correct": "B",
+   "explanation": "3NF removes non-key attributes that depend on other non-key attributes."
+  },
+  {
+   "difficulty": "HARD",
+   "text": "Boyce-Codd Normal Form (BCNF) requires that",
+   "options": [
+    "every determinant is a candidate key",
+    "there are no foreign keys",
+    "every attribute is atomic",
+    "all keys are single attributes"
+   ],
+   "correct": "A",
+   "explanation": "For every non-trivial FD X → Y, X must be a superkey."
+  },
+  {
+   "difficulty": "HARD",
+   "text": "Given R(A, B, C) with A → B and B → C, what is the key and the highest normal form?",
+   "options": [
+    "Key A; 2NF but not 3NF",
+    "Key B; 3NF",
+    "Key AB; 1NF",
+    "Key C; BCNF"
+   ],
+   "correct": "A",
+   "explanation": "A determines B and C, so A is the key; B → C is a transitive dependency, so R is in 2NF but not 3NF."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "A functional dependency X → Y means",
+   "options": [
+    "Y determines X",
+    "each value of X is associated with exactly one value of Y",
+    "X and Y are both keys",
+    "X and Y are independent"
+   ],
+   "correct": "B",
+   "explanation": "Two tuples that agree on X must agree on Y."
+  },
+  {
+   "difficulty": "HARD",
+   "text": "A lossless-join decomposition of R into R1 and R2 requires that",
+   "options": [
+    "R1 ∩ R2 is empty",
+    "R1 ∩ R2 is a key of R1 or of R2",
+    "R1 and R2 have the same attributes",
+    "R2 has no key"
+   ],
+   "correct": "B",
+   "explanation": "If the common attributes determine all of R1 or all of R2, joining them back gives exactly R."
+  },
+  {
+   "difficulty": "EASY",
+   "text": "ACID stands for",
+   "options": [
+    "Atomicity, Consistency, Isolation, Durability",
+    "Accuracy, Consistency, Integrity, Durability",
+    "Atomicity, Concurrency, Integrity, Dependency",
+    "Access, Control, Isolation, Data"
+   ],
+   "correct": "A",
+   "explanation": "The four properties every transaction must satisfy."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Atomicity of a transaction means",
+   "options": [
+    "it runs alone",
+    "either all of its operations happen or none do",
+    "its results survive a crash",
+    "it keeps the database valid"
+   ],
+   "correct": "B",
+   "explanation": "A partially done transaction is rolled back, so it is all or nothing."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Durability means",
+   "options": [
+    "the committed changes survive system failures",
+    "the transaction never fails",
+    "data is encrypted",
+    "transactions run in parallel"
+   ],
+   "correct": "A",
+   "explanation": "Once committed, changes persist, usually through the log."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "A schedule is conflict serializable if",
+   "options": [
+    "it has no reads",
+    "it can be turned into a serial schedule by swapping non-conflicting operations",
+    "it runs transactions at the same time",
+    "it contains only one transaction"
+   ],
+   "correct": "B",
+   "explanation": "This is checked with a precedence graph: the schedule is conflict serializable if the graph has no cycle."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "In two-phase locking (2PL), a transaction",
+   "options": [
+    "releases all locks before acquiring any",
+    "acquires all its locks before it releases any",
+    "never takes locks",
+    "takes only shared locks"
+   ],
+   "correct": "B",
+   "explanation": "The growing phase only acquires locks and the shrinking phase only releases them, which ensures serializability."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "A deadlock happens when",
+   "options": [
+    "a transaction commits twice",
+    "two or more transactions each wait for a lock held by the other",
+    "the log is full",
+    "an index is missing"
+   ],
+   "correct": "B",
+   "explanation": "Each transaction waits for the others in a cycle, so none can go on."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Which problem occurs when a transaction reads data written by another transaction that has not yet committed?",
+   "options": [
+    "Lost update",
+    "Dirty read",
+    "Phantom read",
+    "Deadlock"
+   ],
+   "correct": "B",
+   "explanation": "Reading uncommitted data is a dirty read; if the writer rolls back, the reader used a value that never existed."
+  },
+  {
+   "difficulty": "HARD",
+   "text": "In the write-ahead logging (WAL) rule,",
+   "options": [
+    "data pages are written before the log",
+    "the log record of a change is written to stable storage before the changed data page",
+    "the log is never written",
+    "only committed transactions are logged"
+   ],
+   "correct": "B",
+   "explanation": "Writing the log first makes it possible to undo or redo changes after a crash."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "Which index structure is used by most relational databases for range queries?",
+   "options": [
+    "Hash index",
+    "B+ tree",
+    "Bitmap only",
+    "Linked list"
+   ],
+   "correct": "B",
+   "explanation": "B+ tree leaves are sorted and linked, so ranges are read in order."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "A clustered index",
+   "options": [
+    "is stored separately from the data in any order",
+    "determines the physical order of the rows in the table",
+    "can exist many times on one table",
+    "is used only for text"
+   ],
+   "correct": "B",
+   "explanation": "Rows are stored in the order of the clustered index key, so there can be only one."
+  },
+  {
+   "difficulty": "MEDIUM",
+   "text": "A hash index is best for",
+   "options": [
+    "range queries such as BETWEEN",
+    "equality lookups such as WHERE id = 7",
+    "sorting results",
+    "full table scans"
+   ],
+   "correct": "B",
+   "explanation": "Hashing finds a key's bucket directly but keeps no order, so ranges need a scan."
+  },
+  {
+   "difficulty": "EASY",
+   "text": "Which SQL constraint makes sure a column never holds NULL?",
+   "options": [
+    "UNIQUE",
+    "NOT NULL",
+    "CHECK",
+    "DEFAULT"
+   ],
+   "correct": "B",
+   "explanation": "NOT NULL rejects any row without a value in that column."
+  }
+ ]
+}

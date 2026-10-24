@@ -55,17 +55,22 @@ public interface LearningResourceRepository extends JpaRepository<LearningResour
       @Param("search") String search,
       Pageable pageable);
 
-  /** The published resources of a unit, notes first and then the newest first. */
+  /**
+   * The published resources of a unit, or of the whole subject when the unit is null, notes first
+   * and then the newest first.
+   */
   @Query(
       """
       select r from LearningResource r
-      where r.unitId = :unitId
+      where ((:unitId is not null and r.unitId = :unitId)
+             or (:unitId is null and r.subjectId = :subjectId))
         and r.status = com.campuscompanion.resource.ResourceStatus.PUBLISHED
       order by case when r.resourceType = com.campuscompanion.resource.ResourceType.NOTES
                     then 0 else 1 end,
                r.createdAt desc, r.id desc
       """)
-  List<LearningResource> findForRevision(@Param("unitId") Long unitId, Pageable pageable);
+  List<LearningResource> findForRevision(
+      @Param("subjectId") Long subjectId, @Param("unitId") Long unitId, Pageable pageable);
 
   /** The published resources a student has bookmarked. A hidden resource drops out by itself. */
   @Query(

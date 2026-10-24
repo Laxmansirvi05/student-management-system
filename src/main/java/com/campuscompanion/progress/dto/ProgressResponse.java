@@ -19,7 +19,8 @@ public record ProgressResponse(
       String subjectCode,
       String subjectName,
       Long unitId,
-      int unitNo,
+      /** Null for a whole-subject test. */
+      Integer unitNo,
       String unitTitle,
       int answered,
       int correct,

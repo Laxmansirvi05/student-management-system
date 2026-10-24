@@ -260,6 +260,18 @@ Index: (`branch`, `semester`, `section`, `day_of_week`). Overlaps within a secti
 
 Index: (`status`, `published_at` DESC). The three document columns are all set or all empty (FR-NOT-002).
 
+#### 4.10a `notice_exam_papers` (V19)
+
+The papers of an exam time table published as a notice, so the countdown can show each exam (FR-PLN-002). Saved with the notice: an update deletes the notice's papers and inserts the new ones.
+
+| Column | Type | Constraints | Notes |
+| --- | --- | --- | --- |
+| notice_id | BIGINT | NOT NULL, FK → notices ON DELETE CASCADE | |
+| exam_date | DATE | NOT NULL | |
+| subject | VARCHAR(120) | NOT NULL, CHECK not blank | As printed on the time table. |
+
+Index: (`notice_id`, `exam_date`). No primary key of its own (a JPA element collection of `Notice`). At most 30 papers per notice (checked in Java); only `EXAM` notices have papers.
+
 ### 4.11 `learning_resources`
 
 | Column | Type | Constraints | Notes |
@@ -311,7 +323,7 @@ Primary key: (`student_id`, `resource_id`).
 | --- | --- | --- | --- |
 | id | BIGINT | PK | |
 | subject_id | BIGINT | NOT NULL, FK → subjects | |
-| unit_id | BIGINT | NOT NULL, FK → subject_units | |
+| unit_id | BIGINT | NULL, FK → subject_units | NULL since V19: a question or a test of the whole subject. |
 | question_text | VARCHAR(1000) | NOT NULL | |
 | option_a, option_b, option_c, option_d | VARCHAR(300) | NOT NULL | |
 | correct_option | CHAR(1) | NOT NULL, CHECK in (`A`, `B`, `C`, `D`) | Never sent to a student before submission. |
@@ -331,7 +343,7 @@ Index: (`subject_id`, `unit_id`, `status`).
 | id | BIGINT | PK | |
 | student_id | BIGINT | NOT NULL, FK → student_profiles | |
 | subject_id | BIGINT | NOT NULL, FK → subjects | |
-| unit_id | BIGINT | NOT NULL, FK → subject_units | |
+| unit_id | BIGINT | NULL, FK → subject_units | NULL since V19: a question or a test of the whole subject. |
 | question_count | SMALLINT | NOT NULL, CHECK 1 to 20 | |
 | started_at | TIMESTAMPTZ | NOT NULL | |
 | expires_at | TIMESTAMPTZ | NOT NULL | `started_at` + 60 s × `question_count`. |
@@ -499,7 +511,7 @@ Built in V16 (T7-02). Also: `completed_at` is set exactly when `status` is `DONE
 
 ### 4.19b `student_exams` (P1)
 
-An exam date a student adds for their own countdown (FR-PLN-002, extended by T7-02). Exam dates the college publishes stay in `notices` (category `EXAM` with a due date) and are not copied here.
+An exam date a student adds for their own countdown (FR-PLN-002, extended by T7-02). Exam dates the college publishes stay in `notices` (category `EXAM`: its papers in `notice_exam_papers`, or else its due date) and are not copied here.
 
 | Column | Type | Constraints |
 | --- | --- | --- |
@@ -604,6 +616,7 @@ Flyway, versioned SQL files, forward-only. See [ADR 0006](decisions/0006-flyway-
 | V16 | `V16__planner.sql` | Adds `study_tasks` (section 4.19) and `student_exams` (section 4.19b) for T7-02 | Added 2026-10-24 |
 | V17 | `V17__resource_reports.sql` | Adds `resource_reports` (section 4.20) for FR-LIB-005 | Added 2026-10-24 |
 | V18 | `V18__ai_log_retention.sql` | Grants `DELETE` on `ai_request_logs` to `cc_app`, with its policy, for the retention job (T7-09) | Added 2026-10-24 |
+| V19 | `V19__exam_papers_and_subject_tests.sql` | `notice_exam_papers` (section 4.10a); `unit_id` of `quiz_questions` and `quiz_attempts` becomes nullable (Quick Exam by subject) | Added 2026-10-24 |
 | V12 | `V12__notice_documents.sql` | Adds the official document columns to `notices` (section 4.10) | Added 2026-10-22 |
 | V11 | `V11__pyq_created_by_optional.sql` | Makes `pyq_papers.created_by` optional (section 4.21) | Added 2026-10-19 |
 | V10 | `V10__pyq.sql` | Adds `pyq_papers` and `pyq_bookmarks` (sections 4.21 and 4.22) | Added 2026-10-18 |
@@ -687,6 +700,7 @@ Schema: `USAGE` on `app`. No `CREATE`.
 | semester_results | ✓ | ✓ | ✓ | | Same. |
 | timetable_entries | ✓ | ✓ | ✓ | ✓ | |
 | notices | ✓ | ✓ | ✓ | ✓ | |
+| notice_exam_papers | ✓ | ✓ | | ✓ | Replaced with the notice (V19). |
 | learning_resources | ✓ | ✓ | ✓ | ✓ | |
 | question_papers | ✓ | ✓ | ✓ | ✓ | |
 | bookmarks | ✓ | ✓ | | ✓ | A bookmark is never edited. |

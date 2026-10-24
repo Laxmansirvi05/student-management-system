@@ -243,7 +243,8 @@ class QuizApiIT extends ApiIntegrationTest {
     assertThat(
             invalidFields(
                 student.post("/api/v1/quiz-attempts", "{\"subjectId\":null,\"unitId\":null}")))
-        .containsExactly("questionCount", "subjectId", "unitId");
+        .as("the unit is optional: a test can cover the whole subject")
+        .containsExactly("questionCount", "subjectId");
     assertProblem(
         student.post(
             "/api/v1/quiz-attempts",

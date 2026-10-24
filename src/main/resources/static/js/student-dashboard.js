@@ -1,5 +1,5 @@
 import { api } from "./api.js";
-import { daysUntil, fill, formatDate, formatToday, h, icon, percent, stagger, tag } from "./dom.js";
+import { daysUntil, fill, formatDate, formatToday, h, icon, stagger, tag } from "./dom.js";
 import { countUp, enableTilt, reveal, ring } from "./motion.js";
 import { cardHead, categoryTag, dueText, empty, loadInto } from "./parts.js";
 import { currentStudent, currentUser } from "./shell.js";
@@ -53,22 +53,33 @@ function attendanceCard({ overallPercent, requiredPercent }) {
   return h("section.card.card--lift.reveal", cardHead("attendance", "Attendance", "/student/attendance.html"), body);
 }
 
-function resultsCard({ latestSgpa, cgpa }) {
-  const tile = (label, value) => {
-    const figure = h("p.figure.figure--small");
-    countUp(figure, value, { decimals: 2 });
-    return h("div.inset", h("p.eyebrow", label), figure);
-  };
+/** The CGPA on top, then the SGPA of every published semester, oldest first. */
+function resultsCard({ cgpa, semesters }) {
+  if (!semesters.length) {
+    return h(
+      "section.card.card--lift.reveal",
+      cardHead("results", "Results", "/student/results.html"),
+      empty("results", "Results not published yet", "Your SGPA and CGPA appear here once results are published."),
+    );
+  }
+  const figure = h("p.figure");
+  countUp(figure, cgpa, { decimals: 2 });
+  const rows = semesters.map((entry) =>
+    h(
+      "li.row.results-row",
+      h("span.row__title", `Semester ${entry.semester}`),
+      entry.resultStatus === "FAIL" ? tag("Backlog", "danger") : null,
+      h("span.results-row__sgpa.num", "SGPA ", h("strong", Number(entry.sgpa).toFixed(2))),
+    ),
+  );
   return h(
     "section.card.card--lift.reveal",
     cardHead("results", "Results", "/student/results.html"),
-    latestSgpa === null
-      ? empty("results", "Results not published yet", "Your SGPA and CGPA appear here once results are published.")
-      : [h("div.tiles", tile("Latest SGPA", latestSgpa), tile("CGPA", cgpa)), h("p.note", icon("info"), "CGPA is weighted by the credits registered in each semester.")],
+    h("div.inset.results-cgpa", h("p.eyebrow", "CGPA"), figure, h("p.row__meta", `Over ${semesters.length} semester${semesters.length === 1 ? "" : "s"}, weighted by credits`)),
+    h("ul.rows", rows),
   );
 }
 
-/** Where a class stands against the clock: done, on now, the next one, or later today. */
 function classState(entry, now, isNext) {
   if (entry.endTime <= now) {
     return tag("Completed");
@@ -108,30 +119,45 @@ function deadlinesCard(upcomingDeadlines) {
   return h(
     "section.card.card--lift.reveal",
     cardHead("check-circle", "Upcoming deadlines", "/student/notices.html"),
-    rows.length ? h("ul.rows", rows) : empty("check-circle", "Nothing due", "No deadlines in the next 14 days."),
+    rows.length ? h("ul.rows", rows) : empty("check-circle", "Nothing due", "No deadlines in the next 30 days."),
   );
 }
 
-/** The next exam, the student's own or the college's (FR-PLN-002), counted down in days. */
-function nextExamCard(nextExam) {
-  if (!nextExam) {
+/** "Today", "Tomorrow" or "In 5 days". */
+function inDays(isoDate) {
+  const days = daysUntil(isoDate);
+  return days === 0 ? "Today" : days === 1 ? "Tomorrow" : `In ${days} days`;
+}
+
+/** The coming exams, the college's time table and the student's own (FR-PLN-002), soonest first. */
+function examsCard(upcomingExams) {
+  if (!upcomingExams.length) {
     return h(
       "section.card.card--lift.reveal",
-      cardHead("timer", "Next exam", "/student/planner.html", "Planner"),
-      empty("timer", "No exams coming up", "Add your exam dates in the planner to count down to them."),
+      cardHead("timer", "Upcoming exams", "/student/planner.html", "Planner"),
+      empty("timer", "No exams coming up", "Exam dates your college publishes appear here. You can add your own in the planner."),
     );
   }
-  const days = daysUntil(nextExam.examDate);
-  const when = days === 0 ? "Today" : days === 1 ? "Tomorrow" : `In ${days} days`;
+  const [next, ...later] = upcomingExams;
+  const soon = daysUntil(next.examDate) <= 3;
   return h(
     "section.card.card--lift.reveal",
-    cardHead("timer", "Next exam", "/student/planner.html", "Planner"),
+    cardHead("timer", "Upcoming exams", "/student/planner.html", "Planner"),
     h(
       "div.planner-next",
-      h("p.planner-next__days.num" + (days <= 3 ? ".row__meta--warning" : ""), when),
-      h("p.row__title", nextExam.name),
-      h("p.row__meta", formatDate(nextExam.examDate) + (nextExam.source === "COLLEGE" ? " · from your college" : "")),
+      h("p.eyebrow", "Next exam"),
+      h("p.planner-next__days.num" + (soon ? ".row__meta--warning" : ""), inDays(next.examDate)),
+      h("p.row__title", next.name),
+      h("p.row__meta", formatDate(next.examDate) + (next.source === "COLLEGE" ? " · from your college" : "")),
     ),
+    later.length
+      ? h(
+          "ul.rows",
+          later.map((exam) =>
+            h("li.row", h("div.row__top", h("span.row__meta.num", formatDate(exam.examDate)), h("span.row__meta", inDays(exam.examDate))), h("span.row__title", exam.name)),
+          ),
+        )
+      : null,
   );
 }
 
@@ -151,23 +177,6 @@ function noticesCard(recentNotices) {
   );
 }
 
-function recommendationsCard(recommendations) {
-  const rows = recommendations.slice(0, 3).map((item) =>
-    h(
-      "a.inset.inset--link",
-      { href: "/student/progress.html" },
-      h("div.line", h("span.row__title", `Revise Unit ${item.unitNo}: ${item.unitTitle}`), icon("arrow-right")),
-      h("p.row__meta.mono", item.subjectCode),
-      h("p.reason", icon("alert"), `Accuracy ${percent(item.accuracyPercent)} in your tests`),
-    ),
-  );
-  return h(
-    "section.card.card--lift.reveal",
-    cardHead("target", "Revise next", "/student/progress.html"),
-    rows.length ? h("div.stack", rows) : empty("target", "No suggestions yet", "Take a quick test to see what to revise."),
-  );
-}
-
 const content = document.getElementById("content");
 loadInto(content, () => api.get("/students/me/dashboard"), (data) => {
   fill(
@@ -177,9 +186,8 @@ loadInto(content, () => api.get("/students/me/dashboard"), (data) => {
       resultsCard(data.results),
       classesCard(data.todayClasses),
       deadlinesCard(data.upcomingDeadlines),
-      nextExamCard(data.nextExam),
+      examsCard(data.upcomingExams),
       noticesCard(data.recentNotices),
-      recommendationsCard(data.recommendations),
     ]),
   );
   reveal();

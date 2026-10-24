@@ -6,6 +6,7 @@ import com.campuscompanion.common.error.ResourceNotFoundException;
 import com.campuscompanion.common.security.CurrentUser;
 import com.campuscompanion.common.storage.StorageClient;
 import com.campuscompanion.common.web.PageResponse;
+import com.campuscompanion.notice.dto.ExamPaperResponse;
 import com.campuscompanion.notice.dto.NoticeDocumentLinkResponse;
 import com.campuscompanion.notice.dto.NoticeResponse;
 import com.campuscompanion.student.StudentContext;
@@ -13,6 +14,7 @@ import com.campuscompanion.student.StudentProfileService;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -129,16 +131,31 @@ public class NoticeService {
         .toList();
   }
 
+  /** One exam date the college published: a paper of a time table, or an exam notice's date. */
+  public record CollegeExam(Long noticeId, String name, LocalDate examDate) {}
+
   /**
-   * The exam dates the college has published for a student's class: notices in the Exam category
-   * whose due date falls from {@code from} to {@code to}, soonest first (FR-PLN-002).
+   * The college's exams a student can see, from {@code from} to {@code to}. An exam notice that
+   * lists its papers gives one exam per paper, named by its subject; one without papers gives its
+   * due date, named by its title.
    */
-  public List<NoticeResponse> examDatesFor(StudentContext student, LocalDate from, LocalDate to) {
-    return notices
-        .findDeadlines(student.branch(), (short) student.currentSemester(), from, to)
-        .stream()
-        .filter(notice -> notice.getCategory() == NoticeCategory.EXAM)
-        .map(NoticeService::toResponse)
+  public List<CollegeExam> collegeExamsFor(StudentContext student, LocalDate from, LocalDate to) {
+    List<CollegeExam> exams = new ArrayList<>();
+    for (Notice notice :
+        notices.findVisibleExamNotices(student.branch(), (short) student.currentSemester())) {
+      List<ExamPaper> papers = notice.getExamPapers();
+      if (papers.isEmpty()) {
+        exams.add(new CollegeExam(notice.getId(), notice.getTitle(), notice.getDueDate()));
+      } else {
+        papers.forEach(
+            paper ->
+                exams.add(
+                    new CollegeExam(notice.getId(), paper.getSubject(), paper.getExamDate())));
+      }
+    }
+    return exams.stream()
+        .filter(exam -> exam.examDate() != null)
+        .filter(exam -> !exam.examDate().isBefore(from) && !exam.examDate().isAfter(to))
         .toList();
   }
 
@@ -164,6 +181,9 @@ public class NoticeService {
         notice.getDueDate(),
         notice.getStatus(),
         notice.getPublishedAt(),
-        notice.getDocumentType());
+        notice.getDocumentType(),
+        notice.getExamPapers().stream()
+            .map(paper -> new ExamPaperResponse(paper.getExamDate(), paper.getSubject()))
+            .toList());
   }
 }

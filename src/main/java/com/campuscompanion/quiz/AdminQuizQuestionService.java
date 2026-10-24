@@ -85,6 +85,12 @@ public class AdminQuizQuestionService {
     return questions.count() > 0;
   }
 
+  /** Whether the subject already has a question with this text, so a bank is loaded only once. */
+  @Transactional(readOnly = true)
+  public boolean existsInSubject(Long subjectId, String questionText) {
+    return questions.existsBySubjectIdAndQuestionText(subjectId, questionText);
+  }
+
   @Transactional
   public AdminQuizQuestionResponse create(QuizQuestionWriteRequest request, CurrentUser admin) {
     UnitOfSubject unit = unitOf(request);
@@ -142,10 +148,16 @@ public class AdminQuizQuestionService {
         request.correctOption());
   }
 
-  /** The unit of the request, checked to exist and to belong to the subject of the request. */
+  /**
+   * The unit of the request, checked to exist and to belong to the subject of the request; null for
+   * a question of the whole subject.
+   */
   private UnitOfSubject unitOf(QuizQuestionWriteRequest request) {
     if (subjects.find(request.subjectId()).isEmpty()) {
       throw new ValidationException("subjectId", "Choose an existing subject.");
+    }
+    if (request.unitId() == null) {
+      return null;
     }
     return subjects
         .findUnit(request.unitId())

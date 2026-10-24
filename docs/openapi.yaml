@@ -2491,6 +2491,15 @@ components:
           properties:
             latestSgpa: { type: number, nullable: true }
             cgpa: { type: number, nullable: true }
+            semesters:
+              type: array
+              description: Every published semester, oldest first.
+              items:
+                type: object
+                properties:
+                  semester: { type: integer }
+                  sgpa: { type: number }
+                  resultStatus: { type: string, enum: [PASS, FAIL] }
         todayClasses:
           type: array
           items: { $ref: "#/components/schemas/TimetableEntry" }
@@ -2502,7 +2511,16 @@ components:
           items: { $ref: "#/components/schemas/Notice" }
         recommendations:
           type: array
+          description: Still sent; the page no longer shows it (2026-10-24).
           items: { $ref: "#/components/schemas/Recommendation" }
+        nextExam:
+          type: object
+          nullable: true
+          description: "The next exam: { id, source: MINE|COLLEGE, noticeId, name, subject, examDate, past } (API contract 8.22)."
+        upcomingExams:
+          type: array
+          description: Up to eight coming exams, soonest first, each shaped like nextExam.
+          items: { type: object }
 
     AttendanceSummary:
       type: object
@@ -2794,6 +2812,17 @@ components:
           nullable: true
           enum: [application/pdf, image/jpeg]
           description: The official document's type, or null when the notice is text only.
+        examPapers:
+          type: array
+          description: The papers of an exam time table, in date order; empty for other notices.
+          items: { $ref: "#/components/schemas/ExamPaper" }
+
+    ExamPaper:
+      type: object
+      required: [examDate, subject]
+      properties:
+        examDate: { type: string, format: date }
+        subject: { type: string, minLength: 1, maxLength: 120 }
 
     ComplaintRequest:
       type: object
@@ -2870,6 +2899,12 @@ components:
         targetBranch: { type: string, maxLength: 20, nullable: true }
         targetSemester: { type: integer, minimum: 1, maximum: 8, nullable: true }
         dueDate: { type: string, format: date, nullable: true }
+        examPapers:
+          type: array
+          nullable: true
+          maxItems: 30
+          description: EXAM notices only. Left out on update, the saved papers are kept; [] removes them.
+          items: { $ref: "#/components/schemas/ExamPaper" }
 
     Subject:
       type: object
@@ -2954,10 +2989,14 @@ components:
 
     StartQuizRequest:
       type: object
-      required: [subjectId, unitId, questionCount]
+      required: [subjectId, questionCount]
       properties:
         subjectId: { type: integer, format: int64 }
-        unitId: { type: integer, format: int64 }
+        unitId:
+          type: integer
+          format: int64
+          nullable: true
+          description: Optional. Without it the questions come from the whole subject.
         questionCount: { type: integer, enum: [5, 10, 20] }
 
     QuizOption:
@@ -3014,9 +3053,9 @@ components:
         subjectId: { type: integer, format: int64 }
         subjectCode: { type: string }
         subjectName: { type: string }
-        unitId: { type: integer, format: int64 }
-        unitNo: { type: integer }
-        unitTitle: { type: string }
+        unitId: { type: integer, format: int64, nullable: true }
+        unitNo: { type: integer, nullable: true }
+        unitTitle: { type: string, nullable: true }
         status: { type: string, enum: [IN_PROGRESS, SUBMITTED, EXPIRED] }
         score: { type: integer, nullable: true }
         questionCount: { type: integer }
@@ -3036,9 +3075,9 @@ components:
         subjectId: { type: integer, format: int64 }
         subjectCode: { type: string }
         subjectName: { type: string }
-        unitId: { type: integer, format: int64 }
-        unitNo: { type: integer }
-        unitTitle: { type: string }
+        unitId: { type: integer, format: int64, nullable: true }
+        unitNo: { type: integer, nullable: true }
+        unitTitle: { type: string, nullable: true }
         items:
           type: array
           items:
@@ -3067,9 +3106,9 @@ components:
       properties:
         subjectId: { type: integer, format: int64 }
         subjectCode: { type: string }
-        unitId: { type: integer, format: int64 }
-        unitNo: { type: integer }
-        unitTitle: { type: string }
+        unitId: { type: integer, format: int64, nullable: true }
+        unitNo: { type: integer, nullable: true }
+        unitTitle: { type: string, nullable: true }
         accuracyPercent: { type: number }
         resources:
           type: array
@@ -3094,9 +3133,9 @@ components:
               subjectId: { type: integer, format: int64 }
               subjectCode: { type: string }
               subjectName: { type: string }
-              unitId: { type: integer, format: int64 }
-              unitNo: { type: integer }
-              unitTitle: { type: string }
+              unitId: { type: integer, format: int64, nullable: true }
+              unitNo: { type: integer, nullable: true }
+              unitTitle: { type: string, nullable: true }
               answered: { type: integer }
               correct: { type: integer }
               accuracyPercent: { type: number, nullable: true }
@@ -3391,10 +3430,10 @@ components:
 
     QuizQuestionWriteRequest:
       type: object
-      required: [subjectId, unitId, questionText, optionA, optionB, optionC, optionD, correctOption, explanation, difficulty, status]
+      required: [subjectId, questionText, optionA, optionB, optionC, optionD, correctOption, explanation, difficulty, status]
       properties:
         subjectId: { type: integer, format: int64 }
-        unitId: { type: integer, format: int64 }
+        unitId: { type: integer, format: int64, nullable: true, description: Optional; null for the whole subject. }
         questionText: { type: string, minLength: 1, maxLength: 1000 }
         optionA: { type: string, minLength: 1, maxLength: 300 }
         optionB: { type: string, minLength: 1, maxLength: 300 }
@@ -3414,7 +3453,7 @@ components:
             id: { type: integer, format: int64 }
             source: { type: string, enum: [ADMIN, AI_GENERATED] }
             subjectCode: { type: string }
-            unitNo: { type: integer }
-            unitTitle: { type: string }
+            unitNo: { type: integer, nullable: true }
+            unitTitle: { type: string, nullable: true }
             used: { type: boolean, description: True once the question has been served in an attempt. }
             createdAt: { type: string, format: date-time }

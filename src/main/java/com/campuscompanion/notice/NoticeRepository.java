@@ -42,6 +42,19 @@ public interface NoticeRepository extends JpaRepository<Notice, Long> {
   Optional<Notice> findVisibleById(
       @Param("id") Long id, @Param("branch") String branch, @Param("semester") Short semester);
 
+  /** Published exam notices a student may see, whatever their dates. */
+  @Query(
+      """
+      select n from Notice n
+      where n.status = com.campuscompanion.notice.NoticeStatus.PUBLISHED
+        and n.category = com.campuscompanion.notice.NoticeCategory.EXAM
+        and (n.targetBranch is null or n.targetBranch = :branch)
+        and (n.targetSemester is null or n.targetSemester = :semester)
+      order by n.id
+      """)
+  List<Notice> findVisibleExamNotices(
+      @Param("branch") String branch, @Param("semester") Short semester);
+
   /** Published, visible notices whose due date falls in the given days, soonest first. */
   @Query(
       """

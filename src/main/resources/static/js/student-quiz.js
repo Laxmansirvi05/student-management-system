@@ -19,16 +19,17 @@ const SECONDS_PER_QUESTION = 60;
 // questions and the same end time. It holds no answers key: only what the student chose.
 const SAVED = "quick-exam";
 
-const setup = { subjects: [], subjectId: Number(params.get("subjectId")) || 0, unitId: Number(params.get("unitId")) || 0, count: 10 };
+const setup = { subjects: [], subjectId: Number(params.get("subjectId")) || 0, count: 10 };
 let test = null;
 
 const clock = (seconds) => `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
 const subjectOf = (id) => setup.subjects.find((subject) => subject.id === id);
+/** "Unit 2" for an older unit test, "Whole subject" for a test of the whole subject. */
+const unitLabel = (item) => (item.unitNo ? `Unit ${item.unitNo}` : "Whole subject");
 
 // ---------------------------------------------------------------- Set up
 function setupView(progress, recent) {
   const subjectSelect = h("select.select", { id: "quiz-subject" }, setup.subjects.map((subject) => h("option", { value: subject.id, selected: subject.id === setup.subjectId }, `${subject.name} (${subject.code})`)));
-  const unitSelect = h("select.select", { id: "quiz-unit" });
   const time = h("strong.mono.num.time-pill");
   const problem = h("div.inset.inset--warning.inset--note", { hidden: true, role: "alert" });
   const start = h("button.button.button--primary.button--block.button--large", { type: "button" }, "Start test", icon("arrow-right"));
@@ -42,23 +43,7 @@ function setupView(progress, recent) {
     problem.hidden = true;
   }
 
-  async function fillUnits() {
-    fill(unitSelect, h("option", { value: "" }, "Loading units"));
-    start.disabled = true;
-    try {
-      const units = await api.get(`/subjects/${setup.subjectId}/units`);
-      if (!units.some((unit) => unit.id === setup.unitId)) {
-        setup.unitId = units[0]?.id || 0;
-      }
-      fill(unitSelect, units.length ? units.map((unit) => h("option", { value: unit.id, selected: unit.id === setup.unitId }, `Unit ${unit.unitNo}: ${unit.title}`)) : h("option", { value: "" }, "This subject has no units yet"));
-      start.disabled = !units.length;
-    } catch (failure) {
-      fill(unitSelect, h("option", { value: "" }, "The units could not be loaded"));
-      toast(messageFor(failure));
-    }
-  }
-
-  /** The unit has too few questions. Says how many, and offers the longest test that fits. */
+  /** The subject has too few questions. Says how many, and offers the longest test that fits. */
   function notEnough(available) {
     const fits = LENGTHS.filter((length) => length <= available).pop();
     const offer = fits ? h("button.button.button--secondary.button--small", { type: "button" }, `Start with ${fits} questions`) : null;
@@ -69,8 +54,8 @@ function setupView(progress, recent) {
     });
     const text =
       available === 0
-        ? "This unit has no questions yet. Try another unit."
-        : `This unit has only ${available} question${available === 1 ? "" : "s"} so far.` + (fits ? "" : " A test needs at least 5.");
+        ? "This subject has no questions yet. Try another subject."
+        : `This subject has only ${available} question${available === 1 ? "" : "s"} so far.` + (fits ? "" : " A test needs at least 5.");
     fill(problem, h("span.line.line--start", icon("alert"), h("span", text)), offer);
     problem.hidden = false;
   }
@@ -78,9 +63,9 @@ function setupView(progress, recent) {
   async function begin() {
     start.disabled = true;
     try {
-      const started = await api.post("/quiz-attempts", { subjectId: setup.subjectId, unitId: setup.unitId, questionCount: setup.count });
+      const started = await api.post("/quiz-attempts", { subjectId: setup.subjectId, questionCount: setup.count });
       const subject = subjectOf(setup.subjectId);
-      startTest(started, `${subject.name} · ${unitSelect.selectedOptions[0].textContent}`);
+      startTest(started, `${subject.name} · Whole subject`);
     } catch (failure) {
       if (failure.code === "QUIZ_NOT_ENOUGH_QUESTIONS") {
         notEnough(Number.isInteger(failure.available) ? failure.available : 0);
@@ -102,24 +87,16 @@ function setupView(progress, recent) {
   });
   subjectSelect.addEventListener("change", () => {
     setup.subjectId = Number(subjectSelect.value);
-    setup.unitId = 0;
-    problem.hidden = true;
-    fillUnits();
-  });
-  unitSelect.addEventListener("change", () => {
-    setup.unitId = Number(unitSelect.value);
     problem.hidden = true;
   });
   start.addEventListener("click", begin);
   showCount();
-  fillUnits();
 
   const form = h(
     "section.card.reveal",
     { "aria-labelledby": "setup-title" },
-    h("div.line.line--start", h("span.badge-icon.badge-icon--round", icon("play")), h("div.stack.stack--tight", h("h2.card__title", { id: "setup-title" }, "Start a quick test"), h("p.row__meta", "Choose a unit and how many questions."))),
+    h("div.line.line--start", h("span.badge-icon.badge-icon--round", icon("play")), h("div.stack.stack--tight", h("h2.card__title", { id: "setup-title" }, "Start a quick test"), h("p.row__meta", "Choose a subject and how many questions. Each test draws new random questions from the subject's question bank."))),
     h("div.field", h("label.field__label", { for: "quiz-subject" }, "Subject"), subjectSelect),
-    h("div.field", h("label.field__label", { for: "quiz-unit" }, "Unit"), unitSelect),
     h("div.field", h("span.field__label", "Number of questions"), h("div.count-pills", { role: "group", "aria-label": "Number of questions" }, pills)),
     h("div.inset.inset--row", h("span.line.line--start", icon("timer"), h("span.stack.stack--tight", h("strong", "Time allowed"), h("span.row__meta", "1 minute per question. The test ends when the time runs out."))), time),
     problem,
@@ -143,7 +120,7 @@ function practiceCard(progress) {
     h(
       "div.stack",
       progress.units.slice(0, 3).map((unit) =>
-        h("div.stack.stack--tight", h("div.line", h("span.small.clip", `${unit.subjectCode} · Unit ${unit.unitNo}`), h("span.mono.num", Math.round(unit.accuracyPercent) + "%")), bar(unit.accuracyPercent)),
+        h("div.stack.stack--tight", h("div.line", h("span.small.clip", `${unit.subjectCode} · ${unitLabel(unit)}`), h("span.mono.num", Math.round(unit.accuracyPercent) + "%")), bar(unit.accuracyPercent)),
       ),
     ),
   );
@@ -162,7 +139,7 @@ function recentCard(attempts) {
             return h(
               "li.row.attempt",
               h("span.badge-icon.badge-icon--round" + (kind ? ".badge-icon--" + kind : ".badge-icon--neutral"), icon(kind === "danger" ? "alert" : "check")),
-              h("div.stack.stack--tight", h("span.row__title.clip", `${attempt.subjectName} · Unit ${attempt.unitNo}`), h("span.row__meta.num", formatDate(attempt.startedAt))),
+              h("div.stack.stack--tight", h("span.row__title.clip", `${attempt.subjectName} · ${unitLabel(attempt)}`), h("span.row__meta.num", formatDate(attempt.startedAt))),
               h("strong.num.attempt__score" + (kind ? ".attempt__score--" + kind : ""), `${attempt.score}/${attempt.questionCount}`),
             );
           }),
@@ -468,7 +445,7 @@ function resultView(result) {
   );
 
   renderReview();
-  const retake = `/student/quiz.html?subjectId=${result.subjectId}&unitId=${result.unitId}`;
+  const retake = `/student/quiz.html?subjectId=${result.subjectId}`;
   return [
     expired
       ? h("p.inset.inset--warning.inset--note.reveal", { role: "status" }, icon("timer"), "The time ran out before this test was submitted, so no answers were counted. The correct answers are below.")
@@ -479,7 +456,7 @@ function resultView(result) {
       h(
         "div.hero__main",
         h("p.hero__eyebrow", expired ? "Test not submitted in time" : `Test completed · ${formatDate(result.startedAt)}`),
-        h("h2.hero__title.hero__title--small", `${result.subjectName} · Unit ${result.unitNo}: ${result.unitTitle}`),
+        h("h2.hero__title.hero__title--small", result.unitNo ? `${result.subjectName} · Unit ${result.unitNo}: ${result.unitTitle}` : `${result.subjectName} · Whole subject`),
         figure,
         h(
           "ul.chips",
@@ -488,7 +465,7 @@ function resultView(result) {
           h("li.chip", icon("minus"), "Not answered ", h("strong", countOf("open"))),
           seconds === null ? null : h("li.chip", icon("timer"), "Time ", h("strong", clock(seconds))),
         ),
-        h("div.line.line--start.line--wrap", h("a.button.button--primary", { href: retake }, icon("refresh"), "Retake this unit"), h("a.button.button--glass", { href: "/student/progress.html" }, icon("progress"), "See your progress")),
+        h("div.line.line--start.line--wrap", h("a.button.button--primary", { href: retake }, icon("refresh"), "Take another test"), h("a.button.button--glass", { href: "/student/progress.html" }, icon("progress"), "See your progress")),
       ),
       h("div.hero__aside", ring(percentage, { size: 168, stroke: 14, label: [h("strong.ring__big", percentage + "%"), h("span.eyebrow.eyebrow--inverse", "Score")] })),
     ),

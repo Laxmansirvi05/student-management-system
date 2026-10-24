@@ -223,7 +223,7 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A["Open Quick Exam"] --> B["Choose subject, unit, 5, 10 or 20 questions"]
+    A["Open Quick Exam"] --> B["Choose subject, 5, 10 or 20 questions (drawn at random from the whole subject)"]
     B --> C{"Enough questions?"}
     C -- No --> D["Only N questions available.<br/>Offer a test of N"]
     D --> B

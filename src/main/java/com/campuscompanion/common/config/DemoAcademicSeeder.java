@@ -399,6 +399,7 @@ public class DemoAcademicSeeder {
             NoticeCategory.EVENT,
             null,
             null,
+            null,
             null),
         admin);
   }
@@ -414,7 +415,7 @@ public class DemoAcademicSeeder {
         notices
             .create(
                 new NoticeWriteRequest(
-                    title, body, category, branch, branch == null ? null : SEMESTER, dueDate),
+                    title, body, category, branch, branch == null ? null : SEMESTER, dueDate, null),
                 admin)
             .id();
     notices.publish(id);

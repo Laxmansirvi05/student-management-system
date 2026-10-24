@@ -22,7 +22,7 @@ function stat(label, value, suffix = "") {
 }
 
 function row(attempt) {
-  const what = h("div.stack.stack--tight.hrow__what", h("span.row__title", attempt.subjectName), h("span.row__meta", `Unit ${attempt.unitNo}: ${attempt.unitTitle}`));
+  const what = h("div.stack.stack--tight.hrow__what", h("span.row__title", attempt.subjectName), h("span.row__meta", attempt.unitNo ? `Unit ${attempt.unitNo}: ${attempt.unitTitle}` : "Whole subject"));
   const date = h("span.row__meta.num.hrow__date", formatDate(attempt.startedAt));
   if (attempt.status === "IN_PROGRESS") {
     return h("li.row.hrow.reveal", date, what, h("strong.mono.num.hrow__score", "—"), h("span.hrow__pct", tag("In progress", "primary", "timer")), h("span.hrow__view"));

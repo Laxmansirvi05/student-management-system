@@ -5,7 +5,6 @@ import com.campuscompanion.common.error.ResourceNotFoundException;
 import com.campuscompanion.common.error.ValidationException;
 import com.campuscompanion.common.security.CurrentUser;
 import com.campuscompanion.notice.NoticeService;
-import com.campuscompanion.notice.dto.NoticeResponse;
 import com.campuscompanion.planner.dto.ExamListResponse;
 import com.campuscompanion.planner.dto.ExamRequest;
 import com.campuscompanion.planner.dto.ExamResponse;
@@ -131,13 +130,11 @@ public class ExamCountdownService {
   }
 
   private List<ExamResponse> collegeExams(StudentContext student, LocalDate today) {
-    List<NoticeResponse> published =
-        notices.examDatesFor(student, today, today.plusDays(COLLEGE_DAYS_AHEAD));
-    return published.stream()
+    return notices.collegeExamsFor(student, today, today.plusDays(COLLEGE_DAYS_AHEAD)).stream()
         .map(
-            notice ->
+            exam ->
                 new ExamResponse(
-                    null, "COLLEGE", notice.id(), notice.title(), null, notice.dueDate(), false))
+                    null, "COLLEGE", exam.noticeId(), exam.name(), null, exam.examDate(), false))
         .toList();
   }
 
