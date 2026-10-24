@@ -98,6 +98,7 @@ Names are defined in [.env.example](../.env.example). In production they are Her
 | `ADMIN_BOOTSTRAP_EMAIL` | First start | No | Login email of the first admin. Not a student address |
 | `ADMIN_BOOTSTRAP_PASSWORD` | First start | **Yes** | A strong password chosen by the owner, never a roll number. Remove after the admin has changed it |
 | `DEMO_SEED_ENABLED` | No | No | Default `false`. Set to `true` for one start to load synthetic demo data, then remove it |
+| `QUESTION_BANK_ENABLED` | No | No | Default `true`. At each start, adds any bundled course question (`question-bank/*.json`) that is missing to the subject with the matching code (25CS21001, 25CS21002, 25CS21003); nothing is added twice. `false` skips it |
 | `ATTENDANCE_REQUIRED_PERCENT` | No | No | Default 75 |
 | `JAVA_OPTS` | Recommended | No | Memory settings sized for the dyno |
 | `PORT` | Set by Heroku | No | Do not set it yourself |
