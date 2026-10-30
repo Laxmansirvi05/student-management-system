@@ -280,6 +280,15 @@ az group delete -n rg-campus-companion
 
 **Render stays as a backup:** see section 8a; it has the same settings and runs on the Free plan.
 
+## 8c. Redeploy with the coding portfolio (2026-10-30)
+
+At the owner's request, commit `7e89b4a` (coding portfolio and leaderboard, ADR 0017) was pushed and deployed to both hosts.
+
+- **Azure:** JAR built from a clean `git archive` of `7e89b4a`, deployed with `az webapp deploy --type jar` (`RuntimeSuccessful`). Start-up log: schema at 21, then "Migrating schema app to version 22 - coding badge images", "Successfully applied 1 migration"; `AI router: 12 routes`. Health UP; the new pages and assets are served; `/api/v1/coding/**`, `/api/v1/coding-badges/{key}` and `/api/v1/admin/coding/**` return 401 when signed out. V20 and V21 had already reached hosted Supabase from the owner's local server on port 8080, which reads `.env`.
+- **Render:** the push did not start an auto-deploy, so it was started through Render's API. The first try (`dep-dbi8b1psrm7s73dhk4u0`) ended `update_failed`: the old instance kept restarting with `EMAXCONNSESSION max clients reached in session mode - pool_size: 15`, because Azure, two Render instances and a local server on port 8080 all used the hosted pooler (each app takes up to 5 connections, `spring.datasource.hikari.maximum-pool-size`, plus one for Flyway). After the local server was stopped, the second deploy (`dep-dbi8fv142hec73coi6kg`) went **live**. **Risk:** session-mode pooling allows 15 clients in total; keep at most two app instances against hosted Supabase, or move the runtime connection to the transaction-mode pooler (port 6543) in a separate, tested change.
+- **New optional settings** (not set on either host): `GITHUB_TOKEN` (no scopes; raises GitHub's limit so commits, pull requests and issues always fill in) and `CODING_SYNC_ENABLED` (default `true`, the nightly refresh at 02:15).
+- **Not verified by the developer:** a signed-in session on the live data; the owner should open Portfolio, Leaderboard and the admin Coding leaderboard once.
+
 ## 9. What was verified in this phase
 
 - `./mvnw -B verify` passes in an isolated copy (no `.env`, Testcontainers PostgreSQL), including the planner tests.
