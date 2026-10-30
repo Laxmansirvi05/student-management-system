@@ -13,13 +13,17 @@ import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-/** The readers of the six coding sites, sharing one HTTP client. */
+/** The readers of the six coding sites and the badge pictures, sharing one HTTP client. */
 @Configuration
 public class CodingConfig {
 
   @Bean
-  public PlatformReaders platformReaders(CodingProperties properties) {
-    PlatformHttp http = new PlatformHttp(properties.timeout());
+  public PlatformHttp platformHttp(CodingProperties properties) {
+    return new PlatformHttp(properties.timeout());
+  }
+
+  @Bean
+  public PlatformReaders platformReaders(PlatformHttp http, CodingProperties properties) {
     return new PlatformReaders(
         List.of(
             new GitHubReader(http, properties.githubToken()),

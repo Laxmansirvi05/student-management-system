@@ -1,4 +1,4 @@
-import { formatDate, h, tag } from "./dom.js";
+import { formatDate, h } from "./dom.js";
 
 // Pieces the coding portfolio and both leaderboards share (FR-COD-002 to FR-COD-005): the names
 // of the sites, one account's numbers, and the journey chart. Everything from the server goes in as
@@ -22,9 +22,21 @@ export function count(value) {
   return value === null || value === undefined ? "—" : NUMBER.format(value);
 }
 
-/** The small chips of the sites a student has verified. */
+const LOGOS = { GITHUB: "github", LEETCODE: "leetcode", CODEFORCES: "codeforces", CODECHEF: "codechef", GEEKSFORGEEKS: "geeksforgeeks", HACKERRANK: "hackerrank" };
+
+/** A site's logo on a light tile, in the site's own colour (img/brands.svg). */
+export function platformMark(platform, size = "") {
+  const logo = svg("svg", { class: "cd-logo__svg", "aria-hidden": "true", focusable: "false" }, svg("use", { href: "/img/brands.svg#" + (LOGOS[platform] ?? "github") }));
+  return h("span.cd-logo.cd-logo--" + platform.toLowerCase() + (size ? ".cd-logo--" + size : ""), { "aria-hidden": "true" }, logo);
+}
+
+/** The logos of the sites a student has verified, named for screen readers. */
 export function platformTags(platforms) {
-  return h("span.line.line--start.line--wrap.coding-platforms", platforms.map((platform) => tag(PLATFORMS[platform] ?? platform)));
+  return h(
+    "span.line.line--start.line--wrap.coding-platforms",
+    { "aria-label": platforms.map((platform) => PLATFORMS[platform] ?? platform).join(", ") },
+    platforms.map((platform) => h("span", { title: PLATFORMS[platform] ?? platform }, platformMark(platform, "small"))),
+  );
 }
 
 function figure(label, value) {

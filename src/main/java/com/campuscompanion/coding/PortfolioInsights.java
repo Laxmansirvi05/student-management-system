@@ -88,7 +88,8 @@ public final class PortfolioInsights {
               });
       details
           .badges()
-          .forEach(badge -> awards.add(new Award(platform, badge.name(), badge.stars())));
+          .forEach(
+              badge -> awards.add(new Award(platform, badge.name(), badge.stars(), badge.image())));
       switch (platform) {
         case GEEKSFORGEEKS -> {
           fundamentals.add(new Count(platform.displayName(), orZero(details.basicSolved())));

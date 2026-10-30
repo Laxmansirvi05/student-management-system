@@ -51,6 +51,51 @@ public class PlatformHttp {
     return send(request, headers);
   }
 
+  /** An image an answer carried: its declared type and its bytes. */
+  public record Image(String contentType, byte[] bytes) {}
+
+  /**
+   * Downloads one image of at most maxBytes. Anything other than a 200 answer with an image type is
+   * "unavailable".
+   */
+  public Image getImage(String url, int maxBytes) throws PlatformException {
+    HttpRequest request =
+        HttpRequest.newBuilder(URI.create(url))
+            .GET()
+            .timeout(timeout)
+            .header("User-Agent", USER_AGENT)
+            .build();
+    CompletableFuture<HttpResponse<byte[]>> pending =
+        http.sendAsync(request, HttpResponse.BodyHandlers.ofByteArray());
+    HttpResponse<byte[]> response;
+    try {
+      response = pending.get(timeout.toMillis() + 2000, TimeUnit.MILLISECONDS);
+    } catch (TimeoutException | ExecutionException failed) {
+      pending.cancel(true);
+      throw new PlatformException(Kind.UNAVAILABLE);
+    } catch (InterruptedException interrupted) {
+      pending.cancel(true);
+      Thread.currentThread().interrupt();
+      throw new PlatformException(Kind.UNAVAILABLE);
+    }
+    String type =
+        response
+            .headers()
+            .firstValue("Content-Type")
+            .orElse("")
+            .split(";")[0]
+            .strip()
+            .toLowerCase(Locale.ROOT);
+    byte[] body = response.body();
+    if (response.statusCode() != 200
+        || !type.startsWith("image/")
+        || body == null
+        || body.length > maxBytes) {
+      throw new PlatformException(Kind.UNAVAILABLE);
+    }
+    return new Image(type, body);
+  }
+
   private String send(HttpRequest.Builder request, Map<String, String> headers)
       throws PlatformException {
     request.timeout(timeout).header("User-Agent", USER_AGENT);

@@ -40,6 +40,11 @@ At the owner's request the portfolio shows views in the style of Codolio: heatma
 
 Badges are drawn by the application (no image from a site is loaded), project addresses are built from the handle and a checked repository name, and descriptions are plain text.
 
+### Addendum 2, 2026-10-30: real logos and badge pictures (owner's choice)
+
+- **Logos**: the six sites' logos are kept in the application (`static/img/brands.svg`, from simple-icons 13.21.0, CC0) and are used only to name the linked site.
+- **Badge pictures**: the owner chose "the server copies them" over allowing the sites' image hosts in the page policy. When a read names a badge picture, the server downloads it once, only over HTTPS from `leetcode.com`, `assets.leetcode.com` or `cdn.codechef.com`, only a plain picture path, at most 1.5 MB; it keeps it only when its bytes are a PNG, GIF, WebP, JPEG or an SVG with no script, event handler, embedded page or outside reference (`V22`, `coding_badge_images`). `GET /api/v1/coding-badges/{key}` serves the copy to any logged-in user with a policy that lets it run nothing. The browser security policy is unchanged, and no browser contacts the sites. HackerRank has no badge pictures, so its badges are drawn in HackerRank's style.
+
 ## Trade-offs
 
 - Three of the six sites can change their pages or endpoints at any time. When one does, that platform's numbers stop updating (the old numbers stay, marked with the date of the last good read) until its reader is fixed; the rest keep working.

@@ -182,6 +182,7 @@ The AI component can read no table except its own usage log. It cannot look up m
 | Students' leaderboard | Read | ❌ | ✅ students who chose to show: name, class, totals | ❌ | — |
 | Admin coding leaderboard | Read | ❌ | ❌ | ✅ every student with a linked account | — |
 | Coding numbers | Nightly refresh | ❌ | ❌ | ❌ | ✅ verified accounts only |
+| Badge pictures (copies of public site pictures) | Read | ❌ | ✅ | ✅ | ✅ keeps a copy on a read |
 
 ### 4.8 Audit and operations
 

@@ -28,6 +28,9 @@ public class CodeChefReader implements PlatformReader {
       Pattern.compile("No\\. of Contests Participated:\\s*(?:<[^>]+>\\s*)*(\\d+)");
   private static final Pattern DETAILS = Pattern.compile("user-details-container");
   private static final Pattern BADGE = Pattern.compile("badge__title'?\"?>\\s*([^<]{1,80})<");
+  private static final Pattern BADGE_IMAGE =
+      Pattern.compile(
+          "<img\\s+src=['\"](https://cdn\\.codechef\\.com/images/badges/[A-Za-z0-9_/-]{1,80}\\.svg)['\"]\\s+alt=['\"]([^'\"<]{1,80})['\"]");
   private static final Pattern DAILY =
       Pattern.compile("userDailySubmissionsStats\\s*=\\s*(\\[.{0,200000}?\\]);");
 
@@ -80,9 +83,18 @@ public class CodeChefReader implements PlatformReader {
   /** The badges ("Problem Solver - Gold Badge") and the submissions by day from the page. */
   private static PlatformDetails details(String page) {
     List<PlatformDetails.Badge> badges = new ArrayList<>();
+    Matcher pictured = BADGE_IMAGE.matcher(page);
+    while (pictured.find()) {
+      String name = badgeName(pictured.group(2));
+      if (name != null) {
+        badges.add(new PlatformDetails.Badge(name, null, pictured.group(1), null));
+      }
+    }
+    // Without pictures (the page changed), the badge titles alone still name them.
     Matcher badge = BADGE.matcher(page);
-    while (badge.find()) {
-      String name = Json.label(badge.group(1).replace(" Badge", "").replace(" - ", " · "));
+    boolean pictures = !badges.isEmpty();
+    while (!pictures && badge.find()) {
+      String name = badgeName(badge.group(1));
       if (name != null) {
         badges.add(new PlatformDetails.Badge(name, null));
       }
@@ -106,6 +118,11 @@ public class CodeChefReader implements PlatformReader {
     }
     return new PlatformDetails(
         Json.recentDays(days), Map.of(), badges, Map.of(), List.of(), null, null, null, null);
+  }
+
+  /** "Problem Solver - Gold Badge" becomes "Problem Solver · Gold". */
+  private static String badgeName(String title) {
+    return Json.label(title.replace(" Badge", "").replaceAll("\\s+-\\s+", " · "));
   }
 
   /** "2026-1-5" or "2026-01-05" as a date, or null. */

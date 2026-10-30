@@ -649,6 +649,7 @@ Flyway, versioned SQL files, forward-only. See [ADR 0006](decisions/0006-flyway-
 | V17 | `V17__resource_reports.sql` | Adds `resource_reports` (section 4.20) for FR-LIB-005 | Added 2026-10-24 |
 | V18 | `V18__ai_log_retention.sql` | Grants `DELETE` on `ai_request_logs` to `cc_app`, with its policy, for the retention job (T7-09) | Added 2026-10-24 |
 | V20 | `V20__coding_portfolio.sql` | `coding_accounts`, `coding_snapshots`, `coding_leaderboard_optins` (section 4.28) | Added 2026-10-30 |
+| V22 | `V22__coding_badge_images.sql` | `coding_badge_images`, the kept copies of the sites' badge pictures (section 4.28) | Added 2026-10-30 |
 | V21 | `V21__coding_details.sql` | `coding_accounts.details`, a nullable JSON text column for the portfolio views (section 4.28) | Added 2026-10-30 |
 | V19 | `V19__exam_papers_and_subject_tests.sql` | `notice_exam_papers` (section 4.10a); `unit_id` of `quiz_questions` and `quiz_attempts` becomes nullable (Quick Exam by subject) | Added 2026-10-24 |
 | V12 | `V12__notice_documents.sql` | Adds the official document columns to `notices` (section 4.10) | Added 2026-10-22 |
@@ -666,6 +667,16 @@ Rules:
 4. A migration that drops or rewrites data needs the owner's approval before it is written.
 5. Migrations run as `cc_migrator`. They never create roles or set passwords; the two roles are created once by the owner (section 11.7).
 6. A migration that widens a privilege of `cc_app` states the reason in a comment and updates the table in section 11.3.
+
+**`coding_badge_images`** (V22): this application's copy of each badge picture a coding site shows, so a browser never contacts the sites. RLS on; `cc_app` may select and insert only.
+
+| Column | Type | Constraints | Notes |
+| --- | --- | --- | --- |
+| id | VARCHAR(64) | PK; 64 lower-case hex | SHA-256 of the source address. |
+| source | VARCHAR(300) | NOT NULL | The picture's address on the site (`leetcode.com`, `assets.leetcode.com` or `cdn.codechef.com`, HTTPS). |
+| content_type | VARCHAR(20) | NOT NULL; PNG, SVG, GIF, WebP or JPEG | Taken from the picture's own bytes, not from the site's answer. |
+| data | BYTEA | NOT NULL; 1 byte to 1,500,000 bytes | An SVG with a script, event handler, embedded page or outside reference is never kept. |
+| created_at | TIMESTAMPTZ | NOT NULL, default now() | |
 
 ### Login email: schema change and legacy accounts
 
@@ -747,6 +758,7 @@ Schema: `USAGE` on `app`. No `CREATE`.
 | student_exams | ✓ | ✓ | ✓ | ✓ | |
 | resource_reports (P1) | ✓ | ✓ | ✓ | | |
 | coding_accounts | ✓ | ✓ | ✓ | ✓ | A student removes a link (V20). |
+| coding_badge_images | ✓ | ✓ | — | — | A kept picture never changes (V22). |
 | coding_snapshots | ✓ | ✓ | ✓ | | Removed only with their account. |
 | coding_leaderboard_optins | ✓ | ✓ | | ✓ | Insert to show, delete to hide. |
 

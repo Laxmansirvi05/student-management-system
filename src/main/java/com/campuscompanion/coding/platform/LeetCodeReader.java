@@ -26,7 +26,7 @@ public class LeetCodeReader implements PlatformReader {
           + " userCalendar{submissionCalendar}"
           + " tagProblemCounts{advanced{tagName problemsSolved} intermediate{tagName problemsSolved}"
           + " fundamental{tagName problemsSolved}}"
-          + " badges{displayName}"
+          + " badges{displayName icon}"
           + " languageProblemCount{languageName problemsSolved}}"
           + " userContestRanking(username:$u){rating attendedContestsCount}}";
 
@@ -119,7 +119,9 @@ public class LeetCodeReader implements PlatformReader {
     for (JsonNode badge : user.path("badges")) {
       String name = Json.label(Json.text(badge.get("displayName")));
       if (name != null) {
-        badges.add(new PlatformDetails.Badge(name, null));
+        String icon = Json.text(badge.get("icon"));
+        String source = icon != null && icon.startsWith("/") ? "https://leetcode.com" + icon : icon;
+        badges.add(new PlatformDetails.Badge(name, null, source, null));
       }
     }
     Map<String, Integer> languages = new HashMap<>();

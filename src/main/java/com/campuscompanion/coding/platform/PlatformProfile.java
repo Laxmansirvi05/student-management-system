@@ -21,6 +21,11 @@ public record PlatformProfile(
     ownerText = ownerText.stream().filter(text -> text != null && !text.isBlank()).toList();
   }
 
+  /** The same read with other details. */
+  public PlatformProfile withDetails(PlatformDetails others) {
+    return new PlatformProfile(stats, ownerText, others);
+  }
+
   /** Whether the code appears in any of the owner's text fields, ignoring letter case. */
   public boolean mentions(String code) {
     String wanted = code.toUpperCase(Locale.ROOT);

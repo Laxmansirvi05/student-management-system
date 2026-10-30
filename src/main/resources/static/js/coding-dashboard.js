@@ -1,5 +1,7 @@
 import { formatDate, h, icon, tag } from "./dom.js";
-import { accountFigures, count, journeyChart, PLATFORMS, syncLine } from "./coding-parts.js";
+import { accountFigures, count, journeyChart, platformMark, PLATFORMS, syncLine } from "./coding-parts.js";
+
+export { platformMark };
 
 // The coding portfolio dashboard (FR-COD-002, ADR 0017), shared by the student's own Portfolio page
 // and the admin's read-only view of one student. A profile card on the left lists the linked sites;
@@ -9,7 +11,6 @@ import { accountFigures, count, journeyChart, PLATFORMS, syncLine } from "./codi
 const SVG = "http://www.w3.org/2000/svg";
 const DAY = 86400000;
 const SHORT_MONTH = new Intl.DateTimeFormat("en-GB", { month: "short" });
-const MARKS = { GITHUB: "GH", LEETCODE: "LC", CODEFORCES: "CF", CODECHEF: "CC", GEEKSFORGEEKS: "GfG", HACKERRANK: "HR" };
 
 function svg(name, attributes = {}, ...children) {
   const element = document.createElementNS(SVG, name);
@@ -29,110 +30,164 @@ function initialsOf(name) {
     .join("");
 }
 
-/** A site's round mark, in the site's own colour. */
-export function platformMark(platform) {
-  return h("span.cd-mark.cd-mark--" + platform.toLowerCase(), { "aria-hidden": "true" }, MARKS[platform] ?? "?");
-}
-
 function card(title, ...children) {
   return h("section.card.cd-card", title ? h("h2.cd-card__title", title) : null, ...children);
 }
 
 function bigNumber(label, value, hint) {
-  return h("section.card.cd-card.cd-big", h("p.cd-big__label", label), h("p.cd-big__value.num", count(value)), hint ? h("p.row__meta", hint) : null);
+  return h("div.cd-tile", h("p.cd-tile__value.num", count(value)), h("p.cd-tile__label", label), hint ? h("p.cd-tile__hint", hint) : null);
 }
 
 // ------------------------------------------------------------------------------------ Heatmap
 
-/** Day cells grouped by month, columns of weeks; a click or focus names the day below the grid. */
-function heatmap(calendar, { noun, months }) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const first = new Date(today.getFullYear(), today.getMonth() - (months - 1), 1);
-  const values = Object.values(calendar).filter((value) => value > 0);
-  const max = values.length ? Math.max(...values) : 0;
-  const level = (value) => (!value ? 0 : max <= 4 ? Math.min(4, value) : Math.min(4, Math.ceil((value / max) * 4)));
-  const caption = h("p.cd-heat__caption.row__meta", { "aria-live": "polite" }, `Choose a day to see its ${noun}.`);
-  const blocks = [];
-  for (let m = 0; m < months; m++) {
-    const start = new Date(first.getFullYear(), first.getMonth() + m, 1);
-    const end = new Date(start.getFullYear(), start.getMonth() + 1, 0);
-    const cells = [];
-    for (let pad = 0; pad < start.getDay(); pad++) {
-      cells.push(h("span.cd-heat__cell.cd-heat__cell--blank"));
-    }
-    for (let day = new Date(start); day <= end; day = new Date(day.getTime() + DAY + 3600000)) {
-      day.setHours(0, 0, 0, 0);
-      const iso = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
-      const value = calendar[iso] ?? 0;
-      const future = day > today;
-      const text = `${value} ${value === 1 ? noun.replace(/s$/, "") : noun} on ${formatDate(iso)}`;
-      const cell = h("button.cd-heat__cell.cd-heat__cell--" + (future ? "future" : level(value)), { type: "button", title: text, "aria-label": text, disabled: future });
-      cell.addEventListener("click", () => (caption.textContent = text));
-      cell.addEventListener("focus", () => (caption.textContent = text));
-      cells.push(cell);
-    }
-    blocks.push(h("div.cd-heat__month", h("div.cd-heat__grid", cells), h("span.cd-heat__label", SHORT_MONTH.format(start))));
-  }
-  // Laid out right to left, so the scroll starts at the newest month and older ones are to the left.
-  const scroller = h("div.cd-heat__scroll", blocks.reverse());
-  return h("div.cd-heat", scroller, h("div.cd-heat__legend", h("span.row__meta", "Less"), [0, 1, 2, 3, 4].map((n) => h("span.cd-heat__cell.cd-heat__cell--" + n)), h("span.row__meta", "More")), caption);
+function isoOf(day) {
+  return `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
 }
 
-function activityCard(calendar, activity, { noun, totalLabel }) {
-  let months = 6;
+/**
+ * A calendar of weeks, one column a week from Sunday, that grows to the card's width. A day names
+ * its count when it is pointed at, clicked or reached with the keyboard.
+ */
+function heatmap(calendar, { noun, months }) {
+  const today = new Date();
+  today.setHours(12, 0, 0, 0);
+  const start = new Date(today.getFullYear(), today.getMonth() - (months - 1), 1, 12);
+  start.setDate(start.getDate() - start.getDay());
+  const values = Object.values(calendar).filter((value) => value > 0);
+  const max = values.length ? Math.max(...values) : 0;
+  const level = (value) => (!value ? 0 : max <= 4 ? Math.min(4, value) : Math.max(1, Math.min(4, Math.ceil((value / max) * 4))));
+  const singular = noun.replace(/s$/, "");
+  const caption = h("p.cd-heat__caption", { "aria-live": "polite" }, `Point at a day to see its ${noun}.`);
+  const weeks = Math.ceil((today - start) / DAY / 7 + 0.0001);
+  const grid = h("div.cd-heat__grid", { style: { "--weeks": String(weeks) } });
+  const labels = h("div.cd-heat__months", { style: { "--weeks": String(weeks) } });
+  for (let week = 0; week < weeks; week++) {
+    const sunday = new Date(start.getTime() + week * 7 * DAY);
+    // A column is named by the month whose first day it holds.
+    for (let weekday = 0; weekday < 7; weekday++) {
+      const day = new Date(sunday.getTime() + weekday * DAY);
+      if (day.getDate() === 1 && day <= today) {
+        labels.append(h("span.cd-heat__month", { style: { "grid-column": `${week + 1} / span 4` } }, SHORT_MONTH.format(day)));
+      }
+    }
+    for (let weekday = 0; weekday < 7; weekday++) {
+      const day = new Date(sunday.getTime() + weekday * DAY);
+      day.setHours(12, 0, 0, 0);
+      if (day > today) {
+        grid.append(h("span.cd-heat__cell.cd-heat__cell--empty", { style: { "grid-row": String(weekday + 1), "grid-column": String(week + 1) } }));
+        continue;
+      }
+      const iso = isoOf(day);
+      const value = calendar[iso] ?? 0;
+      const text = value ? `${value} ${value === 1 ? singular : noun} on ${formatDate(iso)}` : `No ${noun} on ${formatDate(iso)}`;
+      const cell = h("button.cd-heat__cell.cd-heat__cell--" + level(value), { type: "button", title: text, "aria-label": text, style: { "grid-row": String(weekday + 1), "grid-column": String(week + 1) } });
+      const show = () => (caption.textContent = text);
+      cell.addEventListener("mouseenter", show);
+      cell.addEventListener("focus", show);
+      cell.addEventListener("click", show);
+      grid.append(cell);
+    }
+  }
+  const weekdays = h("div.cd-heat__days", ["", "Mon", "", "Wed", "", "Fri", ""].map((name) => h("span", name)));
+  return h(
+    "div.cd-heat",
+    h("div.cd-heat__body", h("span"), labels, weekdays, grid),
+    h("div.cd-heat__foot", caption, h("div.cd-heat__legend", h("span", "Less"), [0, 1, 2, 3, 4].map((n) => h("span.cd-heat__cell.cd-heat__cell--" + n)), h("span", "More"))),
+  );
+}
+
+/** The activity tiles and the full-width calendar of one view. */
+function activityBlock(calendar, activity, { noun, tiles }) {
+  let months = 12;
   const body = h("div");
   const draw = () => body.replaceChildren(heatmap(calendar, { noun, months }));
-  const range = h("select.select.cd-range", { "aria-label": "Period" }, h("option", { value: "6" }, "Last 6 months"), h("option", { value: "12" }, "Last 12 months"));
+  const range = h("select.select.cd-range", { "aria-label": "Period" }, h("option", { value: "12" }, "Last 12 months"), h("option", { value: "6" }, "Last 6 months"));
   range.addEventListener("change", () => {
     months = Number(range.value);
     draw();
   });
   draw();
-  return h(
-    "section.card.cd-card.cd-activity",
+  return [
+    h("div.cd-tiles", tiles),
     h(
-      "div.cd-activity__head",
-      h("span.cd-chip", totalLabel, " ", h("strong.num", count(activity.total))),
-      h("span.cd-chip", "Max streak ", h("strong.num", count(activity.maxStreak))),
-      h("span.cd-chip", "Current streak ", h("strong.num", count(activity.currentStreak))),
-      h("span.cd-spacer"),
-      range,
+      "section.card.cd-card.cd-activity",
+      h(
+        "div.cd-activity__head",
+        h("h2.cd-card__title", noun === "contributions" ? "Contribution activity" : "Submission activity"),
+        h("span.cd-chip", "Total ", h("strong.num", count(activity.total))),
+        h("span.cd-chip", "Max streak ", h("strong.num", count(activity.maxStreak))),
+        h("span.cd-chip", "Current streak ", h("strong.num", count(activity.currentStreak))),
+        h("span.cd-spacer"),
+        range,
+      ),
+      body,
     ),
-    body,
-  );
+  ];
 }
 
 // ------------------------------------------------------------------------------------ Awards
 
-function badgeKind(award) {
-  const name = award.name.toLowerCase();
-  if (/gold|guardian|knight/.test(name) || award.stars >= 5) return "gold";
-  if (/silver/.test(name) || award.stars >= 3) return "silver";
-  if (/bronze/.test(name) || award.stars >= 1) return "bronze";
-  return "plain";
+/** HackerRank's levels: one or two stars bronze, three or four silver, five and up gold. */
+function hackerRankLevel(stars) {
+  return stars >= 5 ? "gold" : stars >= 3 ? "silver" : "bronze";
+}
+
+/** HackerRank's badge: a metal hexagon with the skill's name and its stars. */
+function hackerRankBadge(award) {
+  const level = hackerRankLevel(award.stars ?? 1);
+  const id = "hr-" + Math.random().toString(36).slice(2, 9);
+  const hexagon = "50,3 95,28 95,80 50,105 5,80 5,28";
+  const inner = "50,13 86,33 86,75 50,95 14,75 14,33";
+  const stars = Math.min(award.stars ?? 0, 6);
+  return svg(
+    "svg",
+    { class: "cd-hr cd-hr--" + level, viewBox: "0 0 100 108", "aria-hidden": "true" },
+    svg("defs", {}, svg("linearGradient", { id, x1: "0", y1: "0", x2: "0", y2: "1" }, svg("stop", { offset: "0", class: "cd-hr__light" }), svg("stop", { offset: "1", class: "cd-hr__dark" }))),
+    svg("polygon", { points: hexagon, fill: `url(#${id})` }),
+    svg("polygon", { points: inner, class: "cd-hr__inner" }),
+    ...hackerRankName(award.name),
+    svg("text", { x: 50, y: 80, class: "cd-hr__stars", "text-anchor": "middle" }, "★".repeat(stars)),
+  );
+}
+
+/** The skill's name on one line, or two when it has two words ("Problem / Solving"). */
+function hackerRankName(name) {
+  const words = name.split(/\s+/);
+  const lines = words.length > 1 && name.length > 8 ? [words[0], words.slice(1).join(" ")] : [name];
+  return lines.map((line, index) =>
+    svg("text", { x: 50, y: lines.length === 1 ? 58 : 50 + index * 15, class: "cd-hr__name", "text-anchor": "middle" }, line.length > 10 ? line.slice(0, 9) + "…" : line),
+  );
+}
+
+/** A badge: the site's own picture when a copy is kept, HackerRank's design, or a plain medal. */
+function badgeArt(award) {
+  if (award.image) {
+    return h("img.cd-award__img", { src: "/api/v1/coding-badges/" + award.image, alt: "", loading: "lazy", decoding: "async" });
+  }
+  if (award.platform === "HACKERRANK") {
+    return hackerRankBadge(award);
+  }
+  return h("span.cd-award__medal", platformMark(award.platform, "large"));
 }
 
 function awardsCard(awards) {
-  const shown = 8;
+  const shown = 10;
   const list = h("ul.cd-awards");
   const draw = (all) =>
     list.replaceChildren(
       ...(all ? awards : awards.slice(0, shown)).map((award) =>
         h(
           "li.cd-award",
-          { title: `${award.name} · ${PLATFORMS[award.platform]}` },
-          h("span.cd-award__hex.cd-award__hex--" + badgeKind(award), h("span.cd-award__mark", MARKS[award.platform]), award.stars ? h("span.cd-award__stars", "★".repeat(Math.min(award.stars, 7))) : null),
+          { title: `${award.name} · ${PLATFORMS[award.platform]}`, tabindex: "0" },
+          h("span.cd-award__art", badgeArt(award)),
           h("span.cd-award__name", award.name),
+          h("span.cd-award__site", PLATFORMS[award.platform]),
         ),
       ),
     );
   draw(false);
   let open = false;
-  const more =
-    awards.length > shown
-      ? h("button.button.button--quiet.button--small", { type: "button" }, `Show all ${awards.length}`)
-      : null;
+  const more = awards.length > shown ? h("button.button.button--quiet.button--small", { type: "button" }, `Show all ${awards.length}`) : null;
   more?.addEventListener("click", () => {
     open = !open;
     draw(open);
@@ -260,37 +315,49 @@ function problemSolvingView(portfolio) {
   const journey = journeyChart(portfolio.journey);
   return h(
     "div.cd-view",
+    activityBlock(insights.calendar, insights.activity, {
+      noun: "submissions",
+      tiles: [
+        bigNumber("Questions solved", insights.questionsSolved),
+        bigNumber("Active days", insights.activity.activeDays),
+        bigNumber("Submissions", insights.activity.total, "Last 12 months"),
+        bigNumber("Max streak", insights.activity.maxStreak, "days"),
+        bigNumber("Current streak", insights.activity.currentStreak, "days"),
+      ],
+    }),
     h(
-      "div.cd-top",
-      bigNumber("Questions solved", insights.questionsSolved),
-      bigNumber("Active days", insights.activity.activeDays),
-      activityCard(insights.calendar, insights.activity, { noun: "submissions", totalLabel: "Submissions" }),
+      "div.cd-split",
+      h("div.cd-column", awardsCard(insights.awards), topicsCard(insights.topics), journey ? card("Your journey", h("div.coding-chart-wrap.cd-journey", journey)) : null),
+      h("div.cd-column", distributionCard(insights.distribution), contestsCard(insights.contests)),
     ),
-    h("div.cd-split", h("div.cd-column", awardsCard(insights.awards), topicsCard(insights.topics), contestsCard(insights.contests)), h("div.cd-column", distributionCard(insights.distribution))),
-    journey ? card("Your journey", h("div.coding-chart-wrap", journey)) : null,
   );
 }
+
+const LANGUAGE_TONES = ["primary", "danger", "success", "warning", "purple", "teal", "orange"];
 
 function developmentView(development, account, options) {
   const actions =
     account && options.accountActions
-      ? h("section.card.cd-card.cd-owner", h("div.line.line--wrap", h("span.line.line--start", platformMark("GITHUB"), h("a.row__link", { href: account.profileUrl, target: "_blank", rel: "noopener noreferrer" }, "@" + account.handle)), syncLine(account), options.accountActions(account)))
+      ? h("section.card.cd-owner", h("span.line.line--start", platformMark("GITHUB"), h("a.row__link", { href: account.profileUrl, target: "_blank", rel: "noopener noreferrer" }, "@" + account.handle)), syncLine(account), h("span.cd-spacer"), options.accountActions(account))
       : null;
   if (!development) {
-    return card(null, h("div.empty", h("h3", "No GitHub account yet"), h("p", "Link and verify GitHub to see contributions, languages and projects.")));
+    return h("div.cd-view", actions, card(null, h("div.empty", h("h3", "No GitHub numbers yet"), h("p", "Verify GitHub, or press Refresh, to see contributions, languages and projects."))));
   }
   const languages = Object.entries(development.languages);
-  const LANGUAGE_TONES = ["danger", "success", "warning", "primary", "purple", "teal", "orange"];
-  const stat = (iconName, label, value) => h("li.cd-stat", icon(iconName), h("span", label), h("strong.num", count(value)));
+  const stat = (iconName, label, value) => h("li.cd-stat", h("span.cd-stat__icon", icon(iconName)), h("span", label), h("strong.num", count(value)));
   return h(
     "div.cd-view",
     actions,
-    h(
-      "div.cd-top",
-      bigNumber("Total contributions", development.contributions.total, "In the last year"),
-      bigNumber("Total active days", development.contributions.activeDays),
-      activityCard(development.calendar, development.contributions, { noun: "contributions", totalLabel: "Contributions" }),
-    ),
+    activityBlock(development.calendar, development.contributions, {
+      noun: "contributions",
+      tiles: [
+        bigNumber("Contributions", development.contributions.total, "Last 12 months"),
+        bigNumber("Active days", development.contributions.activeDays),
+        bigNumber("Max streak", development.contributions.maxStreak, "days"),
+        bigNumber("Current streak", development.contributions.currentStreak, "days"),
+        bigNumber("Repositories", development.publicRepos),
+      ],
+    }),
     h(
       "div.cd-split.cd-split--even",
       card(
@@ -300,6 +367,7 @@ function developmentView(development, account, options) {
               "div.stack",
               h("div.cd-langbar", languages.map(([name, share], index) => h("span.cd-langbar__part.cd-tone-bg--" + LANGUAGE_TONES[index % LANGUAGE_TONES.length], { style: { "--share": share + "%" }, title: `${name} ${share}%` }))),
               h("ul.cd-langs", languages.map(([name, share], index) => h("li", h("span.cd-dot.cd-tone-bg--" + LANGUAGE_TONES[index % LANGUAGE_TONES.length]), h("span", name), h("span.row__meta.num", share + "%")))),
+              h("p.row__meta", "Share of public repositories by main language."),
             )
           : h("p.row__meta", "No languages yet."),
       ),
@@ -311,23 +379,22 @@ function developmentView(development, account, options) {
           stat("check-circle", "Commits", development.commits),
           stat("arrow-up-right", "Pull requests", development.pullRequests),
           stat("alert", "Issues", development.issues),
-          stat("book-open", "Public repositories", development.publicRepos),
           stat("users", "Followers", development.followers),
         ),
         development.commits === null ? h("p.row__meta", "GitHub's search did not answer on the last read; these fill in on the next one.") : null,
       ),
     ),
     card(
-      "Projects",
+      h("span.line.line--start", "Projects", h("span.cd-count.num", String(development.projects.length))),
       development.projects.length
         ? h(
             "ul.cd-projects",
             development.projects.map((project) =>
               h(
                 "li.cd-project",
-                h("div.cd-project__head", h("strong", project.name), h("a.icon-button.icon-button--bare", { href: project.url, target: "_blank", rel: "noopener noreferrer", "aria-label": `Open ${project.name} on GitHub` }, icon("external"))),
-                project.description ? h("p.row__meta", project.description) : null,
-                h("div.line.line--start.line--wrap", project.language ? tag(project.language) : null, h("span.row__meta", "★ " + count(project.stars ?? 0)), h("span.row__meta", `${development.handle}/${project.name}`)),
+                h("div.cd-project__head", h("span.cd-project__icon", platformMark("GITHUB")), h("strong", project.name), h("a.icon-button.icon-button--bare", { href: project.url, target: "_blank", rel: "noopener noreferrer", "aria-label": `Open ${project.name} on GitHub` }, icon("external"))),
+                h("p.cd-project__text", project.description || "No description."),
+                h("div.line.line--start.line--wrap", project.language ? tag(project.language) : null, h("span.row__meta", "★ " + count(project.stars ?? 0)), h("span.row__meta.cd-project__path", `${development.handle}/${project.name}`)),
               ),
             ),
           )
@@ -345,24 +412,45 @@ function accountView(account, options) {
   const topics = Object.entries(details.topics)
     .sort((a, b) => b[1] - a[1])
     .map(([name, value]) => ({ name, count: value }));
-  const awards = details.badges.map((badge) => ({ platform: account.platform, name: badge.name, stars: badge.stars }));
+  const awards = details.badges.map((badge) => ({ platform: account.platform, name: badge.name, stars: badge.stars, image: badge.image }));
   const hasCalendar = Object.keys(details.calendar).length > 0;
   return h(
     "div.cd-view",
     card(
-      h("span.line.line--start", platformMark(account.platform), account.platformName, account.rankLabel ? tag(account.rankLabel, "purple") : null),
+      h("span.line.line--start", platformMark(account.platform, "large"), account.platformName, account.rankLabel ? tag(account.rankLabel, "purple") : null),
       h("a.row__link", { href: account.profileUrl, target: "_blank", rel: "noopener noreferrer" }, "@" + account.handle),
       accountFigures(account),
       syncLine(account),
       options.accountActions ? options.accountActions(account) : null,
     ),
-    hasCalendar ? activityCard(details.calendar, account.activity, { noun: account.platform === "GITHUB" ? "contributions" : "submissions", totalLabel: "Total" }) : null,
+    hasCalendar
+      ? activityBlock(details.calendar, account.activity, {
+          noun: "submissions",
+          tiles: [bigNumber("Solved", account.problemsSolved), bigNumber("Active days", account.activity.activeDays), bigNumber("Max streak", account.activity.maxStreak, "days"), bigNumber("Current streak", account.activity.currentStreak, "days")],
+        })
+      : null,
     awards.length ? awardsCard(awards) : null,
     topics.length ? topicsCard(topics) : null,
   );
 }
 
 // ------------------------------------------------------------------------------------ Profile card
+
+/** The student's text, four lines at first, with a toggle when it is longer. */
+function bio(text) {
+  const body = h("p.cd-profile__bio.is-clamped", text);
+  if (text.length < 180) {
+    body.classList.remove("is-clamped");
+    return body;
+  }
+  const toggle = h("button.cd-profile__more-text", { type: "button", "aria-expanded": "false" }, "Read more");
+  toggle.addEventListener("click", () => {
+    const open = body.classList.toggle("is-clamped") === false;
+    toggle.setAttribute("aria-expanded", String(open));
+    toggle.textContent = open ? "Show less" : "Read more";
+  });
+  return h("div.cd-profile__bio-wrap", body, toggle);
+}
 
 function profileCard(portfolio, state, options, select) {
   const student = portfolio.student;
@@ -397,10 +485,10 @@ function profileCard(portfolio, state, options, select) {
   return h(
     "aside.card.cd-profile",
     options.headerControls ? options.headerControls(portfolio) : null,
-    h("div.cd-profile__who", avatar, h("h2.cd-profile__name", student.fullName), h("p.row__meta", `${student.rollNo} · ${student.branch} · Semester ${student.semester} · Section ${student.section}`), student.bio ? h("p.cd-profile__bio", student.bio) : null),
+    h("div.cd-profile__who", avatar, h("h2.cd-profile__name", student.fullName), h("p.row__meta", `${student.rollNo} · ${student.branch} · Semester ${student.semester} · Section ${student.section}`), student.bio ? bio(student.bio) : null),
     h("div.cd-profile__totals", h("div", h("strong.num", count(portfolio.totalSolved)), h("span.row__meta", "solved")), h("div", h("strong.num", String(portfolio.verifiedAccounts)), h("span.row__meta", "verified sites"))),
     h("p.eyebrow", "Problem solving"),
-    h("ul.cd-sites", row("ALL", "All platforms", h("span.cd-mark.cd-mark--all", { "aria-hidden": "true" }, icon("grid")), null), solving.map((account) => row(account.platform, account.platformName, platformMark(account.platform), account))),
+    h("ul.cd-sites", row("ALL", "All platforms", h("span.cd-logo.cd-logo--all", { "aria-hidden": "true" }, icon("grid")), null), solving.map((account) => row(account.platform, account.platformName, platformMark(account.platform), account))),
     options.addPlatform ? options.addPlatform() : null,
     h("p.eyebrow", "Development"),
     h("ul.cd-sites", github ? row("GITHUB", "GitHub", platformMark("GITHUB"), github) : h("li.row__meta", "No GitHub account linked.")),

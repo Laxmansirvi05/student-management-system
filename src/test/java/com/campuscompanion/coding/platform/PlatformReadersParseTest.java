@@ -70,7 +70,7 @@ class PlatformReadersParseTest {
               "userCalendar":{"submissionCalendar":"{\\"1790812800\\": 3, \\"1790899200\\": 2}"},
               "tagProblemCounts":{"fundamental":[{"tagName":"Array","problemsSolved":53}],
                 "intermediate":[{"tagName":"Hash Table","problemsSolved":25}],"advanced":[]},
-              "badges":[{"displayName":"50 Days Badge 2026"}],
+              "badges":[{"displayName":"50 Days Badge 2026","icon":"/static/images/badges/dcc-2026.png"}],
               "languageProblemCount":[{"languageName":"Java","problemsSolved":100}]},
              "userContestRanking":{"rating":1612.7,"attendedContestsCount":9}}}
             """);
@@ -89,8 +89,12 @@ class PlatformReadersParseTest {
         .containsEntry("Array", 53)
         .containsEntry("Hash Table", 25);
     assertThat(profile.details().badges())
-        .extracting(PlatformDetails.Badge::name)
-        .containsExactly("50 Days Badge 2026");
+        .containsExactly(
+            new PlatformDetails.Badge(
+                "50 Days Badge 2026",
+                null,
+                "https://leetcode.com/static/images/badges/dcc-2026.png",
+                null));
     assertThat(profile.details().languages()).containsEntry("Java", 100);
   }
 
@@ -143,7 +147,8 @@ class PlatformReadersParseTest {
             <div class="rating-number">1734</div><span>3★</span>
             <small>(Highest Rating 1801)</small>
             <h3>Total Problems Solved: 85</h3>
-            <div class='badge__title'>Problem Solver - Gold Badge</div>
+            <div class='badge'><img src='https://cdn.codechef.com/images/badges/problem/gold.svg' alt='Problem Solver - Gold Badge'/>
+            <div class='badge__title'>Problem Solver - Gold Badge</div></div>
             <script>var userDailySubmissionsStats = [{"date":"2026-10-1","value":4},{"date":"bad","value":1}];</script>
             """);
 
@@ -152,8 +157,12 @@ class PlatformReadersParseTest {
     assertThat(profile.stats().maxRating()).isEqualTo(1801);
     assertThat(profile.stats().rankLabel()).isEqualTo("3★");
     assertThat(profile.details().badges())
-        .extracting(PlatformDetails.Badge::name)
-        .containsExactly("Problem Solver · Gold");
+        .containsExactly(
+            new PlatformDetails.Badge(
+                "Problem Solver · Gold",
+                null,
+                "https://cdn.codechef.com/images/badges/problem/gold.svg",
+                null));
     assertThat(profile.details().calendar()).containsExactly(java.util.Map.entry("2026-10-01", 4));
     assertThat(profile.mentions("CC-ABCD2345")).isTrue();
   }

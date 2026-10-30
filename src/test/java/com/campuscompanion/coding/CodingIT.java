@@ -368,4 +368,33 @@ class CodingIT extends ApiIntegrationTest {
                 "select problems_solved from app.coding_accounts where id = ?", Integer.class, id))
         .isEqualTo(27);
   }
+
+  // --- badge pictures ----------------------------------------------------------------------------
+
+  @Test
+  void aKeptBadgePictureIsServedToAnyoneLoggedInAndCannotRunAnything() throws Exception {
+    String key = "a".repeat(64);
+    jdbc.update(
+        "insert into app.coding_badge_images (id, source, content_type, data) values (?, ?, ?, ?)"
+            + " on conflict do nothing",
+        key,
+        "https://cdn.codechef.com/images/badges/problem/gold.svg",
+        "image/svg+xml",
+        "<svg xmlns=\"http://www.w3.org/2000/svg\"></svg>"
+            .getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    String path = "/api/v1/coding-badges/" + key;
+
+    HttpResponse<String> forStudent = student("23COD015").get(path);
+    assertThat(forStudent.statusCode()).isEqualTo(200);
+    assertThat(forStudent.headers().firstValue("Content-Type"))
+        .hasValueSatisfying(type -> assertThat(type).startsWith("image/svg+xml"));
+    assertThat(forStudent.headers().firstValue("Content-Security-Policy"))
+        .hasValueSatisfying(
+            policy -> assertThat(policy).contains("default-src 'none'").contains("sandbox"));
+    assertThat(forStudent.headers().firstValue("X-Content-Type-Options")).hasValue("nosniff");
+    assertThat(adminClient(ADMIN).get(path).statusCode()).isEqualTo(200);
+    assertProblem(visitor().get(path), 401, "AUTH_REQUIRED");
+    assertProblem(
+        student("23COD015").get("/api/v1/coding-badges/" + "b".repeat(64)), 404, "NOT_FOUND");
+  }
 }

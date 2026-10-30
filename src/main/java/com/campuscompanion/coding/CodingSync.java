@@ -21,6 +21,7 @@ public class CodingSync {
   private final CodingAccountRepository accounts;
   private final CodingSnapshotRepository snapshots;
   private final PlatformReaders readers;
+  private final BadgePictures pictures;
   private final TransactionTemplate transactions;
   private final Clock clock;
 
@@ -28,18 +29,21 @@ public class CodingSync {
       CodingAccountRepository accounts,
       CodingSnapshotRepository snapshots,
       PlatformReaders readers,
+      BadgePictures pictures,
       TransactionTemplate transactions,
       Clock clock) {
     this.accounts = accounts;
     this.snapshots = snapshots;
     this.readers = readers;
+    this.pictures = pictures;
     this.transactions = transactions;
     this.clock = clock;
   }
 
   /** One read of the account's public profile. Must be called outside a transaction. */
   public PlatformProfile read(CodingAccount account) throws PlatformException {
-    return readers.of(account.getPlatform()).read(account.getHandle());
+    PlatformProfile profile = readers.of(account.getPlatform()).read(account.getHandle());
+    return profile.withDetails(pictures.attach(profile.details()));
   }
 
   /** Stores a good read on the account, inside the caller's transaction, with today's snapshot. */

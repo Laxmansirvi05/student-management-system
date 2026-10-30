@@ -19,8 +19,11 @@ public record ProblemSolvingInsights(
     Distribution distribution,
     List<Contest> contests) {
 
-  /** A badge from one site; stars are its level where the site has one. */
-  public record Award(CodingPlatform platform, String name, Integer stars) {}
+  /**
+   * A badge from one site; stars are its level where the site has one, and image the key of the
+   * kept copy of its picture (GET /coding-badges/{image}), or null.
+   */
+  public record Award(CodingPlatform platform, String name, Integer stars, String image) {}
 
   /** A named count: a topic, a site's share, a level. */
   public record Count(String name, int count) {}

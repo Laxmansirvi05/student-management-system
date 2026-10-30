@@ -40,8 +40,27 @@ public record PlatformDetails(
       new PlatformDetails(
           Map.of(), Map.of(), List.of(), Map.of(), List.of(), null, null, null, null);
 
-  /** A badge: its name and, where the site has one, its level as stars (1 to 7). */
-  public record Badge(String name, Integer stars) {}
+  /**
+   * A badge: its name, its level as stars where the site has one (1 to 7), the address of its
+   * picture on the site, and the key of the copy this application keeps of that picture (null until
+   * copied).
+   */
+  public record Badge(String name, Integer stars, String source, String image) {
+
+    public Badge(String name, Integer stars) {
+      this(name, stars, null, null);
+    }
+
+    public Badge withImage(String key) {
+      return new Badge(name, stars, source, key);
+    }
+  }
+
+  /** The same details with other badges. */
+  public PlatformDetails withBadges(List<Badge> others) {
+    return new PlatformDetails(
+        calendar, topics, others, languages, projects, basicSolved, commits, pullRequests, issues);
+  }
 
   /** A public repository: the address is built from the handle and the name, never taken. */
   public record Project(
