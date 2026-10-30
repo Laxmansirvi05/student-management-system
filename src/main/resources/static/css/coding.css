@@ -110,6 +110,12 @@
 }
 
 /* ---------------------------------------------------------------- Dashboard layout */
+/* The portfolio pages use the whole width beside the menu. */
+.page.page--wide {
+  max-width: none;
+  padding-inline: var(--space-5);
+}
+
 .cd-layout {
   display: grid;
   gap: var(--space-5);
@@ -521,9 +527,9 @@
 
 .cd-chip {
   padding: var(--space-1) var(--space-3);
-  background: var(--tint-primary);
+  background: var(--tint-orange);
   border-radius: var(--radius-pill);
-  color: var(--on-tint-primary);
+  color: var(--on-tint-orange);
   font: var(--text-caption);
 }
 
@@ -538,6 +544,7 @@
   gap: var(--space-3);
 }
 
+/* Orange shades, from no activity to the busiest days. */
 /* Day names, then one column a week that shares the card's width; cells stay square. */
 .cd-heat__body {
   display: grid;
@@ -601,11 +608,11 @@ button.cd-heat__cell:focus-visible {
 }
 
 .cd-heat__cell--empty { background: transparent; }
-.cd-heat__cell--0 { background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface)); }
-.cd-heat__cell--1 { background: color-mix(in srgb, var(--color-primary) 30%, var(--color-surface)); }
-.cd-heat__cell--2 { background: color-mix(in srgb, var(--color-primary) 55%, var(--color-surface)); }
-.cd-heat__cell--3 { background: color-mix(in srgb, var(--color-primary) 80%, var(--color-surface)); }
-.cd-heat__cell--4 { background: color-mix(in srgb, var(--color-primary) 100%, #001a4d 25%); }
+.cd-heat__cell--0 { background: #fff1e6; }
+.cd-heat__cell--1 { background: #fed7aa; }
+.cd-heat__cell--2 { background: #fdba74; }
+.cd-heat__cell--3 { background: #fb923c; }
+.cd-heat__cell--4 { background: #ea580c; }
 
 .cd-heat__foot {
   display: flex;

@@ -1,6 +1,6 @@
 import { confirmAction, field, input, openForm, select } from "./admin-kit.js";
 import { api, messageFor } from "./api.js";
-import { fill, h, icon, toast } from "./dom.js";
+import { h, icon, toast } from "./dom.js";
 import { renderDashboard } from "./coding-dashboard.js";
 import { PLATFORMS } from "./coding-parts.js";
 import { loadInto } from "./parts.js";
@@ -180,5 +180,4 @@ async function load() {
   });
 }
 
-fill(document.getElementById("actions"), h("button.button.button--primary", { type: "button", onclick: () => linkForm() }, icon("plus"), "Add platform"));
 load();
