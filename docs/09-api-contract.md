@@ -84,6 +84,8 @@ Errors use RFC 9457 problem details with media type `application/problem+json`.
 | 413 | `REQUEST_TOO_LARGE` | A JSON request body over 64 KB (section 6). |
 | 415 | `UPLOAD_INVALID_TYPE` | Not a valid PDF. |
 | 422 | `AI_REQUEST_DECLINED` | The assistant declined the request (off-topic or unsafe). `detail` gives the reason. |
+| 422 | `CODING_PROFILE_NOT_FOUND` | The coding site has no profile with that handle (section 8.24). |
+| 422 | `CODING_VERIFICATION_FAILED` | The verification code is not in the profile yet (section 8.24). |
 | 423 | `AUTH_ACCOUNT_LOCKED` | Too many failed logins for that email address. Returned in the same way whether or not an account exists. |
 | 429 | `RATE_LIMITED` | Too many requests. Includes a `Retry-After` header. |
 | 429 | `AI_QUOTA_EXCEEDED` | Daily AI limit reached. |
@@ -91,6 +93,7 @@ Errors use RFC 9457 problem details with media type `application/problem+json`.
 | 502 | `AI_INVALID_RESPONSE` | The AI provider returned output that failed validation. |
 | 503 | `AI_UNAVAILABLE` | AI provider error, AI switched off, or the application-wide daily ceiling reached. |
 | 503 | `STORAGE_UNAVAILABLE` | File storage could not be reached. |
+| 503 | `CODING_PLATFORM_UNAVAILABLE` | The coding site did not answer or answered in a form the reader does not know (section 8.24). |
 | 504 | `AI_TIMEOUT` | The AI provider did not answer within the time budget. |
 
 Success codes: `200` for reads and updates that return a body, `201` for creation (with a `Location` header), `204` for success with no body.
@@ -255,6 +258,10 @@ All paths start with `/admin` and require the `ADMIN` role.
 | POST | `/resources/{id}/reports` | Student: report a problem with a resource. See 8.23. |
 | GET, POST | `/admin/resource-reports`, `/admin/resource-reports/{id}/resolve` | Admin: list and resolve reports. See 8.23. |
 | PUT | `/admin/complaints/{id}` | Set status and response. |
+| GET | `/coding/portfolio`, `/coding/leaderboard` | Student: own coding portfolio; the students' leaderboard. See 8.24. |
+| POST, DELETE | `/coding/accounts`, `/coding/accounts/{id}`; POST `/coding/accounts/{id}/verify`, `/coding/accounts/{id}/refresh` | Student: link, verify, refresh and remove coding accounts. |
+| PUT | `/coding/leaderboard-visibility` | Student: show or hide on the students' leaderboard. |
+| GET | `/admin/coding/leaderboard`, `/admin/coding/students/{studentId}/portfolio` | Admin: every student's coding activity; one portfolio. See 8.24. |
 | GET | `/admin/audit-logs` | Read the audit log, newest first (P1). See 8.15. |
 | GET | `/admin/audit-logs/actions` | The actions that can appear, for the filter. |
 | POST | `/admin/imports/students` | Create many students from one CSV file (P1). See 8.14. |
@@ -804,6 +811,21 @@ Student only (T7-02, FR-PLN-001, FR-PLN-002). The student always comes from the 
 - `POST /resources/{id}/reports` `{reason}` (student only): `reason` is 5 to 500 characters of plain text. Returns 201 with `{id, resourceId, resourceTitle, reason, status: OPEN, reportedBy: null, createdAt, resolvedAt: null}`. A resource that does not exist or is hidden is `404`. A second open report of the same resource by the same student is `409 CONFLICT`. An admin gets `403`.
 - `GET /admin/resource-reports?status=OPEN|RESOLVED|ALL&page&size` (admin only, default `OPEN`, size 1 to 50) returns a page of reports, newest first, each with `resourceTitle` and `reportedBy` (the student's roll number).
 - `POST /admin/resource-reports/{id}/resolve` (admin only) returns the report with `status: RESOLVED` and `resolvedAt`. Resolving again changes nothing. Each first resolve is audited as `RESOURCE_REPORT_RESOLVED`, with the status only.
+
+### 8.24 Coding portfolio and leaderboard (FR-COD-001 to FR-COD-005)
+
+[ADR 0017](decisions/0017-coding-portfolio-and-leaderboard.md). Paths under `/coding` are student only (an admin gets `403`); paths under `/admin/coding` are admin only. The student always comes from the session; another student's account is `404`. Sites: `GITHUB`, `LEETCODE`, `CODEFORCES`, `CODECHEF`, `GEEKSFORGEEKS`, `HACKERRANK`.
+
+- `GET /coding/portfolio` returns `{totalSolved, verifiedAccounts, showOnLeaderboard, accounts, journey}`. An account is `{id, platform, platformName, handle, profileUrl, status: PENDING|VERIFIED, verificationCode, codeHint, verifiedAt, countsProblems, problemsSolved, easySolved, mediumSolved, hardSolved, contestRating, maxRating, contestsAttended, rankLabel, score, publicRepos, stars, followers, lastSyncedAt, lastSyncError: NOT_FOUND|UNAVAILABLE|null, refreshAvailableAt}`; numbers a site does not have are `null`. `verificationCode` is sent only while the account is pending. `totalSolved` adds `problemsSolved` of the verified accounts except GitHub (`countsProblems: false`). `journey` is `[{date, problemsSolved}]` for the last 365 days: on each day an account was read, the sum of each counted account's latest count on or before that day.
+- `POST /coding/accounts` `{platform, handle}` returns 201 with the pending account and its `verificationCode` (`CC-` and eight letters or digits). `handle` may be a profile link: the last part of its path is kept, then it must match `^[A-Za-z0-9][A-Za-z0-9_.-]{0,49}$` (GitHub: letters, digits and hyphens, at most 39). Failures: `400` naming `platform` or `handle`; `409 CONFLICT` when the student already has an account on that site, or another student has verified that handle (letter case ignored).
+- `POST /coding/accounts/{id}/verify` reads the public profile and looks for the code, ignoring letter case, in the fields `codeHint` names. Found: the account becomes `VERIFIED`, is read, and today's snapshot is kept; returns 200 with the account. A verified account is returned unchanged. Failures: `422 CODING_VERIFICATION_FAILED`, `422 CODING_PROFILE_NOT_FOUND`, `503 CODING_PLATFORM_UNAVAILABLE`, `409 CONFLICT` (verified by another student meanwhile), `429 RATE_LIMITED` within 20 seconds of the last press.
+- `POST /coding/accounts/{id}/refresh` reads a verified account again and returns it. Allowed once every 15 minutes per account (`429 RATE_LIMITED`, the detail says how long to wait); a pending account is `409 CONFLICT`. A failed read keeps the last numbers, sets `lastSyncError`, and returns `422 CODING_PROFILE_NOT_FOUND` or `503 CODING_PLATFORM_UNAVAILABLE`.
+- `DELETE /coding/accounts/{id}` returns 204; the account's snapshots go with it.
+- `PUT /coding/leaderboard-visibility` `{show}` returns `{show}`. Off by default.
+- `GET /coding/leaderboard?page&size` (size 1 to 100, default 20) returns `{content, page, size, totalElements, totalPages, me}`. It lists the students who chose to show and have a verified account, from the whole college, by `totalSolved` from highest, then name; equal totals share a rank (30, 20, 20, 10 rank 1, 2, 2, 4). An entry is `{rank, fullName, branch, semester, totalSolved, platforms, me}`: no roll number and no handles. `me` is `{showOnLeaderboard, rank (null when not listed), totalSolved, verifiedAccounts}`.
+- `GET /admin/coding/leaderboard?branch&semester&section&q&page&size` returns a page of every student with a linked account, shown or not, ranked the same way within the filter: `{rank, studentId, rollNo, fullName, branch, semester, section, totalSolved, solvedLast30Days, verifiedAccounts, pendingAccounts, platforms, showOnLeaderboard, lastSyncedAt}`. `q` matches part of the name or roll number. `solvedLast30Days` is each counted account's current count less its earliest snapshot of the last 30 days, never below zero.
+- `GET /admin/coding/students/{studentId}/portfolio` returns `{studentId, rollNo, fullName, branch, semester, section, portfolio}`, the portfolio as above without codes; `404` for an unknown student.
+- A nightly job (02:15 campus time, `CODING_SYNC_ENABLED`) reads verified accounts not read in the last 20 hours, one at a time with a pause between them.
 
 ## 9. AI endpoints
 

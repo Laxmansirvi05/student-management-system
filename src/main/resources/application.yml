@@ -124,6 +124,13 @@ app:
     admin-password: ${ADMIN_BOOTSTRAP_PASSWORD:}
   seed:
     demo-enabled: ${DEMO_SEED_ENABLED:false}
+  coding:
+    # The coding portfolio and leaderboard (ADR 0017). Reads public profiles on six sites.
+    github-token: ${GITHUB_TOKEN:}
+    sync-enabled: ${CODING_SYNC_ENABLED:true}
+    sync-max-accounts: 1000
+    sync-pause: 1500ms
+    timeout: 10s
   question-bank:
     # The course question banks bundled in question-bank/*.json: added once to the subjects with
     # matching codes at start-up, published, for Quick Exam.

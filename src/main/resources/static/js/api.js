@@ -131,7 +131,7 @@ export function homeFor(user) {
 
 // One part of the system is down for now. The server's own words say which part, so they are
 // shown. Any other server failure gets the general message with its reference.
-const UNAVAILABLE = new Set(["STORAGE_UNAVAILABLE", "AI_UNAVAILABLE", "AI_TIMEOUT", "AI_INVALID_RESPONSE"]);
+const UNAVAILABLE = new Set(["STORAGE_UNAVAILABLE", "AI_UNAVAILABLE", "AI_TIMEOUT", "AI_INVALID_RESPONSE", "CODING_PLATFORM_UNAVAILABLE"]);
 
 /** A message for the user for any failure, in plain language. */
 export function messageFor(error) {

@@ -1537,6 +1537,133 @@ paths:
               schema: { $ref: "#/components/schemas/Complaint" }
         "404": { $ref: "#/components/responses/Problem" }
 
+  /coding/portfolio:
+    get:
+      tags: [Student]
+      summary: The student's coding portfolio (FR-COD-002)
+      responses:
+        "200":
+          description: Accounts, total and journey.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CodingPortfolio" }
+
+  /coding/accounts:
+    post:
+      tags: [Student]
+      summary: Link a coding account as pending, with a verification code (FR-COD-001)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CodingAccountRequest" }
+      responses:
+        "201":
+          description: The pending account, with its verificationCode.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CodingAccount" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+
+  /coding/accounts/{id}/verify:
+    post:
+      tags: [Student]
+      summary: Look for the code in the profile; verify and read the account
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      responses:
+        "200":
+          description: The account, verified (or already verified).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CodingAccount" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+        "429": { $ref: "#/components/responses/Problem" }
+        "503": { $ref: "#/components/responses/Problem" }
+
+  /coding/accounts/{id}/refresh:
+    post:
+      tags: [Student]
+      summary: Read a verified account again, at most every 15 minutes
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      responses:
+        "200":
+          description: The account with the new numbers.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CodingAccount" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+        "429": { $ref: "#/components/responses/Problem" }
+        "503": { $ref: "#/components/responses/Problem" }
+
+  /coding/accounts/{id}:
+    delete:
+      tags: [Student]
+      summary: Remove a linked account and its history
+      parameters:
+        - { $ref: "#/components/parameters/IdPath" }
+      responses:
+        "204": { description: Removed. }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /coding/leaderboard-visibility:
+    put:
+      tags: [Student]
+      summary: Show or hide the student on the students' leaderboard
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LeaderboardVisibility" }
+      responses:
+        "200":
+          description: The new setting.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LeaderboardVisibility" }
+        "400": { $ref: "#/components/responses/Problem" }
+
+  /coding/leaderboard:
+    get:
+      tags: [Student]
+      summary: The students' leaderboard, and the student's own standing (FR-COD-004)
+      parameters:
+        - { name: page, in: query, schema: { type: integer, minimum: 0, default: 0 } }
+        - { name: size, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+      responses:
+        "200": { description: "A page of entries {rank, fullName, branch, semester, totalSolved, platforms, me} and me {showOnLeaderboard, rank, totalSolved, verifiedAccounts}." }
+
+  /admin/coding/leaderboard:
+    get:
+      tags: [Admin]
+      summary: Every student with a linked coding account (FR-COD-005)
+      parameters:
+        - { name: branch, in: query, schema: { type: string, maxLength: 20 } }
+        - { name: semester, in: query, schema: { type: integer, minimum: 1, maximum: 8 } }
+        - { name: section, in: query, schema: { type: string, maxLength: 5 } }
+        - { name: q, in: query, description: Part of a name or roll number., schema: { type: string, maxLength: 100 } }
+        - { name: page, in: query, schema: { type: integer, minimum: 0, default: 0 } }
+        - { name: size, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+      responses:
+        "200": { description: "A page of {rank, studentId, rollNo, fullName, branch, semester, section, totalSolved, solvedLast30Days, verifiedAccounts, pendingAccounts, platforms, showOnLeaderboard, lastSyncedAt}." }
+        "400": { $ref: "#/components/responses/Problem" }
+
+  /admin/coding/students/{studentId}/portfolio:
+    get:
+      tags: [Admin]
+      summary: One student's coding portfolio, read-only
+      parameters:
+        - { name: studentId, in: path, required: true, schema: { type: integer, format: int64 } }
+      responses:
+        "200": { description: "{studentId, rollNo, fullName, branch, semester, section, portfolio}; no verification codes." }
+        "404": { $ref: "#/components/responses/Problem" }
+
   /admin/complaints:
     get:
       tags: [Admin]
@@ -2328,6 +2455,64 @@ components:
         notes: { type: string, maxLength: 1000, nullable: true }
         subjectId: { type: integer, nullable: true }
         dueDate: { type: string, format: date, nullable: true, description: "From today to five years ahead; an unchanged date is kept on edit." }
+    CodingPlatform:
+      type: string
+      enum: [GITHUB, LEETCODE, CODEFORCES, CODECHEF, GEEKSFORGEEKS, HACKERRANK]
+    CodingAccountRequest:
+      type: object
+      additionalProperties: false
+      required: [platform, handle]
+      properties:
+        platform: { $ref: "#/components/schemas/CodingPlatform" }
+        handle: { type: string, maxLength: 200, description: "The username or a link to the profile; the last part of a link is kept." }
+    CodingAccount:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        platform: { $ref: "#/components/schemas/CodingPlatform" }
+        platformName: { type: string }
+        handle: { type: string }
+        profileUrl: { type: string }
+        status: { type: string, enum: [PENDING, VERIFIED] }
+        verificationCode: { type: string, nullable: true, description: Sent to the owner only while pending. }
+        codeHint: { type: string, description: Where on the site to put the code. }
+        verifiedAt: { type: string, format: date-time, nullable: true }
+        countsProblems: { type: boolean, description: False for GitHub. }
+        problemsSolved: { type: integer, nullable: true }
+        easySolved: { type: integer, nullable: true }
+        mediumSolved: { type: integer, nullable: true }
+        hardSolved: { type: integer, nullable: true }
+        contestRating: { type: integer, nullable: true }
+        maxRating: { type: integer, nullable: true }
+        contestsAttended: { type: integer, nullable: true }
+        rankLabel: { type: string, nullable: true }
+        score: { type: integer, nullable: true }
+        publicRepos: { type: integer, nullable: true }
+        stars: { type: integer, nullable: true }
+        followers: { type: integer, nullable: true }
+        lastSyncedAt: { type: string, format: date-time, nullable: true }
+        lastSyncError: { type: string, nullable: true, enum: [NOT_FOUND, UNAVAILABLE] }
+        refreshAvailableAt: { type: string, format: date-time, nullable: true }
+    CodingPortfolio:
+      type: object
+      properties:
+        totalSolved: { type: integer }
+        verifiedAccounts: { type: integer }
+        showOnLeaderboard: { type: boolean }
+        accounts: { type: array, items: { $ref: "#/components/schemas/CodingAccount" } }
+        journey:
+          type: array
+          items:
+            type: object
+            properties:
+              date: { type: string, format: date }
+              problemsSolved: { type: integer }
+    LeaderboardVisibility:
+      type: object
+      additionalProperties: false
+      required: [show]
+      properties:
+        show: { type: boolean }
     ExamRequest:
       type: object
       additionalProperties: false

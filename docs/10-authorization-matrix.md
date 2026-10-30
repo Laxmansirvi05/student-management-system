@@ -172,6 +172,17 @@ The AI component can read no table except its own usage log. It cannot look up m
 | Own exam dates (countdown) | Read, create, update, delete | ❌ | 🔒 own | ❌ | — |
 | College exam dates in the countdown | Read | ❌ | ✅ published Exam notices of the student's class, as in Notices | ❌ | — |
 
+### 4.7b Coding portfolio and leaderboard (P1, ADR 0017)
+
+| Data | Action | Visitor | Student | Admin | System |
+| --- | --- | --- | --- | --- | --- |
+| Coding accounts | Link, verify, refresh, remove | ❌ | 🔒 own | ❌ | — |
+| Coding portfolio | Read | ❌ | 🔒 own, with pending codes | ✅ any student, read-only, no codes | — |
+| Leaderboard setting | Show or hide | ❌ | 🔒 own | ❌ | — |
+| Students' leaderboard | Read | ❌ | ✅ students who chose to show: name, class, totals | ❌ | — |
+| Admin coding leaderboard | Read | ❌ | ❌ | ✅ every student with a linked account | — |
+| Coding numbers | Nightly refresh | ❌ | ❌ | ❌ | ✅ verified accounts only |
+
 ### 4.8 Audit and operations
 
 | Data | Action | Visitor | Student | Admin | System |

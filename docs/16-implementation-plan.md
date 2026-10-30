@@ -38,6 +38,10 @@ Consequences to keep in mind:
 - **The seeder becomes more important.** Its data must stay obviously synthetic, and it must never run in production unless the owner enables it for one start.
 - **Access control is not postponed.** Every student endpoint gets its own "not logged in" and "someone else's record" tests when it is built; only the generated all-endpoint suites wait for stage G.
 
+## Progress on 2026-10-30
+
+T7-13 coding portfolio and leaderboard ✅ at the owner's request ([ADR 0017](decisions/0017-coding-portfolio-and-leaderboard.md), FR-COD-001 to FR-COD-005, `V20__coding_portfolio.sql`): students link GitHub, LeetCode, Codeforces, CodeChef, GeeksforGeeks and HackerRank, prove each account with a code, and see their journey; an opt-in students' leaderboard and an admin leaderboard of every student. Built and integration tested with fake sites (`CodingIT`). **Owner actions:** V20 reaches hosted Supabase only with the next deployment, which needs your approval; an optional `GITHUB_TOKEN` (no scopes) raises GitHub's limit.
+
 ## Progress on 2026-10-24
 
 The autonomous completion run ([25](25-autonomous-completion-plan.md), report [26](26-final-project-completion-report.md)): T7-06 report a resource (V17) ✅, T7-05 flowchart ✅, T7-09 AI log retention (V18, off by default) ◐, T7-04 PDF summarization dropped. Every approved P0 and P1 requirement is built and integration tested. What remains is owner work: T3-01 (bucket sign-off), T5-06 (provider decision), T6-04 to T6-06 (host, backup and V16 to V18, deployment), T0-04 (GitHub settings), credential rotation. Doc 26 §18 lists all of it once.
@@ -188,6 +192,7 @@ Follow [15-AI-features-handoff.md](15-AI-features-handoff.md).
 | T7-09 ◐ | AI log retention: **built** on 2026-10-24 (`AiUsageLogRetention`, V18, off by default). Orphaned-file cleanup: **deferred**; it deletes from the real storage bucket, which cannot be verified here and needs the owner's approval | |
 | T7-12 ✅ | Notes workspace, Quick Note, Quick Assistant and floating robot, ported from Opportunity Radar ([ADR 0014](decisions/0014-notes-quick-assistant-and-robot.md)), V14 and V15. Built on 2026-10-23 | — |
 | T7-11 ✅ | Student complaints (public, private, secure), V13. Built on 2026-10-23 | FR-CMP-001 to FR-CMP-004 |
+| T7-13 ✅ | Coding portfolio and leaderboard (`V20`, [ADR 0017](decisions/0017-coding-portfolio-and-leaderboard.md)). Built on 2026-10-30 | FR-COD-001 to FR-COD-005 |
 | T7-10 ✅ | Past papers (PYQ) library: `V10__pyq.sql`, student search, filter, save and signed viewing, admin upload and folder import. Built on 2026-10-18 | FR-LIB-006 |
 
 ## Tasks that always need the owner

@@ -54,6 +54,7 @@
             <li><strong>Your college record</strong>, entered by the college: roll number, branch, semester, section and admission year, and your attendance, marks and semester results.</li>
             <li><strong>What you add yourself</strong>, all optional: a phone number, a short text about you, and a profile photo.</li>
             <li><strong>What you do here.</strong> The study material you bookmark, and your quick tests: the questions you were given, your answers and your scores.</li>
+            <li><strong>Your coding accounts</strong>, only if you link them on the Portfolio page: the site and your username on GitHub, LeetCode, Codeforces, CodeChef, GeeksforGeeks or HackerRank, and the public numbers read from that profile (problems solved, contest rating and rank, or for GitHub public repositories, stars and followers), with one total a day to draw your journey. Nothing else from those sites is kept, and nothing is ever posted there.</li>
             <li><strong>Your use of the AI assistant</strong>, as numbers only: how many requests you made, which tool you used, how long the texts were, and whether the request worked.</li>
             <li><strong>Your chats with the Quick Assistant</strong>, the helper on the floating robot: the questions you type there and the answers it gives, so that you can read them again. Only your newest six chats are kept; older ones are deleted. Only you can read them, not an administrator, and you can delete a chat at any time. Nothing is stored when an answer fails.</li>
             <li><strong>A security record.</strong> When marks, attendance, results, an account or a password are changed, the application records who changed what and when, and the network address the change came from. A password itself is never written into this record.</li>
@@ -76,6 +77,8 @@
             <h2><span class="legal__num">5</span>Who can see what</h2>
           <ul>
             <li>You see your own record, and nobody else's. Another student cannot see your attendance, marks, results, tests, bookmarks, phone number or photo.</li>
+            <li>If you switch on "Show me on the leaderboard", other students see your name, branch, semester, the coding sites you verified and your total of problems solved. They never see your usernames or roll number. It is off until you switch it on.</li>
+            <li>Administrators see the coding portfolio of every student who linked an account, whether or not they chose to show on the leaderboard.</li>
             <li>Administrators of your college can see and correct student records, create and deactivate accounts, and reset a password. They cannot see a password.</li>
             <li>Nobody outside your college is given access.</li>
           </ul>
@@ -86,6 +89,7 @@
             <li>The database and the files (study material and profile photos) are kept with Supabase. The files are private: one can be opened only through a link that the application gives to a logged-in person and that stops working after five minutes.</li>
             <li>The application itself runs on a hosting service chosen by the college.</li>
             <li>When you use the AI assistant, the text you type or paste for that request (and, in a Quick Assistant chat, the earlier messages of that chat) is sent to an AI service so that it can write the answer. Your name, roll number, email address and records are never sent to it. That is why the assistant asks you not to paste personal information. While the assistant is in demo mode, no AI service is used at all.</li>
+            <li>When you link a coding account, the application reads that account's public profile from the site itself: when you verify it, when you press Refresh, and once a night. Those sites see a request from the application, not from you, and only your public username is sent to them.</li>
             <li>The college may set up more than one AI service, so that the assistant keeps working when one is busy or down. Each request goes to one of them, and to another only if the first one fails. The services that may be used are Groq, Ollama's cloud service, Google's Gemini API and OpenRouter. Each has its own terms; on free plans, some services may keep the text or use it to improve their models. That is one more reason not to paste personal information.</li>
           </ul>
           </section>
@@ -95,6 +99,7 @@
             <li>Your account and your college record are kept for as long as the college needs them for your studies.</li>
             <li>The security record is kept for as long as the service runs, because its purpose is to show later what was changed.</li>
             <li>The numbers about your use of the AI assistant are removed automatically after 90 days once the college switches on the nightly clean-up. Until it does, they are kept until an administrator removes them.</li>
+            <li>A coding account and its daily totals are kept until you remove the account on your Portfolio page or your account is closed.</li>
             <li>Your Quick Assistant chats: your newest six are kept until you delete them or your account is closed.</li>
             <li>Your phone number, the text about you and your photo are kept until you remove them or your account is closed.</li>
           </ul>

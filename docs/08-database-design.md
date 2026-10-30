@@ -556,6 +556,37 @@ Added in V14 ([ADR 0014](decisions/0014-notes-quick-assistant-and-robot.md)). Ev
 
 Added in V15. A chat of one student (`title` 60, `source` `assistant`/`quick`) and its messages (`role` `user`/`ai`, `content` 1 to 8,000 characters, `ON DELETE CASCADE`). The only place the text of an assistant chat is stored; read by its student only. V15 also adds `QUICK_CHAT` to the feature check of `ai_request_logs`, which still holds no text.
 
+### 4.28 Coding portfolio tables (V20)
+
+Added on 2026-10-30 for FR-COD-001 to FR-COD-005 ([ADR 0017](decisions/0017-coding-portfolio-and-leaderboard.md)). RLS on all three; `cc_app` has the grants of the privilege table.
+
+**`coding_accounts`**: one linked account per student and site.
+
+| Column | Type | Constraints | Notes |
+| --- | --- | --- | --- |
+| id | BIGINT | PK | |
+| student_id | BIGINT | NOT NULL, FK → student_profiles | |
+| platform | VARCHAR(20) | NOT NULL, CHECK in (`GITHUB`, `LEETCODE`, `CODEFORCES`, `CODECHEF`, `GEEKSFORGEEKS`, `HACKERRANK`) | |
+| handle | VARCHAR(50) | NOT NULL, CHECK `^[A-Za-z0-9][A-Za-z0-9_.-]{0,49}$` | The user name on that site. |
+| status | VARCHAR(10) | NOT NULL, CHECK in (`PENDING`, `VERIFIED`) | |
+| verification_code | VARCHAR(12) | NOT NULL | `CC-` and eight characters; not secret once verified. |
+| verified_at | TIMESTAMPTZ | NULL; set exactly when `VERIFIED` | |
+| problems_solved, easy_solved, medium_solved, hard_solved | INTEGER | NULL, ≥ 0 | Problems solved; by difficulty on LeetCode only. GitHub has none. |
+| contest_rating, max_rating, contests_attended | INTEGER | NULL | |
+| rank_label | VARCHAR(40) | NULL | Codeforces rank, CodeChef stars; trimmed plain text. |
+| score | INTEGER | NULL | GeeksforGeeks coding score. |
+| public_repos, stars, followers | INTEGER | NULL, ≥ 0 | GitHub only. |
+| last_synced_at | TIMESTAMPTZ | NULL | Time of the last good read. |
+| last_sync_error | VARCHAR(20) | NULL | `NOT_FOUND` or `UNAVAILABLE` after a failed read; cleared by a good one. |
+| last_attempt_at | TIMESTAMPTZ | NULL | Last Verify or Refresh pressed, for the waiting times. |
+| created_at | TIMESTAMPTZ | NOT NULL | |
+
+Unique: (`student_id`, `platform`), and a partial unique index on (`platform`, `lower(handle)`) where `status = 'VERIFIED'`: one verified owner per handle.
+
+**`coding_snapshots`**: (`account_id` → coding_accounts `ON DELETE CASCADE`, `captured_on` DATE) as primary key, with `problems_solved` and `contest_rating`. One row per account per day, overwritten by later reads that day.
+
+**`coding_leaderboard_optins`**: `student_id` (PK, FK → student_profiles `ON DELETE CASCADE`), `created_at`. A row means the student appears on the students' leaderboard.
+
 ## 5. Validation: database and Java
 
 | Rule | Database | Java |
@@ -616,6 +647,7 @@ Flyway, versioned SQL files, forward-only. See [ADR 0006](decisions/0006-flyway-
 | V16 | `V16__planner.sql` | Adds `study_tasks` (section 4.19) and `student_exams` (section 4.19b) for T7-02 | Added 2026-10-24 |
 | V17 | `V17__resource_reports.sql` | Adds `resource_reports` (section 4.20) for FR-LIB-005 | Added 2026-10-24 |
 | V18 | `V18__ai_log_retention.sql` | Grants `DELETE` on `ai_request_logs` to `cc_app`, with its policy, for the retention job (T7-09) | Added 2026-10-24 |
+| V20 | `V20__coding_portfolio.sql` | `coding_accounts`, `coding_snapshots`, `coding_leaderboard_optins` (section 4.28) | Added 2026-10-30 |
 | V19 | `V19__exam_papers_and_subject_tests.sql` | `notice_exam_papers` (section 4.10a); `unit_id` of `quiz_questions` and `quiz_attempts` becomes nullable (Quick Exam by subject) | Added 2026-10-24 |
 | V12 | `V12__notice_documents.sql` | Adds the official document columns to `notices` (section 4.10) | Added 2026-10-22 |
 | V11 | `V11__pyq_created_by_optional.sql` | Makes `pyq_papers.created_by` optional (section 4.21) | Added 2026-10-19 |
@@ -712,6 +744,9 @@ Schema: `USAGE` on `app`. No `CREATE`.
 | study_tasks | ✓ | ✓ | ✓ | ✓ | |
 | student_exams | ✓ | ✓ | ✓ | ✓ | |
 | resource_reports (P1) | ✓ | ✓ | ✓ | | |
+| coding_accounts | ✓ | ✓ | ✓ | ✓ | A student removes a link (V20). |
+| coding_snapshots | ✓ | ✓ | ✓ | | Removed only with their account. |
+| coding_leaderboard_optins | ✓ | ✓ | | ✓ | Insert to show, delete to hide. |
 
 `cc_app` is granted no `TRUNCATE`, `REFERENCES` or `TRIGGER` privilege on any table, and no privilege at all on `flyway_schema_history`.
 

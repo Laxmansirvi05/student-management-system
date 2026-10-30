@@ -32,7 +32,9 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
       "SUPABASE_URL=",
       "SUPABASE_SERVICE_KEY=",
       "ADMIN_BOOTSTRAP_EMAIL=",
-      "ADMIN_BOOTSTRAP_PASSWORD="
+      "ADMIN_BOOTSTRAP_PASSWORD=",
+      "GITHUB_TOKEN=",
+      "CODING_SYNC_ENABLED=false"
     })
 public abstract class PostgresIntegrationTest {
 

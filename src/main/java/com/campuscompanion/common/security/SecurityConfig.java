@@ -51,7 +51,8 @@ public class SecurityConfig {
     "/api/v1/quiz-attempts/**",
     "/api/v1/progress/**",
     "/api/v1/ai/**",
-    "/api/v1/assistant/**"
+    "/api/v1/assistant/**",
+    "/api/v1/coding/**"
   };
 
   @Bean

@@ -61,6 +61,7 @@ A priority is changed only by editing this document, stating the reason, with th
 | FR-PRG-002 | Revision recommendations | P0 |
 | FR-PLN-001 | Study tasks | P1 |
 | FR-PLN-002 | Exam countdown | P1 |
+| FR-COD-001 to FR-COD-005 | Coding portfolio and leaderboard | P1 |
 | FR-AI-001 | Explain a topic | P0 |
 | FR-AI-002 | Summarize text | P0 |
 | FR-AI-003 | Generate practice questions | P0 |
@@ -485,6 +486,39 @@ Built on 2026-10-24 (T7-02), on the Planner page (`/student/planner.html`) and t
 - **Acceptance criteria:** The dashboard shows the days remaining until the next notice in the "Exam" category that has a due date.
 - **Extended at the owner's request (T7-02, 2026-10-24):** a student can also add, edit and delete exam dates of their own (a name of 1 to 120 characters, an optional subject, a date from today to five years ahead). The countdown lists the student's own exams and the college's published Exam notices with a due date for the student's class (read-only, linked to the notice) together, soonest first; the student's own past exams are listed apart, latest first. The dashboard shows the next of them, whichever kind it is.
 - **Exam papers (2026-10-24, owner's request):** an Exam notice can list its papers (date and subject, up to 30), entered by the admin on the notice form. Each paper still to come is one college exam in the countdown, named by its subject; an Exam notice without papers still counts by its due date. The dashboard lists up to eight upcoming exams. The notice page shows the papers. Days are counted from the campus date; an exam is "Today" on its day and past from the next day.
+
+## 8b. Coding portfolio and leaderboard
+
+Added on 2026-10-30 at the owner's request ([ADR 0017](decisions/0017-coding-portfolio-and-leaderboard.md)). Pages: Portfolio (`/student/portfolio.html`), Coding leaderboard (`/student/leaderboard.html`) and the admin Coding leaderboard (`/admin/leaderboard.html`).
+
+### FR-COD-001 Link a coding account (P1)
+
+- **Story:** As a student, I want to link my accounts on coding sites so that my work is in one place.
+- **Acceptance criteria:**
+  1. A student can link one account on each of GitHub, LeetCode, Codeforces, CodeChef, GeeksforGeeks and HackerRank, by handle or by pasting the profile link.
+  2. A new link is *pending* and shows a verification code. The student puts the code in a text field they control on that site (bio, about me, display name, designation or organisation) and presses Verify; the server reads the public profile and verifies the link only if the code is there.
+  3. A handle that another student has already verified on the same site is refused.
+  4. A student can remove a link; its numbers and history go with it.
+- **Edge cases:** an unknown handle, a site that does not answer and a missing code each have their own message. Verify can be pressed again after 20 seconds.
+
+### FR-COD-002 Portfolio (P1)
+
+- **Acceptance criteria:** The Portfolio page shows, for each verified account, the numbers that site publishes: problems solved (and by difficulty on LeetCode), contest rating and highest rating, rank or stars, score, and for GitHub public repositories, stars and followers; the total problems solved across sites; and a chart of the total over time. Each card says when its numbers were last read and has a Refresh button (at most every 15 minutes per account).
+
+### FR-COD-003 Daily refresh (P1)
+
+- **Acceptance criteria:** Every night the server reads each verified account again, one at a time, and keeps one snapshot per account per day. A site that fails leaves the last good numbers in place, marked with their date.
+
+### FR-COD-004 Students' leaderboard (P1)
+
+- **Acceptance criteria:**
+  1. Students are ranked by total problems solved across their verified accounts (GitHub has no problem count and adds nothing). Equal totals share a rank.
+  2. Only students who switched on "Show me on the leaderboard" appear, to every student of the college. The switch is off until the student turns it on.
+  3. Each row shows the student's name, branch, semester and section, the total, the count per site and links to their profiles. The page also shows the student's own total and rank.
+
+### FR-COD-005 Admin leaderboard (P1)
+
+- **Acceptance criteria:** Admins see every student with a linked account, opted in or not, ranked the same way, with how many problems each solved in the last 30 days, pending links, and when their numbers were last read. Filters: branch, semester, section and a search by name or roll number. An admin can open any student's portfolio, read-only.
 
 ## 9. AI study assistant
 

@@ -1756,3 +1756,138 @@ dialog .form-grid {
   gap: var(--space-4);
   align-items: start;
 }
+
+/* The coding portfolio and leaderboard (FR-COD-001 to FR-COD-004). */
+.coding-grid {
+  display: grid;
+  gap: var(--space-5);
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .coding-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.coding-account {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.coding-handle {
+  font: var(--text-small);
+  overflow-wrap: anywhere;
+}
+
+.coding-figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: var(--space-3);
+}
+
+.coding-figure {
+  display: grid;
+  gap: 2px;
+  padding: var(--space-3);
+  background: var(--color-bg-subtle);
+  border-radius: var(--radius-input);
+}
+
+.coding-figure__value {
+  font: var(--text-title);
+  font-weight: 700;
+}
+
+.coding-figure__label {
+  color: var(--color-text-muted);
+  font: var(--text-caption);
+}
+
+.coding-steps {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding-left: var(--space-5);
+}
+
+.coding-code {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  list-style: none;
+  margin-left: calc(-1 * var(--space-5));
+}
+
+.coding-code code {
+  padding: var(--space-2) var(--space-3);
+  background: var(--tint-primary);
+  border-radius: var(--radius-input);
+  color: var(--on-tint-primary);
+  font: var(--text-mono);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  user-select: all;
+}
+
+.coding-chart-wrap {
+  overflow: hidden;
+}
+
+.coding-chart {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.coding-chart__axis {
+  stroke: var(--color-hairline);
+  stroke-width: 1;
+}
+
+.coding-chart__line {
+  fill: none;
+  stroke: var(--color-primary);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.coding-chart__dot {
+  fill: var(--color-primary);
+}
+
+.coding-chart__label {
+  fill: var(--color-text-muted);
+  font: var(--text-caption);
+}
+
+.coding-platforms .tag {
+  font: var(--text-caption);
+}
+
+.coding-rank {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--space-4);
+  align-items: center;
+}
+
+.coding-rank__place {
+  min-width: 3ch;
+  color: var(--color-text-muted);
+  font: var(--text-title);
+  font-weight: 700;
+}
+
+.coding-rank--me {
+  background: var(--tint-primary);
+  border-radius: var(--radius-input);
+  padding-inline: var(--space-3);
+}
+
+.coding-rank__total {
+  display: grid;
+  justify-items: end;
+}

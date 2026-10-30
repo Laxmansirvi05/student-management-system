@@ -23,6 +23,8 @@ public enum ErrorCode {
   REQUEST_TOO_LARGE(HttpStatus.CONTENT_TOO_LARGE, "Request too large"),
   UPLOAD_INVALID_TYPE(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Unsupported file type"),
   AI_REQUEST_DECLINED(HttpStatus.UNPROCESSABLE_CONTENT, "Request declined"),
+  CODING_PROFILE_NOT_FOUND(HttpStatus.UNPROCESSABLE_CONTENT, "Profile not found"),
+  CODING_VERIFICATION_FAILED(HttpStatus.UNPROCESSABLE_CONTENT, "Code not found in profile"),
   AUTH_ACCOUNT_LOCKED(HttpStatus.LOCKED, "Too many attempts"),
   RATE_LIMITED(HttpStatus.TOO_MANY_REQUESTS, "Too many requests"),
   AI_QUOTA_EXCEEDED(HttpStatus.TOO_MANY_REQUESTS, "Daily AI limit reached"),
@@ -30,6 +32,7 @@ public enum ErrorCode {
   AI_INVALID_RESPONSE(HttpStatus.BAD_GATEWAY, "Assistant unavailable"),
   AI_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "Assistant unavailable"),
   STORAGE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "File storage unavailable"),
+  CODING_PLATFORM_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "Coding site unavailable"),
   AI_TIMEOUT(HttpStatus.GATEWAY_TIMEOUT, "Assistant unavailable");
 
   private final HttpStatus status;
