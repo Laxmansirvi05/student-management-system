@@ -663,8 +663,8 @@ button.cd-heat__cell:focus-visible {
 .cd-award__art {
   display: grid;
   place-items: center;
-  width: 84px;
-  height: 84px;
+  width: 92px;
+  height: 100px;
   margin-bottom: var(--space-1);
   transition: transform var(--motion) var(--ease);
 }
@@ -700,33 +700,46 @@ button.cd-heat__cell:focus-visible {
   font: var(--text-caption);
 }
 
-/* HackerRank's badge: a metal hexagon with the skill and its stars. */
+/* HackerRank's skill badges, drawn here: a hexagon in the level's metal with a dark icon and text. */
 .cd-hr {
-  width: 78px;
-  height: 84px;
+  width: 92px;
+  height: 100px;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.12));
 }
 
-.cd-hr__inner {
-  fill: rgba(0, 0, 0, 0.14);
+.cd-hr__shape {
+  stroke-width: 2;
+}
+
+.cd-hr__icon {
+  color: #39424e;
+}
+
+.cd-hr__number {
+  fill: #39424e;
+  font: 800 30px/1 var(--font);
 }
 
 .cd-hr__name {
-  fill: #ffffff;
-  font: 800 14px/1 var(--font);
+  fill: #39424e;
+  font: 700 12.5px/1 var(--font);
 }
 
 .cd-hr__stars {
-  fill: #ffffff;
-  font: 700 13px/1 var(--font);
-  letter-spacing: 1px;
+  fill: #39424e;
+  font: 700 11px/1 var(--font);
+  letter-spacing: 2px;
 }
 
-.cd-hr--bronze .cd-hr__light { stop-color: #e2a175; }
-.cd-hr--bronze .cd-hr__dark { stop-color: #9b5a2e; }
-.cd-hr--silver .cd-hr__light { stop-color: #d5dbe3; }
-.cd-hr--silver .cd-hr__dark { stop-color: #7b8794; }
-.cd-hr--gold .cd-hr__light { stop-color: #f7d061; }
-.cd-hr--gold .cd-hr__dark { stop-color: #c08a12; }
+.cd-hr--gold .cd-hr__light { stop-color: #f7dc6f; }
+.cd-hr--gold .cd-hr__dark { stop-color: #f0be4f; }
+.cd-hr--gold .cd-hr__shape { stroke: #c99a2e; }
+.cd-hr--silver .cd-hr__light { stop-color: #eaf0f2; }
+.cd-hr--silver .cd-hr__dark { stop-color: #c2cfd3; }
+.cd-hr--silver .cd-hr__shape { stroke: #97a4ab; }
+.cd-hr--bronze .cd-hr__light { stop-color: #f9d2bf; }
+.cd-hr--bronze .cd-hr__dark { stop-color: #eea486; }
+.cd-hr--bronze .cd-hr__shape { stroke: #cf8466; }
 
 /* ---------------------------------------------------------------- Topics */
 .cd-topics {

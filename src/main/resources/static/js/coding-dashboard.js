@@ -132,30 +132,67 @@ function hackerRankLevel(stars) {
   return stars >= 5 ? "gold" : stars >= 3 ? "silver" : "bronze";
 }
 
-/** HackerRank's badge: a metal hexagon with the skill's name and its stars. */
+/** The icon of a skill badge (img/skills.svg), or null when it has none. */
+function skillIcon(name) {
+  const key = name.toLowerCase().trim();
+  const icons = { "problem solving": "problem-solving", java: "java", python: "python", sql: "database", c: "c", "c language": "c", cpp: "cpp", "c++": "cpp", ruby: "ruby", react: "react", javascript: "javascript", js: "javascript" };
+  return icons[key] ?? null;
+}
+
+/** What the badge says: "C" reads "C language", as on HackerRank. */
+function skillLabel(name) {
+  return name.trim().toLowerCase() === "c" ? "C language" : name;
+}
+
+/** A pointy-top hexagon with rounded corners, as an SVG path. */
+function roundedHexagon(cx, cy, radius, corner) {
+  const points = Array.from({ length: 6 }, (_, i) => {
+    const angle = (Math.PI / 3) * i - Math.PI / 2;
+    return [cx + radius * Math.cos(angle), cy + radius * Math.sin(angle)];
+  });
+  let path = "";
+  points.forEach((point, i) => {
+    const before = points[(i + 5) % 6];
+    const after = points[(i + 1) % 6];
+    const toward = (from, to) => {
+      const dx = to[0] - from[0];
+      const dy = to[1] - from[1];
+      const length = Math.hypot(dx, dy);
+      return [from[0] + (dx / length) * corner, from[1] + (dy / length) * corner];
+    };
+    const start = toward(point, before);
+    const end = toward(point, after);
+    path += `${i === 0 ? "M" : "L"}${start[0].toFixed(1)},${start[1].toFixed(1)} Q${point[0].toFixed(1)},${point[1].toFixed(1)} ${end[0].toFixed(1)},${end[1].toFixed(1)} `;
+  });
+  return path + "Z";
+}
+
+/**
+ * A HackerRank skill badge, drawn here because HackerRank publishes no badge pictures: a hexagon in
+ * the level's metal, the skill's icon (or the day count of a "Days of" badge), its name and stars.
+ */
 function hackerRankBadge(award) {
   const level = hackerRankLevel(award.stars ?? 1);
   const id = "hr-" + Math.random().toString(36).slice(2, 9);
-  const hexagon = "50,3 95,28 95,80 50,105 5,80 5,28";
-  const inner = "50,13 86,33 86,75 50,95 14,75 14,33";
   const stars = Math.min(award.stars ?? 0, 6);
+  const label = skillLabel(award.name);
+  const days = /^(\d+)\s+days?\s+of\s+(.+)$/i.exec(award.name.trim());
+  const icon = skillIcon(award.name);
+  const mark = days
+    ? svg("text", { x: 60, y: 62, class: "cd-hr__number", "text-anchor": "middle" }, days[1])
+    : icon
+      ? svg("use", { href: "/img/skills.svg#" + icon, x: 42, y: 26, width: 36, height: 36, class: "cd-hr__icon" })
+      : svg("text", { x: 60, y: 60, class: "cd-hr__number", "text-anchor": "middle" }, label.charAt(0).toUpperCase());
+  const words = days ? `Days of ${days[2]}` : label;
+  const lines = words.length > 15 && words.includes(" ") ? [words.slice(0, words.lastIndexOf(" ", 15) > 0 ? words.lastIndexOf(" ", 15) : 15), words.slice(words.lastIndexOf(" ", 15) > 0 ? words.lastIndexOf(" ", 15) + 1 : 15)] : [words];
   return svg(
     "svg",
-    { class: "cd-hr cd-hr--" + level, viewBox: "0 0 100 108", "aria-hidden": "true" },
+    { class: "cd-hr cd-hr--" + level, viewBox: "0 0 120 132", "aria-hidden": "true" },
     svg("defs", {}, svg("linearGradient", { id, x1: "0", y1: "0", x2: "0", y2: "1" }, svg("stop", { offset: "0", class: "cd-hr__light" }), svg("stop", { offset: "1", class: "cd-hr__dark" }))),
-    svg("polygon", { points: hexagon, fill: `url(#${id})` }),
-    svg("polygon", { points: inner, class: "cd-hr__inner" }),
-    ...hackerRankName(award.name),
-    svg("text", { x: 50, y: 80, class: "cd-hr__stars", "text-anchor": "middle" }, "★".repeat(stars)),
-  );
-}
-
-/** The skill's name on one line, or two when it has two words ("Problem / Solving"). */
-function hackerRankName(name) {
-  const words = name.split(/\s+/);
-  const lines = words.length > 1 && name.length > 8 ? [words[0], words.slice(1).join(" ")] : [name];
-  return lines.map((line, index) =>
-    svg("text", { x: 50, y: lines.length === 1 ? 58 : 50 + index * 15, class: "cd-hr__name", "text-anchor": "middle" }, line.length > 10 ? line.slice(0, 9) + "…" : line),
+    svg("path", { d: roundedHexagon(60, 66, 62, 12), fill: `url(#${id})`, class: "cd-hr__shape" }),
+    mark,
+    ...lines.map((line, index) => svg("text", { x: 60, y: (lines.length === 1 ? 82 : 78) + index * 13, class: "cd-hr__name", "text-anchor": "middle" }, line)),
+    svg("text", { x: 60, y: lines.length === 1 ? 101 : 106, class: "cd-hr__stars", "text-anchor": "middle" }, "★".repeat(stars)),
   );
 }
 
