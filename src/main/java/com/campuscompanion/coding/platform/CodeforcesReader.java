@@ -1,7 +1,11 @@
 package com.campuscompanion.coding.platform;
 
 import com.campuscompanion.coding.platform.PlatformException.Kind;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -10,7 +14,8 @@ import tools.jackson.databind.JsonNode;
 
 /**
  * Codeforces' official API: the user (rating, highest rating, rank, first name, organisation),
- * their accepted submissions (counted once per problem) and their rated contests.
+ * their submissions (accepted ones counted once per problem, with their topics; every one counted
+ * on its day) and their rated contests.
  */
 public class CodeforcesReader implements PlatformReader {
 
@@ -43,10 +48,24 @@ public class CodeforcesReader implements PlatformReader {
       throw new PlatformException(Kind.NOT_FOUND);
     }
     Set<String> solved = new HashSet<>();
+    Map<LocalDate, Integer> days = new HashMap<>();
+    Map<String, Integer> topics = new HashMap<>();
     for (JsonNode submission : ok(statusBody).path("result")) {
+      JsonNode time = submission.get("creationTimeSeconds");
+      if (time != null && time.isNumber()) {
+        days.merge(
+            Instant.ofEpochSecond(time.asLong()).atZone(ZoneOffset.UTC).toLocalDate(),
+            1,
+            Integer::sum);
+      }
       if ("OK".equals(Json.text(submission.get("verdict")))) {
         JsonNode problem = submission.path("problem");
-        solved.add(Json.text(problem.get("contestId")) + "/" + Json.text(problem.get("index")));
+        String key = Json.text(problem.get("contestId")) + "/" + Json.text(problem.get("index"));
+        if (solved.add(key)) {
+          for (JsonNode tag : problem.path("tags")) {
+            topics.merge(titleCase(Json.text(tag)), 1, Integer::sum);
+          }
+        }
       }
     }
     int contests = ok(ratingBody).path("result").size();
@@ -68,7 +87,26 @@ public class CodeforcesReader implements PlatformReader {
     text.add(Json.text(info.get("firstName")));
     text.add(Json.text(info.get("lastName")));
     text.add(Json.text(info.get("organization")));
-    return new PlatformProfile(stats, text);
+    PlatformDetails details =
+        new PlatformDetails(
+            Json.recentDays(days),
+            Json.largestFirst(topics, PlatformDetails.MAX_TOPICS),
+            List.of(),
+            Map.of(),
+            List.of(),
+            null,
+            null,
+            null,
+            null);
+    return new PlatformProfile(stats, text, details);
+  }
+
+  /** "dfs and similar" becomes "Dfs and similar", so it reads like the other sites' topics. */
+  private static String titleCase(String tag) {
+    if (tag == null || tag.isBlank()) {
+      return null;
+    }
+    return Character.toUpperCase(tag.charAt(0)) + tag.substring(1);
   }
 
   private static JsonNode ok(String body) throws PlatformException {

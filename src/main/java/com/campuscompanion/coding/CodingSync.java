@@ -43,9 +43,10 @@ public class CodingSync {
   }
 
   /** Stores a good read on the account, inside the caller's transaction, with today's snapshot. */
-  public void apply(CodingAccount account, PlatformStats stats) {
+  public void apply(CodingAccount account, PlatformProfile profile) {
     Instant now = clock.instant();
-    account.apply(stats, now);
+    PlatformStats stats = profile.stats();
+    account.apply(stats, CodingDetailsJson.write(profile.details()), now);
     accounts.saveAndFlush(account);
     snapshots.record(
         account.getId(), CampusTime.today(clock), stats.problemsSolved(), stats.contestRating());
@@ -84,7 +85,7 @@ public class CodingSync {
                     .filter(CodingAccount::isVerified)
                     .map(
                         current -> {
-                          apply(current, profile.stats());
+                          apply(current, profile);
                           return true;
                         })
                     .orElse(false)));

@@ -114,6 +114,15 @@ public class StudentProfileService {
         .collect(Collectors.toMap(StudentContext::studentId, Function.identity()));
   }
 
+  /** The student's own text and whether they have a photo, for the coding portfolio. */
+  @Transactional(readOnly = true)
+  public StudentExtras extrasOf(Long studentId) {
+    return profiles
+        .findById(studentId)
+        .map(profile -> new StudentExtras(profile.getBio(), profile.getPhotoPath() != null))
+        .orElse(new StudentExtras(null, false));
+  }
+
   private static StudentContext toContext(StudentProfile profile) {
     return new StudentContext(
         profile.getId(),

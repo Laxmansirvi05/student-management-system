@@ -98,7 +98,7 @@ public class AdminCodingService {
         student.branch(),
         student.currentSemester(),
         student.section(),
-        portfolios.of(studentId, false));
+        portfolios.of(student, false));
   }
 
   private static boolean matches(

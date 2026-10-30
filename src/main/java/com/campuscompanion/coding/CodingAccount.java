@@ -77,6 +77,9 @@ public class CodingAccount {
 
   private Integer followers;
 
+  /** The richer data of the last good read, as JSON ({@link CodingDetailsJson}). */
+  private String details;
+
   @Column(name = "last_synced_at")
   private Instant lastSyncedAt;
 
@@ -106,8 +109,9 @@ public class CodingAccount {
     verifiedAt = now;
   }
 
-  /** A good read: the numbers replace the old ones and any error is cleared. */
-  public void apply(PlatformStats stats, Instant now) {
+  /** A good read: the numbers and details replace the old ones and any error is cleared. */
+  public void apply(PlatformStats stats, String detailsJson, Instant now) {
+    details = detailsJson;
     problemsSolved = stats.problemsSolved();
     easySolved = stats.easySolved();
     mediumSolved = stats.mediumSolved();
@@ -217,6 +221,10 @@ public class CodingAccount {
 
   public Integer getFollowers() {
     return followers;
+  }
+
+  public String getDetails() {
+    return details;
   }
 
   public Instant getLastSyncedAt() {

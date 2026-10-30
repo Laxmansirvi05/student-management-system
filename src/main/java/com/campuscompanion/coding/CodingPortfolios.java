@@ -3,7 +3,12 @@ package com.campuscompanion.coding;
 import com.campuscompanion.coding.dto.CodingAccountResponse;
 import com.campuscompanion.coding.dto.JourneyPoint;
 import com.campuscompanion.coding.dto.PortfolioResponse;
+import com.campuscompanion.coding.dto.StudentCard;
+import com.campuscompanion.coding.platform.PlatformDetails;
 import com.campuscompanion.common.config.CampusTime;
+import com.campuscompanion.student.StudentContext;
+import com.campuscompanion.student.StudentExtras;
+import com.campuscompanion.student.StudentProfileService;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDate;
@@ -26,28 +31,58 @@ public class CodingPortfolios {
   private final CodingAccountRepository accounts;
   private final CodingSnapshotRepository snapshots;
   private final LeaderboardOptinRepository optins;
+  private final StudentProfileService students;
   private final Clock clock;
 
   public CodingPortfolios(
       CodingAccountRepository accounts,
       CodingSnapshotRepository snapshots,
       LeaderboardOptinRepository optins,
+      StudentProfileService students,
       Clock clock) {
     this.accounts = accounts;
     this.snapshots = snapshots;
     this.optins = optins;
+    this.students = students;
     this.clock = clock;
   }
 
   /** The portfolio of one student; the codes of pending accounts only when {@code forOwner}. */
-  public PortfolioResponse of(Long studentId, boolean forOwner) {
+  public PortfolioResponse of(StudentContext student, boolean forOwner) {
+    Long studentId = student.studentId();
     List<CodingAccount> linked = accounts.findByStudentIdOrderByPlatform(studentId);
+    LocalDate today = CampusTime.today(clock);
     List<CodingAccountResponse> shown =
-        linked.stream().map(account -> toResponse(account, forOwner)).toList();
+        linked.stream().map(account -> toResponse(account, forOwner, today)).toList();
     int total = linked.stream().mapToInt(CodingAccount::countedProblems).sum();
     int verified = (int) linked.stream().filter(CodingAccount::isVerified).count();
+    List<PortfolioInsights.Source> sources =
+        linked.stream()
+            .filter(CodingAccount::isVerified)
+            .map(
+                account ->
+                    new PortfolioInsights.Source(
+                        account, CodingDetailsJson.read(account.getDetails())))
+            .toList();
+    StudentExtras extras = students.extrasOf(studentId);
+    StudentCard card =
+        new StudentCard(
+            student.fullName(),
+            student.rollNo(),
+            student.branch(),
+            student.currentSemester(),
+            student.section(),
+            extras.bio(),
+            extras.hasPhoto());
     return new PortfolioResponse(
-        total, verified, optins.existsById(studentId), shown, journey(linked));
+        card,
+        total,
+        verified,
+        optins.existsById(studentId),
+        shown,
+        journey(linked),
+        PortfolioInsights.problemSolving(sources, today),
+        PortfolioInsights.development(sources, today));
   }
 
   private List<JourneyPoint> journey(List<CodingAccount> linked) {
@@ -73,8 +108,10 @@ public class CodingPortfolios {
     return CodingRules.journey(counts);
   }
 
-  static CodingAccountResponse toResponse(CodingAccount account, boolean forOwner) {
+  static CodingAccountResponse toResponse(
+      CodingAccount account, boolean forOwner, LocalDate today) {
     boolean pending = !account.isVerified();
+    PlatformDetails details = pending ? null : CodingDetailsJson.read(account.getDetails());
     return new CodingAccountResponse(
         account.getId(),
         account.getPlatform(),
@@ -102,6 +139,8 @@ public class CodingPortfolios {
         account.getLastSyncError(),
         account.isVerified() && account.getLastAttemptAt() != null
             ? account.getLastAttemptAt().plus(REFRESH_COOLDOWN)
-            : null);
+            : null,
+        details,
+        details == null ? null : PortfolioInsights.summarise(details.calendar(), today));
   }
 }

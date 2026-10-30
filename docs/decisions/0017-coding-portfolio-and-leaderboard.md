@@ -28,6 +28,18 @@ Option 3, inside the existing stack. No library is added: the server uses Java's
 - **Refresh.** Numbers are read when an account is verified, when the student presses Refresh (at most every 15 minutes per account), and once a night by a scheduled job that goes through the verified accounts one at a time with a pause between calls. Each read keeps one snapshot per account per day, which draws the student's journey.
 - **Safety.** A handle must match a strict pattern before any address is built, the host of every call is fixed in the code, calls time out after 10 seconds, and nothing an outside site returns is shown as HTML: only numbers and a short, trimmed rank label are stored.
 
+### Addendum, 2026-10-30: the portfolio views
+
+At the owner's request the portfolio shows views in the style of Codolio: heatmaps and streaks, awards, topics, the question distribution, and a development view of GitHub. The readers keep, per account, a capped JSON document of that data (`V21`, `coding_accounts.details`). New sources, all public and read by the server:
+
+- **GeeksforGeeks**: its profile API has no bio, so a code placed in the bio could never be found. The reader now also reads the public profile page (`geeksforgeeks.org/profile/<handle>`) for the bio and headline, and the practice API for the solved problems by level (with their dates and languages).
+- **LeetCode**: the same endpoint gives the submission calendar, solved problems by topic, badges and languages.
+- **Codeforces**: submission times and the topics of accepted problems, from the call already made.
+- **CodeChef**: the badges and the daily submissions on the page already read.
+- **GitHub**: the public contributions calendar page (`github.com/users/<handle>/contributions`), languages and projects from the repositories already read, and three search calls for commits, pull requests and issues, which are left empty when the search refuses.
+
+Badges are drawn by the application (no image from a site is loaded), project addresses are built from the handle and a checked repository name, and descriptions are plain text.
+
 ## Trade-offs
 
 - Three of the six sites can change their pages or endpoints at any time. When one does, that platform's numbers stop updating (the old numbers stay, marked with the date of the last good read) until its reader is fixed; the rest keep working.

@@ -40,7 +40,7 @@ Consequences to keep in mind:
 
 ## Progress on 2026-10-30
 
-T7-13 coding portfolio and leaderboard ✅ at the owner's request ([ADR 0017](decisions/0017-coding-portfolio-and-leaderboard.md), FR-COD-001 to FR-COD-005, `V20__coding_portfolio.sql`): students link GitHub, LeetCode, Codeforces, CodeChef, GeeksforGeeks and HackerRank, prove each account with a code, and see their journey; an opt-in students' leaderboard and an admin leaderboard of every student. Built and integration tested with fake sites (`CodingIT`). **Owner actions:** V20 reaches hosted Supabase only with the next deployment, which needs your approval; an optional `GITHUB_TOKEN` (no scopes) raises GitHub's limit.
+T7-13 coding portfolio and leaderboard ✅ at the owner's request ([ADR 0017](decisions/0017-coding-portfolio-and-leaderboard.md), FR-COD-001 to FR-COD-005, `V20__coding_portfolio.sql`): students link GitHub, LeetCode, Codeforces, CodeChef, GeeksforGeeks and HackerRank, prove each account with a code, and see their journey; an opt-in students' leaderboard and an admin leaderboard of every student. Built and integration tested with fake sites (`CodingIT`). The same day, the Codolio-style portfolio views (heatmaps, streaks, awards, topics, distribution, a GitHub development view, an admin read-only page) and the GeeksforGeeks verification fix (its bio is only on the profile page), with `V21__coding_details.sql`. **Owner actions:** V20 and V21 reach hosted Supabase only with the next deployment, which needs your approval; an optional `GITHUB_TOKEN` (no scopes) raises GitHub's limit.
 
 ## Progress on 2026-10-24
 

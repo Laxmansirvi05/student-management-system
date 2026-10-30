@@ -1,6 +1,9 @@
 package com.campuscompanion.coding.platform;
 
 import com.campuscompanion.coding.platform.PlatformException.Kind;
+import java.time.LocalDate;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -43,5 +46,34 @@ final class Json {
       return null;
     }
     return clean.length() > 40 ? clean.substring(0, 40) : clean;
+  }
+
+  /** The most recent days of a calendar, oldest first, keyed by ISO date. */
+  static Map<String, Integer> recentDays(Map<LocalDate, Integer> byDay) {
+    Map<String, Integer> kept = new LinkedHashMap<>();
+    byDay.entrySet().stream()
+        .sorted(Map.Entry.<LocalDate, Integer>comparingByKey().reversed())
+        .limit(PlatformDetails.MAX_DAYS)
+        .sorted(Map.Entry.comparingByKey())
+        .forEach(entry -> kept.put(entry.getKey().toString(), entry.getValue()));
+    return kept;
+  }
+
+  /** Counts by cleaned name, largest first, merged when two names clean to the same label. */
+  static Map<String, Integer> largestFirst(Map<String, Integer> counts, int limit) {
+    Map<String, Integer> merged = new LinkedHashMap<>();
+    counts.forEach(
+        (name, count) -> {
+          String clean = label(name);
+          if (clean != null && count != null && count > 0) {
+            merged.merge(clean, count, Integer::sum);
+          }
+        });
+    Map<String, Integer> kept = new LinkedHashMap<>();
+    merged.entrySet().stream()
+        .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+        .limit(limit)
+        .forEach(entry -> kept.put(entry.getKey(), entry.getValue()));
+    return kept;
   }
 }

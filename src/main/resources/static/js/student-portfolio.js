@@ -1,58 +1,18 @@
 import { confirmAction, field, input, openForm, select } from "./admin-kit.js";
 import { api, messageFor } from "./api.js";
-import { fill, h, icon, tag, toast } from "./dom.js";
-import { accountFigures, journeyChart, PLATFORMS, syncLine } from "./coding-parts.js";
-import { countUp, reveal } from "./motion.js";
-import { cardHead, empty, loadInto } from "./parts.js";
+import { fill, h, icon, toast } from "./dom.js";
+import { renderDashboard } from "./coding-dashboard.js";
+import { PLATFORMS } from "./coding-parts.js";
+import { loadInto } from "./parts.js";
 import "./shell.js";
 
-// The coding portfolio (FR-COD-001 to FR-COD-003, ADR 0017). The student links an account, puts the
-// code shown here in their profile on that site, and presses Verify; the server reads the public
-// profile. Only verified accounts count. The journey is drawn from the server's daily snapshots.
+// The student's coding portfolio (FR-COD-001 to FR-COD-004, ADR 0017). The dashboard is drawn by
+// coding-dashboard.js; this page adds what only the owner can do: link a site, verify it with the
+// code, refresh, remove, and show or hide themselves on the leaderboard.
 
 const content = document.getElementById("content");
+const state = { selected: "ALL" };
 let portfolio = null;
-
-function summary() {
-  const total = h("p.stat__value");
-  countUp(total, portfolio.totalSolved);
-  const toggle = h("input.checkbox", { id: "show-on-board", type: "checkbox", checked: portfolio.showOnLeaderboard });
-  toggle.addEventListener("change", async () => {
-    toggle.disabled = true;
-    try {
-      const saved = await api.put("/coding/leaderboard-visibility", { show: toggle.checked });
-      portfolio.showOnLeaderboard = saved.show;
-      toast(saved.show ? "You now show on the leaderboard" : "You are hidden from the leaderboard");
-    } catch (failure) {
-      toggle.checked = !toggle.checked;
-      toast(messageFor(failure));
-    } finally {
-      toggle.disabled = false;
-    }
-  });
-  return h(
-    "div.stats.stats--3",
-    h("div.stat.reveal", total, h("p.stat__label", "Problems solved")),
-    h("div.stat.reveal", h("p.stat__value.num", String(portfolio.verifiedAccounts)), h("p.stat__label", "Verified accounts")),
-    h(
-      "div.stat.reveal",
-      h("label.check", { for: "show-on-board" }, toggle, h("span", "Show me on the leaderboard")),
-      h("p.row__meta", "Students across the college see your name, class and total. Admins always see your activity."),
-      h("a.more", { href: "/student/leaderboard.html" }, "Open the leaderboard", icon("chevron-right")),
-    ),
-  );
-}
-
-function journey() {
-  const chart = journeyChart(portfolio.journey);
-  return h(
-    "section.card",
-    cardHead("progress", "Your journey"),
-    chart
-      ? h("div.coding-chart-wrap", chart)
-      : empty("progress", "No journey yet", "Verify an account to start. Your total is saved every day, so the line grows as you solve problems."),
-  );
-}
 
 function copyButton(code) {
   const button = h("button.button.button--secondary.button--small", { type: "button" }, icon("copy"), "Copy");
@@ -67,68 +27,6 @@ function copyButton(code) {
   return button;
 }
 
-function pendingBody(account) {
-  const verify = h("button.button.button--primary.button--small", { type: "button" }, icon("check"), "Verify");
-  verify.addEventListener("click", () => run(verify, () => api.post(`/coding/accounts/${account.id}/verify`), "Account verified"));
-  return h(
-    "div.stack",
-    h(
-      "ol.coding-steps",
-      h("li", "Copy this code:"),
-      h("li.coding-code", h("code.num", account.verificationCode), copyButton(account.verificationCode)),
-      h("li", `Put it in your ${account.platformName} ${account.codeHint} and save.`),
-      h("li", "Press Verify. You can take the code out again afterwards."),
-    ),
-    h("div.line.line--wrap", verify, h("a.button.button--quiet.button--small", { href: account.profileUrl, target: "_blank", rel: "noopener noreferrer" }, icon("external"), "Open your profile")),
-  );
-}
-
-function verifiedBody(account) {
-  const refresh = h("button.button.button--secondary.button--small", { type: "button" }, icon("refresh"), "Refresh");
-  const waitUntil = account.refreshAvailableAt ? new Date(account.refreshAvailableAt) : null;
-  if (waitUntil && waitUntil > new Date()) {
-    refresh.disabled = true;
-    refresh.title = "You can refresh again at " + waitUntil.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  }
-  refresh.addEventListener("click", () => run(refresh, () => api.post(`/coding/accounts/${account.id}/refresh`), "Updated"));
-  return h(
-    "div.stack",
-    account.rankLabel ? h("p", tag(account.rankLabel, "purple", "target")) : null,
-    accountFigures(account),
-    account.countsProblems ? null : h("p.row__meta", "GitHub shows your projects; it does not add to the problems solved."),
-    syncLine(account),
-    h("div.line.line--wrap", refresh),
-  );
-}
-
-function accountCard(account) {
-  const verified = account.status === "VERIFIED";
-  const remove = h("button.icon-button.icon-button--bare", { type: "button", "aria-label": `Remove ${account.platformName}` }, icon("trash"));
-  remove.addEventListener("click", () => removeAccount(account));
-  return h(
-    "section.card.coding-account.reveal",
-    h(
-      "div.card__head",
-      h("h2.card__title", icon("code"), account.platformName),
-      h("div.line", verified ? tag("Verified", "success", "check-circle") : tag("Waiting for the code", "warning", "clock"), remove),
-    ),
-    h("a.row__link.coding-handle", { href: account.profileUrl, target: "_blank", rel: "noopener noreferrer" }, "@" + account.handle),
-    verified ? verifiedBody(account) : pendingBody(account),
-  );
-}
-
-function accounts() {
-  if (!portfolio.accounts.length) {
-    return h("section.card", empty("code", "No accounts linked", "Link GitHub, LeetCode, Codeforces, CodeChef, GeeksforGeeks or HackerRank to build your portfolio.", linkButton()));
-  }
-  return h("div.coding-grid", portfolio.accounts.map(accountCard));
-}
-
-function draw() {
-  fill(content, summary(), journey(), accounts());
-  reveal();
-}
-
 async function run(button, request, message) {
   button.disabled = true;
   try {
@@ -141,27 +39,118 @@ async function run(button, request, message) {
   }
 }
 
-async function removeAccount(account) {
-  const sure = await confirmAction({ title: `Remove ${account.platformName}?`, text: `@${account.handle} and its history leave your portfolio. You can link it again later.`, confirmLabel: "Remove", danger: true });
-  if (!sure) return;
-  try {
-    await api.delete(`/coding/accounts/${account.id}`);
-    toast("Account removed");
-    await load();
-  } catch (failure) {
-    toast(messageFor(failure));
+function pendingBody(account) {
+  const verify = h("button.button.button--primary", { type: "button" }, icon("check"), "Verify");
+  verify.addEventListener("click", () => run(verify, () => api.post(`/coding/accounts/${account.id}/verify`), "Account verified"));
+  return h(
+    "div.stack",
+    h("a.row__link", { href: account.profileUrl, target: "_blank", rel: "noopener noreferrer" }, "@" + account.handle),
+    h(
+      "ol.coding-steps",
+      h("li", "Copy this code:"),
+      h("li.coding-code", h("code.num", account.verificationCode), copyButton(account.verificationCode)),
+      h("li", `Put it in your ${account.platformName} ${account.codeHint} and save.`),
+      h("li", "Press Verify. You can take the code out again afterwards."),
+    ),
+    h("div.line.line--start.line--wrap", verify, h("a.button.button--quiet", { href: account.profileUrl, target: "_blank", rel: "noopener noreferrer" }, icon("external"), "Open your profile"), removeButton(account)),
+  );
+}
+
+function canRefresh(account) {
+  return account.status === "VERIFIED" && (!account.refreshAvailableAt || new Date(account.refreshAvailableAt) <= new Date());
+}
+
+function accountActions(account) {
+  const refresh = h("button.button.button--secondary.button--small", { type: "button", disabled: !canRefresh(account) }, icon("refresh"), "Refresh");
+  if (!canRefresh(account)) {
+    refresh.title = "You can refresh again at " + new Date(account.refreshAvailableAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   }
+  refresh.addEventListener("click", () => run(refresh, () => api.post(`/coding/accounts/${account.id}/refresh`), "Updated"));
+  return h("div.line.line--start.line--wrap", refresh, removeButton(account));
+}
+
+function removeButton(account) {
+  const remove = h("button.button.button--quiet.button--small", { type: "button" }, icon("trash"), "Remove");
+  remove.addEventListener("click", async () => {
+    const sure = await confirmAction({ title: `Remove ${account.platformName}?`, text: `@${account.handle} and its history leave your portfolio. You can link it again later.`, confirmLabel: "Remove", danger: true });
+    if (!sure) return;
+    try {
+      await api.delete(`/coding/accounts/${account.id}`);
+      toast("Account removed");
+      state.selected = "ALL";
+      await load();
+    } catch (failure) {
+      toast(messageFor(failure));
+    }
+  });
+  return remove;
+}
+
+function headerControls(data) {
+  const toggle = h("input.cd-switch", { id: "show-on-board", type: "checkbox", role: "switch", checked: data.showOnLeaderboard });
+  toggle.addEventListener("change", async () => {
+    toggle.disabled = true;
+    try {
+      const saved = await api.put("/coding/leaderboard-visibility", { show: toggle.checked });
+      data.showOnLeaderboard = saved.show;
+      toast(saved.show ? "You now show on the leaderboard" : "You are hidden from the leaderboard");
+    } catch (failure) {
+      toggle.checked = !toggle.checked;
+      toast(messageFor(failure));
+    } finally {
+      toggle.disabled = false;
+    }
+  });
+  const refreshAll = h("button.cd-control__button", { type: "button" }, icon("refresh"), h("span", "Refresh now"));
+  refreshAll.addEventListener("click", () => refreshEverything(refreshAll));
+  return h(
+    "div.cd-controls",
+    h("label.cd-control", { for: "show-on-board" }, h("span", icon("users"), " Show me on the leaderboard"), toggle),
+    h("div.cd-control", refreshAll),
+  );
+}
+
+/** Refreshes every verified site whose waiting time is over, one after the other. */
+async function refreshEverything(button) {
+  const due = portfolio.accounts.filter(canRefresh);
+  if (!due.length) {
+    toast("Everything was refreshed in the last 15 minutes.");
+    return;
+  }
+  button.disabled = true;
+  let done = 0;
+  const failed = [];
+  for (const account of due) {
+    try {
+      await api.post(`/coding/accounts/${account.id}/refresh`);
+      done++;
+    } catch {
+      failed.push(account.platformName);
+    }
+  }
+  toast(failed.length ? `Updated ${done}; ${failed.join(", ")} did not answer.` : `Updated ${done} ${done === 1 ? "site" : "sites"}`);
+  await load();
+}
+
+function addPlatform() {
+  const button = h("button.button.button--secondary.cd-add", { type: "button" }, icon("plus"), "Add platform");
+  button.addEventListener("click", linkForm);
+  return button;
+}
+
+function footer(data) {
+  return h("a.more.cd-profile__more", { href: "/student/leaderboard.html" }, data.showOnLeaderboard ? "See your rank on the leaderboard" : "Open the leaderboard", icon("chevron-right"));
 }
 
 function linkForm() {
-  const linked = new Set((portfolio?.accounts ?? []).map((account) => account.platform));
+  const linked = new Set(portfolio.accounts.map((account) => account.platform));
   const free = Object.entries(PLATFORMS).filter(([platform]) => !linked.has(platform));
   if (!free.length) {
     toast("Every site is linked already.");
     return;
   }
   openForm({
-    title: "Link an account",
+    title: "Add a platform",
     intro: "The server reads your public profile. Nothing is posted on the site.",
     submitLabel: "Link",
     fields: [
@@ -169,23 +158,27 @@ function linkForm() {
       field("Username", input("handle", { maxlength: 200, required: true, autocomplete: "off", placeholder: "Your username or a link to your profile" }), "As it appears in your profile address."),
     ],
     onSubmit: async (values) => {
-      await api.post("/coding/accounts", values);
-      toast("Account linked. Now add the code to your profile.");
+      const account = await api.post("/coding/accounts", values);
+      state.selected = account.platform;
+      toast("Linked. Now add the code to your profile.");
       await load();
     },
   });
 }
 
-function linkButton() {
-  return h("button.button.button--primary", { type: "button", onclick: linkForm }, icon("plus"), "Link an account");
+async function photoUrl() {
+  const link = await api.get("/students/me/photo-url");
+  return link.url;
 }
+
+const options = { headerControls, addPlatform, footer, accountActions, pendingBody, photoUrl };
 
 async function load() {
   await loadInto(content, () => api.get("/coding/portfolio"), (data) => {
     portfolio = data;
-    draw();
+    renderDashboard(content, data, options, state);
   });
 }
 
-fill(document.getElementById("actions"), linkButton());
+fill(document.getElementById("actions"), h("button.button.button--primary", { type: "button", onclick: () => linkForm() }, icon("plus"), "Add platform"));
 load();

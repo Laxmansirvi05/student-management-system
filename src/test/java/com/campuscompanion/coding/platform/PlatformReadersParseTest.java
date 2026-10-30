@@ -16,11 +16,26 @@ class PlatformReadersParseTest {
   void gitHubGivesReposStarsFollowersAndTheBio() throws Exception {
     PlatformProfile profile =
         GitHubReader.parse(
+            "demo",
             """
             {"login":"demo","name":"Demo Student","bio":"Learning. CC-ABCD2345","company":null,
              "public_repos":7,"followers":12}
             """,
-            "[{\"stargazers_count\":3},{\"stargazers_count\":4},{\"stargazers_count\":null}]");
+            """
+            [{"name":"site","stargazers_count":3,"language":"HTML","fork":false,"pushed_at":"2026-10-01"},
+             {"name":"app","stargazers_count":4,"language":"Java","description":"A\\napp","fork":false},
+             {"name":"copy","stargazers_count":null,"language":"Java","fork":true},
+             {"name":"../bad","stargazers_count":0,"language":null,"fork":false}]
+            """,
+            """
+            <td data-date="2026-10-01" id="contribution-day-component-0-0" data-level="1"></td>
+            <td data-date="2026-10-02" id="contribution-day-component-0-1" data-level="0"></td>
+            <tool-tip for="contribution-day-component-0-0" class="sr-only">1,204 contributions on October 1st.</tool-tip>
+            <tool-tip for="contribution-day-component-0-1" class="sr-only">No contributions on October 2nd.</tool-tip>
+            """,
+            743,
+            12,
+            null);
 
     assertThat(profile.stats().publicRepos()).isEqualTo(7);
     assertThat(profile.stats().stars()).isEqualTo(7);
@@ -28,6 +43,19 @@ class PlatformReadersParseTest {
     assertThat(profile.stats().problemsSolved()).isNull();
     assertThat(profile.mentions("cc-abcd2345")).isTrue();
     assertThat(profile.mentions("CC-ZZZZ9999")).isFalse();
+    PlatformDetails details = profile.details();
+    assertThat(details.calendar()).containsEntry("2026-10-01", 1204).containsEntry("2026-10-02", 0);
+    assertThat(details.languages()).containsEntry("Java", 2).containsEntry("HTML", 1);
+    // Forks are not shown, a name that is not a plain repository name is dropped, and the address
+    // is built from the handle.
+    assertThat(details.projects())
+        .extracting(PlatformDetails.Project::name)
+        .containsExactly("app", "site");
+    assertThat(details.projects().get(0).url()).isEqualTo("https://github.com/demo/app");
+    assertThat(details.projects().get(0).description()).isEqualTo("A app");
+    assertThat(details.commits()).isEqualTo(743);
+    assertThat(details.pullRequests()).isEqualTo(12);
+    assertThat(details.issues()).isNull();
   }
 
   @Test
@@ -38,7 +66,12 @@ class PlatformReadersParseTest {
             {"data":{"matchedUser":{"profile":{"aboutMe":"CC-ABCD2345","realName":"Demo"},
               "submitStatsGlobal":{"acSubmissionNum":[
                 {"difficulty":"All","count":120},{"difficulty":"Easy","count":70},
-                {"difficulty":"Medium","count":40},{"difficulty":"Hard","count":10}]}},
+                {"difficulty":"Medium","count":40},{"difficulty":"Hard","count":10}]},
+              "userCalendar":{"submissionCalendar":"{\\"1790812800\\": 3, \\"1790899200\\": 2}"},
+              "tagProblemCounts":{"fundamental":[{"tagName":"Array","problemsSolved":53}],
+                "intermediate":[{"tagName":"Hash Table","problemsSolved":25}],"advanced":[]},
+              "badges":[{"displayName":"50 Days Badge 2026"}],
+              "languageProblemCount":[{"languageName":"Java","problemsSolved":100}]},
              "userContestRanking":{"rating":1612.7,"attendedContestsCount":9}}}
             """);
 
@@ -49,6 +82,16 @@ class PlatformReadersParseTest {
     assertThat(profile.stats().contestRating()).isEqualTo(1613);
     assertThat(profile.stats().contestsAttended()).isEqualTo(9);
     assertThat(profile.mentions("CC-ABCD2345")).isTrue();
+    assertThat(profile.details().calendar())
+        .containsEntry("2026-10-01", 3)
+        .containsEntry("2026-10-02", 2);
+    assertThat(profile.details().topics())
+        .containsEntry("Array", 53)
+        .containsEntry("Hash Table", 25);
+    assertThat(profile.details().badges())
+        .extracting(PlatformDetails.Badge::name)
+        .containsExactly("50 Days Badge 2026");
+    assertThat(profile.details().languages()).containsEntry("Java", 100);
   }
 
   @Test
@@ -68,10 +111,10 @@ class PlatformReadersParseTest {
             """,
             """
             {"status":"OK","result":[
-              {"verdict":"OK","problem":{"contestId":1,"index":"A"}},
-              {"verdict":"OK","problem":{"contestId":1,"index":"A"}},
-              {"verdict":"WRONG_ANSWER","problem":{"contestId":1,"index":"B"}},
-              {"verdict":"OK","problem":{"contestId":2,"index":"C"}}]}
+              {"verdict":"OK","creationTimeSeconds":1790812800,"problem":{"contestId":1,"index":"A","tags":["math","greedy"]}},
+              {"verdict":"OK","creationTimeSeconds":1790812900,"problem":{"contestId":1,"index":"A","tags":["math","greedy"]}},
+              {"verdict":"WRONG_ANSWER","creationTimeSeconds":1790899200,"problem":{"contestId":1,"index":"B","tags":["dp"]}},
+              {"verdict":"OK","creationTimeSeconds":1790899300,"problem":{"contestId":2,"index":"C","tags":["math"]}}]}
             """,
             "{\"status\":\"OK\",\"result\":[{},{},{}]}");
 
@@ -80,6 +123,14 @@ class PlatformReadersParseTest {
     assertThat(profile.stats().maxRating()).isEqualTo(1520);
     assertThat(profile.stats().contestsAttended()).isEqualTo(3);
     assertThat(profile.stats().rankLabel()).isEqualTo("specialist");
+    // Every submission counts on its day; topics come from accepted problems, once each.
+    assertThat(profile.details().calendar())
+        .containsEntry("2026-10-01", 2)
+        .containsEntry("2026-10-02", 2);
+    assertThat(profile.details().topics())
+        .containsEntry("Math", 2)
+        .containsEntry("Greedy", 1)
+        .doesNotContainKey("Dp");
     assertThat(profile.mentions("CC-ABCD2345")).isTrue();
   }
 
@@ -92,12 +143,18 @@ class PlatformReadersParseTest {
             <div class="rating-number">1734</div><span>3★</span>
             <small>(Highest Rating 1801)</small>
             <h3>Total Problems Solved: 85</h3>
+            <div class='badge__title'>Problem Solver - Gold Badge</div>
+            <script>var userDailySubmissionsStats = [{"date":"2026-10-1","value":4},{"date":"bad","value":1}];</script>
             """);
 
     assertThat(profile.stats().problemsSolved()).isEqualTo(85);
     assertThat(profile.stats().contestRating()).isEqualTo(1734);
     assertThat(profile.stats().maxRating()).isEqualTo(1801);
     assertThat(profile.stats().rankLabel()).isEqualTo("3★");
+    assertThat(profile.details().badges())
+        .extracting(PlatformDetails.Badge::name)
+        .containsExactly("Problem Solver · Gold");
+    assertThat(profile.details().calendar()).containsExactly(java.util.Map.entry("2026-10-01", 4));
     assertThat(profile.mentions("CC-ABCD2345")).isTrue();
   }
 
@@ -109,16 +166,36 @@ class PlatformReadersParseTest {
   }
 
   @Test
-  void geeksforGeeksGivesTheCountAndScore() throws Exception {
+  void geeksforGeeksGivesTheCountsByLevelAndFindsTheCodeInTheBio() throws Exception {
     PlatformProfile profile =
         GeeksforGeeksReader.parse(
             """
-            {"message":"data retrieved successfully","data":{"name":"Demo","designation":"CC-ABCD2345",
-             "institute_name":"A College","total_problems_solved":64,"score":210}}
-            """);
+            {"message":"data retrieved successfully","data":{"name":"Demo","designation":null,
+             "institute_name":"A College","total_problems_solved":6,"score":21}}
+            """,
+            """
+            {"status":"success","result":{
+              "School":{"1":{"lang":"python3","user_subtime":"2026-10-01 09:00:00"}},
+              "Basic":{"2":{"lang":"python3","user_subtime":"2026-10-01 10:00:00"}},
+              "Easy":{"3":{"lang":"java","user_subtime":"2026-10-02 10:00:00"},
+                      "4":{"lang":"python3","user_subtime":"2026-10-03 10:00:00"}},
+              "Medium":{"5":{"lang":"java","user_subtime":"2026-10-03 11:00:00"}},
+              "Hard":{"6":{"lang":"java","user_subtime":"bad"}}}}
+            """,
+            "<script>self.__next_f.push([1,\"{\\\"bio\\\":\\\"Coder CC-ABCD2345\\\",\\\"headline\\\":\\\"\\\"}\"])</script>");
 
-    assertThat(profile.stats().problemsSolved()).isEqualTo(64);
-    assertThat(profile.stats().score()).isEqualTo(210);
+    assertThat(profile.stats().problemsSolved()).isEqualTo(6);
+    assertThat(profile.stats().score()).isEqualTo(21);
+    assertThat(profile.stats().easySolved()).isEqualTo(2);
+    assertThat(profile.stats().mediumSolved()).isEqualTo(1);
+    assertThat(profile.stats().hardSolved()).isEqualTo(1);
+    assertThat(profile.details().basicSolved()).isEqualTo(2);
+    assertThat(profile.details().calendar())
+        .containsEntry("2026-10-01", 2)
+        .containsEntry("2026-10-02", 1)
+        .containsEntry("2026-10-03", 2);
+    assertThat(profile.details().languages()).containsEntry("java", 3).containsEntry("python3", 3);
+    // The code is only in the bio, which only the public page carries.
     assertThat(profile.mentions("CC-ABCD2345")).isTrue();
   }
 
@@ -128,18 +205,23 @@ class PlatformReadersParseTest {
         HackerRankReader.parse(
             "{\"model\":{\"username\":\"demo\",\"short_bio\":\"CC-ABCD2345\",\"name\":\"Demo\"}}",
             """
-            {"models":[{"badge_type":"problem-solving","solved":30,"stars":4},
-                       {"badge_type":"java","solved":12,"stars":2}]}
+            {"models":[{"badge_type":"problem-solving","badge_name":"Problem Solving","solved":30,"stars":4},
+                       {"badge_type":"java","badge_name":"Java","solved":12,"stars":2},
+                       {"badge_type":"sql","badge_name":"Sql","solved":0,"stars":0}]}
             """);
 
     assertThat(profile.stats().problemsSolved()).isEqualTo(42);
     assertThat(profile.stats().rankLabel()).isEqualTo("4★ Problem Solving");
+    assertThat(profile.details().basicSolved()).isEqualTo(42);
+    assertThat(profile.details().badges())
+        .containsExactly(
+            new PlatformDetails.Badge("Problem Solving", 4), new PlatformDetails.Badge("Java", 2));
     assertThat(profile.mentions("CC-ABCD2345")).isTrue();
   }
 
   @Test
   void anAnswerThatIsNotJsonMeansTheSiteIsUnavailable() {
-    assertThatThrownBy(() -> GeeksforGeeksReader.parse("<html>busy</html>"))
+    assertThatThrownBy(() -> GeeksforGeeksReader.parse("<html>busy</html>", "{}", ""))
         .isInstanceOfSatisfying(
             PlatformException.class, e -> assertThat(e.kind()).isEqualTo(Kind.UNAVAILABLE));
   }

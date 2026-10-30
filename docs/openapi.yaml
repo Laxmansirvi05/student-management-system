@@ -2493,9 +2493,38 @@ components:
         lastSyncedAt: { type: string, format: date-time, nullable: true }
         lastSyncError: { type: string, nullable: true, enum: [NOT_FOUND, UNAVAILABLE] }
         refreshAvailableAt: { type: string, format: date-time, nullable: true }
+        details:
+          type: object
+          nullable: true
+          description: "Verified accounts only. {calendar, topics, badges, languages, projects, basicSolved, commits, pullRequests, issues}; see docs/09-api-contract.md 8.24."
+        activity:
+          type: object
+          nullable: true
+          properties:
+            total: { type: integer }
+            activeDays: { type: integer }
+            maxStreak: { type: integer }
+            currentStreak: { type: integer }
     CodingPortfolio:
       type: object
       properties:
+        student:
+          type: object
+          properties:
+            fullName: { type: string }
+            rollNo: { type: string }
+            branch: { type: string }
+            semester: { type: integer }
+            section: { type: string }
+            bio: { type: string, nullable: true }
+            hasPhoto: { type: boolean }
+        problemSolving:
+          type: object
+          description: "{questionsSolved, activity, calendar, awards, topics, distribution, contests}; see docs/09-api-contract.md 8.24."
+        development:
+          type: object
+          nullable: true
+          description: "{handle, profileUrl, contributions, calendar, languages, stars, commits, pullRequests, issues, publicRepos, followers, projects}; null without a verified GitHub account."
         totalSolved: { type: integer }
         verifiedAccounts: { type: integer }
         showOnLeaderboard: { type: boolean }

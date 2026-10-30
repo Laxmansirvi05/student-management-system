@@ -504,6 +504,7 @@ Added on 2026-10-30 at the owner's request ([ADR 0017](decisions/0017-coding-por
 ### FR-COD-002 Portfolio (P1)
 
 - **Acceptance criteria:** The Portfolio page shows, for each verified account, the numbers that site publishes: problems solved (and by difficulty on LeetCode), contest rating and highest rating, rank or stars, score, and for GitHub public repositories, stars and followers; the total problems solved across sites; and a chart of the total over time. Each card says when its numbers were last read and has a Refresh button (at most every 15 minutes per account).
+- **Views (owner's request of 2026-10-30):** a profile card lists the linked sites; choosing one shows that site alone, "All platforms" shows them together, GitHub opens the development view. The problem-solving view shows questions solved, active days, a submissions heatmap with total, longest and current streak (last 6 or 12 months; a day names its count when chosen), awards (the sites' badges), a DSA topic analysis (topics merged across sites, top 10 then all), the question distribution (fundamentals: GeeksforGeeks School and Basic and HackerRank; DSA by difficulty: LeetCode and GeeksforGeeks; competitive programming: Codeforces and CodeChef) and contest ratings. The development view shows total contributions and active days with their heatmap, languages, stars, commits, pull requests, issues, repositories, followers and up to six projects. Admins open the same dashboard read-only.
 
 ### FR-COD-003 Daily refresh (P1)
 

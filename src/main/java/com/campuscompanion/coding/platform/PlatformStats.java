@@ -19,7 +19,7 @@ public record PlatformStats(
     Integer followers) {
 
   /** Only problems solved, for the sites that publish nothing else of use. */
-  static PlatformStats solved(Integer problemsSolved) {
+  public static PlatformStats solved(Integer problemsSolved) {
     return new PlatformStats(
         problemsSolved, null, null, null, null, null, null, null, null, null, null, null);
   }

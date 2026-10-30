@@ -1,10 +1,15 @@
 package com.campuscompanion.coding.platform;
 
 import com.campuscompanion.coding.platform.PlatformException.Kind;
+import java.time.DateTimeException;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import tools.jackson.databind.JsonNode;
 
 /**
  * CodeChef has no public API, so the public profile page is read: problems solved, the current and
@@ -22,6 +27,9 @@ public class CodeChefReader implements PlatformReader {
   private static final Pattern CONTESTS =
       Pattern.compile("No\\. of Contests Participated:\\s*(?:<[^>]+>\\s*)*(\\d+)");
   private static final Pattern DETAILS = Pattern.compile("user-details-container");
+  private static final Pattern BADGE = Pattern.compile("badge__title'?\"?>\\s*([^<]{1,80})<");
+  private static final Pattern DAILY =
+      Pattern.compile("userDailySubmissionsStats\\s*=\\s*(\\[.{0,200000}?\\]);");
 
   private final PlatformHttp http;
 
@@ -66,7 +74,52 @@ public class CodeChefReader implements PlatformReader {
     // The name and institution the owner chose are in the details block, as plain text.
     String block = page.substring(details.start(), Math.min(page.length(), details.start() + 4000));
     String text = block.replaceAll("<[^>]+>", " ").replaceAll("&[a-z#0-9]+;", " ");
-    return new PlatformProfile(stats, List.of(text));
+    return new PlatformProfile(stats, List.of(text), details(page));
+  }
+
+  /** The badges ("Problem Solver - Gold Badge") and the submissions by day from the page. */
+  private static PlatformDetails details(String page) {
+    List<PlatformDetails.Badge> badges = new ArrayList<>();
+    Matcher badge = BADGE.matcher(page);
+    while (badge.find()) {
+      String name = Json.label(badge.group(1).replace(" Badge", "").replace(" - ", " · "));
+      if (name != null) {
+        badges.add(new PlatformDetails.Badge(name, null));
+      }
+    }
+    Map<LocalDate, Integer> days = new HashMap<>();
+    Matcher daily = DAILY.matcher(page);
+    if (daily.find()) {
+      try {
+        for (JsonNode day : Json.parse(daily.group(1))) {
+          LocalDate date = date(Json.text(day.get("date")));
+          Integer count = Json.integer(day.get("value"));
+          if (date != null && count != null) {
+            days.merge(date, count, Integer::sum);
+          }
+        }
+      } catch (PlatformException unreadable) {
+        // The page changed its daily data: the badges and numbers still count; the calendar is
+        // left empty until this reader is fixed.
+        days.clear();
+      }
+    }
+    return new PlatformDetails(
+        Json.recentDays(days), Map.of(), badges, Map.of(), List.of(), null, null, null, null);
+  }
+
+  /** "2026-1-5" or "2026-01-05" as a date, or null. */
+  private static LocalDate date(String value) {
+    if (value == null || !value.matches("\\d{4}-\\d{1,2}-\\d{1,2}")) {
+      return null;
+    }
+    String[] parts = value.split("-");
+    try {
+      return LocalDate.of(
+          Integer.parseInt(parts[0]), Integer.parseInt(parts[1]), Integer.parseInt(parts[2]));
+    } catch (DateTimeException impossible) {
+      return null;
+    }
   }
 
   private static Integer first(Pattern pattern, String page) {

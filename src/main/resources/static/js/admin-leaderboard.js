@@ -1,56 +1,17 @@
-import { dataTable, dialogShell, field, hidePageError, input, pager, rowAction, select, semesterOptions } from "./admin-kit.js";
-import { api, messageFor } from "./api.js";
-import { fill, formatDate, h, icon, tag, toast } from "./dom.js";
-import { accountFigures, count, journeyChart, platformTags, syncLine } from "./coding-parts.js";
+import { dataTable, field, hidePageError, input, pager, rowAction, select, semesterOptions } from "./admin-kit.js";
+import { api } from "./api.js";
+import { fill, formatDate, h, icon, tag } from "./dom.js";
+import { count, platformTags } from "./coding-parts.js";
 import { loadInto } from "./parts.js";
 import "./shell.js";
 
 // Admin: the coding leaderboard (FR-COD-005, ADR 0017). Every student with a linked account, shown
 // on the students' leaderboard or not, ranked by problems solved within the filter, with how many
-// they solved in the last 30 days. One student's portfolio opens read-only.
+// they solved in the last 30 days. One student's portfolio opens read-only on its own page.
 
 const filters = { branch: "", semester: "", section: "", q: "", page: 0 };
 const content = document.getElementById("content");
 let searchTimer = 0;
-
-async function open(row) {
-  let data;
-  try {
-    data = await api.get(`/admin/coding/students/${row.studentId}/portfolio`);
-  } catch (failure) {
-    toast(messageFor(failure));
-    return;
-  }
-  const dialog = dialogShell("portfolio-title");
-  dialog.classList.add("dialog--wide");
-  const { portfolio } = data;
-  const chart = journeyChart(portfolio.journey);
-  fill(
-    dialog,
-    h(
-      "div.stack.stack--loose",
-      h("div.stack.stack--tight", h("h2", { id: "portfolio-title" }, data.fullName), h("p.row__meta", `${data.rollNo} · ${data.branch} · Semester ${data.semester} · Section ${data.section}`)),
-      h("p", h("strong.num", count(portfolio.totalSolved)), " problems solved on ", h("strong.num", String(portfolio.verifiedAccounts)), " verified accounts"),
-      chart ? h("div.coding-chart-wrap", chart) : null,
-      portfolio.accounts.length
-        ? h(
-            "ul.rows",
-            portfolio.accounts.map((account) =>
-              h(
-                "li.row",
-                h("div.row__top", h("strong", account.platformName), account.status === "VERIFIED" ? tag("Verified", "success") : tag("Pending", "warning")),
-                h("a.row__link", { href: account.profileUrl, target: "_blank", rel: "noopener noreferrer" }, "@" + account.handle),
-                account.status === "VERIFIED" ? accountFigures(account) : null,
-                syncLine(account),
-              ),
-            ),
-          )
-        : h("p.muted", "No accounts linked."),
-      h("div.dialog__actions", h("button.button.button--secondary", { type: "button", "data-close": true }, "Close")),
-    ),
-  );
-  dialog.showModal();
-}
 
 function load() {
   hidePageError();
@@ -75,7 +36,7 @@ function load() {
           { label: "Sites", cell: (row) => h("div.stack.stack--tight", platformTags(row.platforms), row.pendingAccounts ? h("span.row__meta", `${row.pendingAccounts} waiting for the code`) : null) },
           { label: "On board", cell: (row) => (row.showOnLeaderboard ? tag("Shown", "success") : tag("Hidden")) },
           { label: "Updated", cell: (row) => (row.lastSyncedAt ? formatDate(row.lastSyncedAt) : "—") },
-          { label: "Actions", align: "end", cell: (row) => h("span.row-actions", rowAction("Open the portfolio of " + row.fullName, "eye", () => open(row))) },
+          { label: "Actions", align: "end", cell: (row) => h("span.row-actions", rowAction("Open the portfolio of " + row.fullName, "eye", () => window.location.assign("/admin/portfolio.html?student=" + row.studentId))) },
         ],
         page.content,
         "No student has linked a coding account yet.",

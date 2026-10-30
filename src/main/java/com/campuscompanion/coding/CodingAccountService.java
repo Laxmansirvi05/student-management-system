@@ -7,17 +7,20 @@ import com.campuscompanion.coding.dto.PortfolioResponse;
 import com.campuscompanion.coding.platform.Handles;
 import com.campuscompanion.coding.platform.PlatformException;
 import com.campuscompanion.coding.platform.PlatformProfile;
+import com.campuscompanion.common.config.CampusTime;
 import com.campuscompanion.common.error.ApiException;
 import com.campuscompanion.common.error.ConflictException;
 import com.campuscompanion.common.error.ErrorCode;
 import com.campuscompanion.common.error.ResourceNotFoundException;
 import com.campuscompanion.common.error.ValidationException;
 import com.campuscompanion.common.security.CurrentUser;
+import com.campuscompanion.student.StudentContext;
 import com.campuscompanion.student.StudentProfileService;
 import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -66,8 +69,8 @@ public class CodingAccountService {
   }
 
   public PortfolioResponse portfolio(CurrentUser user) {
-    Long studentId = students.currentStudent(user).studentId();
-    return transactions.execute(status -> portfolios.of(studentId, true));
+    StudentContext student = students.currentStudent(user);
+    return transactions.execute(status -> portfolios.of(student, true));
   }
 
   /** Links an account as pending, with a new verification code. */
@@ -92,7 +95,7 @@ public class CodingAccountService {
           }
           CodingAccount account =
               accounts.save(new CodingAccount(studentId, request.platform(), handle, newCode()));
-          return CodingPortfolios.toResponse(account, true);
+          return CodingPortfolios.toResponse(account, true, today());
         });
   }
 
@@ -101,7 +104,7 @@ public class CodingAccountService {
     Long studentId = students.currentStudent(user).studentId();
     CodingAccount account = startAttempt(studentId, accountId, VERIFY_COOLDOWN, false);
     if (account.isVerified()) {
-      return CodingPortfolios.toResponse(account, true);
+      return CodingPortfolios.toResponse(account, true, today());
     }
     PlatformProfile profile = readOrThrow(account);
     if (!profile.mentions(account.getVerificationCode())) {
@@ -121,8 +124,8 @@ public class CodingAccountService {
               throw new ConflictException("This account is already verified by another student.");
             }
             current.verify(clock.instant());
-            sync.apply(current, profile.stats());
-            return CodingPortfolios.toResponse(current, true);
+            sync.apply(current, profile);
+            return CodingPortfolios.toResponse(current, true, today());
           });
     } catch (DataIntegrityViolationException raced) {
       throw new ConflictException("This account is already verified by another student.");
@@ -144,8 +147,8 @@ public class CodingAccountService {
     return transactions.execute(
         status -> {
           CodingAccount current = owned(studentId, accountId);
-          sync.apply(current, profile.stats());
-          return CodingPortfolios.toResponse(current, true);
+          sync.apply(current, profile);
+          return CodingPortfolios.toResponse(current, true, today());
         });
   }
 
@@ -222,6 +225,10 @@ public class CodingAccountService {
     return seconds < 60
         ? "Wait " + seconds + " seconds before trying again."
         : "Wait " + ((seconds + 59) / 60) + " minutes before trying again.";
+  }
+
+  private LocalDate today() {
+    return CampusTime.today(clock);
   }
 
   private String newCode() {

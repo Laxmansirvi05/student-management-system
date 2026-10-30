@@ -4,6 +4,7 @@ import static com.campuscompanion.support.ApiTestClient.json;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.campuscompanion.coding.platform.CodingPlatform;
+import com.campuscompanion.coding.platform.PlatformDetails;
 import com.campuscompanion.coding.platform.PlatformException;
 import com.campuscompanion.coding.platform.PlatformProfile;
 import com.campuscompanion.coding.platform.PlatformReader;
@@ -178,6 +179,9 @@ class CodingIT extends ApiIntegrationTest {
     assertThat(portfolio.get("verifiedAccounts").asInt()).isEqualTo(1);
     assertThat(portfolio.get("journey")).hasSize(1);
     assertThat(portfolio.get("journey").get(0).get("problemsSolved").asInt()).isEqualTo(150);
+    assertThat(portfolio.get("student").get("rollNo").asString()).isEqualTo("23COD004");
+    assertThat(portfolio.get("problemSolving").get("questionsSolved").asInt()).isEqualTo(150);
+    assertThat(portfolio.get("development").isNull()).isTrue();
   }
 
   @Test
@@ -251,11 +255,36 @@ class CodingIT extends ApiIntegrationTest {
   @Test
   void gitHubIsShownButAddsNothingToTheTotal() throws Exception {
     ApiTestClient me = student("23COD010");
-    verified(me, CodingPlatform.GITHUB, "cod-github", 0);
+    JsonNode github = connect(me, CodingPlatform.GITHUB, "cod-github");
+    ANSWERS.put(
+        "GITHUB:cod-github",
+        new PlatformProfile(
+            new PlatformStats(null, null, null, null, null, null, null, null, null, 4, 2, 1),
+            List.of(github.get("verificationCode").asString()),
+            new PlatformDetails(
+                Map.of(today().toString(), 5, today().minusDays(1).toString(), 2),
+                Map.of(),
+                List.of(),
+                Map.of("Java", 3, "HTML", 1),
+                List.of(
+                    new PlatformDetails.Project(
+                        "app", "https://github.com/cod-github/app", null, "Java", 2)),
+                null,
+                40,
+                3,
+                null)));
+    assertThat(me.post(ACCOUNTS + "/" + github.get("id").asLong() + "/verify", "").statusCode())
+        .isEqualTo(200);
     verified(me, CodingPlatform.CODECHEF, "cod_total_cc", 30);
     JsonNode portfolio = json(me.get(PORTFOLIO));
     assertThat(portfolio.get("verifiedAccounts").asInt()).isEqualTo(2);
     assertThat(portfolio.get("totalSolved").asInt()).isEqualTo(30);
+    JsonNode development = portfolio.get("development");
+    assertThat(development.get("contributions").get("total").asInt()).isEqualTo(7);
+    assertThat(development.get("contributions").get("currentStreak").asInt()).isEqualTo(2);
+    assertThat(development.get("languages").get("Java").asInt()).isEqualTo(75);
+    assertThat(development.get("commits").asInt()).isEqualTo(40);
+    assertThat(development.get("projects").get(0).get("name").asString()).isEqualTo("app");
   }
 
   // --- leaderboards ----------------------------------------------------------------------------

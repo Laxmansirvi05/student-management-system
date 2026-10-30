@@ -579,6 +579,7 @@ Added on 2026-10-30 for FR-COD-001 to FR-COD-005 ([ADR 0017](decisions/0017-codi
 | last_synced_at | TIMESTAMPTZ | NULL | Time of the last good read. |
 | last_sync_error | VARCHAR(20) | NULL | `NOT_FOUND` or `UNAVAILABLE` after a failed read; cleared by a good one. |
 | last_attempt_at | TIMESTAMPTZ | NULL | Last Verify or Refresh pressed, for the waiting times. |
+| details | TEXT | NULL; at most 100,000 characters (V21) | JSON written by the server only: activity by date (about a year), topics, badges, languages, up to six GitHub projects, GeeksforGeeks School and Basic count, GitHub commits, pull requests and issues. Replaced on each good read. |
 | created_at | TIMESTAMPTZ | NOT NULL | |
 
 Unique: (`student_id`, `platform`), and a partial unique index on (`platform`, `lower(handle)`) where `status = 'VERIFIED'`: one verified owner per handle.
@@ -648,6 +649,7 @@ Flyway, versioned SQL files, forward-only. See [ADR 0006](decisions/0006-flyway-
 | V17 | `V17__resource_reports.sql` | Adds `resource_reports` (section 4.20) for FR-LIB-005 | Added 2026-10-24 |
 | V18 | `V18__ai_log_retention.sql` | Grants `DELETE` on `ai_request_logs` to `cc_app`, with its policy, for the retention job (T7-09) | Added 2026-10-24 |
 | V20 | `V20__coding_portfolio.sql` | `coding_accounts`, `coding_snapshots`, `coding_leaderboard_optins` (section 4.28) | Added 2026-10-30 |
+| V21 | `V21__coding_details.sql` | `coding_accounts.details`, a nullable JSON text column for the portfolio views (section 4.28) | Added 2026-10-30 |
 | V19 | `V19__exam_papers_and_subject_tests.sql` | `notice_exam_papers` (section 4.10a); `unit_id` of `quiz_questions` and `quiz_attempts` becomes nullable (Quick Exam by subject) | Added 2026-10-24 |
 | V12 | `V12__notice_documents.sql` | Adds the official document columns to `notices` (section 4.10) | Added 2026-10-22 |
 | V11 | `V11__pyq_created_by_optional.sql` | Makes `pyq_papers.created_by` optional (section 4.21) | Added 2026-10-19 |
