@@ -68,16 +68,20 @@ async function request(method, path, body, { redirectOnAuthFailure = true, keepa
   }
 
   const problem = await response.json().catch(() => ({}));
+  throw failure(response.status, problem, response.headers.get("Retry-After"), redirectOnAuthFailure);
+}
+
+/** An error from a problem answer of the server; an ended session also sends the user to log in. */
+function failure(status, problem, retryAfter, redirectOnAuthFailure) {
   const error = new ApiError({
-    status: response.status,
+    status,
     code: problem.code,
     detail: problem.detail,
     errors: problem.errors,
     traceId: problem.traceId,
-    retryAfter: response.headers.get("Retry-After"),
+    retryAfter,
     available: problem.available,
   });
-
   if (redirectOnAuthFailure) {
     if (error.code === "AUTH_REQUIRED") {
       // The session ended. Say so on the login page instead of failing silently.
@@ -87,7 +91,38 @@ async function request(method, path, body, { redirectOnAuthFailure = true, keepa
       window.location.assign(CHANGE_PASSWORD_PAGE);
     }
   }
-  throw error;
+  return error;
+}
+
+/**
+ * Sends one file as the part "file" and reports when all of its bytes have gone to the server
+ * ("uploaded"), which is before the server has finished reading it. A plain fetch cannot tell the
+ * two apart, and the Quick Assistant shows both steps.
+ */
+async function uploadFile(path, file, onUploaded) {
+  const form = new FormData();
+  form.append("file", file);
+  const token = await csrfToken();
+  return new Promise((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open("POST", API + path);
+    request.withCredentials = true;
+    request.setRequestHeader("Accept", "application/json");
+    request.setRequestHeader(CSRF_HEADER, token);
+    request.upload.onload = () => onUploaded?.();
+    request.onerror = () => reject(new ApiError({ status: 0, code: "NETWORK", detail: "You appear to be offline." }));
+    request.onload = () => {
+      let answer = {};
+      try {
+        answer = request.responseText ? JSON.parse(request.responseText) : {};
+      } catch {
+        answer = {};
+      }
+      if (request.status >= 200 && request.status < 300) resolve(answer);
+      else reject(failure(request.status, answer, request.getResponseHeader("Retry-After"), true));
+    };
+    request.send(form);
+  });
 }
 
 export const api = {
@@ -107,6 +142,8 @@ export const api = {
   postForm(path, form, options) {
     return request("POST", path, form, options);
   },
+  /** Sends one file and tells when its bytes have all been sent; resolves with the server's answer. */
+  uploadFile,
   /** Sends one file as the part "file", for example a CSV of students. */
   postFile(path, file) {
     const form = new FormData();

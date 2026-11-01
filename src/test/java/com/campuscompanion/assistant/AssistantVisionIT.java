@@ -65,20 +65,20 @@ class AssistantVisionIT extends ApiIntegrationTest {
 
     me.post("/api/v1/assistant/chat", styled("What is a queue?", "quick"));
     AiRequest quick = LAST.get();
-    assertThat(quick.promptVersion()).isEqualTo("assistant-quick-v2");
+    assertThat(quick.promptVersion()).isEqualTo("assistant-quick-v3");
     assertThat(quick.systemInstructions()).contains("Quick Answer").doesNotContain("flowchart");
     assertThat(quick.images()).isEmpty();
 
     me.post("/api/v1/assistant/chat", styled("Explain a queue", "explain"));
     AiRequest explain = LAST.get();
-    assertThat(explain.promptVersion()).isEqualTo("assistant-explain-v1");
+    assertThat(explain.promptVersion()).isEqualTo("assistant-explain-v2");
     assertThat(explain.systemInstructions())
         .contains("Explanatory Answer", "flowchart", "mindmap", "chart", "steps");
     assertThat(explain.maxOutputTokens()).isGreaterThanOrEqualTo(AssistantService.EXPLAIN_TOKENS);
 
     // No style at all means Quick Answer.
     me.post("/api/v1/assistant/chat", "{\"message\":\"Hi\",\"mode\":\"quick\"}");
-    assertThat(LAST.get().promptVersion()).isEqualTo("assistant-quick-v2");
+    assertThat(LAST.get().promptVersion()).isEqualTo("assistant-quick-v3");
   }
 
   @Test
@@ -132,7 +132,7 @@ class AssistantVisionIT extends ApiIntegrationTest {
 
     // A retry writes it once, from the chat before that question, in the Explanatory mode.
     assertThat(me.post("/api/v1/assistant/chat", again).statusCode()).isEqualTo(200);
-    assertThat(LAST.get().promptVersion()).isEqualTo("assistant-explain-v1");
+    assertThat(LAST.get().promptVersion()).isEqualTo("assistant-explain-v2");
     assertThat(LAST.get().userContent()).contains("What is a list?");
     assertThat(
             json(me.get("/api/v1/assistant/conversations/" + chat + "/messages")).get("messages"))

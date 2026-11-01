@@ -6,6 +6,8 @@ import { groupMessages, lastStyle, shownStyle } from "./chat-groups.js";
 import { renderRich } from "./rich-render.js";
 import { selectArea } from "./area-select.js";
 import { snapshotPage } from "./page-snapshot.js";
+import { createAttachmentTray } from "./attachment-tray.js";
+import { ATTACHED_MARKER, kindOf, parseAttached } from "./attachment-rules.js";
 
 // The robot's double-tap Quick Assistant. It is not a second assistant: it asks the same AI provider
 // through the same server code as the study tools, under the same daily limits, and its chats are
@@ -13,22 +15,24 @@ import { snapshotPage } from "./page-snapshot.js";
 // instruction, not text cut off here.
 //
 // Two answer modes (Quick Answer, the default, and Explanatory Answer) are chosen above the chat and
-// travel with each message as "style". A question may come with a JPG or PNG picture: chosen from
-// the device, captured as an area of this page (dragged out like Cmd+Shift+4, drawn by
-// page-snapshot.js; a web page cannot read the rest of the screen), or pasted. The picture is sent with the message, redrawn and read by
-// the server, and is not stored. Explanatory answers are drawn by rich-render.js.
+// travel with each message as "style". A question may come with files (ADR 0019): pictures (JPG,
+// PNG, WEBP), PDFs and Word documents, chosen from the device, pasted, or captured as an area of this
+// page (dragged out like Cmd+Shift+4, drawn by page-snapshot.js; a web page cannot read the rest of
+// the screen). Each file is sent to the server when it is attached and read there; it counts as
+// Ready only when the server answers with what it found (attachment-tray.js). The files stay with
+// the chat for follow-up questions. They are kept in the server's memory for a short time, not
+// stored. Explanatory answers are drawn by rich-render.js.
 
 const DEFAULT_SIZE = { width: 360, height: 440 };
 const MESSAGE_MAX = 4000;
-const IMAGE_MAX_BYTES = 5 * 1024 * 1024;
 const IMAGE_MARKER = "[Image] ";
 const MODES = [
   ["quick", "Quick Answer"],
   ["explain", "Explanatory Answer"],
 ];
 const HINTS = {
-  quick: "Ask anything. Quick answers are short. Switch to Explanatory Answer for the full explanation.",
-  explain: "Ask anything. Explanatory answers are detailed, with steps, examples and diagrams.",
+  quick: "Ask anything. Quick answers are short. Attach pictures, PDFs or Word files to ask about them.",
+  explain: "Ask anything. Explanatory answers are detailed, with steps, examples and diagrams. Attach pictures, PDFs or Word files to ask about them.",
 };
 
 /** Options: anchor ({x, y, size}), onClose(). Returns { close }. */
@@ -40,9 +44,8 @@ export function openQuickAssistant({ anchor, onClose }) {
   let sending = false;
   let error = null;
   let style = "quick";
-  let attachment = null; // { file, url }
   let capturing = false;
-  let pendingPicture = false;
+  let pendingFiles = false;
   const chosenStyle = new Map(); // question id -> the mode shown for it
   let generating = null; // { questionId, style } while the other mode of a question is being written
 
@@ -62,9 +65,17 @@ export function openQuickAssistant({ anchor, onClose }) {
       }
     },
   });
-  const fileInput = h("input", { type: "file", accept: "image/jpeg,image/png,.jpg,.jpeg,.png", hidden: true, "aria-hidden": "true", tabindex: "-1", onchange: picked });
-  const attachButton = h("button.rb-iconbtn", { type: "button", "aria-label": "Attach a JPG or PNG picture", title: "Attach a picture", onclick: () => fileInput.click() }, symbol("image"));
-  const captureButton = h("button.rb-iconbtn", { type: "button", "aria-label": "Capture an area of the page", title: "Capture an area of the page", onclick: capture }, icon("monitor"));
+  const fileInput = h("input", {
+    type: "file",
+    multiple: true,
+    accept: "image/jpeg,image/png,image/webp,application/pdf,.jpg,.jpeg,.png,.webp,.pdf,.docx",
+    hidden: true,
+    "aria-hidden": "true",
+    tabindex: "-1",
+    onchange: picked,
+  });
+  const attachButton = h("button.rb-iconbtn", { type: "button", "aria-label": "Attach pictures, PDFs or Word documents", title: "Attach pictures, PDFs or Word documents", onclick: () => fileInput.click() }, symbol("image"));
+  const captureButton = h("button.rb-iconbtn", { type: "button", "aria-label": "Capture an area of the page", title: "Capture an area of the page", onclick: () => capture() }, icon("monitor"));
   const sendButton = h("button.rb-chat__send", { type: "button", "aria-label": "Send", onclick: send }, symbol("send"));
 
   const newChat = h("button.rb-iconbtn", { type: "button", "aria-label": "New quick chat", title: "New chat", onclick: startNewChat }, symbol("add_comment"));
@@ -76,13 +87,20 @@ export function openQuickAssistant({ anchor, onClose }) {
     h("button.rb-mode__option", { type: "button", "data-mode": value, "aria-pressed": String(value === style), onclick: () => setStyle(value) }, name),
   );
   const modeBar = h("div.rb-mode", { role: "group", "aria-label": "Answer mode" }, modeButtons);
-  const previewBox = h("div.rb-attach", { hidden: true });
+  const tray = createAttachmentTray({
+    onChange: () => refresh(),
+    onNotice: (text) => {
+      error = text;
+      drawLog();
+    },
+    onRecapture: (key) => capture(key),
+  });
   const body = h(
     "div.rb-chat",
     historyBox,
     modeBar,
     transcript,
-    previewBox,
+    tray.element,
     h("div.rb-chat__compose", attachButton, captureButton, fileInput, input, sendButton),
   );
   const panel = createFloatingPanel({
@@ -99,7 +117,7 @@ export function openQuickAssistant({ anchor, onClose }) {
   });
 
   function refresh() {
-    sendButton.disabled = (!input.value.trim() && !attachment) || sending || capturing;
+    sendButton.disabled = (!input.value.trim() && tray.ids().length === 0) || sending || capturing || tray.busy();
   }
 
   /** Switches the answer mode. Only the mode changes: the chat, the box and the picture stay. */
@@ -114,66 +132,24 @@ export function openQuickAssistant({ anchor, onClose }) {
     if (messages.length === 0 && !sending) drawLog();
   }
 
-  // --- the picture ---------------------------------------------------------------------------
+  // --- the files -----------------------------------------------------------------------------
 
-  function setAttachment(file, { captured = false } = {}) {
-    if (!file) return;
-    if (!/^image\/(jpeg|png)$/.test(file.type)) {
-      error = "Attach a JPG or PNG picture.";
-      drawLog();
-      return;
-    }
-    if (file.size > IMAGE_MAX_BYTES) {
-      error = "The picture is larger than 5 MB.";
-      drawLog();
-      return;
-    }
-    clearAttachment();
-    error = null;
-    attachment = { file, url: URL.createObjectURL(file), captured };
-    drawAttachment();
-    drawLog();
-    refresh();
-  }
-
-  function clearAttachment() {
-    if (attachment) URL.revokeObjectURL(attachment.url);
-    attachment = null;
-    drawAttachment();
-    refresh();
-  }
-
-  function drawAttachment() {
-    previewBox.hidden = !attachment;
-    previewBox.replaceChildren();
-    if (!attachment) return;
-    const thumb = h("button.rb-attach__zoom", { type: "button", "aria-label": "Show the picture larger", "aria-pressed": "false" }, h("img.rb-attach__thumb", { src: attachment.url, alt: "The attached picture" }));
-    thumb.addEventListener("click", () => {
-      const large = previewBox.classList.toggle("is-large");
-      thumb.setAttribute("aria-pressed", String(large));
-      thumb.setAttribute("aria-label", large ? "Show the picture smaller" : "Show the picture larger");
-    });
-    previewBox.classList.remove("is-large");
-    const again = attachment.captured ? h("button.rb-iconbtn", { type: "button", "aria-label": "Capture the area again", title: "Capture again", onclick: capture }, icon("monitor")) : [];
-    previewBox.append(
-      thumb,
-      h("span.rb-attach__name", attachment.file.name || "Picture"),
-      again,
-      h("button.rb-iconbtn", { type: "button", "aria-label": "Remove the picture", title: "Remove", onclick: () => (clearAttachment(), input.focus()) }, symbol("close")),
-    );
-  }
-
+  /** Attaches each chosen file; the tray reads them and shows how far each one has got. */
   function picked() {
-    setAttachment(fileInput.files?.[0]);
+    error = null;
+    for (const file of fileInput.files ?? []) tray.add(file);
     fileInput.value = "";
+    drawLog();
   }
 
-  /** Ctrl+V or Cmd+V with a copied picture in the clipboard attaches it; text pastes as usual. */
+  /** Ctrl+V or Cmd+V with copied files or a copied picture attaches them; text pastes as usual. */
   function pasted(event) {
-    const files = [...(event.clipboardData?.files ?? [])].filter((file) => file.type.startsWith("image/"));
+    const files = [...(event.clipboardData?.files ?? [])].filter((file) => kindOf(file));
     if (!files.length) return;
     event.preventDefault();
-    setAttachment(files[0]);
+    error = null;
+    for (const file of files) tray.add(file);
+    drawLog();
   }
 
   /** The parts of the page that must not be in the picture: the assistant itself and the robot. */
@@ -185,7 +161,7 @@ export function openQuickAssistant({ anchor, onClose }) {
    * chosen, and are left out of the picture. A page cannot read pixels outside itself, so this never
    * shows the browser's sharing dialog and never captures the desktop or another window.
    */
-  async function capture() {
+  async function capture(replaceKey = null) {
     if (capturing || sending) return;
     capturing = true;
     error = null;
@@ -201,7 +177,10 @@ export function openQuickAssistant({ anchor, onClose }) {
       const blob = await snapshotPage({ rect, exclude: (element) => hidden.includes(element) });
       const name = blob.type === "image/png" ? "page-capture.png" : "page-capture.jpg";
       hide(false);
-      setAttachment(new File([blob], name, { type: blob.type }), { captured: true });
+      error = null;
+      if (replaceKey !== null) tray.remove(replaceKey);
+      tray.add(new File([blob], name, { type: blob.type }), { captured: true });
+      drawLog();
     } catch {
       error = "The page area could not be captured in this browser. Attach a picture instead.";
       drawLog();
@@ -223,15 +202,7 @@ export function openQuickAssistant({ anchor, onClose }) {
     }
     for (const group of groupMessages(messages)) {
       const message = group.question;
-      const pictured = message.image || message.content.startsWith(IMAGE_MARKER);
-      const text = message.content.startsWith(IMAGE_MARKER) ? message.content.slice(IMAGE_MARKER.length) : message.content;
-      transcript.append(
-        h(
-          "div.rb-bubble.rb-bubble--user",
-          pictured ? (message.image ? h("img.rb-bubble__image", { src: message.image, alt: "Your picture" }) : h("span.rb-bubble__tag", symbol("image"), "Picture")) : null,
-          text,
-        ),
-      );
+      transcript.append(userBubble(message));
       const shown = shownStyle(group, chosenStyle.get(message.id));
       const waitingHere = generating && generating.questionId === message.id;
       if (waitingHere) {
@@ -241,13 +212,34 @@ export function openQuickAssistant({ anchor, onClose }) {
       }
     }
     if (sending && !generating) {
-      const wait = pendingPicture ? "Reading the picture…" : style === "explain" ? "Writing a detailed explanation…" : "Thinking…";
+      const wait = pendingFiles ? "Reading your files…" : style === "explain" ? "Writing a detailed explanation…" : "Thinking…";
       transcript.append(h("div.rb-bubble.rb-bubble--ai", { "aria-live": "polite" }, h("span.rb-bubble__wait", wait)));
     }
     if (error) {
       transcript.append(h("p.rb-chat__error", { role: "alert" }, error));
     }
     transcript.scrollTo({ top: transcript.scrollHeight, behavior: "smooth" });
+  }
+
+  /**
+   * A question as the student sees it: the files that came with it (a picture shows itself, any
+   * other file its name), then the words. A saved question names its files in its first words
+   * ("[Attached: a.pdf] "); a live one also has the files themselves.
+   */
+  function userBubble(message) {
+    const picture = message.content.startsWith(IMAGE_MARKER);
+    const { names, text: afterFiles } = parseAttached(message.content);
+    const text = picture ? message.content.slice(IMAGE_MARKER.length) : afterFiles;
+    const tags = [];
+    if (message.image || picture) {
+      tags.push(message.image ? h("img.rb-bubble__image", { src: message.image, alt: "Your picture" }) : h("span.rb-bubble__tag", symbol("image"), "Picture"));
+    }
+    const live = message.files ?? [];
+    for (const file of live) {
+      tags.push(file.url ? h("img.rb-bubble__image", { src: file.url, alt: file.name, title: file.name }) : h("span.rb-bubble__tag", icon("file"), file.name));
+    }
+    if (!live.length) for (const name of names) tags.push(h("span.rb-bubble__tag", icon("file"), name));
+    return h("div.rb-bubble.rb-bubble--user", tags.length ? h("div.rb-bubble__files", tags) : null, text);
   }
 
   /**
@@ -259,7 +251,7 @@ export function openQuickAssistant({ anchor, onClose }) {
   function answerModes(group, shown) {
     const id = group.question.id;
     if (id == null) return null;
-    const pictured = group.question.content.startsWith(IMAGE_MARKER);
+    const pictured = group.question.content.startsWith(IMAGE_MARKER) || group.question.content.startsWith(ATTACHED_MARKER);
     return h(
       "div.rb-answer__modes",
       { role: "group", "aria-label": "Answer mode of this question" },
@@ -272,7 +264,7 @@ export function openQuickAssistant({ anchor, onClose }) {
             type: "button",
             "aria-pressed": String(value === shown),
             disabled: blocked,
-            title: saved ? name : pictured ? "Ask again with the picture to get this mode" : `Write the ${name.toLowerCase()}`,
+            title: saved ? name : pictured ? "Ask again with the files to get this mode" : `Write the ${name.toLowerCase()}`,
             onclick: () => showMode(group, value),
           },
           name.replace(" Answer", ""),
@@ -357,7 +349,7 @@ export function openQuickAssistant({ anchor, onClose }) {
     chosenStyle.clear();
     error = null;
     historyOpen = false;
-    clearAttachment();
+    tray.clear();
     drawHistory();
     drawLog();
     input.focus();
@@ -365,46 +357,37 @@ export function openQuickAssistant({ anchor, onClose }) {
 
   async function send() {
     const text = input.value.trim();
-    if ((!text && !attachment) || sending || capturing) return;
+    const ids = tray.ids();
+    if ((!text && ids.length === 0) || sending || capturing || tray.busy()) return;
+    if (tray.problem()) {
+      error = "One of the files could not be read. Retry it or remove it, then send.";
+      drawLog();
+      return;
+    }
     input.value = "";
     error = null;
     sending = true;
-    const sent = attachment;
-    // The picture stays on screen with its question; the preview strip is cleared at once.
-    attachment = null;
-    drawAttachment();
-    pendingPicture = !!sent;
+    const sentFiles = tray.files();
+    pendingFiles = sentFiles.length > 0;
     refresh();
     // The question shows at once; the server stores it with the answer, so a failed answer leaves nothing behind.
-    messages = [...messages, { role: "user", content: text, image: sent?.url ?? null }];
+    messages = [...messages, { role: "user", content: text, files: sentFiles }];
     drawLog();
     try {
-      const details = { conversationId, message: text, mode: "quick", style };
-      let answer;
-      if (sent) {
-        const form = new FormData();
-        form.append("metadata", new Blob([JSON.stringify(details)], { type: "application/json" }));
-        form.append("image", sent.file, sent.file.name);
-        answer = await api.postForm("/assistant/chat", form);
-      } else {
-        answer = await api.post("/assistant/chat", details);
-      }
+      const details = { conversationId, message: text, mode: "quick", style, attachmentIds: ids };
+      const answer = await api.post("/assistant/chat", details);
       conversationId = answer.conversation.id;
-      messages = [...messages.slice(0, -1), { ...answer.question, image: sent?.url ?? null }, answer.reply];
+      messages = [...messages.slice(0, -1), { ...answer.question, files: sentFiles }, answer.reply];
       chosenStyle.set(answer.question.id, answer.reply.style === "explain" ? "explain" : "quick");
       history = [answer.conversation, ...history.filter((entry) => entry.id !== answer.conversation.id)].slice(0, 6);
     } catch (failure) {
-      // As in the original, the question stays on screen and the box stays empty; the error is shown below it.
-      // The picture comes back to the preview strip, so the question can be sent again.
+      // The question stays on screen and the box stays empty; the error is shown below it. The files
+      // stay attached, so the question can be sent again.
       error = messageFor(failure);
-      if (sent) {
-        attachment = sent;
-        messages = messages.map((message, index) => (index === messages.length - 1 && message.image === sent.url ? { ...message, image: null } : message));
-        drawAttachment();
-      }
+      if (failure?.status === 409 && /no longer available/i.test(failure.message)) tray.expireAll();
     } finally {
       sending = false;
-      pendingPicture = false;
+      pendingFiles = false;
       refresh();
       drawLog();
       input.focus();
@@ -416,7 +399,7 @@ export function openQuickAssistant({ anchor, onClose }) {
     if (closed) return;
     closed = true;
     document.removeEventListener("keydown", onKeydown);
-    if (attachment) URL.revokeObjectURL(attachment.url);
+    tray.clear();
     for (const message of messages) if (message.image) URL.revokeObjectURL(message.image);
     panel.destroy();
     onClose();

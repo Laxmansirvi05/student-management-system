@@ -159,6 +159,7 @@ Admins do not see individual students' practice attempts in the first release. P
 | --- | --- | --- | --- | --- | --- |
 | AI features | Use | ❌ | ✅ within limits | ❌ | — |
 | Own AI usage count | Read | ❌ | 🔒 own | — | — |
+| Attached file in the Quick Assistant (kept in server memory for two hours, never stored) | Attach, use in a question, remove | ❌ | 🔒 own | ❌ | — |
 | AI request metadata log | Read | ❌ | ❌ | ❌ | ✅ |
 | AI provider key | Read | ❌ | ❌ | ❌ | ✅ |
 

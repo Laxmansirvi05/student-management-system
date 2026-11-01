@@ -14,6 +14,9 @@ import com.campuscompanion.ai.provider.AiProvider;
 import com.campuscompanion.ai.provider.AiProviderException;
 import com.campuscompanion.ai.provider.AiRequest;
 import com.campuscompanion.ai.provider.VisionProvider;
+import com.campuscompanion.assistant.attachment.AttachmentStore;
+import com.campuscompanion.assistant.attachment.DocumentContext;
+import com.campuscompanion.assistant.attachment.ReadFile;
 import com.campuscompanion.assistant.dto.ChatRequest;
 import com.campuscompanion.assistant.dto.ChatResponse;
 import com.campuscompanion.assistant.dto.ConversationListResponse;
@@ -22,9 +25,12 @@ import com.campuscompanion.assistant.dto.MessageListResponse;
 import com.campuscompanion.assistant.dto.MessageResponse;
 import com.campuscompanion.common.config.AiProperties;
 import com.campuscompanion.common.error.ConflictException;
+import com.campuscompanion.common.error.ResourceNotFoundException;
 import com.campuscompanion.common.error.ValidationException;
 import com.campuscompanion.common.security.CurrentUser;
 import com.campuscompanion.student.StudentProfileService;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -56,6 +62,12 @@ public class AssistantService {
   public static final String IMAGE_MARKER = "[Image] ";
 
   static final String IMAGE_DEFAULT_QUESTION = "Explain this image.";
+
+  /** The start of a stored question that came with files, followed by their names and "] ". */
+  public static final String ATTACHED_MARKER = "[Attached: ";
+
+  static final String ATTACHED_DEFAULT_QUESTION =
+      "Read the attached file and explain what it contains.";
   static final int HISTORY_LIST = 7;
   private static final String UNAVAILABLE = "The assistant is unavailable right now.";
   private static final String NO_VISION =
@@ -71,6 +83,7 @@ public class AssistantService {
   private final PromptBuilder prompts;
   private final AiProperties properties;
   private final StudentProfileService students;
+  private final AttachmentStore attachments;
 
   public AssistantService(
       AssistantHistory history,
@@ -81,7 +94,8 @@ public class AssistantService {
       PromptLibrary templates,
       PromptBuilder prompts,
       AiProperties properties,
-      StudentProfileService students) {
+      StudentProfileService students,
+      AttachmentStore attachments) {
     this.history = history;
     this.usage = usage;
     this.provider = provider;
@@ -91,6 +105,7 @@ public class AssistantService {
     this.prompts = prompts;
     this.properties = properties;
     this.students = students;
+    this.attachments = attachments;
   }
 
   /** Answers one message, without a picture. */
@@ -114,20 +129,31 @@ public class AssistantService {
     }
     String question = request.message() == null ? "" : request.message().strip();
     boolean withPicture = picture != null;
-    if (question.isEmpty() && !withPicture) {
+    List<ReadFile> files = files(studentId, request.attachmentIds());
+    if (question.isEmpty() && !withPicture && files.isEmpty()) {
       throw new ValidationException("message", "Write a message.");
     }
     boolean explain = "explain".equals(request.style());
-    List<AiImage> attached = List.of();
+    DocumentContext.Built documents = DocumentContext.build(files);
+    List<AiImage> attached = new ArrayList<>(documents.pictures());
     if (withPicture) {
       if (!vision.available()) {
         throw new AiUnavailableException(NO_VISION);
       }
-      attached = List.of(images.prepare(picture, pictureType));
+      attached.add(images.prepare(picture, pictureType));
       if (question.isEmpty()) {
         question = IMAGE_DEFAULT_QUESTION;
       }
       question = IMAGE_MARKER + question;
+    }
+    if (!attached.isEmpty() && !vision.available()) {
+      throw new AiUnavailableException(NO_VISION);
+    }
+    if (!files.isEmpty()) {
+      if (question.isEmpty()) {
+        question = ATTACHED_DEFAULT_QUESTION;
+      }
+      question = attachedMarker(files) + question;
     }
     String source = "quick".equals(request.mode()) ? AssistantConversation.QUICK : "assistant";
     List<AssistantMessage> earlier = List.of();
@@ -137,7 +163,7 @@ public class AssistantService {
       earlier = history.recent(chat.getId(), CONTEXT_MESSAGES - 1);
     }
 
-    String answer = ask(user, transcript(earlier, question), explain, attached);
+    String answer = ask(user, transcript(earlier, question), documents.text(), explain, attached);
     AssistantHistory.Saved saved =
         history.save(
             studentId, request.conversationId(), source, question, answer, styleOf(explain));
@@ -164,13 +190,14 @@ public class AssistantService {
     if (saved.isPresent()) {
       return new ChatResponse(respond(chat), respond(question), respond(saved.get()), NOTICE);
     }
-    if (question.getContent().startsWith(IMAGE_MARKER)) {
+    if (question.getContent().startsWith(IMAGE_MARKER)
+        || question.getContent().startsWith(ATTACHED_MARKER)) {
       throw new ConflictException(
-          "The picture of this question is not kept. Ask it again with the picture attached.");
+          "The files of this question are not kept. Ask it again with the files attached.");
     }
     List<AssistantMessage> earlier =
         history.before(chat.getId(), question.getId(), CONTEXT_MESSAGES - 1);
-    String answer = ask(user, transcript(earlier, question.getContent()), explain, List.of());
+    String answer = ask(user, transcript(earlier, question.getContent()), "", explain, List.of());
     try {
       AssistantHistory.Saved written =
           history.saveAnswer(studentId, chat.getId(), question.getId(), answer, style);
@@ -181,6 +208,32 @@ public class AssistantService {
       AssistantMessage first = history.answer(question.getId(), style).orElseThrow(() -> twice);
       return new ChatResponse(respond(chat), respond(question), respond(first), NOTICE);
     }
+  }
+
+  /**
+   * The student's attached files named in the request, in order. A file that was forgotten (kept
+   * only a short time) or is not the student's is "not found"; the student is told to attach it
+   * again, and nothing is asked.
+   */
+  private List<ReadFile> files(Long studentId, List<String> ids) {
+    if (ids == null || ids.isEmpty()) {
+      return List.of();
+    }
+    List<ReadFile> files = new ArrayList<>();
+    for (String id : new LinkedHashSet<>(ids)) {
+      try {
+        files.add(attachments.get(studentId, id));
+      } catch (ResourceNotFoundException gone) {
+        throw new ConflictException(
+            "An attached file is no longer available. Remove it and attach it again.");
+      }
+    }
+    return files;
+  }
+
+  /** "[Attached: a.pdf, b.jpg] " for the stored question, from the file names. */
+  static String attachedMarker(List<ReadFile> files) {
+    return ATTACHED_MARKER + String.join(", ", files.stream().map(ReadFile::name).toList()) + "] ";
   }
 
   private static String styleOf(boolean explain) {
@@ -215,13 +268,17 @@ public class AssistantService {
    * or a timeout is logged but does not use up a request; a reply must be some text.
    */
   private String ask(
-      CurrentUser user, String conversation, boolean explain, List<AiImage> pictures) {
+      CurrentUser user,
+      String conversation,
+      String documents,
+      boolean explain,
+      List<AiImage> pictures) {
     usage.begin(user.id());
     AiRequest prompt =
         prompts
             .build(
                 explain ? templates.explainChat() : templates.quickChat(),
-                Map.of("conversation", conversation),
+                Map.of("conversation", conversation, "documents", documents),
                 explain
                     ? Math.max(properties.maxOutputTokens(), EXPLAIN_TOKENS)
                     : properties.maxOutputTokens(),

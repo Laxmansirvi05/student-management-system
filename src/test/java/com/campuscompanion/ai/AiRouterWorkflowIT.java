@@ -102,8 +102,8 @@ class AiRouterWorkflowIT extends ApiIntegrationTest {
             "explain-v1", firstLine("prompts/explain-v1.txt"),
             "summarize-v1", firstLine("prompts/summarize-v1.txt"),
             "quiz-v1", firstLine("prompts/quiz-v1.txt"),
-            "assistant-quick-v2", firstLine("prompts/assistant-quick-v2.txt"),
-            "assistant-explain-v1", firstLine("prompts/assistant-explain-v1.txt"));
+            "assistant-quick-v3", firstLine("prompts/assistant-quick-v3.txt"),
+            "assistant-explain-v2", firstLine("prompts/assistant-explain-v2.txt"));
 
     private final HttpServer server;
     final AtomicInteger calls = new AtomicInteger();

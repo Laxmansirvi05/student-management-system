@@ -40,6 +40,7 @@ Consequences to keep in mind:
 
 ## Progress on 2026-11-01
 
+T7-15 Files in the Quick Assistant ✅ at the owner's request ([ADR 0019](decisions/0019-quick-assistant-files.md), FR-AST-005): JPG, PNG, WEBP, PDF (text or scanned, several pages) and Word attachments are read on the server when attached (text layer and page pictures with Apache PDFBox, DOCX with the JDK's own XML) and shown as Uploading, Reading, Ready; up to four per question, kept in server memory for two hours and never stored; prompts `assistant-quick-v3` and `assistant-explain-v2`. No migration, no new dependency. Checked against a live model with a printed and a handwriting-style photo, a text PDF, a scanned PDF, a DOCX with a table and a figure, a PDF with a diagram, and several files in one question. A host needs `AI_VISION_ROUTES` for pictures and scans.
 T7-14 Quick Assistant V2 ✅ at the owner's request ([ADR 0018](decisions/0018-quick-assistant-v2.md), FR-AST-002, FR-AST-003): Quick Answer and Explanatory Answer modes, JPG and PNG questions (chosen, captured from the screen, or pasted) read by a picture model (`AI_VISION_ROUTES`), and explanations with flowcharts, mind maps, charts, step diagrams, tables and formulas drawn by the page. No migration. Saved answers keep their mode (`V23__assistant_answer_modes.sql`, FR-AST-004): a reopened chat shows both modes of a question and switches between them without a model call. Local only: not pushed or deployed; a host needs `AI_VISION_ROUTES` (for example `groq:qwen/qwen3.8-27b`) for picture questions.
 
 ## Progress on 2026-10-30

@@ -21,6 +21,18 @@ class AssistantHistory {
   static final int QUICK_CHATS_KEPT = 6;
   static final int TITLE_MAX = 60;
 
+  /**
+   * The question without the "[Attached: a.pdf] " that names its files, so a title is the words
+   * asked.
+   */
+  static String withoutFileNames(String question) {
+    if (!question.startsWith(AssistantService.ATTACHED_MARKER)) {
+      return question;
+    }
+    int end = question.indexOf("] ");
+    return end < 0 ? question : question.substring(end + 2);
+  }
+
   private final AssistantConversationRepository conversations;
   private final AssistantMessageRepository messages;
   private final Clock clock;
@@ -99,7 +111,8 @@ class AssistantHistory {
     Instant now = clock.instant();
     AssistantConversation chat;
     if (conversationId == null) {
-      String title = question.length() > TITLE_MAX ? question.substring(0, TITLE_MAX) : question;
+      String words = withoutFileNames(question);
+      String title = words.length() > TITLE_MAX ? words.substring(0, TITLE_MAX) : words;
       chat = conversations.save(new AssistantConversation(studentId, title, source, now));
     } else {
       chat = owned(studentId, conversationId);

@@ -537,26 +537,30 @@
 
 .rb-attach {
   flex: none;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: grid;
+  gap: 6px;
+  max-height: 40%;
   margin: 0 8px;
-  padding: 6px 6px 6px 8px;
-  border: 1px solid var(--nt-outline-variant);
-  border-radius: 14px;
-  background: var(--nt-surface-low);
+  overflow-y: auto;
 }
 
 .rb-attach[hidden] {
   display: none;
 }
 
-.rb-attach__thumb {
-  flex: none;
-  width: 44px;
-  height: 44px;
-  border-radius: 8px;
-  object-fit: cover;
+.rb-attach__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 6px 6px 8px;
+  border: 1px solid var(--nt-outline-variant);
+  border-radius: 14px;
+  background: var(--nt-surface-low);
+}
+
+.rb-attach__item.is-error {
+  border-color: var(--nt-error);
+  background: var(--nt-error-container);
 }
 
 .rb-attach__zoom {
@@ -573,17 +577,113 @@
   outline-offset: 2px;
 }
 
-/* A larger look at the picture: the box wraps and the thumbnail grows to the width of the panel. */
-.rb-attach.is-large {
+.rb-attach__thumb {
+  display: block;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+/* The type of a file that has no thumbnail: PDF, DOCX. */
+.rb-attach__badge {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background: var(--nt-surface-container);
+  color: var(--nt-on-variant);
+  font: 700 11px/1 var(--nt-font);
+  letter-spacing: 0.02em;
+}
+
+.rb-attach__badge[data-kind="pdf"] {
+  background: #fde8e6;
+  color: #a1281f;
+}
+
+.rb-attach__badge[data-kind="docx"] {
+  background: #e3edfd;
+  color: #1b4fb3;
+}
+
+.rb-attach__text {
+  display: grid;
+  flex: 1 1 auto;
+  gap: 1px;
+  min-width: 0;
+}
+
+.rb-attach__name {
+  overflow: hidden;
+  color: var(--nt-on-surface);
+  font: 600 12.5px/1.4 var(--nt-font);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rb-attach__meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--nt-on-variant);
+  font: 400 12px/1.4 var(--nt-font);
+}
+
+.rb-attach__meta .icon {
+  width: 13px;
+  height: 13px;
+}
+
+.rb-attach__meta.is-ready {
+  color: #1a7f4b;
+}
+
+.rb-attach__meta.is-working::before {
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--nt-outline-variant);
+  border-top-color: var(--nt-primary);
+  border-radius: 50%;
+  content: "";
+  animation: rb-attach-spin 0.8s linear infinite;
+}
+
+.rb-attach__meta.is-error {
+  color: var(--nt-on-error-container);
+}
+
+.rb-attach__note {
+  color: var(--nt-on-variant);
+  font: 400 11.5px/1.4 var(--nt-font);
+}
+
+@keyframes rb-attach-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rb-attach__meta.is-working::before {
+    animation: none;
+  }
+}
+
+/* A larger look at a picture: its row wraps and the thumbnail grows to the width of the panel. */
+.rb-attach__item.is-large {
   flex-wrap: wrap;
 }
 
-.rb-attach.is-large .rb-attach__zoom {
+.rb-attach__item.is-large .rb-attach__zoom {
   flex: 1 0 100%;
   cursor: zoom-out;
 }
 
-.rb-attach.is-large .rb-attach__thumb {
+.rb-attach__item.is-large .rb-attach__thumb {
   width: 100%;
   height: auto;
   max-height: 220px;
@@ -591,14 +691,21 @@
   background: var(--nt-surface);
 }
 
-.rb-attach__name {
-  flex: 1 1 auto;
+.rb-attach__name,
+.rb-attach__meta {
   min-width: 0;
-  overflow: hidden;
-  color: var(--nt-on-variant);
-  font: 400 12px/1.5 var(--nt-font);
-  text-overflow: ellipsis;
-  white-space: nowrap;
+}
+
+/* The files of a question, above its words in the chat. */
+.rb-bubble__files .rb-bubble__image {
+  margin-bottom: 0;
+}
+
+.rb-bubble__files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 6px;
 }
 
 .rb-bubble__image {
@@ -616,6 +723,11 @@
   gap: 4px;
   margin-right: 6px;
   opacity: 0.85;
+}
+
+.rb-bubble__tag .icon {
+  width: 14px;
+  height: 14px;
 }
 
 .rb-bubble__tag .material-symbols-outlined {

@@ -24,6 +24,7 @@ A decision record (ADR) captures one significant technical decision: the context
 | [0016](0016-several-ai-providers-with-fallback.md) | Several AI providers behind one router, with automatic fallback | Accepted (data-terms review open) |
 | [0017](0017-coding-portfolio-and-leaderboard.md) | Coding portfolio and leaderboard from public coding profiles | Accepted |
 | [0018](0018-quick-assistant-v2.md) | Quick Assistant V2: two answer modes, picture questions and drawn explanations | Accepted |
+| [0019](0019-quick-assistant-files.md) | Files in the Quick Assistant: pictures, PDFs and Word documents, read on the server | Accepted |
 
 **Accepted** records reflect choices the owner has already made. **Proposed** records are recommendations written with the documentation and await the owner's approval.
 

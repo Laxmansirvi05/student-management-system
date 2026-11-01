@@ -1,5 +1,8 @@
 package com.campuscompanion.assistant;
 
+import com.campuscompanion.assistant.attachment.AttachmentReader;
+import com.campuscompanion.assistant.attachment.AttachmentService;
+import com.campuscompanion.assistant.dto.AttachmentResponse;
 import com.campuscompanion.assistant.dto.ChatRequest;
 import com.campuscompanion.assistant.dto.ChatResponse;
 import com.campuscompanion.assistant.dto.ConversationListResponse;
@@ -9,6 +12,7 @@ import com.campuscompanion.common.error.ErrorCode;
 import com.campuscompanion.common.security.CurrentUser;
 import jakarta.validation.Valid;
 import java.io.IOException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -29,9 +34,11 @@ import org.springframework.web.multipart.MultipartFile;
 public class AssistantController {
 
   private final AssistantService assistant;
+  private final AttachmentService attachments;
 
-  public AssistantController(AssistantService assistant) {
+  public AssistantController(AssistantService assistant, AttachmentService attachments) {
     this.assistant = assistant;
+    this.attachments = attachments;
   }
 
   @PostMapping(path = "/chat", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -55,6 +62,29 @@ public class AssistantController {
       throw new ApiException(ErrorCode.UPLOAD_TOO_LARGE, "The picture is larger than 5 MB.");
     }
     return assistant.chat(user, request, image.getBytes(), image.getContentType());
+  }
+
+  /**
+   * Attaches a file (a JPG or PNG picture, a PDF or a Word document, at most 10 MB) and reads it.
+   * The answer says what was really found; the file is kept in memory for a short time and used by
+   * questions that name its id in {@code attachmentIds}.
+   */
+  @PostMapping(path = "/attachments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @ResponseStatus(HttpStatus.CREATED)
+  public AttachmentResponse attach(
+      @AuthenticationPrincipal CurrentUser user, @RequestPart("file") MultipartFile file)
+      throws IOException {
+    if (file.getSize() > AttachmentReader.MAX_BYTES) {
+      throw new ApiException(ErrorCode.UPLOAD_TOO_LARGE, "The file is larger than 10 MB.");
+    }
+    return attachments.attach(user, file.getOriginalFilename(), file.getBytes());
+  }
+
+  @DeleteMapping("/attachments/{id}")
+  public ResponseEntity<Void> detach(
+      @AuthenticationPrincipal CurrentUser user, @PathVariable String id) {
+    attachments.remove(user, id);
+    return ResponseEntity.noContent().build();
   }
 
   @GetMapping("/conversations")

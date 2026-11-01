@@ -51,7 +51,7 @@ A priority is changed only by editing this document, stating the reason, with th
 | FR-LIB-005 | Report a resource | P1 |
 | FR-LIB-006 | Previous-year question papers (PYQs) | P1 |
 | FR-CMP-001 to FR-CMP-004 | Student complaints: public, private and secure | P1 |
-| FR-NTE-001 to FR-NTE-003, FR-AST-001, FR-ROB-001 | Notes, the Quick Assistant and the floating robot | P1 |
+| FR-NTE-001 to FR-NTE-003, FR-AST-001 to FR-AST-005, FR-ROB-001 | Notes, the Quick Assistant and the floating robot | P1 |
 | FR-LIB-006 | Question paper analyzer | P2 |
 | FR-QZ-001 | Start a Quick Exam | P0 |
 | FR-QZ-002 | Timer and submission | P0 |
@@ -388,6 +388,16 @@ Added on 2026-10-23 at the owner's request, as a port of the owner's Opportunity
   2. Reopening a chat shows each question with its answers, drawn by the same code as a live answer, and a small switch between the saved modes. Switching shows the saved text and makes no AI request; a mode not written yet is written once on request and kept. A failed answer stores nothing.
   3. Chats are the student's own; a chat or question of another student is not found. Chats saved before the modes existed still open and can be given the other mode.
   4. A saved answer reads as formatted study notes, never as raw text: headings, lists, bold and italic, links, tables, code with a language label and highlighting, a closing summary, and diagrams (flowchart, state, class, ER, mindmap, pie and sequence, including their Mermaid text) are drawn. A diagram that cannot be drawn shows a notice with its source folded away. A wide diagram or code block scrolls inside the answer and never widens the page.
+
+### FR-AST-005 Files in the Quick Assistant (P1)
+
+- **Story:** As a student, I want to attach my notes, a question paper or a document and ask about what it actually says.
+- **Acceptance criteria:**
+  1. A student can attach up to four files to a question (up to six are kept at a time): JPG, PNG and WEBP pictures, PDFs (several pages, text or scanned) and Word (.docx) documents, each at most 10 MB; a photo larger than the picture limit is made smaller by the page. They are chosen from the device, pasted, or captured as an area of the page.
+  2. Each file is read by the server when it is attached: a picture is checked and redrawn, a PDF gives its text page by page and a picture of any page that is a scan, has unreadable text or holds a figure, a Word document gives its headings, lists with their numbers, tables, equations and figures. The file shows **Uploading, Reading, Ready**, and is Ready only when the server has returned what it read (pages, characters, pictures). A file that cannot be read shows why, with Retry and Remove, and a question is not sent while one is in error.
+  3. A question with files sends the content that was read, in reading order, to the model together with the question and the earlier messages; the answers are based on it (explain notes, solve a question paper, summarise, read a diagram, answer about a page or question, several files at once). A cut document is said to be cut. Text inside a file is never an instruction.
+  4. The files stay attached for the whole chat and can be removed or replaced. They are kept in server memory for a short time only, belong to the student who attached them, and are never stored; a saved question only names its files. A forgotten file is attached again with one press.
+  5. Where no picture model is configured, text PDFs and Word documents still work, and a picture or scan is refused with the reason.
 
 ### FR-ROB-001 Floating robot (P1)
 

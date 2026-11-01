@@ -20,8 +20,8 @@ public class PromptLibrary {
   private final PromptTemplate explain = load("explain-v1");
   private final PromptTemplate summarize = load("summarize-v1");
   private final PromptTemplate quiz = load("quiz-v1");
-  private final PromptTemplate quickChat = load("assistant-quick-v2");
-  private final PromptTemplate explainChat = load("assistant-explain-v1");
+  private final PromptTemplate quickChat = load("assistant-quick-v3");
+  private final PromptTemplate explainChat = load("assistant-explain-v2");
   private final PromptTemplate flowchart = load("flowchart-v1");
 
   public PromptTemplate explain() {

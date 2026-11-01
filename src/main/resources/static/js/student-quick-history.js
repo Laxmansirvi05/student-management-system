@@ -3,6 +3,7 @@ import { fill, h, icon, toast } from "./dom.js";
 import { cardHead, empty } from "./parts.js";
 import { groupMessages, shownStyle } from "./robot/chat-groups.js";
 import { renderRich } from "./robot/rich-render.js";
+import { parseAttached } from "./robot/attachment-rules.js";
 
 // The robot's Quick Assistant chats, on the AI Assistant page. They are kept apart from the study
 // tools above: a quick chat is a short exchange, and the robot keeps only the newest six. Only this
@@ -88,10 +89,11 @@ function conversation() {
   return groupMessages(openMessages).map((group) => {
     const shown = shownStyle(group, chosen.get(group.question.id));
     const answer = group.answers[shown];
-    const question = group.question.content.replace(/^\[Image\] /, "");
+    const attached = parseAttached(group.question.content);
+    const question = attached.text.replace(/^\[Image\] /, "");
     return h(
       "div.quick-chat__group",
-      h("p.quick-chat__message.quick-chat__message--user", group.question.content.startsWith("[Image] ") ? [icon("file"), " Picture · "] : null, question),
+      h("p.quick-chat__message.quick-chat__message--user", group.question.content.startsWith("[Image] ") ? [icon("file"), " Picture · "] : attached.names.length ? [icon("file"), ` ${attached.names.join(", ")} · `] : null, question),
       answer ? h("div.quick-chat__answer.rb-rich", modeSwitch(group, shown), renderRich(answer.content)) : null,
     );
   });

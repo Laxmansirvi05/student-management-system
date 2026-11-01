@@ -891,7 +891,8 @@ paths:
       description: >
         JSON, or multipart/form-data with the parts "metadata" (the same JSON) and "image" (JPEG or
         PNG, at most 5 MB; the message may then be blank). "style" is "quick" (default) or "explain".
-        A picture is redrawn, read by a picture model and not stored. See docs/09 section 9.5.
+        A picture is redrawn, read by a picture model and not stored. Files (pictures, PDFs, Word
+        documents) are attached first and named in "attachmentIds". See docs/09 section 9.5.
       requestBody:
         required: true
         content:
@@ -911,6 +912,44 @@ paths:
         "415": { $ref: "#/components/responses/Problem" }
         "429": { $ref: "#/components/responses/Problem" }
         "503": { $ref: "#/components/responses/Problem" }
+
+  /assistant/attachments:
+    post:
+      tags: [AI]
+      summary: Attach a file (picture, PDF or Word document) to the Quick Assistant and read it
+      description: >
+        One part "file", at most 10 MB. The kind comes from the first bytes. The content read is kept
+        in server memory for two hours after last use, not stored; use its id in "attachmentIds" of the
+        chat request. See docs/09 section 9.5 and ADR 0019.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary }
+      responses:
+        "201":
+          description: What was really read from the file.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AssistantAttachment" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "413": { $ref: "#/components/responses/Problem" }
+        "415": { $ref: "#/components/responses/Problem" }
+        "503": { $ref: "#/components/responses/Problem" }
+
+  /assistant/attachments/{id}:
+    delete:
+      tags: [AI]
+      summary: Forget an attached file
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "204": { description: Forgotten (also when it was not the student's or was already gone). }
 
   /assistant/conversations:
     get:
@@ -2584,6 +2623,20 @@ components:
         mode: { type: string, enum: [quick] }
         style: { type: string, enum: [quick, explain], default: quick }
         questionId: { type: integer, format: int64, nullable: true, description: "Answer this question of the chat in the given style; the saved answer is returned if there is one. Needs conversationId; no message." }
+        attachmentIds: { type: array, maxItems: 4, items: { type: string }, nullable: true, description: "Files attached earlier with POST /assistant/attachments. The message may then be blank." }
+    AssistantAttachment:
+      type: object
+      required: [id, name, kind, pages, pagesRead, characters, pictures]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        kind: { type: string, enum: [image, pdf, docx] }
+        pages: { type: integer, description: "Pages of a PDF; 0 otherwise." }
+        pagesRead: { type: integer }
+        characters: { type: integer, description: "Characters of text read." }
+        pictures: { type: integer, description: "Pictures that will be sent to the model (a photo, scanned pages, figures)." }
+        notice: { type: string, nullable: true, description: "Set when only part of the file was read." }
+        preview: { type: string, nullable: true, description: "The first words of the text." }
     ExamRequest:
       type: object
       additionalProperties: false

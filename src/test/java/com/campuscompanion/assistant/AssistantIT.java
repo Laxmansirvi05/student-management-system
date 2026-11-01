@@ -196,7 +196,7 @@ class AssistantIT extends ApiIntegrationTest {
     assertThat(feature).isEqualTo("QUICK_CHAT");
     assertThat(
             jdbc.queryForObject(
-                "select count(*) from app.ai_request_logs where prompt_version = 'assistant-quick-v2'",
+                "select count(*) from app.ai_request_logs where prompt_version = 'assistant-quick-v3'",
                 Integer.class))
         .isPositive();
   }
@@ -248,7 +248,7 @@ class AssistantIT extends ApiIntegrationTest {
             jdbc.queryForList(
                 "select prompt_version from app.ai_request_logs where prompt_version like 'assistant-%' order by id desc limit 2",
                 String.class))
-        .contains("assistant-quick-v2", "assistant-explain-v1");
+        .contains("assistant-quick-v3", "assistant-explain-v2");
   }
 
   @Test
