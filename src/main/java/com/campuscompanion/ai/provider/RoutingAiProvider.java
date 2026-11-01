@@ -114,16 +114,7 @@ public class RoutingAiProvider implements AiProvider {
       Duration timeout = shortest(request.timeout(), attemptTimeout, left);
       attempts++;
       try {
-        AiCompletion completion =
-            route
-                .adapter()
-                .complete(
-                    new AiRequest(
-                        request.promptVersion(),
-                        request.systemInstructions(),
-                        request.userContent(),
-                        request.maxOutputTokens(),
-                        timeout));
+        AiCompletion completion = route.adapter().complete(request.withTimeout(timeout));
         if (usable.test(completion.text())) {
           if (attempts > 1) {
             log.info("AI request answered by {} after {} attempts", route.label(), attempts);

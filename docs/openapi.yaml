@@ -887,9 +887,28 @@ paths:
   /assistant/chat:
     post:
       tags: [AI]
-      summary: One message to the Quick Assistant
+      summary: One message to the Quick Assistant, with an optional picture and an answer mode
+      description: >
+        JSON, or multipart/form-data with the parts "metadata" (the same JSON) and "image" (JPEG or
+        PNG, at most 5 MB; the message may then be blank). "style" is "quick" (default) or "explain".
+        A picture is redrawn, read by a picture model and not stored. See docs/09 section 9.5.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AssistantChatRequest" }
+          multipart/form-data:
+            schema:
+              type: object
+              required: [metadata, image]
+              properties:
+                metadata: { $ref: "#/components/schemas/AssistantChatRequest" }
+                image: { type: string, format: binary }
       responses:
         "200": { description: "{ conversation, question, reply, notice }" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "413": { $ref: "#/components/responses/Problem" }
+        "415": { $ref: "#/components/responses/Problem" }
         "429": { $ref: "#/components/responses/Problem" }
         "503": { $ref: "#/components/responses/Problem" }
 
@@ -2557,6 +2576,13 @@ components:
       required: [show]
       properties:
         show: { type: boolean }
+    AssistantChatRequest:
+      type: object
+      properties:
+        conversationId: { type: integer, format: int64, nullable: true }
+        message: { type: string, maxLength: 4000, description: "Blank only when a picture is attached." }
+        mode: { type: string, enum: [quick] }
+        style: { type: string, enum: [quick, explain], default: quick }
     ExamRequest:
       type: object
       additionalProperties: false

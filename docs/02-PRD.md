@@ -364,6 +364,23 @@ Added on 2026-10-23 at the owner's request, as a port of the owner's Opportunity
   1. From the robot, a student chats with the AI assistant, under the same limits and rules as FR-AI-004 and docs/13.
   2. The questions and answers are stored so the student can read them again: only the six newest chats, read by that student only (never by an administrator), deletable by the student, and nothing is stored when an answer fails. The privacy policy says so.
 
+### FR-AST-002 Answer modes (P1)
+
+- **Acceptance criteria:**
+  1. The Quick Assistant has a selector with **Quick Answer** (the default) and **Explanatory Answer**. Switching it does not reload or reopen the assistant, keeps the chat and the typed text, and shows the chosen mode in the application's blue.
+  2. Quick Answer is short: the answer in one or two sentences, then at most four bullets, with the essential code and a line of explanation for a programming question.
+  3. Explanatory Answer is organised like a teacher's: an introduction, steps in sections, an example, line-by-line code where useful, a comparison or applications where relevant, and a summary.
+  4. Where a visual helps, the explanation includes one: a flowchart or block diagram, a mind map, a chart, a step-by-step array diagram, a table, or a formula; none is added to a simple definition. A visual the page cannot read is shown as code.
+  5. The mode travels with each message and chooses the model's instructions on the server.
+
+### FR-AST-003 Picture questions (P1)
+
+- **Acceptance criteria:**
+  1. A student can attach a JPG or PNG (at most 5 MB) by the file picker, capture a screen, window or tab with the browser's capture picker (where the browser and HTTPS allow it; the page cannot choose a region), or paste a copied picture. The picture shows as a preview before sending and can be removed.
+  2. The picture is sent with the question to a model that reads pictures, and the answer follows the chosen mode. A picture alone is a question ("Explain this image.").
+  3. The picture is checked and redrawn on the server, held only for the request, and never stored or logged; the stored question only notes that a picture came with it. The privacy page says so.
+  4. Where no picture model is configured, the student is told so and text questions still work.
+
 ### FR-ROB-001 Floating robot (P1)
 
 - **Acceptance criteria:** Every student page shows a draggable 3D robot (with a plain badge until the scene is drawn, or for good if it cannot load) that opens the Quick Note (triple tap, Enter) and the Quick Assistant (double tap, A). Its scene loads after the page is usable and never from a CDN.

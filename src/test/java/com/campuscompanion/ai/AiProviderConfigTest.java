@@ -38,7 +38,7 @@ class AiProviderConfigTest {
   }
 
   private static AiRoutingProperties routing(String routes) {
-    return new AiRoutingProperties(routes, 3, Duration.ofSeconds(15));
+    return new AiRoutingProperties(routes, "", 3, Duration.ofSeconds(15));
   }
 
   private final AiProviderConfig config = new AiProviderConfig();
@@ -133,5 +133,54 @@ class AiProviderConfigTest {
         .isInstanceOf(IllegalStateException.class)
         .hasMessageContaining("'openai'")
         .hasMessageNotContaining(SECRET);
+  }
+
+  // --- the models that read pictures --------------------------------------------------------
+
+  private com.campuscompanion.ai.provider.VisionProvider vision(
+      String provider, String routes, String visionRoutes, MockEnvironment keys) {
+    AiProvider main = start("mock", "");
+    return config.visionProvider(
+        properties(provider, "", ""),
+        new AiRoutingProperties(routes, visionRoutes, 3, Duration.ofSeconds(15)),
+        keys,
+        Clock.systemUTC(),
+        main);
+  }
+
+  @Test
+  void withTheMockOrOneGeminiModelThePictureModelIsTheMainOne() {
+    assertThat(vision("mock", "", "", new MockEnvironment()).provider())
+        .isInstanceOf(MockAiProvider.class);
+    assertThat(vision("mock", "", "", new MockEnvironment()).available()).isTrue();
+  }
+
+  @Test
+  void theRouterUsesTheListedPictureModels() {
+    MockEnvironment keys = new MockEnvironment().withProperty("GROQ_API_KEY", SECRET);
+    var vision = vision("router", "groq:text-only", "groq:vl-model", keys);
+
+    assertThat(vision.available()).isTrue();
+    RoutingAiProvider router = (RoutingAiProvider) vision.provider();
+    assertThat(router.routes()).extracting(route -> route.model()).containsExactly("vl-model");
+  }
+
+  @Test
+  void withoutAPictureListTheGeminiModelsOfTheRouteListAreUsed() {
+    MockEnvironment keys =
+        new MockEnvironment()
+            .withProperty("GROQ_API_KEY", SECRET)
+            .withProperty("GEMINI_API_KEY", SECRET);
+    var vision = vision("router", "groq:text-only,gemini:flash-test", "", keys);
+
+    RoutingAiProvider router = (RoutingAiProvider) vision.provider();
+    assertThat(router.routes()).extracting(route -> route.provider()).containsExactly("gemini");
+  }
+
+  @Test
+  void withNoPictureModelOrNoKeyPictureQuestionsAreSwitchedOffNotTheStartUp() {
+    MockEnvironment groqOnly = new MockEnvironment().withProperty("GROQ_API_KEY", SECRET);
+    assertThat(vision("router", "groq:text-only", "", groqOnly).available()).isFalse();
+    assertThat(vision("router", "groq:text-only", "gemini:flash", groqOnly).available()).isFalse();
   }
 }

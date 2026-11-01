@@ -38,6 +38,10 @@ Consequences to keep in mind:
 - **The seeder becomes more important.** Its data must stay obviously synthetic, and it must never run in production unless the owner enables it for one start.
 - **Access control is not postponed.** Every student endpoint gets its own "not logged in" and "someone else's record" tests when it is built; only the generated all-endpoint suites wait for stage G.
 
+## Progress on 2026-11-01
+
+T7-14 Quick Assistant V2 ✅ at the owner's request ([ADR 0018](decisions/0018-quick-assistant-v2.md), FR-AST-002, FR-AST-003): Quick Answer and Explanatory Answer modes, JPG and PNG questions (chosen, captured from the screen, or pasted) read by a picture model (`AI_VISION_ROUTES`), and explanations with flowcharts, mind maps, charts, step diagrams, tables and formulas drawn by the page. No migration. Local only: not pushed or deployed; a host needs `AI_VISION_ROUTES` (for example `groq:qwen/qwen3.8-27b`) for picture questions.
+
 ## Progress on 2026-10-30
 
 T7-13 coding portfolio and leaderboard ✅ at the owner's request ([ADR 0017](decisions/0017-coding-portfolio-and-leaderboard.md), FR-COD-001 to FR-COD-005, `V20__coding_portfolio.sql`): students link GitHub, LeetCode, Codeforces, CodeChef, GeeksforGeeks and HackerRank, prove each account with a code, and see their journey; an opt-in students' leaderboard and an admin leaderboard of every student. Built and integration tested with fake sites (`CodingIT`). The same day, the Codolio-style portfolio views (heatmaps, streaks, awards, topics, distribution, a GitHub development view, an admin read-only page) and the GeeksforGeeks verification fix (its bio is only on the profile page), with `V21__coding_details.sql`; then real site logos, copied badge pictures (`V22__coding_badge_images.sql`), blue full-width heatmaps and a denser layout. **Owner actions:** V22 reaches hosted Supabase only with the next deployment, which needs your approval; an optional `GITHUB_TOKEN` (no scopes) raises GitHub's limit.
@@ -192,6 +196,7 @@ Follow [15-AI-features-handoff.md](15-AI-features-handoff.md).
 | T7-09 ◐ | AI log retention: **built** on 2026-10-24 (`AiUsageLogRetention`, V18, off by default). Orphaned-file cleanup: **deferred**; it deletes from the real storage bucket, which cannot be verified here and needs the owner's approval | |
 | T7-12 ✅ | Notes workspace, Quick Note, Quick Assistant and floating robot, ported from Opportunity Radar ([ADR 0014](decisions/0014-notes-quick-assistant-and-robot.md)), V14 and V15. Built on 2026-10-23 | — |
 | T7-11 ✅ | Student complaints (public, private, secure), V13. Built on 2026-10-23 | FR-CMP-001 to FR-CMP-004 |
+| T7-14 ✅ | Quick Assistant V2: answer modes, picture questions, drawn explanations ([ADR 0018](decisions/0018-quick-assistant-v2.md)). Built on 2026-11-01 | FR-AST-002, FR-AST-003 |
 | T7-13 ✅ | Coding portfolio and leaderboard (`V20`, [ADR 0017](decisions/0017-coding-portfolio-and-leaderboard.md)). Built on 2026-10-30 | FR-COD-001 to FR-COD-005 |
 | T7-10 ✅ | Past papers (PYQ) library: `V10__pyq.sql`, student search, filter, save and signed viewing, admin upload and folder import. Built on 2026-10-18 | FR-LIB-006 |
 

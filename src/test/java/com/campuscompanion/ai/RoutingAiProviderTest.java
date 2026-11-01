@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.campuscompanion.ai.provider.AiCompletion;
+import com.campuscompanion.ai.provider.AiImage;
 import com.campuscompanion.ai.provider.AiProvider;
 import com.campuscompanion.ai.provider.AiProviderException;
 import com.campuscompanion.ai.provider.AiProviderException.Kind;
@@ -34,6 +35,7 @@ class RoutingAiProviderTest {
     private final String name;
     private final Deque<Object> script = new ArrayDeque<>();
     private Duration lastTimeout;
+    private List<AiImage> lastImages = List.of();
 
     Scripted(String name, Object... answers) {
       this.name = name;
@@ -44,6 +46,7 @@ class RoutingAiProviderTest {
     public AiCompletion complete(AiRequest request) throws AiProviderException {
       calls.add(name);
       lastTimeout = request.timeout();
+      lastImages = request.images();
       Object next = script.isEmpty() ? "ok from " + name : script.poll();
       if (next instanceof AiProviderException failure) {
         throw failure;
@@ -71,6 +74,17 @@ class RoutingAiProviderTest {
 
   private static Route route(String provider, String model, int key, AiProvider adapter) {
     return new Route(provider, model, key, adapter);
+  }
+
+  @Test
+  void thePicturesOfARequestReachTheModelThatAnswers() throws Exception {
+    Scripted vision = new Scripted("vision");
+    RoutingAiProvider router = router(3, route("groq", "vl", 1, vision));
+    AiImage picture = new AiImage("image/jpeg", new byte[] {1, 2, 3});
+
+    router.complete(request().withImages(List.of(picture)));
+
+    assertThat(vision.lastImages).containsExactly(picture);
   }
 
   @Test

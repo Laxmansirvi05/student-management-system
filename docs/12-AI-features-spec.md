@@ -115,7 +115,7 @@ Several keys of one provider are **not** used to get around its rate limits or q
 
 **Bounds.** At most 3 calls per request (`app.ai.routing.max-attempts`), each at most 15 s (`attempt-timeout`), all within the 25 s total budget; no call starts with less than 2 s left. When every route is paused, the request fails at once without calling anyone, and paused routes come back by themselves. When everything fails, the student gets the documented error (`503 AI_UNAVAILABLE`, `504 AI_TIMEOUT`, or `502 AI_INVALID_RESPONSE` when every model answered but none passed the checks); never a made-up answer.
 
-**Checks.** A reply is accepted only if the feature's own parser accepts it (`AiResponseParser`, `GeneratedQuestionValidator`); a model's decline counts as an answer. The Quick Assistant accepts any non-empty text.
+**Checks.** A reply is accepted only if the feature's own parser accepts it (`AiResponseParser`, `GeneratedQuestionValidator`); a model's decline counts as an answer. The Quick Assistant accepts any non-empty text (its two answer modes and picture questions are in [ADR 0018](decisions/0018-quick-assistant-v2.md)).
 
 **Usage and logs.** One usage row per student request, whichever model answered. Logs name a route as `provider:model (key n)` and the kind of failure; never a key, a prompt or a reply.
 

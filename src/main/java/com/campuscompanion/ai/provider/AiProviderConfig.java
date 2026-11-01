@@ -67,6 +67,46 @@ public class AiProviderConfig {
     };
   }
 
+  /**
+   * The models that read pictures. "mock" and "gemini" use the main provider (the mock acknowledges
+   * a picture; every Gemini model reads one). With the router, AI_VISION_ROUTES lists them, or,
+   * when blank, the Gemini entries of AI_ROUTES do; with none, picture questions are unavailable.
+   */
+  @Bean
+  public VisionProvider visionProvider(
+      AiProperties properties,
+      AiRoutingProperties routing,
+      Environment environment,
+      Clock clock,
+      AiProvider main) {
+    String choice = properties.provider().strip().toLowerCase(Locale.ROOT);
+    if (!choice.equals("router")) {
+      return new VisionProvider(main);
+    }
+    String routes = routing.visionRoutes();
+    if (routes == null || routes.isBlank()) {
+      routes =
+          String.join(
+              ",",
+              entries(routing.routes()).stream().filter(e -> e.startsWith("gemini:")).toList());
+    }
+    if (routes.isBlank()) {
+      log.warn("No AI_VISION_ROUTES and no Gemini model in AI_ROUTES: picture questions are off");
+      return new VisionProvider(null);
+    }
+    try {
+      return new VisionProvider(
+          router(
+              properties,
+              new AiRoutingProperties(routes, "", routing.maxAttempts(), routing.attemptTimeout()),
+              environment::getProperty,
+              clock));
+    } catch (IllegalStateException noKey) {
+      log.warn("Picture questions are off: {}", noKey.getMessage());
+      return new VisionProvider(null);
+    }
+  }
+
   /** Reads a setting by name; the Environment in the application, a map in tests. */
   interface Settings {
     String get(String name);

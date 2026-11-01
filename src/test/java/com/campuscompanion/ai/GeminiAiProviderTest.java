@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.campuscompanion.ai.provider.AiCompletion;
+import com.campuscompanion.ai.provider.AiImage;
 import com.campuscompanion.ai.provider.AiProviderException;
 import com.campuscompanion.ai.provider.AiRequest;
 import com.campuscompanion.ai.provider.GeminiAiProvider;
@@ -12,6 +13,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -162,5 +164,22 @@ class GeminiAiProviderTest {
             AiProviderException.class,
             failure ->
                 assertThat(failure.getKind()).isEqualTo(AiProviderException.Kind.UNAVAILABLE));
+  }
+
+  @Test
+  void aQuestionWithAPictureSendsItAsInlineData() throws Exception {
+    answer = "{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"A diagram.\"}]}}]}";
+    byte[] bytes = {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, 9, 8, 7};
+
+    provider("gemini-test-model")
+        .complete(
+            request(Duration.ofSeconds(5)).withImages(List.of(new AiImage("image/jpeg", bytes))));
+
+    JsonNode parts = JSON.readTree(body.get()).path("contents").path(0).path("parts");
+    assertThat(parts.path(0).path("text").asString()).isEqualTo("Student: What is a stack?");
+    assertThat(parts.path(1).path("inlineData").path("mimeType").asString())
+        .isEqualTo("image/jpeg");
+    assertThat(parts.path(1).path("inlineData").path("data").asString())
+        .isEqualTo(java.util.Base64.getEncoder().encodeToString(bytes));
   }
 }

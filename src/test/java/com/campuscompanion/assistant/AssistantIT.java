@@ -5,8 +5,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.campuscompanion.support.ApiIntegrationTest;
 import com.campuscompanion.support.ApiTestClient;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.net.http.HttpResponse;
 import java.util.List;
+import javax.imageio.ImageIO;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.JsonNode;
 
@@ -193,7 +196,7 @@ class AssistantIT extends ApiIntegrationTest {
     assertThat(feature).isEqualTo("QUICK_CHAT");
     assertThat(
             jdbc.queryForObject(
-                "select count(*) from app.ai_request_logs where prompt_version = 'assistant-quick-v1'",
+                "select count(*) from app.ai_request_logs where prompt_version = 'assistant-quick-v2'",
                 Integer.class))
         .isPositive();
   }
@@ -209,5 +212,121 @@ class AssistantIT extends ApiIntegrationTest {
     ask(me, null, "Question 4");
     ask(me, null, "Question 5");
     assertProblem(me.post(CHAT, message(null, "Question 6")), 429, "RATE_LIMITED");
+  }
+
+  // --- answer modes and pictures (Quick Assistant V2) -------------------------------------------
+
+  private static String styled(String text, String style) {
+    return "{\"message\":\"%s\",\"mode\":\"quick\",\"style\":\"%s\"}".formatted(text, style);
+  }
+
+  private static byte[] picture(String format, int width, int height) throws Exception {
+    BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    ImageIO.write(image, format, out);
+    return out.toByteArray();
+  }
+
+  private HttpResponse<String> askWithPicture(
+      ApiTestClient who, String metadata, String type, byte[] bytes) throws Exception {
+    return who.postMultipart(CHAT, metadata, "image", "shot", type, bytes);
+  }
+
+  @Test
+  void theAnswerModeChoosesTheInstructionsAndTheShapeOfTheAnswer() throws Exception {
+    ApiTestClient me = student("AST00011");
+    HttpResponse<String> quick = me.post(CHAT, styled("What is a stack?", "quick"));
+    assertThat(quick.statusCode()).as(quick.body()).isEqualTo(200);
+    assertThat(json(quick).get("reply").get("content").asString()).doesNotContain("```");
+
+    HttpResponse<String> explain = me.post(CHAT, styled("Explain a stack", "explain"));
+    assertThat(explain.statusCode()).as(explain.body()).isEqualTo(200);
+    String text = json(explain).get("reply").get("content").asString();
+    assertThat(text).contains("## ").contains("```flowchart").contains("| Part |");
+
+    assertThat(
+            jdbc.queryForList(
+                "select prompt_version from app.ai_request_logs where prompt_version like 'assistant-%' order by id desc limit 2",
+                String.class))
+        .contains("assistant-quick-v2", "assistant-explain-v1");
+  }
+
+  @Test
+  void aPictureGoesWithTheQuestionAndIsNotStored() throws Exception {
+    ApiTestClient me = student("AST00012");
+    HttpResponse<String> response =
+        askWithPicture(
+            me, styled("How do I fix this?", "quick"), "image/png", picture("png", 40, 30));
+    assertThat(response.statusCode()).as(response.body()).isEqualTo(200);
+    JsonNode answer = json(response);
+    assertThat(answer.get("question").get("content").asString())
+        .isEqualTo("[Image] How do I fix this?");
+    assertThat(answer.get("reply").get("content").asString()).contains("1 image was attached");
+
+    // Only text is stored: the messages have no picture column and no bytes.
+    List<String> columns =
+        jdbc.queryForList(
+            "select column_name from information_schema.columns where table_schema = 'app' and table_name = 'assistant_messages'",
+            String.class);
+    assertThat(columns).doesNotContain("image", "picture", "data");
+  }
+
+  @Test
+  void aPictureAloneIsAQuestion() throws Exception {
+    ApiTestClient me = student("AST00013");
+    HttpResponse<String> response =
+        askWithPicture(me, styled("", "explain"), "image/jpeg", picture("jpeg", 64, 48));
+    assertThat(response.statusCode()).as(response.body()).isEqualTo(200);
+    assertThat(json(response).get("question").get("content").asString())
+        .isEqualTo("[Image] Explain this image.");
+    // Without a picture, a blank message is still refused.
+    assertThat(invalidFields(me.post(CHAT, styled("", "quick")))).containsExactly("message");
+  }
+
+  @Test
+  void aPictureThatIsNotAJpegOrPngIsRefusedAndStoresNothing() throws Exception {
+    ApiTestClient me = student("AST00014");
+    assertProblem(
+        askWithPicture(me, styled("hi", "quick"), "text/plain", "hello".getBytes()),
+        415,
+        "UPLOAD_INVALID_TYPE");
+    assertProblem(
+        askWithPicture(me, styled("hi", "quick"), "image/gif", picture("gif", 10, 10)),
+        415,
+        "UPLOAD_INVALID_TYPE");
+    // Declared PNG, but the bytes are something else.
+    assertProblem(
+        askWithPicture(me, styled("hi", "quick"), "image/png", "not a picture".getBytes()),
+        415,
+        "UPLOAD_INVALID_TYPE");
+    // Declared PNG, but really a JPEG.
+    assertProblem(
+        askWithPicture(me, styled("hi", "quick"), "image/png", picture("jpeg", 10, 10)),
+        415,
+        "UPLOAD_INVALID_TYPE");
+    assertThat(json(me.get(CONVERSATIONS)).get("conversations")).isEmpty();
+    // None of them used up a request.
+    assertThat(json(me.get("/api/v1/ai/usage/me")).get("usedToday").asInt()).isZero();
+  }
+
+  @Test
+  void aPictureOverFiveMegabytesIsRefused() throws Exception {
+    ApiTestClient me = student("AST00015");
+    byte[] big = new byte[5 * 1024 * 1024 + 1];
+    big[0] = (byte) 0xFF;
+    big[1] = (byte) 0xD8;
+    big[2] = (byte) 0xFF;
+    assertProblem(
+        askWithPicture(me, styled("hi", "quick"), "image/jpeg", big), 413, "UPLOAD_TOO_LARGE");
+  }
+
+  @Test
+  void onlyALoggedInStudentCanSendAPicture() throws Exception {
+    byte[] png = picture("png", 10, 10);
+    assertProblem(
+        askWithPicture(visitor(), styled("hi", "quick"), "image/png", png), 401, "AUTH_REQUIRED");
+    ApiTestClient admin = adminClient("assistant-admin@university.example");
+    assertProblem(
+        askWithPicture(admin, styled("hi", "quick"), "image/png", png), 403, "ACCESS_DENIED");
   }
 }

@@ -3,6 +3,7 @@ package com.campuscompanion.ai;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.campuscompanion.ai.provider.AiImage;
 import com.campuscompanion.ai.provider.AiProviderException;
 import com.campuscompanion.ai.provider.AiProviderException.Kind;
 import com.campuscompanion.ai.provider.AiRequest;
@@ -12,6 +13,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -191,5 +193,34 @@ class OpenAiCompatibleAiProviderTest {
         .isInstanceOfSatisfying(
             AiProviderException.class,
             failure -> assertThat(failure.getKind()).isEqualTo(Kind.UNAVAILABLE));
+  }
+
+  @Test
+  void aQuestionWithAPictureSendsTheTextAndThePictureAsParts() throws Exception {
+    answer = "{\"choices\":[{\"message\":{\"role\":\"assistant\",\"content\":\"A red square.\"}}]}";
+    byte[] bytes = {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, 1, 2, 3};
+
+    provider()
+        .complete(
+            request(Duration.ofSeconds(5)).withImages(List.of(new AiImage("image/jpeg", bytes))));
+
+    JsonNode user = JSON.readTree(body.get()).path("messages").path(1);
+    assertThat(user.path("content").isArray()).isTrue();
+    assertThat(user.path("content").path(0).path("type").asString()).isEqualTo("text");
+    assertThat(user.path("content").path(0).path("text").asString())
+        .isEqualTo("<topic>stacks</topic>");
+    assertThat(user.path("content").path(1).path("type").asString()).isEqualTo("image_url");
+    assertThat(user.path("content").path(1).path("image_url").path("url").asString())
+        .isEqualTo("data:image/jpeg;base64," + java.util.Base64.getEncoder().encodeToString(bytes));
+    // The key is never part of the body.
+    assertThat(body.get()).doesNotContain(KEY);
+  }
+
+  @Test
+  void aQuestionWithoutAPictureStaysAPlainString() throws Exception {
+    answer = "{\"choices\":[{\"message\":{\"role\":\"assistant\",\"content\":\"ok\"}}]}";
+    provider().complete(request(Duration.ofSeconds(5)));
+    assertThat(JSON.readTree(body.get()).path("messages").path(1).path("content").isString())
+        .isTrue();
   }
 }

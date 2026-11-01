@@ -39,13 +39,18 @@ public class NoteImageProcessor {
 
   /** Returns the JPEG to store for a JPEG, PNG or GIF picture. A GIF keeps its first frame. */
   public byte[] toJpeg(byte[] content, String format) {
-    BufferedImage image = decode(content, format);
+    return toJpeg(content, format, OUTPUT_SIDE);
+  }
+
+  /** The same, no larger than {@code outputSide} pixels on the long side. */
+  public byte[] toJpeg(byte[] content, String format, int outputSide) {
+    BufferedImage image = decode(content, format, outputSide);
     int orientation = "jpeg".equals(format) ? ExifOrientation.of(content) : 1;
-    return encode(upright(fitted(image), orientation));
+    return encode(upright(fitted(image, outputSide), orientation));
   }
 
   /** Opens the picture. Its size is read first, so a huge picture is refused before decoding. */
-  private static BufferedImage decode(byte[] content, String format) {
+  private static BufferedImage decode(byte[] content, String format, int outputSide) {
     Iterator<ImageReader> readers = ImageIO.getImageReadersByFormatName(format);
     if (!readers.hasNext()) {
       throw new IllegalStateException("The JDK has no reader for " + format);
@@ -65,7 +70,7 @@ public class NoteImageProcessor {
       // Only 4096 pixels are kept on the long side, so a large picture is read at a lower
       // resolution straight away: every second, third or fourth pixel.
       ImageReadParam every = reader.getDefaultReadParam();
-      int step = Math.max(1, Math.max(width, height) / OUTPUT_SIDE);
+      int step = Math.max(1, Math.max(width, height) / outputSide);
       every.setSourceSubsampling(step, step, 0, 0);
       BufferedImage image = reader.read(0, every);
       if (image == null) {
@@ -80,10 +85,10 @@ public class NoteImageProcessor {
   }
 
   /** The picture on white, no larger than 4096 pixels on its long side. */
-  private static BufferedImage fitted(BufferedImage image) {
+  private static BufferedImage fitted(BufferedImage image, int outputSide) {
     int width = image.getWidth();
     int height = image.getHeight();
-    double scale = Math.min(1.0, (double) OUTPUT_SIDE / Math.max(width, height));
+    double scale = Math.min(1.0, (double) outputSide / Math.max(width, height));
     int targetWidth = Math.max(1, (int) Math.round(width * scale));
     int targetHeight = Math.max(1, (int) Math.round(height * scale));
     BufferedImage flat = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_RGB);

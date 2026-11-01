@@ -5,6 +5,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Base64;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ArrayNode;
@@ -61,7 +62,27 @@ public class OpenAiCompatibleAiProvider implements AiProvider {
     root.put("model", model);
     ArrayNode messages = root.putArray("messages");
     messages.addObject().put("role", "system").put("content", request.systemInstructions());
-    messages.addObject().put("role", "user").put("content", request.userContent());
+    ObjectNode user = messages.addObject().put("role", "user");
+    if (request.images().isEmpty()) {
+      user.put("content", request.userContent());
+    } else {
+      // A question with pictures: the content is a list of parts, the text first, then each picture
+      // as a data address (the form every provider of this format accepts).
+      ArrayNode parts = user.putArray("content");
+      parts.addObject().put("type", "text").put("text", request.userContent());
+      for (AiImage image : request.images()) {
+        parts
+            .addObject()
+            .put("type", "image_url")
+            .putObject("image_url")
+            .put(
+                "url",
+                "data:"
+                    + image.mimeType()
+                    + ";base64,"
+                    + Base64.getEncoder().encodeToString(image.data()));
+      }
+    }
     root.put("max_tokens", request.maxOutputTokens());
     root.put("temperature", 0.4);
     return root.toString();

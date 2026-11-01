@@ -20,7 +20,8 @@ public class PromptLibrary {
   private final PromptTemplate explain = load("explain-v1");
   private final PromptTemplate summarize = load("summarize-v1");
   private final PromptTemplate quiz = load("quiz-v1");
-  private final PromptTemplate quickChat = load("assistant-quick-v1");
+  private final PromptTemplate quickChat = load("assistant-quick-v2");
+  private final PromptTemplate explainChat = load("assistant-explain-v1");
   private final PromptTemplate flowchart = load("flowchart-v1");
 
   public PromptTemplate explain() {
@@ -40,9 +41,14 @@ public class PromptLibrary {
     return flowchart;
   }
 
-  /** The robot's short chat: plain text answers of a few sentences. */
+  /** The robot's Quick Answer: short plain-text answers, with a code block for code. */
   public PromptTemplate quickChat() {
     return quickChat;
+  }
+
+  /** The robot's Explanatory Answer: structured explanations with tables and diagram blocks. */
+  public PromptTemplate explainChat() {
+    return explainChat;
   }
 
   static PromptTemplate load(String version) {

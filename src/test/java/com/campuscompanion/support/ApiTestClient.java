@@ -77,6 +77,18 @@ public class ApiTestClient {
   public HttpResponse<String> postMultipart(
       String path, String metadataJson, String fileName, String fileType, byte[] file)
       throws IOException, InterruptedException {
+    return postMultipart(path, metadataJson, "file", fileName, fileType, file);
+  }
+
+  /** The same, with the file in a part of another name, such as "image". */
+  public HttpResponse<String> postMultipart(
+      String path,
+      String metadataJson,
+      String partName,
+      String fileName,
+      String fileType,
+      byte[] file)
+      throws IOException, InterruptedException {
     String boundary = "----campus-companion-test-" + System.nanoTime();
     ByteArrayOutputStream body = new ByteArrayOutputStream();
     body.write(
@@ -85,9 +97,9 @@ public class ApiTestClient {
             .formatted(boundary, metadataJson)
             .getBytes(StandardCharsets.UTF_8));
     body.write(
-        ("--%s\r\nContent-Disposition: form-data; name=\"file\"; filename=\"%s\"\r\n"
+        ("--%s\r\nContent-Disposition: form-data; name=\"%s\"; filename=\"%s\"\r\n"
                 + "Content-Type: %s\r\n\r\n")
-            .formatted(boundary, fileName, fileType)
+            .formatted(boundary, partName, fileName, fileType)
             .getBytes(StandardCharsets.UTF_8));
     body.write(file);
     body.write(("\r\n--" + boundary + "--\r\n").getBytes(StandardCharsets.UTF_8));

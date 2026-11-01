@@ -34,13 +34,16 @@ public class MockAiProvider implements AiProvider {
     if (content.contains("[[mock:unavailable]]")) {
       throw new AiProviderException(AiProviderException.Kind.UNAVAILABLE);
     }
-    String reply = replyFor(request.promptVersion(), content);
+    String reply = replyFor(request.promptVersion(), content, request.images().size());
     return new AiCompletion(reply, content.length(), reply.length());
   }
 
-  private static String replyFor(String promptVersion, String content) {
+  private static String replyFor(String promptVersion, String content, int pictures) {
+    if (promptVersion.startsWith("assistant-explain")) {
+      return explanatoryReply(content, pictures);
+    }
     if (promptVersion.startsWith("assistant")) {
-      return chatReply(content);
+      return chatReply(content, pictures);
     }
     if (content.contains("[[mock:invalid]]")) {
       return "Sorry, here is my answer in plain words instead of the structure you asked for.";
@@ -64,7 +67,7 @@ public class MockAiProvider implements AiProvider {
   }
 
   /** The plain-text answer of the quick chat: it repeats what was asked, as a demo. */
-  private static String chatReply(String content) {
+  private static String chatReply(String content, int pictures) {
     if (content.contains("[[mock:empty]]")) {
       return "";
     }
@@ -76,7 +79,52 @@ public class MockAiProvider implements AiProvider {
     String reply =
         "Demo answer. No AI provider is connected yet, so this text only shows where the answer will"
             + " appear. You asked: "
-            + shown;
+            + shown
+            + attached(pictures);
+    return special(content, reply);
+  }
+
+  private static String attached(int pictures) {
+    return pictures == 0
+        ? ""
+        : " (" + pictures + (pictures == 1 ? " image was" : " images were") + " attached.)";
+  }
+
+  /**
+   * The demo of an explanatory answer: the headings, list, table and the diagram blocks the page
+   * draws, so the whole feature can be seen without a provider.
+   */
+  private static String explanatoryReply(String content, int pictures) {
+    if (content.contains("[[mock:empty]]")) {
+      return "";
+    }
+    int last = content.lastIndexOf("Student: ");
+    String asked = last < 0 ? "" : content.substring(last + "Student: ".length());
+    int end = asked.indexOf("</student_conversation>");
+    asked = (end < 0 ? asked : asked.substring(0, end)).strip();
+    String shown = asked.length() > 80 ? asked.substring(0, 80) + "…" : asked;
+    String reply =
+        "## Demo explanation\n"
+            + "No AI provider is connected yet, so this text only shows how an explanatory answer"
+            + " looks. You asked: "
+            + shown
+            + attached(pictures)
+            + "\n\n"
+            + "### Steps\n"
+            + "1. Read the question.\n"
+            + "2. Break it into smaller parts.\n"
+            + "3. Check each part with an example.\n\n"
+            + "```flowchart\n"
+            + "flowchart TD\n"
+            + "A([Start]) --> B[Read the question]\n"
+            + "B --> C{Is it clear?}\n"
+            + "C -->|No| B\n"
+            + "C -->|Yes| D([Answer])\n"
+            + "```\n\n"
+            + "| Part | Meaning |\n"
+            + "| --- | --- |\n"
+            + "| Demo | Shown only without a provider |\n\n"
+            + "**Summary:** a real answer explains the topic step by step.";
     return special(content, reply);
   }
 

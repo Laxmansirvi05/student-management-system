@@ -117,6 +117,7 @@ app:
       max-batches: 50
     routing:
       routes: ${AI_ROUTES:}
+      vision-routes: ${AI_VISION_ROUTES:}
       max-attempts: 3
       attempt-timeout: 15s
   bootstrap:

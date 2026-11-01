@@ -489,3 +489,409 @@
 .rb-chat__send .material-symbols-outlined {
   font-size: 16px;
 }
+
+/* --- quick assistant v2: answer modes, pictures and rich answers --------------------------------- */
+
+.rb-mode {
+  flex: none;
+  display: flex;
+  gap: 2px;
+  margin: 8px 12px 0;
+  padding: 2px;
+  border-radius: 999px;
+  background: var(--nt-surface-container);
+}
+
+.rb-mode__option {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 28px;
+  padding: 0 8px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--nt-on-variant);
+  font: 500 12px/1.5 var(--nt-font);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--nt-motion),
+    color var(--nt-motion);
+}
+
+.rb-mode__option:hover {
+  color: var(--nt-on-surface);
+}
+
+.rb-mode__option[aria-pressed="true"] {
+  background: var(--nt-primary);
+  color: var(--nt-on-primary);
+}
+
+.rb-mode__option:focus-visible {
+  outline: 2px solid var(--nt-primary);
+  outline-offset: 1px;
+}
+
+.rb-attach {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 8px;
+  padding: 6px 6px 6px 8px;
+  border: 1px solid var(--nt-outline-variant);
+  border-radius: 14px;
+  background: var(--nt-surface-low);
+}
+
+.rb-attach[hidden] {
+  display: none;
+}
+
+.rb-attach__thumb {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.rb-attach__name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--nt-on-variant);
+  font: 400 12px/1.5 var(--nt-font);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rb-bubble__image {
+  display: block;
+  max-width: 100%;
+  max-height: 140px;
+  margin-bottom: 6px;
+  border-radius: 10px;
+  object-fit: contain;
+}
+
+.rb-bubble__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-right: 6px;
+  opacity: 0.85;
+}
+
+.rb-bubble__tag .material-symbols-outlined {
+  font-size: 16px;
+}
+
+/* An answer with structure: headings, lists, tables, code and diagrams, not one line of text. */
+.rb-bubble--rich {
+  max-width: 100%;
+  white-space: normal;
+}
+
+.rb-bubble--rich > * + * {
+  margin-top: 8px;
+}
+
+.rb-bubble--rich p,
+.rb-bubble--rich ul,
+.rb-bubble--rich ol,
+.rb-bubble--rich blockquote {
+  margin: 0;
+}
+
+.rb-bubble--rich > p + p,
+.rb-bubble--rich > * + p {
+  margin-top: 8px;
+}
+
+.rb-md__heading {
+  margin-bottom: 0;
+  color: var(--nt-on-surface);
+  font: 600 16px/1.4 var(--nt-font);
+}
+
+h4.rb-md__heading {
+  font-size: 14px;
+}
+
+.rb-md__list {
+  padding-left: 20px;
+}
+
+.rb-md__list li + li {
+  margin-top: 2px;
+}
+
+.rb-md__code,
+.rb-code {
+  font-family: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.rb-md__code {
+  padding: 1px 5px;
+  border-radius: 6px;
+  background: var(--nt-surface-high);
+  font-size: 0.9em;
+}
+
+.rb-code {
+  position: relative;
+  margin: 0;
+  padding: 10px 12px;
+  overflow-x: auto;
+  border: 1px solid var(--nt-outline-variant);
+  border-radius: 12px;
+  background: var(--nt-surface);
+  font-size: 12.5px;
+  line-height: 1.5;
+  white-space: pre;
+}
+
+.rb-code__lang {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--nt-on-variant);
+  font: 500 11px/1.2 var(--nt-font);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.rb-md__table {
+  overflow-x: auto;
+  border: 1px solid var(--nt-outline-variant);
+  border-radius: 12px;
+  background: var(--nt-surface);
+}
+
+.rb-md__table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.rb-md__table th,
+.rb-md__table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--nt-outline-variant);
+  text-align: left;
+  vertical-align: top;
+}
+
+.rb-md__table th {
+  background: var(--nt-surface-container);
+  font-weight: 600;
+}
+
+.rb-md__table tr:last-child td {
+  border-bottom: 0;
+}
+
+.rb-md__quote {
+  padding-left: 10px;
+  border-left: 3px solid var(--nt-primary);
+  color: var(--nt-on-variant);
+}
+
+.rb-md__rule {
+  border: 0;
+  border-top: 1px solid var(--nt-outline-variant);
+}
+
+.rb-math {
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--nt-surface);
+  border: 1px solid var(--nt-outline-variant);
+  font: italic 500 16px/1.6 Georgia, "Times New Roman", serif;
+  text-align: center;
+  overflow-x: auto;
+}
+
+.rb-diagram {
+  margin: 0;
+  padding: 8px;
+  border: 1px solid var(--nt-outline-variant);
+  border-radius: 12px;
+  background: var(--nt-surface);
+}
+
+.rb-diagram__title {
+  margin-bottom: 4px;
+  color: var(--nt-on-surface);
+  font: 600 13px/1.4 var(--nt-font);
+}
+
+.rb-diagram__body {
+  overflow-x: auto;
+}
+
+.rb-diagram__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+
+.rb-node {
+  fill: var(--nt-surface);
+  stroke: var(--nt-primary);
+  stroke-width: 1.5;
+}
+
+.rb-node--terminal {
+  fill: var(--nt-primary-container);
+}
+
+.rb-node--decision {
+  fill: var(--nt-surface-low);
+}
+
+.rb-node--branch {
+  fill: var(--nt-primary-container);
+  stroke: none;
+}
+
+.rb-node--root {
+  fill: var(--nt-primary);
+}
+
+.rb-node__text {
+  fill: var(--nt-on-surface);
+  font: 500 12px/1 var(--nt-font);
+}
+
+.rb-node__text--root {
+  fill: var(--nt-on-primary);
+  font-weight: 600;
+}
+
+.rb-edge {
+  fill: none;
+  stroke: var(--nt-outline);
+  stroke-width: 1.4;
+}
+
+.rb-arrowhead {
+  fill: var(--nt-outline);
+}
+
+.rb-edge__back {
+  fill: var(--nt-surface);
+}
+
+.rb-edge__text {
+  fill: var(--nt-on-variant);
+  font: 500 11px/1 var(--nt-font);
+}
+
+.rb-grid {
+  stroke: var(--nt-outline-variant);
+  stroke-width: 1;
+}
+
+.rb-axis {
+  fill: var(--nt-on-variant);
+  font: 400 10px/1 var(--nt-font);
+}
+
+.rb-axis--legend {
+  fill: var(--nt-on-surface);
+  font-size: 11px;
+}
+
+.rb-bar {
+  fill: var(--nt-primary);
+}
+
+.rb-line {
+  fill: none;
+  stroke: var(--nt-primary);
+  stroke-width: 2.2;
+}
+
+.rb-dot {
+  fill: var(--nt-primary);
+}
+
+.rb-value {
+  fill: var(--nt-on-surface);
+  font: 600 10px/1 var(--nt-font);
+}
+
+.rb-steps {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rb-step__cells {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.rb-cell {
+  display: grid;
+  min-width: 34px;
+  padding: 4px 2px 2px;
+  border: 1px solid var(--nt-outline-variant);
+  border-radius: 8px;
+  background: var(--nt-surface);
+  text-align: center;
+}
+
+.rb-cell__value {
+  font: 600 14px/1.2 var(--nt-font);
+}
+
+.rb-cell__index,
+.rb-cell__marks {
+  color: var(--nt-on-variant);
+  font: 400 10px/1.3 var(--nt-font);
+}
+
+.rb-cell__marks {
+  min-height: 13px;
+  color: var(--nt-primary);
+  font-weight: 600;
+}
+
+.rb-cell--mark {
+  border-color: var(--nt-primary);
+}
+
+.rb-cell--mid {
+  border-color: var(--nt-primary);
+  background: var(--nt-primary-container);
+}
+
+.rb-cell--found {
+  border-color: #1a7f4b;
+  background: #e6f3ec;
+}
+
+.rb-cell--swap {
+  border-color: #b4500a;
+  background: #fbeee2;
+}
+
+.rb-step__caption {
+  margin: 4px 0 0;
+  color: var(--nt-on-variant);
+  font: 400 13px/1.4 var(--nt-font);
+}
+
+.rb-iconbtn .icon {
+  width: 18px;
+  height: 18px;
+}

@@ -6,6 +6,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Base64;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ArrayNode;
@@ -81,7 +82,13 @@ public class GeminiAiProvider implements AiProvider {
         .put("text", request.systemInstructions());
     ObjectNode turn = root.putArray("contents").addObject();
     turn.put("role", "user");
-    turn.putArray("parts").addObject().put("text", request.userContent());
+    ArrayNode parts = turn.putArray("parts");
+    parts.addObject().put("text", request.userContent());
+    for (AiImage image : request.images()) {
+      ObjectNode inline = parts.addObject().putObject("inlineData");
+      inline.put("mimeType", image.mimeType());
+      inline.put("data", Base64.getEncoder().encodeToString(image.data()));
+    }
     ObjectNode config = root.putObject("generationConfig");
     config.put("maxOutputTokens", request.maxOutputTokens());
     config.put("temperature", 0.4);
