@@ -2349,3 +2349,252 @@
     border-radius: 18px;
   }
 }
+
+/* --- Campus Companion alignment ---------------------------------------------------------------
+   The notes workspace was ported from Opportunity Radar with its own purple-grey palette and
+   Inter type (ADR 0014). On the Notes page and in its dialogs and menus, the --nt- tokens now take
+   the values of the application's own tokens (tokens.css), so surfaces, text, borders, the blue
+   accent and the font match Home and Portfolio. The folders keep their own fixed colours
+   (folder-colors.js) and their 3D layout, and the quick note panels and the robot, which sit
+   outside this scope, are unchanged. */
+
+.page--notes,
+.nt-modal,
+.nt-context {
+  --nt-surface: var(--color-surface);
+  --nt-surface-low: var(--color-bg-subtle);
+  --nt-surface-container: var(--tint-neutral);
+  --nt-surface-high: var(--color-hairline);
+  --nt-surface-highest: var(--color-border);
+  --nt-on-surface: var(--color-text);
+  --nt-on-variant: var(--color-text-muted);
+  --nt-outline: var(--color-border-control);
+  --nt-outline-variant: var(--color-hairline);
+  --nt-primary: var(--color-primary);
+  --nt-primary-container: var(--tint-primary);
+  --nt-on-primary-container: var(--on-tint-primary);
+  --nt-error: var(--color-danger);
+  --nt-error-container: var(--tint-danger);
+  --nt-on-error-container: var(--on-tint-danger);
+  --nt-shadow-lg: var(--shadow-hover);
+  --nt-shadow-2xl: var(--shadow-float);
+  --nt-font: var(--font);
+}
+
+/* The page: the same side inset as Portfolio (24px), and the same inset from the top as Home and
+   Portfolio (24px, 32px on wide screens). The workspace is shorter by the extra top inset, so it
+   still ends where it did. */
+@media (min-width: 600px) {
+  .page--notes {
+    padding-top: var(--space-5);
+    padding-inline: var(--space-5);
+  }
+
+  .nt-workspace {
+    height: max(560px, calc(100dvh - 156px));
+  }
+}
+
+@media (min-width: 900px) {
+  .page--notes {
+    padding-top: var(--space-6);
+  }
+
+  .nt-workspace {
+    height: max(560px, calc(100dvh - 164px));
+  }
+}
+
+/* The workspace is a card like the others. */
+.nt-workspace {
+  border-color: var(--color-hairline);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+.nt-sidebar {
+  border-right-color: var(--color-hairline);
+}
+
+/* Navigation rows: the sidebar's own look (blue tint when active, grey on hover, 600 weight). */
+.nt-nav__item {
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 10px;
+}
+
+.nt-nav__item:hover:not(.is-active) {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.nt-nav__item.is-active {
+  background: var(--tint-primary);
+  color: var(--on-tint-primary);
+  font-weight: 600;
+}
+
+.nt-nav__item.is-active:hover {
+  background: #dbeafe;
+}
+
+.nt-nav__item:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+}
+
+.nt-folders__head {
+  font: var(--text-label);
+  letter-spacing: 0.06em;
+}
+
+/* Header: title, buttons and search on the application's spacing and type. */
+.nt-main__header {
+  padding: var(--space-4) var(--space-5);
+  border-bottom-color: var(--color-hairline);
+}
+
+.nt-main__row + .nt-main__row {
+  margin-top: var(--space-3);
+}
+
+.nt-heading {
+  font: var(--text-h2);
+}
+
+.nt-search,
+.nt-select {
+  border-color: var(--color-border-control);
+  background: var(--color-bg-subtle);
+  transition:
+    border-color var(--nt-motion),
+    background-color var(--nt-motion),
+    box-shadow var(--nt-motion);
+}
+
+.nt-search:hover,
+.nt-select:hover {
+  border-color: var(--color-text);
+}
+
+.nt-search:focus-within,
+.nt-select:focus-visible {
+  border-color: var(--color-focus);
+  background: var(--color-surface);
+  outline: 0;
+  box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.16);
+}
+
+.nt-search__input,
+.nt-select {
+  font-size: 14px;
+}
+
+.nt-split__main,
+.nt-split__toggle {
+  font-weight: 500;
+}
+
+.nt-split:hover {
+  background: var(--color-primary-hover);
+}
+
+.nt-split__main:hover,
+.nt-split__toggle:hover {
+  opacity: 1;
+}
+
+.nt-btn--primary:hover:not([disabled]) {
+  background: var(--color-primary-hover);
+  opacity: 1;
+}
+
+.nt-ghost:hover,
+.nt-tool:hover:not([disabled]),
+.nt-chip:hover,
+.nt-style:hover,
+.nt-more:hover {
+  background: var(--tint-neutral);
+}
+
+.nt-ghost:focus-visible,
+.nt-tool:focus-visible,
+.nt-chip:focus-visible,
+.nt-split__main:focus-visible,
+.nt-split__toggle:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* Body: the same 24px inset as the header, and one 24px step between the folders and the notes. */
+.nt-body {
+  padding: var(--space-5);
+}
+
+.nt-folder-grid {
+  margin-bottom: var(--space-5);
+}
+
+.nt-folder__name {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.nt-folder__sub {
+  font-size: 14px;
+}
+
+.nt-list__heading {
+  margin-bottom: var(--space-3);
+  color: var(--color-text);
+  font: var(--text-h2);
+}
+
+/* Note cards: the application's card — white surface, 18px radius, soft shadow, lift on hover. */
+.nt-notes {
+  gap: var(--space-4);
+}
+
+.nt-card {
+  padding: var(--space-4);
+  border-color: var(--color-hairline);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  transition:
+    transform 200ms var(--ease),
+    border-color 200ms var(--ease),
+    box-shadow 200ms var(--ease);
+}
+
+.nt-card:hover {
+  border-color: var(--color-hairline);
+  box-shadow: var(--shadow-hover);
+}
+
+.nt-card:focus-visible {
+  box-shadow: 0 0 0 2px var(--color-focus);
+}
+
+.nt-card__title {
+  font: var(--text-body);
+  font-weight: 600;
+}
+
+.nt-card__snippet {
+  font: var(--text-small);
+}
+
+.nt-card__meta {
+  font: var(--text-caption);
+}
+
+.nt-empty {
+  border-radius: var(--radius-card);
+}
+
+.nt-menu-panel,
+.nt-menu,
+.nt-context {
+  border-radius: var(--radius-input);
+}
