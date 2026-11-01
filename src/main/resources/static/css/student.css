@@ -1647,8 +1647,17 @@ button.qdot:hover {
 
 .quick-chat__messages {
   display: grid;
-  gap: var(--space-2);
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+  gap: var(--space-3);
   margin-top: var(--space-3);
+}
+
+/* One question and its saved answer, drawn by the same code as the robot's live answers. */
+.quick-chat__group {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
 }
 
 .quick-chat__message {
@@ -1665,6 +1674,21 @@ button.qdot:hover {
   justify-self: end;
   background: var(--tint-primary);
   color: var(--on-tint-primary);
+}
+
+.quick-chat__answer {
+  min-width: 0;
+  max-width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  font: var(--text-small);
+}
+
+.quick-chat__answer > .rb-answer__modes {
+  margin-bottom: var(--space-3);
 }
 
 /* Planner (T7-02): study tasks and the exam countdown. */

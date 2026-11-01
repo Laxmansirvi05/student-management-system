@@ -3,8 +3,9 @@
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { layoutFlowchart, layoutMindmap, parseChart, parseFlowchart, parseMindmap, parseSteps } from "../../main/resources/static/js/robot/diagram-model.js";
-import { parseInline, parseRich } from "../../main/resources/static/js/robot/rich-parse.js";
+import { layoutFlowchart, layoutMindmap, layoutSequence, parseChart, parseDiagram, parseFlowchart, parseMindmap, parseSteps } from "../../main/resources/static/js/robot/diagram-model.js";
+import { highlight, languageOf } from "../../main/resources/static/js/robot/code-highlight.js";
+import { isSummaryHeading, parseInline, parseRich } from "../../main/resources/static/js/robot/rich-parse.js";
 
 test("an answer becomes headings, lists, a table, code and diagram blocks", () => {
   const blocks = parseRich(
@@ -54,9 +55,9 @@ test("html in an answer stays text and is never read as markup", () => {
 test("inline bold, italic and code are told apart", () => {
   assert.deepEqual(parseInline("a **b** c *d* `e`"), [
     { type: "text", value: "a " },
-    { type: "bold", value: "b" },
+    { type: "bold", children: [{ type: "text", value: "b" }] },
     { type: "text", value: " c " },
-    { type: "italic", value: "d" },
+    { type: "italic", children: [{ type: "text", value: "d" }] },
     { type: "text", value: " " },
     { type: "code", value: "e" },
   ]);
@@ -175,4 +176,87 @@ test("a step shows its cells, its marks and its caption", () => {
   // A mark that points outside the cells is dropped.
   assert.deepEqual(parseSteps("1 2 | mid=9 | x")[0].marks, []);
   assert.equal(parseSteps("   \n"), null);
+});
+
+// Saved answers in the history are read by these same parsers (the history fix).
+
+test("a nested list keeps its sub-items under the right parent", () => {
+  const list = parseRich("1. one\n   - sub\n2. two").at(0);
+  assert.equal(list.type, "list");
+  assert.equal(list.ordered, true);
+  assert.equal(list.items.length, 2);
+  assert.equal(list.items[0].sub.items[0].text, "sub");
+  assert.equal(list.items[1].sub, null);
+});
+
+test("an ordered list that starts above one keeps its start", () => {
+  assert.equal(parseRich("3. c\n4. d").at(0).start, 3);
+});
+
+test("a tilde fence is code, and an unclosed fence still ends the answer", () => {
+  assert.equal(parseRich("~~~java\nint a;\n~~~").at(0).lang, "java");
+  assert.equal(parseRich("text\n\n```java\nint a;").at(-1).code, "int a;");
+});
+
+test("a mermaid fence is a drawable visual, not a code block", () => {
+  const block = parseRich("```mermaid\nflowchart TD\nA --> B\n```").at(0);
+  assert.equal(block.type, "visual");
+  assert.equal(block.kind, "mermaid");
+});
+
+test("an emphasised word inside bold stays nested", () => {
+  const bold = parseInline("**a *b* c**").at(0);
+  assert.equal(bold.type, "bold");
+  assert.ok(bold.children.some((piece) => piece.type === "italic"));
+});
+
+test("only http and https links are kept as links", () => {
+  assert.equal(parseInline("[x](https://example.com)").at(0).type, "link");
+  assert.notEqual(parseInline("[x](javascript:alert(1))").at(0).type, "link");
+});
+
+test("summary headings are told apart from other headings", () => {
+  assert.equal(isSummaryHeading("Summary"), true);
+  assert.equal(isSummaryHeading("Key takeaways"), true);
+  assert.equal(isSummaryHeading("Introduction"), false);
+});
+
+test("Mermaid flowchart, state, class and ER text all become graphs", () => {
+  assert.equal(parseDiagram("flowchart TD\nA --> B").type, "flowchart");
+  assert.equal(parseDiagram("graph LR\nA --> B").type, "flowchart");
+  assert.equal(parseDiagram("stateDiagram-v2\n[*] --> Idle\nIdle --> Busy").type, "flowchart");
+  assert.equal(parseDiagram("classDiagram\nAnimal <|-- Dog").type, "flowchart");
+  assert.equal(parseDiagram("erDiagram\nSTUDENT ||--o{ MARK : has").type, "flowchart");
+});
+
+test("Mermaid mindmap and pie text become a tree and a chart", () => {
+  assert.equal(parseDiagram("mindmap\n  root((Java))\n    OOP\n    Streams").type, "mindmap");
+  assert.equal(parseDiagram('pie title Marks\n  "A" : 40\n  "B" : 60').type, "chart");
+});
+
+test("a Mermaid sequence diagram lays its actors and messages out", () => {
+  const diagram = parseDiagram("sequenceDiagram\nA->>B: hello\nB-->>A: hi");
+  assert.equal(diagram.type, "sequence");
+  const layout = layoutSequence(diagram.sequence);
+  assert.ok(layout.width > 0 && layout.height > 0);
+});
+
+test("a Mermaid kind that cannot be drawn is named, not hidden", () => {
+  const diagram = parseDiagram("gantt\ntitle Plan\nsection A\nTask :a1, 2024-01-01, 3d");
+  assert.equal(diagram.type, "unsupported");
+  assert.equal(diagram.name.toLowerCase(), "gantt");
+});
+
+test("the highlighter marks keywords, strings, numbers and comments, and loses no text", () => {
+  const code = 'int n = 5; // count\nString s = "hi";';
+  const tokens = highlight(code, "java");
+  const types = new Set(tokens.map((token) => token.type));
+  for (const wanted of ["keyword", "number", "comment", "string"]) assert.ok(types.has(wanted), wanted);
+  assert.equal(tokens.map((token) => token.text).join(""), code);
+});
+
+test("the highlighter knows common language aliases and leaves unknown code plain", () => {
+  assert.equal(languageOf("js"), languageOf("javascript"));
+  const tokens = highlight("whatever 1 2 3", "klingon");
+  assert.equal(tokens.map((token) => token.text).join(""), "whatever 1 2 3");
 });

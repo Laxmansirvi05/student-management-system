@@ -1,5 +1,5 @@
 import { h } from "../dom.js";
-import { layoutFlowchart, layoutMindmap, parseChart, parseFlowchart, parseMindmap, parseSteps } from "./diagram-model.js";
+import { layoutFlowchart, layoutMindmap, layoutSequence, parseChart, parseDiagram, parseFlowchart, parseMindmap, parseSteps } from "./diagram-model.js";
 
 // Draws the diagrams of an explanatory answer as SVG, from the numbers diagram-model.js made. Every
 // piece of text is set as text, never as markup, and colours come from classes in robot.css. A form
@@ -22,8 +22,11 @@ function label(text, attributes) {
 
 function canvas(width, height, name) {
   const root = svg("svg", { class: "rb-diagram__svg", viewBox: `0 0 ${width} ${height}`, role: "img", "aria-label": name });
-  // Set through the style object: the page's security policy does not allow a style attribute.
+  // Set through the style object: the page's security policy does not allow a style attribute. A
+  // diagram shrinks to fit its container but never below a readable width, so a wide one scrolls
+  // sideways instead of turning into small print.
   root.style.maxWidth = width + "px";
+  root.style.minWidth = Math.min(width, 420) + "px";
   return root;
 }
 
@@ -51,7 +54,10 @@ function nodeShape(node) {
 
 export function drawFlowchart(source) {
   const graph = parseFlowchart(source);
-  if (!graph) return null;
+  return graph ? drawGraph(graph) : null;
+}
+
+function drawGraph(graph) {
   const layout = layoutFlowchart(graph);
   const root = canvas(layout.width, layout.height, "Flowchart");
   root.append(
@@ -78,7 +84,10 @@ export function drawFlowchart(source) {
 
 export function drawMindmap(source) {
   const tree = parseMindmap(source);
-  if (!tree) return null;
+  return tree ? drawTree(tree) : null;
+}
+
+function drawTree(tree) {
   const layout = layoutMindmap(tree);
   const root = canvas(layout.width, layout.height, "Mind map");
   for (const link of layout.links) {
@@ -108,7 +117,10 @@ function format(value) {
 
 export function drawChart(source) {
   const chart = parseChart(source);
-  if (!chart) return null;
+  return chart ? drawChartData(chart) : null;
+}
+
+function drawChartData(chart) {
   if (chart.type === "pie") return figure(chart.title, drawPie(chart));
   const width = 320;
   const height = 190;
@@ -192,4 +204,45 @@ export function drawSteps(source) {
       }),
     ),
   );
+}
+
+// ------------------------------------------------------------------------------- Mermaid text
+
+function drawSequence(sequence) {
+  const layout = layoutSequence(sequence);
+  const root = canvas(layout.width, layout.height, "Sequence diagram");
+  root.append(svg("defs", {}, svg("marker", { id: "rb-arrow-seq", viewBox: "0 0 10 10", refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: "auto-start-reverse" }, svg("path", { class: "rb-arrowhead", d: "M0,0 L10,5 L0,10 z" }))));
+  for (const actor of layout.actors) {
+    root.append(svg("line", { class: "rb-lifeline", x1: actor.cx, x2: actor.cx, y1: layout.lifelineTop, y2: layout.lifelineBottom }), svg("rect", { class: "rb-node rb-node--terminal", x: actor.x, y: 6, width: actor.w, height: 28, rx: 8 }), label(actor.name, { class: "rb-node__text", x: actor.cx, y: 24, "text-anchor": "middle" }));
+  }
+  for (const message of layout.messages) {
+    if (message.self) {
+      root.append(svg("path", { class: "rb-edge" + (message.dashed ? " rb-edge--dashed" : ""), d: `M${message.x1},${message.y} h34 v18 h-34`, "marker-end": "url(#rb-arrow-seq)" }), label(message.text, { class: "rb-edge__text", x: message.x1 + 40, y: message.y + 12 }));
+    } else {
+      const middle = (message.x1 + message.x2) / 2;
+      root.append(svg("line", { class: "rb-edge" + (message.dashed ? " rb-edge--dashed" : ""), x1: message.x1, x2: message.x2, y1: message.y + 8, y2: message.y + 8, "marker-end": "url(#rb-arrow-seq)" }), label(message.text, { class: "rb-edge__text", x: middle, y: message.y, "text-anchor": "middle" }));
+    }
+  }
+  return figure("", root);
+}
+
+/**
+ * A flowchart, a Mermaid diagram, or a diagram block of the page's own kind. Returns null when the
+ * text cannot be read as a diagram; { unsupported: name } for a Mermaid kind that is not drawn here.
+ */
+export function drawDiagram(source) {
+  const diagram = parseDiagram(source);
+  if (!diagram) return null;
+  switch (diagram.type) {
+    case "flowchart":
+      return drawGraph(diagram.graph);
+    case "mindmap":
+      return drawTree(diagram.tree);
+    case "chart":
+      return figure(diagram.chart.title, drawPie(diagram.chart));
+    case "sequence":
+      return drawSequence(diagram.sequence);
+    default:
+      return { unsupported: diagram.name };
+  }
 }

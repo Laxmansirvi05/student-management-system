@@ -1,0 +1,533 @@
+/* How an assistant answer looks: headings, steps, highlighted terms, code, tables, summaries and
+   diagrams. One set of styles for the Quick Assistant bubble and the saved history on the AI
+   Assistant page, so a saved answer looks exactly as it did live. The colours are variables, with
+   the application's tokens as the default; the robot's panel gives its own (robot.css). */
+
+.rb-rich,
+.rb-bubble--rich {
+  --rich-text: var(--color-text, #1d1d1f);
+  --rich-muted: var(--color-text-muted, #6e6e73);
+  --rich-line: var(--color-hairline, #e5e5ea);
+  --rich-surface: var(--color-surface, #ffffff);
+  --rich-soft: var(--color-bg-subtle, #f5f5f7);
+  --rich-accent: var(--color-primary, #0071e3);
+  --rich-accent-soft: var(--tint-primary, #e8f2fd);
+  --rich-on-accent: var(--color-on-primary, #ffffff);
+  --rich-font: var(--font, system-ui, sans-serif);
+  color: var(--rich-text);
+  font-family: var(--rich-font);
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.rb-rich > * + *,
+.rb-bubble--rich > * + * {
+  margin-top: 10px;
+}
+
+.rb-rich p,
+.rb-rich ul,
+.rb-rich ol,
+.rb-rich blockquote,
+.rb-bubble--rich p,
+.rb-bubble--rich ul,
+.rb-bubble--rich ol,
+.rb-bubble--rich blockquote {
+  margin: 0;
+}
+
+/* Headings read as sections of a set of study notes. */
+.rb-md__heading {
+  margin: 0;
+  color: var(--rich-text);
+  font-family: var(--rich-font);
+  font-size: 1.05em;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.rb-rich > .rb-md__heading,
+.rb-bubble--rich > .rb-md__heading {
+  margin-top: 16px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--rich-line);
+}
+
+.rb-rich > .rb-md__heading:first-child,
+.rb-bubble--rich > .rb-md__heading:first-child {
+  margin-top: 0;
+}
+
+h4.rb-md__heading,
+h5.rb-md__heading {
+  margin-top: 12px;
+  padding-bottom: 0;
+  border-bottom: 0;
+  color: var(--rich-accent);
+  font-size: 0.97em;
+}
+
+.rb-md__key {
+  padding: 0 3px;
+  border-radius: 4px;
+  background: var(--rich-accent-soft);
+  font-weight: 650;
+}
+
+.rb-md__link {
+  color: var(--rich-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Lists: bullets, and numbered steps in circles. */
+.rb-md__list {
+  padding-left: 20px;
+}
+
+.rb-md__list li + li {
+  margin-top: 3px;
+}
+
+.rb-md__list .rb-md__list {
+  margin-top: 3px;
+  padding-left: 18px;
+  list-style-type: circle;
+}
+
+.rb-md__list--steps {
+  padding-left: 0;
+  list-style: none;
+  counter-reset: step;
+}
+
+.rb-md__list--steps > li {
+  position: relative;
+  min-height: 24px;
+  padding-left: 32px;
+  counter-increment: step;
+}
+
+.rb-md__list--steps > li::before {
+  content: counter(step);
+  position: absolute;
+  top: 1px;
+  left: 0;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--rich-accent-soft);
+  color: var(--rich-accent);
+  font: 700 0.8em/1 var(--rich-font);
+}
+
+.rb-md__list--steps > li + li {
+  margin-top: 6px;
+}
+
+.rb-md__task {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  list-style: none;
+  margin-left: -20px;
+}
+
+.rb-md__box {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  margin-top: 4px;
+  border: 1.5px solid var(--rich-muted);
+  border-radius: 4px;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.rb-md__box.is-done {
+  border-color: var(--rich-accent);
+  background: var(--rich-accent);
+  color: var(--rich-on-accent);
+}
+
+.rb-md__item {
+  min-width: 0;
+}
+
+/* Code: a container with the language named, and colours for the parts of the code. */
+.rb-md__code,
+.rb-code {
+  font-family: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.rb-md__code {
+  padding: 1px 5px;
+  border-radius: 6px;
+  background: var(--rich-soft);
+  font-size: 0.9em;
+}
+
+.rb-codeblock {
+  overflow: hidden;
+  border: 1px solid var(--rich-line);
+  border-radius: 12px;
+  background: var(--rich-surface);
+}
+
+.rb-codeblock__bar {
+  padding: 5px 12px;
+  border-bottom: 1px solid var(--rich-line);
+  background: var(--rich-soft);
+  color: var(--rich-muted);
+  font: 600 0.72em/1.4 var(--rich-font);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.rb-code {
+  margin: 0;
+  padding: 10px 12px;
+  overflow-x: auto;
+  font-size: 0.82em;
+  line-height: 1.55;
+  tab-size: 4;
+  white-space: pre;
+}
+
+.rb-codeblock .rb-code {
+  background: transparent;
+}
+
+.rb-tok--keyword { color: #cf222e; font-weight: 600; }
+.rb-tok--string { color: #0a3069; }
+.rb-tok--comment { color: #6e7781; font-style: italic; }
+.rb-tok--number { color: #0550ae; }
+.rb-tok--type { color: #8250df; }
+.rb-tok--tag { color: #116329; }
+.rb-tok--attr { color: #0550ae; }
+
+/* Tables. */
+.rb-md__table {
+  overflow-x: auto;
+  border: 1px solid var(--rich-line);
+  border-radius: 12px;
+  background: var(--rich-surface);
+}
+
+.rb-md__table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9em;
+}
+
+.rb-md__table th,
+.rb-md__table td {
+  padding: 7px 11px;
+  border-bottom: 1px solid var(--rich-line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.rb-md__table th {
+  background: var(--rich-soft);
+  font-weight: 650;
+}
+
+.rb-md__table tr:last-child td {
+  border-bottom: 0;
+}
+
+.rb-md__quote {
+  padding: 2px 0 2px 12px;
+  border-left: 3px solid var(--rich-accent);
+  color: var(--rich-muted);
+}
+
+.rb-md__rule {
+  border: 0;
+  border-top: 1px solid var(--rich-line);
+}
+
+/* The closing summary, set apart. */
+.rb-summary {
+  padding: 10px 14px 12px;
+  border-left: 4px solid var(--rich-accent);
+  border-radius: 10px;
+  background: var(--rich-accent-soft);
+}
+
+.rb-summary > * + * {
+  margin-top: 8px;
+}
+
+.rb-summary > .rb-md__heading {
+  margin-top: 0;
+  padding-bottom: 0;
+  border-bottom: 0;
+  color: var(--rich-accent);
+}
+
+.rb-summary .rb-md__key {
+  background: transparent;
+}
+
+.rb-math {
+  padding: 8px 12px;
+  border: 1px solid var(--rich-line);
+  border-radius: 12px;
+  background: var(--rich-surface);
+  font: italic 500 1.05em/1.6 Georgia, "Times New Roman", serif;
+  text-align: center;
+  overflow-x: auto;
+}
+
+/* Diagrams: a card; wide ones scroll sideways instead of shrinking past reading. */
+.rb-diagram {
+  margin: 0;
+  padding: 10px;
+  border: 1px solid var(--rich-line);
+  border-radius: 12px;
+  background: var(--rich-surface);
+}
+
+.rb-diagram__title {
+  margin-bottom: 4px;
+  font: 600 0.9em/1.4 var(--rich-font);
+}
+
+.rb-diagram__body {
+  overflow-x: auto;
+}
+
+.rb-diagram__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+
+.rb-diagram-fallback {
+  padding: 8px 12px;
+  border: 1px dashed var(--rich-line);
+  border-radius: 12px;
+  color: var(--rich-muted);
+  font-size: 0.9em;
+}
+
+.rb-diagram-fallback summary {
+  cursor: pointer;
+}
+
+.rb-diagram-fallback .rb-code {
+  margin-top: 8px;
+  border: 1px solid var(--rich-line);
+  border-radius: 8px;
+  background: var(--rich-surface);
+  color: var(--rich-text);
+}
+
+.rb-node {
+  fill: var(--rich-surface);
+  stroke: var(--rich-accent);
+  stroke-width: 1.5;
+}
+
+.rb-node--terminal {
+  fill: var(--rich-accent-soft);
+}
+
+.rb-node--decision {
+  fill: var(--rich-soft);
+}
+
+.rb-node--branch {
+  fill: var(--rich-accent-soft);
+  stroke: none;
+}
+
+.rb-node--root {
+  fill: var(--rich-accent);
+}
+
+.rb-node__text {
+  fill: var(--rich-text);
+  font: 500 12px/1 var(--rich-font);
+}
+
+.rb-node__text--root {
+  fill: var(--rich-on-accent);
+  font-weight: 600;
+}
+
+.rb-edge {
+  fill: none;
+  stroke: var(--rich-muted);
+  stroke-width: 1.4;
+}
+
+.rb-edge--dashed {
+  stroke-dasharray: 5 4;
+}
+
+.rb-lifeline {
+  stroke: var(--rich-line);
+  stroke-width: 1.2;
+  stroke-dasharray: 4 4;
+}
+
+.rb-arrowhead {
+  fill: var(--rich-muted);
+}
+
+.rb-edge__back {
+  fill: var(--rich-surface);
+}
+
+.rb-edge__text {
+  fill: var(--rich-muted);
+  font: 500 11px/1 var(--rich-font);
+}
+
+.rb-grid {
+  stroke: var(--rich-line);
+  stroke-width: 1;
+}
+
+.rb-axis {
+  fill: var(--rich-muted);
+  font: 400 10px/1 var(--rich-font);
+}
+
+.rb-axis--legend {
+  fill: var(--rich-text);
+  font-size: 11px;
+}
+
+.rb-bar,
+.rb-dot {
+  fill: var(--rich-accent);
+}
+
+.rb-line {
+  fill: none;
+  stroke: var(--rich-accent);
+  stroke-width: 2.2;
+}
+
+.rb-value {
+  fill: var(--rich-text);
+  font: 600 10px/1 var(--rich-font);
+}
+
+.rb-steps {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rb-step__cells {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.rb-cell {
+  display: grid;
+  min-width: 34px;
+  padding: 4px 2px 2px;
+  border: 1px solid var(--rich-line);
+  border-radius: 8px;
+  background: var(--rich-surface);
+  text-align: center;
+}
+
+.rb-cell__value {
+  font: 600 14px/1.2 var(--rich-font);
+}
+
+.rb-cell__index,
+.rb-cell__marks {
+  color: var(--rich-muted);
+  font: 400 10px/1.3 var(--rich-font);
+}
+
+.rb-cell__marks {
+  min-height: 13px;
+  color: var(--rich-accent);
+  font-weight: 600;
+}
+
+.rb-cell--mark {
+  border-color: var(--rich-accent);
+}
+
+.rb-cell--mid {
+  border-color: var(--rich-accent);
+  background: var(--rich-accent-soft);
+}
+
+.rb-cell--found {
+  border-color: #1a7f4b;
+  background: #e6f3ec;
+}
+
+.rb-cell--swap {
+  border-color: #b4500a;
+  background: #fbeee2;
+}
+
+.rb-step__caption {
+  margin: 4px 0 0;
+  color: var(--rich-muted);
+  font: 400 0.9em/1.4 var(--rich-font);
+}
+
+/* The two answer modes of one saved question, above its answer. */
+.rb-answer__modes {
+  display: inline-flex;
+  gap: 2px;
+  margin-bottom: 6px;
+  padding: 2px;
+  border-radius: 999px;
+  background: var(--rich-line);
+}
+
+.rb-answer__mode {
+  height: 22px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--rich-muted);
+  font: 500 11px/1.5 var(--rich-font);
+  cursor: pointer;
+}
+
+.rb-answer__mode.is-empty {
+  font-style: italic;
+}
+
+.rb-answer__mode[aria-pressed="true"] {
+  background: var(--rich-accent);
+  color: var(--rich-on-accent);
+}
+
+.rb-answer__mode[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.rb-answer__mode:focus-visible {
+  outline: 2px solid var(--rich-accent);
+  outline-offset: 1px;
+}
+
+.rb-bubble--ai > .rb-answer__modes + * {
+  margin-top: 0;
+}

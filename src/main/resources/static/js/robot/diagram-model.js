@@ -363,3 +363,267 @@ export function parseSteps(source) {
   }
   return steps.length ? steps : null;
 }
+
+// ------------------------------------------------------------------------------- Mermaid text
+
+/*
+ * Models often write Mermaid, the common text form for diagrams. It is not drawn with the Mermaid
+ * library (the stack allows no library); the kinds that can be drawn faithfully are read here and
+ * drawn by diagram-draw.js: flowchart and graph, state diagrams, class diagrams (as a hierarchy),
+ * entity-relationship diagrams, mind maps, pie charts and sequence diagrams. Any other kind comes
+ * back as { type: "unsupported" } so the page can say so instead of showing raw text as the diagram.
+ */
+
+const UNSUPPORTED = /^(gantt|journey|gitgraph|timeline|quadrantchart|sankey|xychart|block|c4\w*|requirementdiagram|architecture|kanban|packet|radar|treemap)\b/i;
+
+function cleanLines(source) {
+  return String(source)
+    .replace(/\r\n?/g, "\n")
+    .split("\n")
+    .filter((line) => line.trim() && !/^\s*%%/.test(line));
+}
+
+function plain(text) {
+  return String(text).replace(/<br\s*\/?>/gi, " ").replace(/&[a-z]+;/gi, " ").replace(/\s+/g, " ").trim();
+}
+
+/** Reads a diagram block of kind flowchart, diagram or mermaid. Returns null when unreadable. */
+export function parseDiagram(source) {
+  const lines = cleanLines(source);
+  if (!lines.length) return null;
+  const head = lines[0].trim();
+  if (/^(flowchart|graph)\b/i.test(head)) {
+    const graph = parseFlowchart(lines.join("\n"));
+    return graph ? { type: "flowchart", graph } : null;
+  }
+  if (/^statediagram/i.test(head)) return asFlowchart(stateToGraph(lines.slice(1)));
+  if (/^classdiagram/i.test(head)) return asFlowchart(classToGraph(lines.slice(1)));
+  if (/^erdiagram/i.test(head)) return asFlowchart(erToGraph(lines.slice(1)));
+  if (/^mindmap\b/i.test(head)) {
+    const tree = mermaidMindmap(lines.slice(1));
+    return tree ? { type: "mindmap", tree } : null;
+  }
+  if (/^pie\b/i.test(head)) {
+    const chart = mermaidPie(lines);
+    return chart ? { type: "chart", chart } : null;
+  }
+  if (/^sequencediagram\b/i.test(head)) {
+    const sequence = parseSequence(lines.slice(1));
+    return sequence ? { type: "sequence", sequence } : null;
+  }
+  const unsupported = UNSUPPORTED.exec(head);
+  if (unsupported) return { type: "unsupported", name: unsupported[1] };
+  // A flowchart written without its first line.
+  const graph = parseFlowchart(lines.join("\n"));
+  return graph ? { type: "flowchart", graph } : null;
+}
+
+function asFlowchart(graph) {
+  return graph ? { type: "flowchart", graph } : null;
+}
+
+function graphOf(nodes, edges) {
+  return nodes.size >= 2 && edges.length >= 1 ? { direction: "TD", nodes: [...nodes.values()], edges } : null;
+}
+
+function stateToGraph(lines) {
+  const nodes = new Map();
+  const edges = [];
+  const labels = new Map();
+  let usedStart = false;
+  let usedEnd = false;
+  const node = (id, role) => {
+    let key = id;
+    if (id === "[*]") {
+      key = role === "from" ? "__start" : "__end";
+      if (role === "from") usedStart = true;
+      else usedEnd = true;
+    }
+    if (!nodes.has(key)) {
+      if (nodes.size >= 30) return null;
+      nodes.set(key, { id: key, label: key === "__start" ? "Start" : key === "__end" ? "End" : clip(plain(labels.get(id) ?? id)), shape: key.startsWith("__") ? "terminal" : "rounded" });
+    }
+    return key;
+  };
+  for (const raw of lines) {
+    const line = raw.trim().replace(/;$/, "");
+    const named = /^state\s+"([^"]+)"\s+as\s+(\w+)/i.exec(line);
+    if (named) {
+      labels.set(named[2], named[1]);
+      continue;
+    }
+    const edge = /^(\[\*\]|[\w-]+)\s*-->\s*(\[\*\]|[\w-]+)\s*(?::\s*(.*))?$/.exec(line);
+    if (edge) {
+      const from = node(edge[1], "from");
+      const to = node(edge[2], "to");
+      if (from && to && edges.length < 60) edges.push({ from, to, label: clip(plain(edge[3] ?? ""), 24) });
+      continue;
+    }
+    const described = /^(\w+)\s*:\s*(.+)$/.exec(line);
+    if (described && nodes.has(described[1])) nodes.get(described[1]).label = clip(plain(described[2]));
+  }
+  void usedStart;
+  void usedEnd;
+  return graphOf(nodes, edges);
+}
+
+const CLASS_LINK = /^([\w.~<>]+)\s*(?:"[^"]*"\s*)?(<\|--|\*--|o--|-->|\.\.>|\.\.\|>|<\|\.\.|--\|>|--)\s*(?:"[^"]*"\s*)?([\w.~<>]+)\s*(?::\s*(.*))?$/;
+
+function classToGraph(lines) {
+  const nodes = new Map();
+  const edges = [];
+  const node = (name) => {
+    const id = name.replace(/[~<>.]/g, "_");
+    if (!nodes.has(id)) {
+      if (nodes.size >= 30) return null;
+      nodes.set(id, { id, label: clip(name.replace(/~/g, "<")), shape: "box" });
+    }
+    return id;
+  };
+  for (const raw of lines) {
+    const line = raw.trim();
+    const link = CLASS_LINK.exec(line);
+    if (link) {
+      const [, a, arrow, b, text] = link;
+      const left = node(a);
+      const right = node(b);
+      if (!left || !right) continue;
+      // Drawn from the more general class down to the more specific one, so a hierarchy reads top to bottom.
+      const labelled = clip(plain(text ?? ""), 24);
+      let edge;
+      if (arrow === "<|--") edge = { from: left, to: right, label: labelled || "extended by" };
+      else if (arrow === "--|>") edge = { from: right, to: left, label: labelled || "extended by" };
+      else if (arrow === "..|>") edge = { from: right, to: left, label: labelled || "implemented by" };
+      else if (arrow === "<|..") edge = { from: left, to: right, label: labelled || "implemented by" };
+      else if (arrow === "*--" || arrow === "o--") edge = { from: left, to: right, label: labelled || "has" };
+      else if (arrow === "..>") edge = { from: left, to: right, label: labelled || "uses" };
+      else edge = { from: left, to: right, label: labelled };
+      if (edges.length < 60) edges.push(edge);
+      continue;
+    }
+    const declared = /^class\s+([\w.~<>]+)/.exec(line);
+    if (declared) node(declared[1]);
+  }
+  return graphOf(nodes, edges);
+}
+
+function erToGraph(lines) {
+  const nodes = new Map();
+  const edges = [];
+  const node = (name) => {
+    const id = name.replace(/\W/g, "_");
+    if (!nodes.has(id)) {
+      if (nodes.size >= 30) return null;
+      nodes.set(id, { id, label: clip(name.replace(/"/g, "")), shape: "box" });
+    }
+    return id;
+  };
+  for (const raw of lines) {
+    const link = /^("[^"]+"|[\w-]+)\s+[|}{o]{1,2}(?:--|\.\.)[|}{o]{1,2}\s+("[^"]+"|[\w-]+)\s*:\s*(.*)$/.exec(raw.trim());
+    if (!link) continue;
+    const from = node(link[1]);
+    const to = node(link[2]);
+    if (from && to && edges.length < 60) edges.push({ from, to, label: clip(plain(link[3].replace(/"/g, "")), 24) });
+  }
+  return graphOf(nodes, edges);
+}
+
+function mermaidMindmap(lines) {
+  const rows = lines.slice(0, 40).map((line) => {
+    const text = line.replace(/\t/g, "  ");
+    const label = plain(text.trim().replace(/^[\w-]*\s*(?=[(\[{)])/, "").replace(/^(?:\(\(|\)\)|\[\[?|\{\{|\(|\)|\[)\s*/, "").replace(/\s*(?:\)\)|\(\(|\]\]?|\}\}|\)|\()$/, "").replace(/::icon\([^)]*\)/g, "").replace(/^:::.*$/, "")) || plain(text.trim().replace(/::icon\([^)]*\)/g, ""));
+    return { indent: /^ */.exec(text)[0].length, label: clip(label, 40) };
+  }).filter((row) => row.label);
+  if (rows.length < 2) return null;
+  const root = { label: rows[0].label, children: [] };
+  const stack = [{ indent: rows[0].indent, node: root }];
+  for (const row of rows.slice(1)) {
+    while (stack.length > 1 && stack[stack.length - 1].indent >= row.indent) stack.pop();
+    const child = { label: row.label, children: [] };
+    stack[stack.length - 1].node.children.push(child);
+    stack.push({ indent: row.indent, node: child });
+  }
+  return root;
+}
+
+function mermaidPie(lines) {
+  let title = "";
+  const labels = [];
+  const values = [];
+  const head = /^pie(?:\s+showdata)?(?:\s+title\s+(.*))?$/i.exec(lines[0].trim());
+  if (head?.[1]) title = head[1];
+  for (const line of lines.slice(1)) {
+    const named = /^title\s+(.*)$/i.exec(line.trim());
+    if (named) {
+      title = named[1];
+      continue;
+    }
+    const slice = /^"([^"]+)"\s*:\s*(-?\d+(?:\.\d+)?)\s*$/.exec(line.trim());
+    if (slice) {
+      labels.push(clip(slice[1], 16));
+      values.push(Number(slice[2]));
+    }
+  }
+  return labels.length >= 2 && labels.length <= 12 && values.every((value) => value >= 0) ? { type: "pie", title: clip(title.replace(/^"|"$/g, ""), 60), unit: "", labels, values } : null;
+}
+
+// ------------------------------------------------------------------------------- sequence
+
+const MESSAGE = /^(.+?)\s*(<<-->>|<<->>|-->>|->>|--x|-x|--\)|-\)|-->|->)\s*([+-]?)(.+?)\s*:\s*(.*)$/;
+
+/** Reads a Mermaid sequence diagram: who takes part and the messages between them, in order. */
+export function parseSequence(lines) {
+  const actors = [];
+  const names = new Map();
+  const messages = [];
+  const actor = (id) => {
+    const key = id.trim();
+    if (!names.has(key)) {
+      if (actors.length >= 8) return null;
+      names.set(key, key);
+      actors.push(key);
+    }
+    return key;
+  };
+  for (const raw of lines) {
+    const line = raw.trim();
+    const declared = /^(?:participant|actor)\s+(\S+)(?:\s+as\s+(.+))?$/i.exec(line);
+    if (declared) {
+      const key = actor(declared[1]);
+      if (key && declared[2]) names.set(key, clip(plain(declared[2]), 24));
+      continue;
+    }
+    const message = MESSAGE.exec(line);
+    if (message && messages.length < 30) {
+      const from = actor(message[1]);
+      const to = actor(message[4]);
+      if (from && to) messages.push({ from, to, text: clip(plain(message[5]), 48), dashed: message[2].startsWith("--") });
+    }
+  }
+  return actors.length >= 2 && messages.length >= 1 ? { actors: actors.map((key) => ({ id: key, name: names.get(key) })), messages } : null;
+}
+
+/** Numbers for a sequence diagram: a box and a dashed line for each actor, an arrow for each message. */
+export function layoutSequence(sequence) {
+  const GAP = 150;
+  const boxes = sequence.actors.map((actor, index) => {
+    const width = Math.max(84, actor.name.length * 7.4 + 24);
+    return { id: actor.id, name: actor.name, w: Math.round(width), cx: 0, index };
+  });
+  let x = 12;
+  for (const box of boxes) {
+    box.x = x;
+    box.cx = Math.round(x + box.w / 2);
+    x += Math.max(box.w, GAP - 20) + 28;
+  }
+  const column = new Map(boxes.map((box) => [box.id, box]));
+  const top = 56;
+  const step = 46;
+  const messages = sequence.messages.map((message, index) => {
+    const from = column.get(message.from);
+    const to = column.get(message.to);
+    return { y: top + index * step, x1: from.cx, x2: to.cx, text: message.text, dashed: message.dashed, self: from === to };
+  });
+  const height = top + sequence.messages.length * step + 8;
+  return { width: Math.round(x - 28 + 12), height, actors: boxes, messages, lifelineTop: 34, lifelineBottom: height - 6 };
+}

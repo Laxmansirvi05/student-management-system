@@ -387,6 +387,7 @@ Added on 2026-10-23 at the owner's request, as a port of the owner's Opportunity
   1. A saved chat keeps, for each question, the whole text of every answer written for it, in the mode it was written in, exactly as it was shown (Markdown, code, tables, diagram blocks and formulas included). A question answered in both modes keeps both, neither overwriting the other, and the question is stored once.
   2. Reopening a chat shows each question with its answers, drawn by the same code as a live answer, and a small switch between the saved modes. Switching shows the saved text and makes no AI request; a mode not written yet is written once on request and kept. A failed answer stores nothing.
   3. Chats are the student's own; a chat or question of another student is not found. Chats saved before the modes existed still open and can be given the other mode.
+  4. A saved answer reads as formatted study notes, never as raw text: headings, lists, bold and italic, links, tables, code with a language label and highlighting, a closing summary, and diagrams (flowchart, state, class, ER, mindmap, pie and sequence, including their Mermaid text) are drawn. A diagram that cannot be drawn shows a notice with its source folded away. A wide diagram or code block scrolls inside the answer and never widens the page.
 
 ### FR-ROB-001 Floating robot (P1)
 

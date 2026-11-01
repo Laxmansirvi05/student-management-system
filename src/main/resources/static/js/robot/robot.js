@@ -52,6 +52,7 @@ export function mountRobot() {
   if (mounted) return;
   mounted = true;
   styleSheet("/css/notes.css");
+  styleSheet("/css/rich.css");
   styleSheet("/css/robot.css");
 
   const media = window.matchMedia(COMPACT_QUERY);
