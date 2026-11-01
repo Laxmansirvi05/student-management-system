@@ -376,7 +376,7 @@ Added on 2026-10-23 at the owner's request, as a port of the owner's Opportunity
 ### FR-AST-003 Picture questions (P1)
 
 - **Acceptance criteria:**
-  1. A student can attach a JPG or PNG (at most 5 MB) by the file picker, capture a screen, window or tab with the browser's capture picker (where the browser and HTTPS allow it; the page cannot choose a region), or paste a copied picture. The picture shows as a preview before sending and can be removed.
+  1. A student can attach a JPG or PNG (at most 5 MB) by the file picker, capture an area of the page they are looking at (they drag a rectangle over it, like Cmd+Shift+4; Escape cancels; the browser's screen-sharing dialog is not used), or paste a copied picture. The picture shows as a preview before sending and can be removed, enlarged or captured again. A page cannot read the screen outside itself, so the capture covers this page only, never the desktop or other windows.
   2. The picture is sent with the question to a model that reads pictures, and the answer follows the chosen mode. A picture alone is a question ("Explain this image.").
   3. The picture is checked and redrawn on the server, held only for the request, and never stored or logged; the stored question only notes that a picture came with it. The privacy page says so.
   4. Where no picture model is configured, the student is told so and text questions still work.

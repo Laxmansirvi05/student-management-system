@@ -10,7 +10,7 @@ globalThis.window ??= { addEventListener() {}, matchMedia: () => ({ matches: fal
 
 const root = "../../main/resources/static/js/robot/";
 
-for (const name of ["chat-groups.js", "code-highlight.js", "rich-parse.js", "diagram-model.js", "diagram-draw.js", "rich-render.js", "quick-assistant.js", "robot.js"]) {
+for (const name of ["area-select.js", "page-snapshot.js", "chat-groups.js", "code-highlight.js", "rich-parse.js", "diagram-model.js", "diagram-draw.js", "rich-render.js", "quick-assistant.js", "robot.js"]) {
   test(`${name} loads`, async () => {
     const loaded = await import(root + name);
     assert.ok(Object.keys(loaded).length >= 0);

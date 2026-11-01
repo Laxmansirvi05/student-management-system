@@ -559,6 +559,38 @@
   object-fit: cover;
 }
 
+.rb-attach__zoom {
+  flex: none;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  cursor: zoom-in;
+}
+
+.rb-attach__zoom:focus-visible {
+  outline: 2px solid var(--nt-primary);
+  outline-offset: 2px;
+}
+
+/* A larger look at the picture: the box wraps and the thumbnail grows to the width of the panel. */
+.rb-attach.is-large {
+  flex-wrap: wrap;
+}
+
+.rb-attach.is-large .rb-attach__zoom {
+  flex: 1 0 100%;
+  cursor: zoom-out;
+}
+
+.rb-attach.is-large .rb-attach__thumb {
+  width: 100%;
+  height: auto;
+  max-height: 220px;
+  object-fit: contain;
+  background: var(--nt-surface);
+}
+
 .rb-attach__name {
   flex: 1 1 auto;
   min-width: 0;
@@ -613,4 +645,69 @@
 .rb-iconbtn .icon {
   width: 18px;
   height: 18px;
+}
+
+/* The area picker of the screenshot tool: a dim layer over the page, a crosshair and a live
+   rectangle. The dim comes from the rectangle's own huge shadow once a drag begins, so the chosen
+   area stays clear. */
+.rb-capture {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  background: rgba(0, 0, 0, 0.28);
+  cursor: crosshair;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  outline: none;
+}
+
+.rb-capture.is-dragging {
+  background: transparent;
+}
+
+.rb-capture__hint {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  max-width: calc(100% - 24px);
+  padding: 8px 14px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: rgba(20, 22, 30, 0.86);
+  color: #ffffff;
+  font: 500 13px/1.4 var(--nt-font, system-ui, sans-serif);
+  text-align: center;
+  pointer-events: none;
+}
+
+.rb-capture__box {
+  position: absolute;
+  border: 1.5px solid #ffffff;
+  outline: 1px solid rgba(37, 99, 235, 0.95);
+  box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.38);
+  pointer-events: none;
+}
+
+.rb-capture__box[hidden] {
+  display: none;
+}
+
+.rb-capture__size {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(20, 22, 30, 0.9);
+  color: #ffffff;
+  font: 600 12px/1.5 var(--nt-font, system-ui, sans-serif);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.rb-capture__box.is-low .rb-capture__size {
+  top: 6px;
+  bottom: auto;
+  left: 6px;
 }

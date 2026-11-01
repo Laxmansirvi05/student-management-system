@@ -4,6 +4,8 @@ import { symbol } from "../notes/symbols.js";
 import { createFloatingPanel } from "./floating-panel.js";
 import { groupMessages, lastStyle, shownStyle } from "./chat-groups.js";
 import { renderRich } from "./rich-render.js";
+import { selectArea } from "./area-select.js";
+import { snapshotPage } from "./page-snapshot.js";
 
 // The robot's double-tap Quick Assistant. It is not a second assistant: it asks the same AI provider
 // through the same server code as the study tools, under the same daily limits, and its chats are
@@ -12,14 +14,13 @@ import { renderRich } from "./rich-render.js";
 //
 // Two answer modes (Quick Answer, the default, and Explanatory Answer) are chosen above the chat and
 // travel with each message as "style". A question may come with a JPG or PNG picture: chosen from
-// the device, captured from a screen, window or tab (the browser's own picker; the page cannot
-// choose a region for the user), or pasted. The picture is sent with the message, redrawn and read by
+// the device, captured as an area of this page (dragged out like Cmd+Shift+4, drawn by
+// page-snapshot.js; a web page cannot read the rest of the screen), or pasted. The picture is sent with the message, redrawn and read by
 // the server, and is not stored. Explanatory answers are drawn by rich-render.js.
 
 const DEFAULT_SIZE = { width: 360, height: 440 };
 const MESSAGE_MAX = 4000;
 const IMAGE_MAX_BYTES = 5 * 1024 * 1024;
-const CAPTURE_SIDE = 1568;
 const IMAGE_MARKER = "[Image] ";
 const MODES = [
   ["quick", "Quick Answer"],
@@ -63,8 +64,7 @@ export function openQuickAssistant({ anchor, onClose }) {
   });
   const fileInput = h("input", { type: "file", accept: "image/jpeg,image/png,.jpg,.jpeg,.png", hidden: true, "aria-hidden": "true", tabindex: "-1", onchange: picked });
   const attachButton = h("button.rb-iconbtn", { type: "button", "aria-label": "Attach a JPG or PNG picture", title: "Attach a picture", onclick: () => fileInput.click() }, symbol("image"));
-  const canCapture = typeof navigator !== "undefined" && !!navigator.mediaDevices?.getDisplayMedia && window.isSecureContext;
-  const captureButton = canCapture ? h("button.rb-iconbtn", { type: "button", "aria-label": "Capture a screen, window or tab", title: "Capture the screen", onclick: capture }, icon("monitor")) : null;
+  const captureButton = h("button.rb-iconbtn", { type: "button", "aria-label": "Capture an area of the page", title: "Capture an area of the page", onclick: capture }, icon("monitor"));
   const sendButton = h("button.rb-chat__send", { type: "button", "aria-label": "Send", onclick: send }, symbol("send"));
 
   const newChat = h("button.rb-iconbtn", { type: "button", "aria-label": "New quick chat", title: "New chat", onclick: startNewChat }, symbol("add_comment"));
@@ -116,7 +116,7 @@ export function openQuickAssistant({ anchor, onClose }) {
 
   // --- the picture ---------------------------------------------------------------------------
 
-  function setAttachment(file) {
+  function setAttachment(file, { captured = false } = {}) {
     if (!file) return;
     if (!/^image\/(jpeg|png)$/.test(file.type)) {
       error = "Attach a JPG or PNG picture.";
@@ -130,7 +130,7 @@ export function openQuickAssistant({ anchor, onClose }) {
     }
     clearAttachment();
     error = null;
-    attachment = { file, url: URL.createObjectURL(file) };
+    attachment = { file, url: URL.createObjectURL(file), captured };
     drawAttachment();
     drawLog();
     refresh();
@@ -147,9 +147,18 @@ export function openQuickAssistant({ anchor, onClose }) {
     previewBox.hidden = !attachment;
     previewBox.replaceChildren();
     if (!attachment) return;
+    const thumb = h("button.rb-attach__zoom", { type: "button", "aria-label": "Show the picture larger", "aria-pressed": "false" }, h("img.rb-attach__thumb", { src: attachment.url, alt: "The attached picture" }));
+    thumb.addEventListener("click", () => {
+      const large = previewBox.classList.toggle("is-large");
+      thumb.setAttribute("aria-pressed", String(large));
+      thumb.setAttribute("aria-label", large ? "Show the picture smaller" : "Show the picture larger");
+    });
+    previewBox.classList.remove("is-large");
+    const again = attachment.captured ? h("button.rb-iconbtn", { type: "button", "aria-label": "Capture the area again", title: "Capture again", onclick: capture }, icon("monitor")) : [];
     previewBox.append(
-      h("img.rb-attach__thumb", { src: attachment.url, alt: "The attached picture" }),
+      thumb,
       h("span.rb-attach__name", attachment.file.name || "Picture"),
+      again,
       h("button.rb-iconbtn", { type: "button", "aria-label": "Remove the picture", title: "Remove", onclick: () => (clearAttachment(), input.focus()) }, symbol("close")),
     );
   }
@@ -167,10 +176,14 @@ export function openQuickAssistant({ anchor, onClose }) {
     setAttachment(files[0]);
   }
 
+  /** The parts of the page that must not be in the picture: the assistant itself and the robot. */
+  const leftOut = () => [panel.element, panel.backdrop, ...document.querySelectorAll(".rb-robot")];
+
   /**
-   * Captures a screen, window or tab with the browser's own picker, as one still picture. The page
-   * cannot choose an area of the screen: the student picks what to share, the browser asks
-   * permission, and the sharing stops as soon as the picture is taken.
+   * Captures an area of the visible page. The student drags a rectangle (area-select.js, like
+   * Cmd+Shift+4); the assistant and the robot are hidden meanwhile so the page behind them can be
+   * chosen, and are left out of the picture. A page cannot read pixels outside itself, so this never
+   * shows the browser's sharing dialog and never captures the desktop or another window.
    */
   async function capture() {
     if (capturing || sending) return;
@@ -178,29 +191,22 @@ export function openQuickAssistant({ anchor, onClose }) {
     error = null;
     captureButton.disabled = true;
     refresh();
-    let stream = null;
+    const hidden = leftOut();
+    const before = hidden.map((element) => element.style.visibility);
+    const hide = (on) => hidden.forEach((element, index) => (element.style.visibility = on ? "hidden" : before[index]));
     try {
-      stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
-      const video = h("video", { muted: true, playsinline: true });
-      video.srcObject = stream;
-      await video.play();
-      await new Promise((resolve) => setTimeout(resolve, 350)); // let the first full frame arrive
-      const scale = Math.min(1, CAPTURE_SIDE / Math.max(video.videoWidth, video.videoHeight));
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.max(1, Math.round(video.videoWidth * scale));
-      canvas.height = Math.max(1, Math.round(video.videoHeight * scale));
-      canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
-      let blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
-      if (blob && blob.size > IMAGE_MAX_BYTES - 262144) blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.9));
-      if (!blob) throw new Error("empty");
-      const name = blob.type === "image/png" ? "screen-capture.png" : "screen-capture.jpg";
-      setAttachment(new File([blob], name, { type: blob.type }));
-    } catch (failure) {
-      // Closing the picker is not an error.
-      error = failure?.name === "NotAllowedError" || failure?.name === "AbortError" ? null : "The screen could not be captured in this browser.";
+      hide(true);
+      const rect = await selectArea();
+      if (!rect) return; // cancelled
+      const blob = await snapshotPage({ rect, exclude: (element) => hidden.includes(element) });
+      const name = blob.type === "image/png" ? "page-capture.png" : "page-capture.jpg";
+      hide(false);
+      setAttachment(new File([blob], name, { type: blob.type }), { captured: true });
+    } catch {
+      error = "The page area could not be captured in this browser. Attach a picture instead.";
       drawLog();
     } finally {
-      stream?.getTracks().forEach((track) => track.stop());
+      hide(false);
       capturing = false;
       captureButton.disabled = false;
       refresh();
