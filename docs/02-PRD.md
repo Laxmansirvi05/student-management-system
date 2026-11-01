@@ -381,6 +381,13 @@ Added on 2026-10-23 at the owner's request, as a port of the owner's Opportunity
   3. The picture is checked and redrawn on the server, held only for the request, and never stored or logged; the stored question only notes that a picture came with it. The privacy page says so.
   4. Where no picture model is configured, the student is told so and text questions still work.
 
+### FR-AST-004 Saved answers keep their mode (P1)
+
+- **Acceptance criteria:**
+  1. A saved chat keeps, for each question, the whole text of every answer written for it, in the mode it was written in, exactly as it was shown (Markdown, code, tables, diagram blocks and formulas included). A question answered in both modes keeps both, neither overwriting the other, and the question is stored once.
+  2. Reopening a chat shows each question with its answers, drawn by the same code as a live answer, and a small switch between the saved modes. Switching shows the saved text and makes no AI request; a mode not written yet is written once on request and kept. A failed answer stores nothing.
+  3. Chats are the student's own; a chat or question of another student is not found. Chats saved before the modes existed still open and can be given the other mode.
+
 ### FR-ROB-001 Floating robot (P1)
 
 - **Acceptance criteria:** Every student page shows a draggable 3D robot (with a plain badge until the scene is drawn, or for good if it cannot load) that opens the Quick Note (triple tap, Enter) and the Quick Assistant (double tap, A). Its scene loads after the page is usable and never from a CDN.

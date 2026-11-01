@@ -2,6 +2,7 @@ import { h, icon } from "../dom.js";
 import { api, messageFor } from "../api.js";
 import { symbol } from "../notes/symbols.js";
 import { createFloatingPanel } from "./floating-panel.js";
+import { groupMessages, lastStyle, shownStyle } from "./chat-groups.js";
 import { renderRich } from "./rich-render.js";
 
 // The robot's double-tap Quick Assistant. It is not a second assistant: it asks the same AI provider
@@ -41,6 +42,8 @@ export function openQuickAssistant({ anchor, onClose }) {
   let attachment = null; // { file, url }
   let capturing = false;
   let pendingPicture = false;
+  const chosenStyle = new Map(); // question id -> the mode shown for it
+  let generating = null; // { questionId, style } while the other mode of a question is being written
 
   const transcript = h("div.rb-chat__log");
   const historyBox = h("div.rb-chat__history", { hidden: true });
@@ -212,22 +215,26 @@ export function openQuickAssistant({ anchor, onClose }) {
         h("div.rb-chat__empty", symbol("smart_toy"), h("p", HINTS[style])),
       );
     }
-    for (const message of messages) {
-      if (message.role === "user") {
-        const pictured = message.image || message.content.startsWith(IMAGE_MARKER);
-        const text = message.content.startsWith(IMAGE_MARKER) ? message.content.slice(IMAGE_MARKER.length) : message.content;
-        transcript.append(
-          h(
-            "div.rb-bubble.rb-bubble--user",
-            pictured ? (message.image ? h("img.rb-bubble__image", { src: message.image, alt: "Your picture" }) : h("span.rb-bubble__tag", symbol("image"), "Picture")) : null,
-            text,
-          ),
-        );
-      } else {
-        transcript.append(h("div.rb-bubble.rb-bubble--ai.rb-bubble--rich", renderRich(message.content)));
+    for (const group of groupMessages(messages)) {
+      const message = group.question;
+      const pictured = message.image || message.content.startsWith(IMAGE_MARKER);
+      const text = message.content.startsWith(IMAGE_MARKER) ? message.content.slice(IMAGE_MARKER.length) : message.content;
+      transcript.append(
+        h(
+          "div.rb-bubble.rb-bubble--user",
+          pictured ? (message.image ? h("img.rb-bubble__image", { src: message.image, alt: "Your picture" }) : h("span.rb-bubble__tag", symbol("image"), "Picture")) : null,
+          text,
+        ),
+      );
+      const shown = shownStyle(group, chosenStyle.get(message.id));
+      const waitingHere = generating && generating.questionId === message.id;
+      if (waitingHere) {
+        transcript.append(h("div.rb-bubble.rb-bubble--ai", { "aria-live": "polite" }, answerModes(group, generating.style), h("span.rb-bubble__wait", generating.style === "explain" ? "Writing a detailed explanation…" : "Writing a short answer…")));
+      } else if (group.answers[shown]) {
+        transcript.append(h("div.rb-bubble.rb-bubble--ai.rb-bubble--rich", answerModes(group, shown), renderRich(group.answers[shown].content)));
       }
     }
-    if (sending) {
+    if (sending && !generating) {
       const wait = pendingPicture ? "Reading the picture…" : style === "explain" ? "Writing a detailed explanation…" : "Thinking…";
       transcript.append(h("div.rb-bubble.rb-bubble--ai", { "aria-live": "polite" }, h("span.rb-bubble__wait", wait)));
     }
@@ -235,6 +242,64 @@ export function openQuickAssistant({ anchor, onClose }) {
       transcript.append(h("p.rb-chat__error", { role: "alert" }, error));
     }
     transcript.scrollTo({ top: transcript.scrollHeight, behavior: "smooth" });
+  }
+
+  /**
+   * The two modes of one saved question, as a small switch above its answer. The mode shown is
+   * pressed. A mode already saved is shown from the saved text, with no call to the model; a mode
+   * not yet written is written once and then kept. A question that came with a picture cannot get
+   * a second mode, because the picture is not kept.
+   */
+  function answerModes(group, shown) {
+    const id = group.question.id;
+    if (id == null) return null;
+    const pictured = group.question.content.startsWith(IMAGE_MARKER);
+    return h(
+      "div.rb-answer__modes",
+      { role: "group", "aria-label": "Answer mode of this question" },
+      MODES.map(([value, name]) => {
+        const saved = !!group.answers[value];
+        const blocked = !saved && (pictured || sending || capturing);
+        return h(
+          "button.rb-answer__mode" + (saved ? "" : ".is-empty"),
+          {
+            type: "button",
+            "aria-pressed": String(value === shown),
+            disabled: blocked,
+            title: saved ? name : pictured ? "Ask again with the picture to get this mode" : `Write the ${name.toLowerCase()}`,
+            onclick: () => showMode(group, value),
+          },
+          name.replace(" Answer", ""),
+        );
+      }),
+    );
+  }
+
+  async function showMode(group, value) {
+    const id = group.question.id;
+    if (group.answers[value]) {
+      chosenStyle.set(id, value);
+      drawLog();
+      return;
+    }
+    if (sending || !conversationId) return;
+    error = null;
+    sending = true;
+    generating = { questionId: id, style: value };
+    refresh();
+    drawLog();
+    try {
+      const answer = await api.post("/assistant/chat", { conversationId, questionId: id, mode: "quick", style: value });
+      if (!messages.some((message) => message.id === answer.reply.id)) messages = [...messages, answer.reply];
+      chosenStyle.set(id, value);
+    } catch (failure) {
+      error = messageFor(failure);
+    } finally {
+      sending = false;
+      generating = null;
+      refresh();
+      drawLog();
+    }
   }
 
   function drawHistory() {
@@ -268,8 +333,12 @@ export function openQuickAssistant({ anchor, onClose }) {
     error = null;
     conversationId = id;
     drawHistory();
+    chosenStyle.clear();
     try {
       messages = (await api.get(`/assistant/conversations/${id}/messages`)).messages;
+      // The mode of the saved answers comes back with the chat.
+      const saved = lastStyle(messages);
+      if (saved) setStyle(saved);
     } catch {
       error = "Could not load that chat.";
     }
@@ -279,6 +348,7 @@ export function openQuickAssistant({ anchor, onClose }) {
   function startNewChat() {
     conversationId = null;
     messages = [];
+    chosenStyle.clear();
     error = null;
     historyOpen = false;
     clearAttachment();
@@ -315,6 +385,7 @@ export function openQuickAssistant({ anchor, onClose }) {
       }
       conversationId = answer.conversation.id;
       messages = [...messages.slice(0, -1), { ...answer.question, image: sent?.url ?? null }, answer.reply];
+      chosenStyle.set(answer.question.id, answer.reply.style === "explain" ? "explain" : "quick");
       history = [answer.conversation, ...history.filter((entry) => entry.id !== answer.conversation.id)].slice(0, 6);
     } catch (failure) {
       // As in the original, the question stays on screen and the box stays empty; the error is shown below it.

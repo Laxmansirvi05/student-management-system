@@ -329,4 +329,235 @@ class AssistantIT extends ApiIntegrationTest {
     assertProblem(
         askWithPicture(admin, styled("hi", "quick"), "image/png", png), 403, "ACCESS_DENIED");
   }
+
+  // --- saved answers and their modes (history) --------------------------------------------------
+
+  private JsonNode again(ApiTestClient who, long chat, long question, String style)
+      throws Exception {
+    HttpResponse<String> response =
+        who.post(
+            CHAT,
+            "{\"conversationId\":%d,\"questionId\":%d,\"mode\":\"quick\",\"style\":\"%s\"}"
+                .formatted(chat, question, style));
+    assertThat(response.statusCode()).as(response.body()).isEqualTo(200);
+    return json(response);
+  }
+
+  @Test
+  void bothModesOfOneQuestionAreSavedSideBySideWithoutAnotherQuestion() throws Exception {
+    ApiTestClient me = student("AST00016");
+    JsonNode quick = json(me.post(CHAT, styled("What is a stack?", "quick")));
+    long chat = quick.get("conversation").get("id").asLong();
+    long question = quick.get("question").get("id").asLong();
+    assertThat(quick.get("reply").get("style").asString()).isEqualTo("quick");
+    assertThat(quick.get("reply").get("replyTo").asLong()).isEqualTo(question);
+    assertThat(quick.get("question").get("style").isNull()).isTrue();
+
+    JsonNode explain = again(me, chat, question, "explain");
+    assertThat(explain.get("question").get("id").asLong()).isEqualTo(question);
+    assertThat(explain.get("reply").get("style").asString()).isEqualTo("explain");
+    assertThat(explain.get("reply").get("replyTo").asLong()).isEqualTo(question);
+
+    JsonNode messages = json(me.get(CONVERSATIONS + "/" + chat + "/messages")).get("messages");
+    assertThat(messages).hasSize(3);
+    assertThat(texts(messages, "role")).containsExactly("user", "ai", "ai");
+    assertThat(texts(messages, "style")).containsExactly("", "quick", "explain");
+    // Neither answer overwrote the other.
+    assertThat(messages.get(1).get("content").asString())
+        .isEqualTo(quick.get("reply").get("content").asString());
+    assertThat(messages.get(2).get("content").asString())
+        .isEqualTo(explain.get("reply").get("content").asString());
+    assertThat(messages.get(1).get("content").asString())
+        .isNotEqualTo(messages.get(2).get("content").asString());
+  }
+
+  @Test
+  void aSavedAnswerComesBackWithoutAnotherModelCall() throws Exception {
+    ApiTestClient me = student("AST00017");
+    JsonNode first = json(me.post(CHAT, styled("What is a queue?", "explain")));
+    long chat = first.get("conversation").get("id").asLong();
+    long question = first.get("question").get("id").asLong();
+    assertThat(json(me.get("/api/v1/ai/usage/me")).get("usedToday").asInt()).isEqualTo(1);
+
+    // The mode that is already saved is returned as it is: same message, no new request.
+    JsonNode again = again(me, chat, question, "explain");
+    assertThat(again.get("reply").get("id").asLong())
+        .isEqualTo(first.get("reply").get("id").asLong());
+    assertThat(again.get("reply").get("content").asString())
+        .isEqualTo(first.get("reply").get("content").asString());
+    assertThat(json(me.get("/api/v1/ai/usage/me")).get("usedToday").asInt()).isEqualTo(1);
+
+    // The other mode is written once, then also returned as it is.
+    JsonNode other = again(me, chat, question, "quick");
+    JsonNode otherAgain = again(me, chat, question, "quick");
+    assertThat(otherAgain.get("reply").get("id").asLong())
+        .isEqualTo(other.get("reply").get("id").asLong());
+    assertThat(json(me.get("/api/v1/ai/usage/me")).get("usedToday").asInt()).isEqualTo(2);
+    assertThat(json(me.get(CONVERSATIONS + "/" + chat + "/messages")).get("messages")).hasSize(3);
+  }
+
+  @Test
+  void theSavedExplanationIsExactlyWhatWasShown() throws Exception {
+    ApiTestClient me = student("AST00018");
+    JsonNode answer = json(me.post(CHAT, styled("Explain recursion", "explain")));
+    String shown = answer.get("reply").get("content").asString();
+    long chat = answer.get("conversation").get("id").asLong();
+
+    String saved =
+        json(me.get(CONVERSATIONS + "/" + chat + "/messages"))
+            .get("messages")
+            .get(1)
+            .get("content")
+            .asString();
+    assertThat(saved).isEqualTo(shown);
+    // Headings, a diagram block, a table and bold text, character for character.
+    assertThat(saved)
+        .contains(
+            "## Demo explanation", "```flowchart\nflowchart TD", "| --- | --- |", "**Summary:**");
+    assertThat(
+            jdbc.queryForObject(
+                "select content from app.assistant_messages where id = ?",
+                String.class,
+                json(me.get(CONVERSATIONS + "/" + chat + "/messages"))
+                    .get("messages")
+                    .get(1)
+                    .get("id")
+                    .asLong()))
+        .isEqualTo(shown);
+  }
+
+  @Test
+  void anotherStudentCannotAnswerOrSeeAQuestionOfAChat() throws Exception {
+    ApiTestClient owner = student("AST00019");
+    ApiTestClient other = student("AST00020");
+    JsonNode first = json(owner.post(CHAT, styled("What is a heap?", "quick")));
+    long chat = first.get("conversation").get("id").asLong();
+    long question = first.get("question").get("id").asLong();
+
+    assertProblem(
+        other.post(
+            CHAT,
+            "{\"conversationId\":%d,\"questionId\":%d,\"mode\":\"quick\",\"style\":\"explain\"}"
+                .formatted(chat, question)),
+        404,
+        "NOT_FOUND");
+    // A question of another chat is not found in this one, even for its owner.
+    JsonNode second = json(owner.post(CHAT, styled("What is a tree?", "quick")));
+    long otherChat = second.get("conversation").get("id").asLong();
+    assertProblem(
+        owner.post(
+            CHAT,
+            "{\"conversationId\":%d,\"questionId\":%d,\"mode\":\"quick\",\"style\":\"explain\"}"
+                .formatted(otherChat, question)),
+        404,
+        "NOT_FOUND");
+    assertProblem(other.get(CONVERSATIONS + "/" + chat + "/messages"), 404, "NOT_FOUND");
+  }
+
+  @Test
+  void aQuestionIdNeedsItsChat() throws Exception {
+    ApiTestClient me = student("AST00021");
+    assertThat(
+            invalidFields(
+                me.post(CHAT, "{\"questionId\":5,\"mode\":\"quick\",\"style\":\"explain\"}")))
+        .containsExactly("conversationId");
+  }
+
+  @Test
+  void aQuestionWithAPictureCannotGetASecondModeBecauseThePictureIsNotKept() throws Exception {
+    ApiTestClient me = student("AST00022");
+    JsonNode first =
+        json(askWithPicture(me, styled("Fix this", "quick"), "image/png", picture("png", 30, 30)));
+    long chat = first.get("conversation").get("id").asLong();
+    long question = first.get("question").get("id").asLong();
+
+    assertProblem(
+        me.post(
+            CHAT,
+            "{\"conversationId\":%d,\"questionId\":%d,\"mode\":\"quick\",\"style\":\"explain\"}"
+                .formatted(chat, question)),
+        409,
+        "CONFLICT");
+    // The saved mode is still returned.
+    assertThat(again(me, chat, question, "quick").get("reply").get("id").asLong())
+        .isEqualTo(first.get("reply").get("id").asLong());
+  }
+
+  @Test
+  void aModeCannotBeSavedTwiceForOneQuestion() throws Exception {
+    ApiTestClient me = student("AST00023");
+    JsonNode first = json(me.post(CHAT, styled("What is a set?", "quick")));
+    long chat = first.get("conversation").get("id").asLong();
+    long question = first.get("question").get("id").asLong();
+
+    org.assertj.core.api.Assertions.assertThatThrownBy(
+            () ->
+                jdbc.update(
+                    "insert into app.assistant_messages (conversation_id, role, content, reply_to, style) values (?, 'ai', 'again', ?, 'quick')",
+                    chat,
+                    question))
+        .isInstanceOf(org.springframework.dao.DuplicateKeyException.class);
+    // A question has no mode, and a mode with no question is refused.
+    org.assertj.core.api.Assertions.assertThatThrownBy(
+            () ->
+                jdbc.update(
+                    "insert into app.assistant_messages (conversation_id, role, content, style) values (?, 'user', 'q', 'quick')",
+                    chat))
+        .isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+  }
+
+  @Test
+  void chatsSavedBeforeTheModesExistedStillOpenAndTheMigrationPairsThem() throws Exception {
+    ApiTestClient me = student("AST00024");
+    long student = accounts.student("AST00024", "AST", 3, "A");
+    Long chat =
+        jdbc.queryForObject(
+            "insert into app.assistant_conversations (student_id, title, source, updated_at) values (?, 'old chat', 'quick', now()) returning id",
+            Long.class,
+            student);
+    // Two questions with an answer each, as an earlier version saved them: no mode, no link.
+    jdbc.update(
+        "insert into app.assistant_messages (conversation_id, role, content) values (?, 'user', 'What is a stack?')",
+        chat);
+    jdbc.update(
+        "insert into app.assistant_messages (conversation_id, role, content) values (?, 'ai', 'A stack is LIFO.')",
+        chat);
+    jdbc.update(
+        "insert into app.assistant_messages (conversation_id, role, content) values (?, 'user', 'Explain it')",
+        chat);
+    jdbc.update(
+        "insert into app.assistant_messages (conversation_id, role, content) values (?, 'ai', E'## Stacks\\n\\nA stack is LIFO.')",
+        chat);
+
+    // They open as they are.
+    JsonNode before = json(me.get(CONVERSATIONS + "/" + chat + "/messages")).get("messages");
+    assertThat(before).hasSize(4);
+    assertThat(before.get(1).get("style").isNull()).isTrue();
+    assertThat(before.get(1).get("content").asString()).isEqualTo("A stack is LIFO.");
+
+    // The migration's own update pairs each answer with its question and labels its mode.
+    String migration =
+        new String(
+            getClass()
+                .getResourceAsStream("/db/migration/V23__assistant_answer_modes.sql")
+                .readAllBytes());
+    int start = migration.indexOf("update app.assistant_messages");
+    // The application's role may not update messages (it only reads and inserts them); the
+    // migration runs as the migration role.
+    try (java.sql.Connection migrator = connectionAs(MIGRATOR_USER, MIGRATOR_PASSWORD);
+        java.sql.Statement statement = migrator.createStatement()) {
+      statement.executeUpdate(migration.substring(start, migration.indexOf(';', start)));
+    }
+
+    JsonNode after = json(me.get(CONVERSATIONS + "/" + chat + "/messages")).get("messages");
+    assertThat(after.get(1).get("replyTo").asLong()).isEqualTo(after.get(0).get("id").asLong());
+    assertThat(after.get(1).get("style").asString()).isEqualTo("quick");
+    assertThat(after.get(3).get("replyTo").asLong()).isEqualTo(after.get(2).get("id").asLong());
+    assertThat(after.get(3).get("style").asString()).isEqualTo("explain");
+    // And the other mode of an old question can be written and saved next to it.
+    JsonNode second = again(me, chat, after.get(0).get("id").asLong(), "explain");
+    assertThat(second.get("reply").get("replyTo").asLong())
+        .isEqualTo(after.get(0).get("id").asLong());
+    assertThat(json(me.get(CONVERSATIONS + "/" + chat + "/messages")).get("messages")).hasSize(5);
+  }
 }

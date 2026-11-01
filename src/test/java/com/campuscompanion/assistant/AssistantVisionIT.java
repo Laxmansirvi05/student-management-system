@@ -19,6 +19,7 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
+import tools.jackson.databind.JsonNode;
 
 /**
  * What actually reaches the model (Quick Assistant V2): the request is captured by a stand-in
@@ -29,6 +30,7 @@ import org.springframework.context.annotation.Primary;
 class AssistantVisionIT extends ApiIntegrationTest {
 
   static final AtomicReference<AiRequest> LAST = new AtomicReference<>();
+  static volatile boolean failing = false;
 
   @TestConfiguration
   static class Capturing {
@@ -39,6 +41,9 @@ class AssistantVisionIT extends ApiIntegrationTest {
         @Override
         public AiCompletion complete(AiRequest request) throws AiProviderException {
           LAST.set(request);
+          if (failing) {
+            throw new AiProviderException(AiProviderException.Kind.UNAVAILABLE);
+          }
           return new AiCompletion("ok", 1, 2);
         }
       };
@@ -102,5 +107,57 @@ class AssistantVisionIT extends ApiIntegrationTest {
         ImageIO.read(new java.io.ByteArrayInputStream(sent.images().get(0).data()));
     assertThat(seen.getWidth()).isLessThanOrEqualTo(1568);
     assertThat(sent.userContent()).contains("[Image] What does this show?");
+  }
+
+  @Test
+  void aFailedSecondModeSavesNothingAndTheQuestionStaysAnswerable() throws Exception {
+    ApiTestClient me = student("AVI00003");
+    JsonNode first = json(me.post("/api/v1/assistant/chat", styled("What is a list?", "quick")));
+    long chat = first.get("conversation").get("id").asLong();
+    long question = first.get("question").get("id").asLong();
+    String again =
+        "{\"conversationId\":%d,\"questionId\":%d,\"mode\":\"quick\",\"style\":\"explain\"}"
+            .formatted(chat, question);
+
+    failing = true;
+    try {
+      assertProblem(me.post("/api/v1/assistant/chat", again), 503, "AI_UNAVAILABLE");
+    } finally {
+      failing = false;
+    }
+    assertThat(
+            json(me.get("/api/v1/assistant/conversations/" + chat + "/messages")).get("messages"))
+        .hasSize(2);
+    assertThat(json(me.get("/api/v1/ai/usage/me")).get("usedToday").asInt()).isEqualTo(1);
+
+    // A retry writes it once, from the chat before that question, in the Explanatory mode.
+    assertThat(me.post("/api/v1/assistant/chat", again).statusCode()).isEqualTo(200);
+    assertThat(LAST.get().promptVersion()).isEqualTo("assistant-explain-v1");
+    assertThat(LAST.get().userContent()).contains("What is a list?");
+    assertThat(
+            json(me.get("/api/v1/assistant/conversations/" + chat + "/messages")).get("messages"))
+        .hasSize(3);
+  }
+
+  @Test
+  void whenAQuestionHasTwoAnswersTheModelGetsOnlyTheNewestOfEach() throws Exception {
+    ApiTestClient me = student("AVI00004");
+    JsonNode first = json(me.post("/api/v1/assistant/chat", styled("First question", "quick")));
+    long chat = first.get("conversation").get("id").asLong();
+    long question = first.get("question").get("id").asLong();
+    me.post(
+        "/api/v1/assistant/chat",
+        "{\"conversationId\":%d,\"questionId\":%d,\"mode\":\"quick\",\"style\":\"explain\"}"
+            .formatted(chat, question));
+
+    me.post(
+        "/api/v1/assistant/chat",
+        "{\"conversationId\":%d,\"message\":\"Second question\",\"mode\":\"quick\"}"
+            .formatted(chat));
+
+    String conversation = LAST.get().userContent();
+    assertThat(conversation.split("Student: First question", -1)).hasSize(2);
+    assertThat(conversation.split("Assistant: ", -1).length - 1).isEqualTo(1);
+    assertThat(conversation).contains("Student: Second question");
   }
 }

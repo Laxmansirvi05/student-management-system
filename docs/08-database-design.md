@@ -554,7 +554,7 @@ Added in V14 ([ADR 0014](decisions/0014-notes-quick-assistant-and-robot.md)). Ev
 
 ### 4.27 `assistant_conversations` and `assistant_messages`
 
-Added in V15. A chat of one student (`title` 60, `source` `assistant`/`quick`) and its messages (`role` `user`/`ai`, `content` 1 to 8,000 characters, `ON DELETE CASCADE`). The only place the text of an assistant chat is stored; read by its student only. V15 also adds `QUICK_CHAT` to the feature check of `ai_request_logs`, which still holds no text.
+Added in V15. A chat of one student (`title` 60, `source` `assistant`/`quick`) and its messages (`role` `user`/`ai`, `content` 1 to 8,000 characters, `ON DELETE CASCADE`). The only place the text of an assistant chat is stored; read by its student only. **V23** (Quick Assistant V2, [ADR 0018](decisions/0018-quick-assistant-v2.md)) adds `style` (`quick`/`explain`, NULL, answers only) and `reply_to` (the question message an answer belongs to; self FK, `ON DELETE CASCADE`, answers only), and a unique index on (`reply_to`, `style`): one saved answer per question and mode. Earlier answers were filled in once by the migration (paired with the question before them; `explain` when the text has a heading line, else `quick`); no text was changed. V15 also adds `QUICK_CHAT` to the feature check of `ai_request_logs`, which still holds no text.
 
 ### 4.28 Coding portfolio tables (V20)
 
@@ -649,6 +649,7 @@ Flyway, versioned SQL files, forward-only. See [ADR 0006](decisions/0006-flyway-
 | V17 | `V17__resource_reports.sql` | Adds `resource_reports` (section 4.20) for FR-LIB-005 | Added 2026-10-24 |
 | V18 | `V18__ai_log_retention.sql` | Grants `DELETE` on `ai_request_logs` to `cc_app`, with its policy, for the retention job (T7-09) | Added 2026-10-24 |
 | V20 | `V20__coding_portfolio.sql` | `coding_accounts`, `coding_snapshots`, `coding_leaderboard_optins` (section 4.28) | Added 2026-10-30 |
+| V23 | `V23__assistant_answer_modes.sql` | `assistant_messages.style` and `reply_to`, and a unique index on both (section 4.27) | Added 2026-11-01 |
 | V22 | `V22__coding_badge_images.sql` | `coding_badge_images`, the kept copies of the sites' badge pictures (section 4.28) | Added 2026-10-30 |
 | V21 | `V21__coding_details.sql` | `coding_accounts.details`, a nullable JSON text column for the portfolio views (section 4.28) | Added 2026-10-30 |
 | V19 | `V19__exam_papers_and_subject_tests.sql` | `notice_exam_papers` (section 4.10a); `unit_id` of `quiz_questions` and `quiz_attempts` becomes nullable (Quick Exam by subject) | Added 2026-10-24 |

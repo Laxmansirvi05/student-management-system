@@ -40,7 +40,7 @@ Consequences to keep in mind:
 
 ## Progress on 2026-11-01
 
-T7-14 Quick Assistant V2 ✅ at the owner's request ([ADR 0018](decisions/0018-quick-assistant-v2.md), FR-AST-002, FR-AST-003): Quick Answer and Explanatory Answer modes, JPG and PNG questions (chosen, captured from the screen, or pasted) read by a picture model (`AI_VISION_ROUTES`), and explanations with flowcharts, mind maps, charts, step diagrams, tables and formulas drawn by the page. No migration. Local only: not pushed or deployed; a host needs `AI_VISION_ROUTES` (for example `groq:qwen/qwen3.8-27b`) for picture questions.
+T7-14 Quick Assistant V2 ✅ at the owner's request ([ADR 0018](decisions/0018-quick-assistant-v2.md), FR-AST-002, FR-AST-003): Quick Answer and Explanatory Answer modes, JPG and PNG questions (chosen, captured from the screen, or pasted) read by a picture model (`AI_VISION_ROUTES`), and explanations with flowcharts, mind maps, charts, step diagrams, tables and formulas drawn by the page. No migration. Saved answers keep their mode (`V23__assistant_answer_modes.sql`, FR-AST-004): a reopened chat shows both modes of a question and switches between them without a model call. Local only: not pushed or deployed; a host needs `AI_VISION_ROUTES` (for example `groq:qwen/qwen3.8-27b`) for picture questions.
 
 ## Progress on 2026-10-30
 

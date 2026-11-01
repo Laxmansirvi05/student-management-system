@@ -895,3 +895,47 @@ h4.rb-md__heading {
   width: 18px;
   height: 18px;
 }
+
+/* The two answer modes of one saved question, above its answer. */
+.rb-answer__modes {
+  display: inline-flex;
+  gap: 2px;
+  margin-bottom: 6px;
+  padding: 2px;
+  border-radius: 999px;
+  background: var(--nt-surface-high);
+}
+
+.rb-answer__mode {
+  height: 22px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--nt-on-variant);
+  font: 500 11px/1.5 var(--nt-font);
+  cursor: pointer;
+}
+
+.rb-answer__mode.is-empty {
+  font-style: italic;
+}
+
+.rb-answer__mode[aria-pressed="true"] {
+  background: var(--nt-primary);
+  color: var(--nt-on-primary);
+}
+
+.rb-answer__mode[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.rb-answer__mode:focus-visible {
+  outline: 2px solid var(--nt-primary);
+  outline-offset: 1px;
+}
+
+.rb-bubble--ai > .rb-answer__modes + * {
+  margin-top: 0;
+}

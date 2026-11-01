@@ -21,6 +21,7 @@ import com.campuscompanion.assistant.dto.ConversationResponse;
 import com.campuscompanion.assistant.dto.MessageListResponse;
 import com.campuscompanion.assistant.dto.MessageResponse;
 import com.campuscompanion.common.config.AiProperties;
+import com.campuscompanion.common.error.ConflictException;
 import com.campuscompanion.common.error.ValidationException;
 import com.campuscompanion.common.security.CurrentUser;
 import com.campuscompanion.student.StudentProfileService;
@@ -28,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
@@ -107,6 +109,9 @@ public class AssistantService {
   public ChatResponse chat(
       CurrentUser user, ChatRequest request, byte[] picture, String pictureType) {
     Long studentId = students.currentStudent(user).studentId();
+    if (request.questionId() != null) {
+      return answerAgain(user, studentId, request);
+    }
     String question = request.message() == null ? "" : request.message().strip();
     boolean withPicture = picture != null;
     if (question.isEmpty() && !withPicture) {
@@ -134,9 +139,52 @@ public class AssistantService {
 
     String answer = ask(user, transcript(earlier, question), explain, attached);
     AssistantHistory.Saved saved =
-        history.save(studentId, request.conversationId(), source, question, answer);
+        history.save(
+            studentId, request.conversationId(), source, question, answer, styleOf(explain));
     return new ChatResponse(
         respond(saved.chat()), respond(saved.question()), respond(saved.reply()), NOTICE);
+  }
+
+  /**
+   * The answer, in the asked mode, to a question that is already in the chat (the "other mode" of
+   * Quick Assistant V2). A saved answer is returned as it is, with no model call and no use of the
+   * student's limit. Otherwise one is written from the chat before that question, saved next to the
+   * question, and returned. A question that came with a picture cannot be answered again: the
+   * picture is not kept.
+   */
+  private ChatResponse answerAgain(CurrentUser user, Long studentId, ChatRequest request) {
+    if (request.conversationId() == null) {
+      throw new ValidationException("conversationId", "Choose the chat of the question.");
+    }
+    boolean explain = "explain".equals(request.style());
+    String style = styleOf(explain);
+    AssistantConversation chat = history.owned(studentId, request.conversationId());
+    AssistantMessage question = history.question(chat.getId(), request.questionId());
+    var saved = history.answer(question.getId(), style);
+    if (saved.isPresent()) {
+      return new ChatResponse(respond(chat), respond(question), respond(saved.get()), NOTICE);
+    }
+    if (question.getContent().startsWith(IMAGE_MARKER)) {
+      throw new ConflictException(
+          "The picture of this question is not kept. Ask it again with the picture attached.");
+    }
+    List<AssistantMessage> earlier =
+        history.before(chat.getId(), question.getId(), CONTEXT_MESSAGES - 1);
+    String answer = ask(user, transcript(earlier, question.getContent()), explain, List.of());
+    try {
+      AssistantHistory.Saved written =
+          history.saveAnswer(studentId, chat.getId(), question.getId(), answer, style);
+      return new ChatResponse(
+          respond(written.chat()), respond(written.question()), respond(written.reply()), NOTICE);
+    } catch (DataIntegrityViolationException twice) {
+      // Another request saved the same answer a moment earlier: that one is the answer.
+      AssistantMessage first = history.answer(question.getId(), style).orElseThrow(() -> twice);
+      return new ChatResponse(respond(chat), respond(question), respond(first), NOTICE);
+    }
+  }
+
+  private static String styleOf(boolean explain) {
+    return explain ? "explain" : "quick";
   }
 
   /** The student's chats, newest first. The robot's list is kept short. */
@@ -218,6 +266,25 @@ public class AssistantService {
     }
   }
 
+  /**
+   * The messages for the model: when a question has been answered in both modes, only the newest
+   * answer goes with it, so the same question is not repeated in the context.
+   */
+  static List<AssistantMessage> oneAnswerEach(List<AssistantMessage> messages) {
+    java.util.Map<Long, Long> newest = new java.util.HashMap<>();
+    for (AssistantMessage message : messages) {
+      if (message.getReplyTo() != null) {
+        newest.put(message.getReplyTo(), message.getId());
+      }
+    }
+    return messages.stream()
+        .filter(
+            message ->
+                message.getReplyTo() == null
+                    || message.getId().equals(newest.get(message.getReplyTo())))
+        .toList();
+  }
+
   private static String cut(String text, int max) {
     return text.length() > max ? text.substring(0, max) : text;
   }
@@ -245,7 +312,7 @@ public class AssistantService {
   /** The chat as text for the model: each message under its speaker, the new question last. */
   private static String transcript(List<AssistantMessage> earlier, String question) {
     StringBuilder text = new StringBuilder();
-    for (AssistantMessage message : earlier) {
+    for (AssistantMessage message : oneAnswerEach(earlier)) {
       text.append(AssistantMessage.USER.equals(message.getRole()) ? "Student: " : "Assistant: ")
           .append(trimmed(message.getContent()))
           .append("\n\n");
@@ -264,6 +331,11 @@ public class AssistantService {
 
   private static MessageResponse respond(AssistantMessage message) {
     return new MessageResponse(
-        message.getId(), message.getRole(), message.getContent(), message.getCreatedAt());
+        message.getId(),
+        message.getRole(),
+        message.getContent(),
+        message.getCreatedAt(),
+        message.getStyle(),
+        message.getReplyTo());
   }
 }

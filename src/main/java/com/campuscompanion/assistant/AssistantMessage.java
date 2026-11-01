@@ -32,6 +32,14 @@ public class AssistantMessage {
   @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt;
 
+  /** An answer's mode, "quick" or "explain"; null for a question. */
+  @Column(length = 7, updatable = false)
+  private String style;
+
+  /** The question message an answer belongs to; null for a question. */
+  @Column(name = "reply_to", updatable = false)
+  private Long replyTo;
+
   /** Required by JPA. */
   protected AssistantMessage() {}
 
@@ -40,6 +48,14 @@ public class AssistantMessage {
     this.role = role;
     this.content = content;
     this.createdAt = now;
+  }
+
+  /** An answer to a question, in a mode. */
+  public AssistantMessage(
+      Long conversationId, String content, Instant now, Long replyTo, String style) {
+    this(conversationId, AI, content, now);
+    this.replyTo = replyTo;
+    this.style = style;
   }
 
   public Long getId() {
@@ -60,5 +76,13 @@ public class AssistantMessage {
 
   public Instant getCreatedAt() {
     return createdAt;
+  }
+
+  public String getStyle() {
+    return style;
+  }
+
+  public Long getReplyTo() {
+    return replyTo;
   }
 }

@@ -2583,6 +2583,7 @@ components:
         message: { type: string, maxLength: 4000, description: "Blank only when a picture is attached." }
         mode: { type: string, enum: [quick] }
         style: { type: string, enum: [quick, explain], default: quick }
+        questionId: { type: integer, format: int64, nullable: true, description: "Answer this question of the chat in the given style; the saved answer is returned if there is one. Needs conversationId; no message." }
     ExamRequest:
       type: object
       additionalProperties: false
