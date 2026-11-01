@@ -2405,15 +2405,50 @@
   }
 }
 
-/* The workspace is a card like the others. */
+/* The workspace sits directly on the page, like Home and Portfolio: no outer box, border or
+   shadow. The sidebar and the notes are laid out side by side with the page's own spacing; the
+   folders, note cards and the open note keep their own surfaces. */
 .nt-workspace {
-  border-color: var(--color-hairline);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-card);
+  gap: var(--space-5);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .nt-sidebar {
-  border-right-color: var(--color-hairline);
+  width: 232px;
+  border-right: 0;
+  background: transparent;
+}
+
+.nt-nav {
+  padding: 0 0 var(--space-2);
+}
+
+.nt-nav--folders {
+  padding-bottom: var(--space-4);
+}
+
+.nt-folders__head {
+  padding-inline: var(--space-3);
+}
+
+/* Under 720px the sidebar is a drawer over the list (unchanged); it needs a surface of its own. */
+@container notes (max-width: 719px) {
+  .nt-sidebar {
+    padding: var(--space-3);
+    border-radius: var(--radius-card);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-float);
+  }
+}
+
+/* An open note is a card on the page. */
+.nt-pane {
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
 }
 
 /* Navigation rows: the sidebar's own look (blue tint when active, grey on hover, 600 weight). */
@@ -2424,7 +2459,7 @@
 }
 
 .nt-nav__item:hover:not(.is-active) {
-  background: var(--color-surface);
+  background: var(--tint-neutral);
   color: var(--color-text);
 }
 
@@ -2450,8 +2485,8 @@
 
 /* Header: title, buttons and search on the application's spacing and type. */
 .nt-main__header {
-  padding: var(--space-4) var(--space-5);
-  border-bottom-color: var(--color-hairline);
+  padding: 0 0 var(--space-4);
+  border-bottom: 0;
 }
 
 .nt-main__row + .nt-main__row {
@@ -2465,7 +2500,7 @@
 .nt-search,
 .nt-select {
   border-color: var(--color-border-control);
-  background: var(--color-bg-subtle);
+  background: var(--color-surface);
   transition:
     border-color var(--nt-motion),
     background-color var(--nt-motion),
@@ -2528,7 +2563,7 @@
 
 /* Body: the same 24px inset as the header, and one 24px step between the folders and the notes. */
 .nt-body {
-  padding: var(--space-5);
+  padding: 0 0 var(--space-5);
 }
 
 .nt-folder-grid {
