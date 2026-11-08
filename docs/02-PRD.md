@@ -258,6 +258,8 @@ A priority is changed only by editing this document, stating the reason, with th
   1. Given a subject and a target percentage, show the number of consecutive classes to attend to reach it.
   2. If already above the target, show how many classes can be missed while staying at or above it.
   3. The result is labelled an estimate based on recorded classes.
+  4. Targets offered are 65, 70, 75, 80 and 85%, and always the college's required percentage.
+  5. **Whole term** (added 2026-11-09): given the total classes of the term and a target, show the fewest to attend, `ceil(target × total)` worked out in whole numbers (48 classes at 65% gives 32, since 31 is 64.58%), and the most that can be missed (total minus that). With classes already held, show how many of the remaining must still be attended, or that the target can no longer be reached and the best percentage still possible.
 - **Edge cases:** Target of 100% with any absence shows "Not reachable".
 - **Built on 2026-10-22, on the total instead of a subject:** for 70%, 75%, 80% and 85% the page shows how many classes to attend in a row to reach each, or how many can be missed in a row while staying at or above it, and a "what if" box for the coming classes. 100% is not offered.
 
