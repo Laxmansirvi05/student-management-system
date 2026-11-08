@@ -1,10 +1,13 @@
-# Runs the full build and every test on each push to main (task T1-11).
+# Runs the full build and every test on each push to main and on every pull request into main
+# (task T1-11), so a change is checked before it is merged.
 # Integration tests start PostgreSQL in Docker through Testcontainers; the runner provides Docker.
 # No secret is needed: the tests never connect to Supabase or any other hosted service.
 name: CI
 
 on:
   push:
+    branches: [main]
+  pull_request:
     branches: [main]
 
 permissions:
