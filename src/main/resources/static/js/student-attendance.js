@@ -3,12 +3,15 @@ import { fill, formatDate, h, icon, tag } from "./dom.js";
 import { countUp, enableTilt, reveal, ring } from "./motion.js";
 import { empty, loadInto } from "./parts.js";
 import "./shell.js";
+import { plan, termPlan } from "./attendance-plan.js";
 
 // Attendance (FR-ATT-001): the student's total attendance and a planner that says how many classes
 // to attend to reach a target, or how many can still be missed. Everything is read-only and
 // belongs to the logged-in student.
 
-const TARGETS = [70, 75, 80, 85];
+const TARGETS = [65, 70, 75, 80, 85];
+/** The offered targets, with the college's required one always among them. */
+const targetsWith = (required) => [...new Set([...TARGETS, Number(required)])].sort((x, y) => x - y);
 const content = document.getElementById("content");
 
 /** Classes held and attended: the college's report when there are no subject-wise records. */
@@ -19,17 +22,6 @@ function totals(summary) {
     return { held: summary.report.classesHeld, attended: summary.report.classesAttended, report: summary.report };
   }
   return { held, attended, report: null };
-}
-
-/**
- * How many classes in a row must be attended to reach the target, or (when it is already reached)
- * how many can be missed in a row and still keep it.
- */
-export function plan(attended, held, target) {
-  if (held > 0 && (attended * 100) / held >= target) {
-    return { reached: true, classes: Math.floor((attended * 100 - target * held) / target) };
-  }
-  return { reached: false, classes: Math.ceil((target * held - attended * 100) / (100 - target)) };
 }
 
 const pct = (attended, held) => (held === 0 ? 0 : (attended * 100) / held);
@@ -58,18 +50,20 @@ function hero(summary, { held, attended, report }) {
 }
 
 function plannerCard({ held, attended }, required) {
-  const rows = TARGETS.map((target) => {
+  const rows = targetsWith(required).map((target) => {
     const result = plan(attended, held, target);
     const text = result.reached
       ? result.classes === 0
         ? "Reached. Attend the next class to stay above it."
         : `Reached. You can miss up to ${result.classes} ${result.classes === 1 ? "class" : "classes"} in a row.`
-      : `Attend the next ${result.classes} ${result.classes === 1 ? "class" : "classes"} in a row.`;
+      : result.classes === null
+        ? "Cannot be reached once a class has been missed."
+        : `Attend the next ${result.classes} ${result.classes === 1 ? "class" : "classes"} in a row.`;
     return h(
       "li.row.planner__row",
       h("span.planner__target.num", target + "%"),
       h("span.planner__text", text),
-      result.reached ? tag("Reached", "success", "check-circle") : tag(result.classes + " to go", target === required ? "danger" : "warning", "target"),
+      result.reached ? tag("Reached", "success", "check-circle") : tag(result.classes === null ? "Not possible" : result.classes + " to go", target === required ? "danger" : "warning", "target"),
     );
   });
   return h(
@@ -102,13 +96,49 @@ function whatIfCard({ held, attended }) {
   );
 }
 
+/** The whole term: out of all its classes, how many to attend and how many can be missed. */
+function termCard({ held, attended }, required) {
+  const total = h("input.input.num", { type: "number", id: "term-total", min: Math.max(1, held), max: 1000, value: Math.max(held, 48), inputmode: "numeric" });
+  const target = h("select.input", { id: "term-target" }, targetsWith(required).map((value) => h("option", { value: String(value), selected: value === Number(required) }, value + "%")));
+  const result = h("div.stack.stack--tight", { "aria-live": "polite" });
+  const update = () => {
+    const typed = Number.parseInt(total.value, 10) || 0;
+    const classes = Math.max(held, Math.min(1000, typed));
+    const p = termPlan(classes, Number(target.value), attended, held);
+    const lines = [
+      typed < held ? h("p.row__meta", `${held} classes have already been held, so the term has at least ${held}.`) : null,
+      h("p", "Attend at least ", h("strong.num", `${p.mustAttend} of ${p.total}`), ` classes; you can miss up to `, h("strong.num", String(p.canMiss)), "."),
+    ];
+    if (held > 0) {
+      lines.push(
+        p.remaining === 0
+          ? h("p.row__meta", `So far ${attended} of ${held}. No classes are left in this term.`)
+          : p.possible
+          ? h("p.row__meta", `So far ${attended} of ${held}. Of the ${p.remaining} classes left, attend at least ${p.stillNeeded}; you can still miss ${p.canStillMiss}.`)
+          : h("p.row__meta", `So far ${attended} of ${held}. Even attending all ${p.remaining} classes left gives ${p.bestPercent.toFixed(2)}%, so ${target.value}% can no longer be reached this term.`),
+      );
+    }
+    fill(result, lines);
+  };
+  total.addEventListener("input", update);
+  target.addEventListener("change", update);
+  update();
+  return h(
+    "section.card.reveal",
+    { "aria-label": "Whole term" },
+    h("div.stack.stack--tight", h("h2", "Whole term"), h("p.row__meta", "Enter the total classes of the term to see the least you must attend.")),
+    h("div.planner__inputs", h("label.field", { for: "term-total" }, h("span.field__label", "Total classes in the term"), total), h("label.field", { for: "term-target" }, h("span.field__label", "Target"), target)),
+    result,
+  );
+}
+
 loadInto(content, () => api.get("/attendance/me"), (summary) => {
   const count = totals(summary);
   if (count.held === 0) {
     fill(content, h("div.card", empty("attendance", "No attendance yet", `Your attendance appears here once the college records it. The college requires ${summary.requiredPercent}%.`)));
     return;
   }
-  fill(content, hero(summary, count), h("div.grid.grid--2", plannerCard(count, summary.requiredPercent), whatIfCard(count)));
+  fill(content, hero(summary, count), h("div.grid.grid--2", plannerCard(count, summary.requiredPercent), whatIfCard(count), termCard(count, summary.requiredPercent)));
   reveal();
   enableTilt();
 });
