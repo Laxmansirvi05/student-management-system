@@ -9,7 +9,7 @@ This document sets the technical constraints every implementation must satisfy. 
 | Area | Technology | Version | Notes |
 | --- | --- | --- | --- |
 | Language | Java | 21 (LTS) | Fixed. |
-| Framework | Spring Boot | 4.1.1 | Verified in `T1-01` on Java 21. It manages Spring Framework 7.0.9, Spring Security 7.1.1, Hibernate 7.4.5, Flyway 12.4.0 and the PostgreSQL driver 42.7.13. |
+| Framework | Spring Boot | 4.1.2 | Verified in `T1-01` on Java 21; 4.1.2 since 2026-11-09 (Tomcat 11.0.27 and Jackson 3.1.7 close four critical and six high or moderate advisories). It manages Spring Framework 7.0.9, Spring Security 7.1.1, Hibernate 7.4.5, Flyway 12.4.0 and the PostgreSQL driver 42.7.13. |
 | Web | Spring Web MVC (`spring-boot-starter-webmvc`) | from Boot | REST controllers. |
 | Security | Spring Security | from Boot | Session-based login. |
 | Persistence | Spring Data JPA with Hibernate | from Boot | |
