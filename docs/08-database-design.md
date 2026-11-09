@@ -651,6 +651,7 @@ Flyway, versioned SQL files, forward-only. See [ADR 0006](decisions/0006-flyway-
 | V20 | `V20__coding_portfolio.sql` | `coding_accounts`, `coding_snapshots`, `coding_leaderboard_optins` (section 4.28) | Added 2026-10-30 |
 | V23 | `V23__assistant_answer_modes.sql` | `assistant_messages.style` and `reply_to`, and a unique index on both (section 4.27) | Added 2026-11-01 |
 | V24 | `V24__foreign_key_indexes.sql` | Indexes on seven foreign key columns that had none (`pyq_papers.created_by`, `notes.folder_id`, `note_links.student_id`, `note_shares.owner_id`, `note_share_recipients.owner_id`, `study_tasks.subject_id`, `student_exams.subject_id`); no data or constraint changes | Added 2026-11-09 |
+| V25 | `V25__function_search_path.sql` | Fixes the `search_path` of `app.audit_logs_reject_change()` (Supabase security advisor); no behaviour change. `notice_exam_papers` has no primary key on purpose: it is a Hibernate collection table of `notices` (6 rows), the advisor note is informational | Added 2026-11-09 |
 | V22 | `V22__coding_badge_images.sql` | `coding_badge_images`, the kept copies of the sites' badge pictures (section 4.28) | Added 2026-10-30 |
 | V21 | `V21__coding_details.sql` | `coding_accounts.details`, a nullable JSON text column for the portfolio views (section 4.28) | Added 2026-10-30 |
 | V19 | `V19__exam_papers_and_subject_tests.sql` | `notice_exam_papers` (section 4.10a); `unit_id` of `quiz_questions` and `quiz_attempts` becomes nullable (Quick Exam by subject) | Added 2026-10-24 |
