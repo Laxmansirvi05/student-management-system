@@ -1,4 +1,4 @@
-# Audit V2: running issue log (PAUSED 2026-11-07, Phase 0-2 only)
+# Audit V2: issue log (completed 2026-11-09; see AUDIT_REPORT_V2.md)
 
 Nothing fixed, committed, pushed or deployed yet. Baseline: `main` at `5c0134e`, level with origin.
 
@@ -28,3 +28,12 @@ Nothing fixed, committed, pushed or deployed yet. Baseline: `main` at `5c0134e`,
 
 ## Next on resume
 Phase 2 remainder (JS tests, dependency scan), fix A01 and A02 first so PR checks work, then Phases 3 to 13.
+
+
+## Final status (2026-11-09)
+- A01, A02 fixed: PR #1, commit 4139017. CI green.
+- A03, A04 fixed: PR #2, commit e86f243.
+- A10 (dependency advisories, found later) fixed and deployed: PR #3, commit 9d33dca, Azure and Render.
+- A12 README refresh: PR #4.
+- A05, A06, A07, A08, A09, A11, A13, A14, A15: open, see AUDIT_REPORT_V2.md section 3.
+- Hosted read-only note: the session did not enforce read-only on the first query; only SELECT was sent.
