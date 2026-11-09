@@ -17,8 +17,6 @@ import org.springframework.stereotype.Service;
 @PreAuthorize("hasRole('STUDENT')")
 public class AttachmentService {
 
-  private static final int PREVIEW_CHARS = 160;
-
   private final AttachmentReader reader;
   private final AttachmentStore store;
   private final StudentProfileService students;
@@ -36,29 +34,11 @@ public class AttachmentService {
     ReadFile file = reader.read(fileName, content);
     String id = store.add(studentId, file);
     return new AttachmentResponse(
-        id,
-        file.name(),
-        file.kind().name().toLowerCase(Locale.ROOT),
-        file.pages(),
-        file.pagesRead(),
-        file.characters(),
-        file.pictures().size(),
-        file.notice(),
-        preview(file));
+        id, file.name(), file.kind().name().toLowerCase(Locale.ROOT), file.pictures().size());
   }
 
   /** Forgets a file the student attached. */
   public void remove(CurrentUser user, String id) {
     store.remove(students.currentStudent(user).studentId(), id);
-  }
-
-  private static String preview(ReadFile file) {
-    for (Segment segment : file.segments()) {
-      if (!segment.hasPicture() && !segment.text().isBlank()) {
-        String text = segment.text().replaceAll("\\s+", " ").strip();
-        return text.length() > PREVIEW_CHARS ? text.substring(0, PREVIEW_CHARS) + "…" : text;
-      }
-    }
-    return null;
   }
 }

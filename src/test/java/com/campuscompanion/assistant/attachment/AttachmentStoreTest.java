@@ -20,13 +20,12 @@ class AttachmentStoreTest {
 
   private static ReadFile file(String name) {
     return new ReadFile(
-        name, ReadFile.Kind.DOCX, 0, 0, List.of(Segment.text("hello")), List.of(), null);
+        name, ReadFile.Kind.IMAGE, List.of(new AiImage("image/jpeg", new byte[10])));
   }
 
   private static ReadFile heavy(String name, int megabytes) {
     AiImage image = new AiImage("image/jpeg", new byte[megabytes * 1024 * 1024]);
-    return new ReadFile(
-        name, ReadFile.Kind.IMAGE, 0, 0, List.of(Segment.picture("", 0)), List.of(image), null);
+    return new ReadFile(name, ReadFile.Kind.IMAGE, List.of(image));
   }
 
   @Test

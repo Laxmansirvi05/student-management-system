@@ -15,13 +15,13 @@ import { ATTACHED_MARKER, kindOf, parseAttached } from "./attachment-rules.js";
 // instruction, not text cut off here.
 //
 // Two answer modes (Quick Answer, the default, and Explanatory Answer) are chosen above the chat and
-// travel with each message as "style". A question may come with files (ADR 0019): pictures (JPG,
-// PNG, WEBP), PDFs and Word documents, chosen from the device, pasted, or captured as an area of this
-// page (dragged out like Cmd+Shift+4, drawn by page-snapshot.js; a web page cannot read the rest of
-// the screen). Each file is sent to the server when it is attached and read there; it counts as
-// Ready only when the server answers with what it found (attachment-tray.js). The files stay with
-// the chat for follow-up questions. They are kept in the server's memory for a short time, not
-// stored. Explanatory answers are drawn by rich-render.js.
+// travel with each message as "style". A question may come with pictures (ADR 0019): JPG, PNG or
+// WEBP, chosen from the device, pasted, or captured as an area of this page (dragged out like
+// Cmd+Shift+4, drawn by page-snapshot.js; a web page cannot read the rest of the screen). Each
+// picture is sent to the server when it is attached and checked there; it counts as Ready only when
+// the server answers (attachment-tray.js). The pictures stay with the chat for follow-up questions.
+// They are kept in the server's memory for a short time, not stored. Explanatory answers are drawn
+// by rich-render.js.
 
 const DEFAULT_SIZE = { width: 360, height: 440 };
 const MESSAGE_MAX = 4000;
@@ -31,8 +31,8 @@ const MODES = [
   ["explain", "Explanatory Answer"],
 ];
 const HINTS = {
-  quick: "Ask anything. Quick answers are short. Attach pictures, PDFs or Word files to ask about them.",
-  explain: "Ask anything. Explanatory answers are detailed, with steps, examples and diagrams. Attach pictures, PDFs or Word files to ask about them.",
+  quick: "Ask anything. Quick answers are short. Attach a picture or a screenshot to ask about it.",
+  explain: "Ask anything. Explanatory answers are detailed, with steps, examples and diagrams. Attach a picture or a screenshot to ask about it.",
 };
 
 /** Options: anchor ({x, y, size}), onClose(). Returns { close }. */
@@ -68,13 +68,13 @@ export function openQuickAssistant({ anchor, onClose }) {
   const fileInput = h("input", {
     type: "file",
     multiple: true,
-    accept: "image/jpeg,image/png,image/webp,application/pdf,.jpg,.jpeg,.png,.webp,.pdf,.docx",
+    accept: "image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp",
     hidden: true,
     "aria-hidden": "true",
     tabindex: "-1",
     onchange: picked,
   });
-  const attachButton = h("button.rb-iconbtn", { type: "button", "aria-label": "Attach pictures, PDFs or Word documents", title: "Attach pictures, PDFs or Word documents", onclick: () => fileInput.click() }, symbol("image"));
+  const attachButton = h("button.rb-iconbtn", { type: "button", "aria-label": "Attach pictures", title: "Attach pictures", onclick: () => fileInput.click() }, symbol("image"));
   const captureButton = h("button.rb-iconbtn", { type: "button", "aria-label": "Capture an area of the page", title: "Capture an area of the page", onclick: () => capture() }, icon("monitor"));
   const sendButton = h("button.rb-chat__send", { type: "button", "aria-label": "Send", onclick: send }, symbol("send"));
 
@@ -212,7 +212,7 @@ export function openQuickAssistant({ anchor, onClose }) {
       }
     }
     if (sending && !generating) {
-      const wait = pendingFiles ? "Reading your files…" : style === "explain" ? "Writing a detailed explanation…" : "Thinking…";
+      const wait = pendingFiles ? "Reading your pictures…" : style === "explain" ? "Writing a detailed explanation…" : "Thinking…";
       transcript.append(h("div.rb-bubble.rb-bubble--ai", { "aria-live": "polite" }, h("span.rb-bubble__wait", wait)));
     }
     if (error) {
@@ -222,9 +222,9 @@ export function openQuickAssistant({ anchor, onClose }) {
   }
 
   /**
-   * A question as the student sees it: the files that came with it (a picture shows itself, any
-   * other file its name), then the words. A saved question names its files in its first words
-   * ("[Attached: a.pdf] "); a live one also has the files themselves.
+   * A question as the student sees it: the pictures that came with it (each shows itself, or
+   * its name when it is a saved question), then the words. A saved question names its files in its first words
+   * ("[Attached: a.jpg] "); a live one also has the files themselves.
    */
   function userBubble(message) {
     const picture = message.content.startsWith(IMAGE_MARKER);
@@ -264,7 +264,7 @@ export function openQuickAssistant({ anchor, onClose }) {
             type: "button",
             "aria-pressed": String(value === shown),
             disabled: blocked,
-            title: saved ? name : pictured ? "Ask again with the files to get this mode" : `Write the ${name.toLowerCase()}`,
+            title: saved ? name : pictured ? "Ask again with the pictures to get this mode" : `Write the ${name.toLowerCase()}`,
             onclick: () => showMode(group, value),
           },
           name.replace(" Answer", ""),
@@ -360,7 +360,7 @@ export function openQuickAssistant({ anchor, onClose }) {
     const ids = tray.ids();
     if ((!text && ids.length === 0) || sending || capturing || tray.busy()) return;
     if (tray.problem()) {
-      error = "One of the files could not be read. Retry it or remove it, then send.";
+      error = "One of the pictures could not be read. Retry it or remove it, then send.";
       drawLog();
       return;
     }

@@ -586,30 +586,6 @@
   object-fit: cover;
 }
 
-/* The type of a file that has no thumbnail: PDF, DOCX. */
-.rb-attach__badge {
-  display: grid;
-  flex: none;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 8px;
-  background: var(--nt-surface-container);
-  color: var(--nt-on-variant);
-  font: 700 11px/1 var(--nt-font);
-  letter-spacing: 0.02em;
-}
-
-.rb-attach__badge[data-kind="pdf"] {
-  background: #fde8e6;
-  color: #a1281f;
-}
-
-.rb-attach__badge[data-kind="docx"] {
-  background: #e3edfd;
-  color: #1b4fb3;
-}
-
 .rb-attach__text {
   display: grid;
   flex: 1 1 auto;

@@ -1,13 +1,13 @@
 import { h, icon } from "../dom.js";
 import { api, messageFor } from "../api.js";
 import { symbol } from "../notes/symbols.js";
-import { MAX_FILES, badgeOf, describeRead, jpegName, kindOf, needsRedraw, redrawnSize, refusal, statusLabel } from "./attachment-rules.js";
+import { MAX_FILES, describeRead, jpegName, kindOf, needsRedraw, redrawnSize, refusal, statusLabel } from "./attachment-rules.js";
 
-// The files of a Quick Assistant question, shown above the message box. A file goes to the server as
-// soon as it is attached, and the server reads it (a picture is checked, a PDF gives its pages, a
-// Word document its text) and answers with what it really found. A file is "Ready" only when that
-// answer has come back, so a preview is never shown as a processed file when it is not. The files
-// stay for the whole chat, so follow-up questions can use them, until the student removes them.
+// The pictures of a Quick Assistant question (photos, screenshots), shown above the message box. A
+// picture goes to the server as soon as it is attached, and the server checks and redraws it and
+// answers with what it really found. It is "Ready" only when that answer has come back, so a preview
+// is never shown as processed when it is not. The pictures stay for the whole chat, so follow-up
+// questions can use them, until the student removes them.
 
 /**
  * Options: onChange() after any change, onNotice(text) for a refusal that has no row of its own,
@@ -40,9 +40,9 @@ export function createAttachmentTray({ onChange, onNotice, onRecapture }) {
     const item = {
       key: ++counter,
       file,
-      name: file.name || (kind === "image" ? "Picture" : "File"),
+      name: file.name || "Picture",
       kind,
-      url: kind === "image" ? URL.createObjectURL(file) : null,
+      url: URL.createObjectURL(file),
       status: needsRedraw(file) ? "preparing" : "uploading",
       error: null,
       info: null,
@@ -158,8 +158,8 @@ export function createAttachmentTray({ onChange, onNotice, onRecapture }) {
     items
       .filter((item) => item.status === "ready")
       .map((item) => {
-        if (item.kind === "image" && !item.bubbleUrl) item.bubbleUrl = URL.createObjectURL(item.file);
-        return { name: item.name, kind: item.kind, url: item.kind === "image" ? item.bubbleUrl : null };
+        if (!item.bubbleUrl) item.bubbleUrl = URL.createObjectURL(item.file);
+        return { name: item.name, kind: item.kind, url: item.bubbleUrl };
       });
 
   // --- drawing -----------------------------------------------------------------------------
@@ -170,21 +170,15 @@ export function createAttachmentTray({ onChange, onNotice, onRecapture }) {
   }
 
   function row(item) {
-    const thumb =
-      item.kind === "image"
-        ? (() => {
-            const button = h(
-              "button.rb-attach__zoom",
-              { type: "button", "aria-label": item.large ? "Show the picture smaller" : "Show the picture larger", "aria-pressed": String(item.large) },
-              h("img.rb-attach__thumb", { src: item.url, alt: `Picture ${item.name}` }),
-            );
-            button.addEventListener("click", () => {
-              item.large = !item.large;
-              render();
-            });
-            return button;
-          })()
-        : h("span.rb-attach__badge", { "data-kind": item.kind, "aria-hidden": "true" }, badgeOf(item.kind));
+    const thumb = h(
+      "button.rb-attach__zoom",
+      { type: "button", "aria-label": item.large ? "Show the picture smaller" : "Show the picture larger", "aria-pressed": String(item.large) },
+      h("img.rb-attach__thumb", { src: item.url, alt: `Picture ${item.name}` }),
+    );
+    thumb.addEventListener("click", () => {
+      item.large = !item.large;
+      render();
+    });
     const meta = item.status === "error" ? h("span.rb-attach__meta.is-error", { role: "alert" }, item.error) : h("span.rb-attach__meta" + (item.status === "ready" ? ".is-ready" : ".is-working"), steps(item));
     return h(
       "div.rb-attach__item" + (item.large ? ".is-large" : "") + (item.status === "error" ? ".is-error" : ""),
