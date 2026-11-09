@@ -72,7 +72,12 @@ export function countUp(element, target, { decimals = 0, suffix = "" } = {}) {
   const show = (value) => {
     element.textContent = value.toFixed(decimals) + suffix;
   };
-  if (motionReduced() || !Number.isFinite(target)) {
+  // No number (a CGPA that is not available, for instance) is shown as a dash, never as a crash.
+  if (typeof target !== "number" || !Number.isFinite(target)) {
+    element.textContent = "–";
+    return;
+  }
+  if (motionReduced()) {
     show(target);
     return;
   }

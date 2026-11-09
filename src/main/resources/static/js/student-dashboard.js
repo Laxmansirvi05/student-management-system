@@ -68,18 +68,19 @@ function resultsCard({ cgpa, semesters }) {
   }
   const figure = h("p.figure");
   countUp(figure, cgpa, { decimals: 2 });
+  const note = cgpa === null || cgpa === undefined ? "No CGPA while a semester has no SGPA (a backlog is pending)." : `Over ${semesters.length} semester${semesters.length === 1 ? "" : "s"}, weighted by credits`;
   const rows = semesters.map((entry) =>
     h(
       "li.row.results-row",
       h("span.row__title", `Semester ${entry.semester}`),
       entry.resultStatus === "FAIL" ? tag("Backlog", "danger") : null,
-      h("span.results-row__sgpa.num", "SGPA ", h("strong", Number(entry.sgpa).toFixed(2))),
+      h("span.results-row__sgpa.num", "SGPA ", h("strong", entry.sgpa === null || entry.sgpa === undefined ? "Not published" : Number(entry.sgpa).toFixed(2))),
     ),
   );
   return h(
     "section.card.card--lift.reveal",
     cardHead("results", "Results", "/student/results.html"),
-    h("div.inset.results-cgpa", h("p.eyebrow", "CGPA"), figure, h("p.row__meta", `Over ${semesters.length} semester${semesters.length === 1 ? "" : "s"}, weighted by credits`)),
+    h("div.inset.results-cgpa", h("p.eyebrow", "CGPA"), figure, h("p.row__meta", note)),
     h("ul.rows", rows),
   );
 }
