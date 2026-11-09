@@ -2,9 +2,9 @@
 
 A Java-first student management and learning platform. It combines a student's academic records with study resources, practice tests and an AI study assistant in one web application.
 
-> **Project status (2026-10-24): built, tested and deployed.** Live at **https://campus-companion.azurewebsites.net** (Azure App Service, Central India; primary) with a backup at https://campus-companion-go4c.onrender.com (Render Free). Students see their records, results with CGPA, timetable, notices and upcoming exams; find and bookmark study material and past papers; take timed Quick Exams from course question banks; follow their progress; plan tasks and exams; keep notes; raise complaints; and use the AI study assistant (explain, summarise, practice questions, flowcharts). Administrators manage accounts, subjects, attendance, marks, results, timetables, notices with exam papers, resources, past papers, the question bank, complaints and the audit log. 296 unit, 307 integration and 13 browser-module tests pass. What remains are owner actions (credential rotation, storage sign-off, GitHub security settings, college approval): see the [final report](docs/26-final-project-completion-report.md) and the [QA report](docs/27-final-predeployment-qa-report.md).
+> **Project status (2026-11-09): built, tested and deployed.** Live at **https://campus-companion.azurewebsites.net** (Azure App Service, Central India; primary) with a backup at https://campus-companion-go4c.onrender.com (Render Free). Students see their records, results with CGPA, timetable, notices and upcoming exams; find and bookmark study material and past papers; take timed Quick Exams from course question banks; follow their progress; plan tasks and exams; keep notes; raise complaints; and use the AI study assistant (explain, summarise, practice questions, flowcharts) and the Quick Assistant (short or detailed answers, drawn diagrams, and questions about attached pictures, PDFs and Word documents). Administrators manage accounts, subjects, attendance, marks, results, timetables, notices with exam papers, resources, past papers, the question bank, complaints and the audit log. 387 unit, 347 integration and 86 browser-module tests pass (CI is green on `main`). What remains are owner actions (credential rotation, storage sign-off, GitHub security settings, college approval): see the [final report](docs/26-final-project-completion-report.md) and the [QA report](docs/27-final-predeployment-qa-report.md).
 >
-> Students log in with an institutional email address. A new student's first password is the roll number and must be changed at first login; that rule is a recorded security exception for demonstration with **synthetic data only** ([decision 0008](docs/decisions/0008-institutional-email-login.md)). The AI assistant runs on a built-in mock provider until a real one is chosen.
+> Students log in with an institutional email address. A new student's first password is the roll number and must be changed at first login; that rule is a recorded security exception for demonstration with **synthetic data only** ([decision 0008](docs/decisions/0008-institutional-email-login.md)). On both hosts the AI runs through a router over Groq and Ollama; the built-in mock provider is the default for tests and local runs.
 
 ## The problem
 
@@ -139,3 +139,18 @@ Rules for everyone working in this repository:
 - [CONTRIBUTING.md](CONTRIBUTING.md): the single-branch workflow, commits, reviews.
 
 Work is tracked in [GitHub Issues](https://github.com/Laxmansirvi05/student-management-system/issues). Do not report security vulnerabilities in a public issue; see [CONTRIBUTING.md](CONTRIBUTING.md#reporting-security-problems).
+
+## How to run the audit again
+
+An end-to-end audit script set lives in `audit_evidence/` (local test server and synthetic accounts only, never real students):
+
+```bash
+export JAVA_HOME=$(/usr/libexec/java_home -v 21)
+./mvnw -B verify && node --test "src/test/js/**/*.test.mjs"          # needs Docker
+python3 audit_evidence/perm_probe.py http://localhost:8081            # anonymous, role, IDOR and CSRF checks
+python3 audit_evidence/journey_probe.py http://localhost:8081         # admin -> student journeys, bad input
+python3 audit_evidence/route_check.py                                 # links and frontend/API route parity
+python3 audit_evidence/ai_eval.py http://localhost:8081 out.csv       # 53-question AI set (needs real routes)
+```
+
+The first four run against `campus-companion-local-db`; the AI set needs a local server started with `AI_PROVIDER=router`. The login limit is 20 attempts per IP per 10 minutes, so wait between runs.
