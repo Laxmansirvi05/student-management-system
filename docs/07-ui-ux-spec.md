@@ -269,7 +269,7 @@ Target: WCAG 2.1 level AA.
 
 ## 18. Student pages design system
 
-Built on 2026-10-13 from designs the owner made in Google Stitch (the prompts are in [design-prompts-stitch.md](design-prompts-stitch.md)). The designs were followed for layout and feel, and adjusted where they conflicted with this project's rules.
+Built on 2026-10-13 from designs the owner made in Google Stitch. The designs were followed for layout and feel, and adjusted where they conflicted with this project's rules.
 
 ### What every page shares
 

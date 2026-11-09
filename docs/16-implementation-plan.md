@@ -49,11 +49,11 @@ T7-13 coding portfolio and leaderboard ✅ at the owner's request ([ADR 0017](de
 
 ## Progress on 2026-10-24
 
-The autonomous completion run ([25](25-autonomous-completion-plan.md), report [26](26-final-project-completion-report.md)): T7-06 report a resource (V17) ✅, T7-05 flowchart ✅, T7-09 AI log retention (V18, off by default) ◐, T7-04 PDF summarization dropped. Every approved P0 and P1 requirement is built and integration tested. What remains is owner work: T3-01 (bucket sign-off), T5-06 (provider decision), T6-04 to T6-06 (host, backup and V16 to V18, deployment), T0-04 (GitHub settings), credential rotation. Doc 26 §18 lists all of it once.
+The autonomous completion run (2026-10-24): T7-06 report a resource (V17) ✅, T7-05 flowchart ✅, T7-09 AI log retention (V18, off by default) ◐, T7-04 PDF summarization dropped. Every approved P0 and P1 requirement is built and integration tested. What remains is owner work: T3-01 (bucket sign-off), T5-06 (provider decision), T6-04 to T6-06 (host, backup and V16 to V18, deployment), T0-04 (GitHub settings), credential rotation. Doc 26 §18 lists all of it once.
 
 ## Progress on 2026-10-23
 
-Since 2026-10-14: T7-01 (attendance calculator), notice documents, student complaints (V13, ADR 0013), Notes, the Quick Assistant and the robot (V14, V15, ADR 0014), and the React landing page (ADR 0015) were built. A full audit and its remediation are in [PROJECT_AUDIT_REPORT.md](../PROJECT_AUDIT_REPORT.md). The owner tasks below are unchanged: T3-01, T5-06 and the manual half of T5-08, T6-04 to T6-06 (the host, Heroku or Render, is not yet chosen), T0-01/02/04/05, and the 90-day clean-up of AI usage rows (T7-09) is not built.
+Since 2026-10-14: T7-01 (attendance calculator), notice documents, student complaints (V13, ADR 0013), Notes, the Quick Assistant and the robot (V14, V15, ADR 0014), and the React landing page (ADR 0015) were built. The latest audit and its fixes are in [AUDIT_REPORT_V2.md](../AUDIT_REPORT_V2.md). The owner tasks below are unchanged: T3-01, T5-06 and the manual half of T5-08, T6-04 to T6-06 (the host, Heroku or Render, is not yet chosen), T0-01/02/04/05, and the 90-day clean-up of AI usage rows (T7-09) is not built.
 
 ## Progress on 2026-10-14
 
