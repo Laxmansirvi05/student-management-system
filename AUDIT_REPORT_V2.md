@@ -2,6 +2,27 @@
 
 **Date:** 2026-11-09. **Scope:** repository, local test environment with synthetic accounts, live Azure and Render (read-only requests only, plus the deployment below), hosted database (read-only queries and a backup). **Status legend:** ✅ working · 🟡 partial · ❌ broken · ⬜ not started · ❓ unverified · 🔧 fixed and deployed.
 
+## Update, round 2 (2026-11-09, evening): owner policy decisions and a deeper sweep
+
+**Owner decisions applied.** Attendance policy: under 65% detained, 65 to 75% condonation fee, 75% and above no issue (PR #5; the host setting of 75 was already right, so A05 is closed). PDF and Word reading in the Quick Assistant is discontinued because it used too many tokens (PR #6); pictures and screenshots stay, and ADR 0019, the API contract, OpenAPI, PRD and privacy page now say pictures only (this supersedes the PDF, DOCX and "scanned PDF" results in sections 6 and 7 below, which describe the build before it was removed).
+
+**Found and fixed in round 2**
+
+| Issue | What | PR | Evidence |
+| --- | --- | --- | --- |
+| B01 P0 🔧 | A student with a backlog semester has no CGPA by the documented rule, and the dashboard threw on it, replacing the whole page with "This could not be loaded". A read-only count found **28 published semesters without an SGPA across 19 students on the hosted database**, so those dashboards were broken in production. (I saw this error during round 1 and wrongly set it aside.) | #9 | `motion.test.mjs`; the dashboard renders all six cards for such a student; deployed to both hosts |
+| B02 🔧 | Seven foreign key columns had no index, against docs/08's own rule | #8 (V24) | `SchemaHealthIT` fails on any unindexed foreign key or table without RLS; V24 applied on the hosted database (0 unindexed foreign keys after) |
+| B03 🔧 | Seven dated snapshot or tooling documents (completion plan, two reports, old audit, Stitch prompts, two agent-tooling records) | #7 | 0 broken relative links across all tracked markdown |
+| B04 🔧 | GitHub Dependabot alerts, security updates, secret scanning and push protection were off | settings | Enabled via the API; the repository is public, and `private-data/`, `notes/` and `notices/` are confirmed untracked |
+
+**Verification this round.** Clean `./mvnw verify`: 360 unit and 345 integration tests, 0 failures (the PDF and Word tests are gone with the feature). 88 browser-module tests pass. Browser sweep with a local student and admin: **all 20 student pages and all 16 admin pages load with no failed request and no error card**, with no horizontal overflow at 375 px on 9 sampled pages. Picture flow in the real UI: a PDF is refused with a reason, a photo and a converted WEBP show Ready, a real model answered from "Picture 1", and screen capture and Recapture still work. The only console noise is the third-party Spline 3D runtime logging "Missing property" when the robot loads (harmless).
+
+**Database health (hosted, read-only).** RLS is on for 41 of 42 tables with 137 policies, none of them for any role except `cc_app`; `cc_app` has only the grants it needs and no access to the Flyway table (so A08 is closed); `anon` and `authenticated` hold nothing; there are no tables in `public`; no unused indexes; the largest table is 1.4 MB.
+
+**Deployment.** Azure and Render both run `992db3a` (Azure start-up 248 s, health 200, migration V24 applied, no errors in logs; Render health 200). Pre-deploy backups: `private-data/backups/app-2026-11-09-predeploy.dump` and `...-predeploy-v24.dump` (git-ignored). Rollback: redeploy `9d33dca`'s JAR; V24 only adds indexes, so older builds still work on it.
+
+**Still open.** A06 (percent rounded to two decimals before comparing; needs over about 1,000 classes to matter), A09 (`AI_VISION_ROUTES` unset on the hosts, so picture questions are refused there until you set it), A14 (a vague question gets "I'm not sure" instead of a clarifying question), credential rotation, the private-bucket sign-off and the AI provider terms. Not measured: Lighthouse scores and keyboard or screen-reader behaviour.
+
 ## 1. Summary
 
 **Verdict: LAUNCH WITH CONDITIONS.** The code is in good shape and was improved today; what blocks real student traffic is on the owner's side (section 5).
@@ -43,7 +64,7 @@
 
 | ID | Sev | Item | Owner and next action |
 | --- | --- | --- | --- |
-| A05 | Decision | Azure `ATTENDANCE_REQUIRED_PERCENT` is 75; your brief said 65. The planner offers both. | Owner: which is the college rule? Then change the host setting. |
+| A05 | Closed | Required percent is 75 (owner confirmed policy: 65 detained, 75 condonation line). | Done in PR #5. |
 | A06 | Low | Percent is rounded to 2 decimals before comparing to the requirement, so 64.996% counts as 65.00% (needs over about 1,000 classes). | Dev: compare unrounded values. Low risk, not urgent. |
 | A07 | Info | Hosted V23 was applied 2026-11-02 09:03 UTC by `cc_migrator` while AGENTS.md says "local only"; Azure's build then predated it. | Owner: confirm who ran it (probably a local run with the hosted `.env`). Rule: use `campus-companion-local-db` for previews. |
 | A08 | Info | `flyway_schema_history` is the one table in `app` without RLS. | Standard for Flyway; no grants to anon or authenticated. Accept or enable RLS. |
