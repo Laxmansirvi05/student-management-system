@@ -1,10 +1,10 @@
 # Audit V2: issue log (completed 2026-11-09; see AUDIT_REPORT_V2.md)
 
-Nothing fixed, committed, pushed or deployed yet. Baseline: `main` at `5c0134e`, level with origin.
+Baseline was `main` at `5c0134e`; final state is `main` at `9d33dca` plus PR #4.
 
 ## Baseline evidence
 - Local `./mvnw -B verify` with Docker (Colima), Java 21: BUILD SUCCESS. 385 unit (1 skipped: opt-in SampleFilesTest), 347 integration, 0 failures.
-- JS tests: not re-run in this audit yet.
+- JS tests: 86 pass at the end of the audit.
 - Azure: health 200, login 200. Last deployment 2026-10-30 (OneDeploy). Render: health and login timed out after 25 s.
 
 ## Issues
@@ -20,14 +20,12 @@ Nothing fixed, committed, pushed or deployed yet. Baseline: `main` at `5c0134e`,
 | A08 | Info | `flyway_schema_history` is the one table of 42 in `app` without RLS. No grants to anon, authenticated or public on `app` | Hosted catalog query | Review |
 | A09 | Decision | Azure hosts do not have `AI_VISION_ROUTES` set, so pictures and scans will be refused after deploy until it is set | Setting names | Owner |
 
-## Process notes for resuming
+## Process notes
 - The hosted check asked for a read-only session, but `transaction_read_only` came back `off`: the connection pooler dropped the option. Only SELECTs were sent, so nothing changed, but read-only was NOT enforced. Use `begin read only` explicitly next time.
 - The Supabase connector in this session lists only careroute projects, a different app. Do not use it.
 - Approved by the owner on 2026-11-07: deploy with V23, read-only hosted checks plus pg_dump backup, live AI eval on Groq and Ollama with synthetic data, Render workspace holding campus-companion. Reconfirm the deploy approval on resume given A07.
 - Scratch helper: `hosted.sh` in the session scratchpad.
 
-## Next on resume
-Phase 2 remainder (JS tests, dependency scan), fix A01 and A02 first so PR checks work, then Phases 3 to 13.
 
 
 ## Final status (2026-11-09)
