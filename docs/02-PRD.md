@@ -248,7 +248,7 @@ A priority is changed only by editing this document, stating the reason, with th
 
 ### FR-ATT-002 Low-attendance flag (P0)
 
-- **Acceptance criteria:** A subject below the required percentage (OQ-2, default 75%) is marked "Below required" with text and colour, never colour alone.
+- **Acceptance criteria:** The attendance policy has two lines. Below **65%** the student is **detained**; from 65% up to the required percentage (default 75%) a **condonation fee** is paid; at or above 75% there is **no issue**. The attendance page and the dashboard state which applies, with text and colour, never colour alone. Decided by the owner on 2026-11-09.
 - **Depends on:** FR-ATT-001.
 
 ### FR-ATT-003 Attendance calculator (P1)

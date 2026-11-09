@@ -81,3 +81,14 @@ test("exactly at the target counts as reached", () => {
 test("a 100% target cannot be reached again after a miss", () => {
   assert.deepEqual(plan(9, 10, 100), { reached: false, classes: null });
 });
+
+test("the policy: below 65 detained, 65 up to 75 condonation, 75 and above no issue", async () => {
+  const { attendancePolicy } = await import("../../main/resources/static/js/attendance-plan.js");
+  assert.equal(attendancePolicy(64.99, 75).state, "detained");
+  assert.equal(attendancePolicy(64.996, 75).state, "detained"); // not rounded up to 65
+  assert.equal(attendancePolicy(65, 75).state, "condonation");
+  assert.equal(attendancePolicy(74.99, 75).state, "condonation");
+  assert.equal(attendancePolicy(75, 75).state, "safe");
+  assert.equal(attendancePolicy(100, 75).state, "safe");
+  assert.equal(attendancePolicy(0, 75).state, "detained");
+});

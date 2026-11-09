@@ -36,3 +36,18 @@ export function termPlan(total, target, attended = 0, held = 0) {
   const best = classes === 0 ? 0 : ((attended + remaining) * 100) / classes;
   return { total: classes, mustAttend, canMiss, remaining, stillNeeded, possible, bestPercent: best, missedSoFar: Math.max(0, held - attended), canStillMiss: Math.max(0, remaining - stillNeeded) };
 }
+
+/** Below this percentage a student is detained (the college's attendance policy). */
+export const DETAINED_BELOW = 65;
+
+/**
+ * Where a total attendance stands under the policy: below 65% the student is detained; from 65% up
+ * to the required percentage (75%) a condonation fee is paid; at or above the required percentage
+ * there is no issue. Compared in hundredths of a percent, like the planner, so 64.996 is not 65.
+ */
+export function attendancePolicy(percent, required = 75) {
+  const p = Math.floor(Number(percent) * 100 + 1e-7);
+  if (p < DETAINED_BELOW * 100) return { state: "detained", label: "Detained", needed: DETAINED_BELOW };
+  if (p < Math.round(Number(required) * 100)) return { state: "condonation", label: "Condonation fee", needed: Number(required) };
+  return { state: "safe", label: "No issue", needed: Number(required) };
+}
