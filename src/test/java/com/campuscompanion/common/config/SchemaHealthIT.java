@@ -12,8 +12,8 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Rules of the schema that every migration must keep (docs/08 section 1): every foreign key column
- * is indexed, and every table of the application schema has row level security switched on (except
- * the migration tool's own history table).
+ * is indexed, every table of the application schema has row level security switched on (except the
+ * migration tool's own history table), and every function has a fixed search_path.
  */
 class SchemaHealthIT extends PostgresIntegrationTest {
 
@@ -41,6 +41,18 @@ class SchemaHealthIT extends PostgresIntegrationTest {
         order by 1
         """;
     assertThat(names(sql)).as("tables without row level security").isEmpty();
+  }
+
+  @Test
+  void everyFunctionOfTheApplicationSchemaHasAFixedSearchPath() throws Exception {
+    String sql =
+        """
+        select p.proname from pg_proc p
+        where p.pronamespace = 'app'::regnamespace
+          and not exists (select 1 from unnest(coalesce(p.proconfig, '{}')) c where c like 'search_path=%')
+        order by 1
+        """;
+    assertThat(names(sql)).as("functions without a fixed search_path").isEmpty();
   }
 
   private static List<String> names(String sql) throws Exception {
