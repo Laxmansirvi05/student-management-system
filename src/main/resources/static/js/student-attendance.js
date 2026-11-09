@@ -3,13 +3,14 @@ import { fill, formatDate, h, icon, tag } from "./dom.js";
 import { countUp, enableTilt, reveal, ring } from "./motion.js";
 import { empty, loadInto } from "./parts.js";
 import "./shell.js";
-import { plan, termPlan } from "./attendance-plan.js";
+import { DETAINED_BELOW, attendancePolicy, plan, termPlan } from "./attendance-plan.js";
 
 // Attendance (FR-ATT-001): the student's total attendance and a planner that says how many classes
 // to attend to reach a target, or how many can still be missed. Everything is read-only and
 // belongs to the logged-in student.
 
 const TARGETS = [65, 70, 75, 80, 85];
+// The two lines of the attendance policy: 65% (below it: detained) and the required 75% (below it: condonation fee).
 /** The offered targets, with the college's required one always among them. */
 const targetsWith = (required) => [...new Set([...TARGETS, Number(required)])].sort((x, y) => x - y);
 const content = document.getElementById("content");
@@ -32,8 +33,13 @@ function hero(summary, { held, attended, report }) {
   const current = summary.overallPercent === null ? pct(attended, held) : Number(summary.overallPercent);
   const figure = h("p.hero__figure");
   countUp(figure, current, { decimals: 2, suffix: "%" });
-  const onTrack = current >= required;
-  const margin = Math.abs(current - required).toFixed(2);
+  const policy = attendancePolicy(current, required);
+  const gap = Math.abs(current - policy.needed).toFixed(2);
+  const status = {
+    safe: { cls: ".chip--good", icon: "check-circle", text: `No issue · ${gap}% above the required ${required}%` },
+    condonation: { cls: ".chip--bad", icon: "alert", text: `Condonation fee · between ${DETAINED_BELOW}% and ${required}%; ${gap}% to reach ${required}%` },
+    detained: { cls: ".chip--bad", icon: "alert", text: `Detained · ${gap}% under ${DETAINED_BELOW}%` },
+  }[policy.state];
   return h(
     "section.hero.hero--split.reveal",
     { "data-tilt": true, "aria-label": "Total attendance" },
@@ -41,7 +47,7 @@ function hero(summary, { held, attended, report }) {
       "div.hero__main",
       h("p.hero__eyebrow", "Total attendance"),
       figure,
-      h("p.chip" + (onTrack ? ".chip--good" : ".chip--bad"), icon(onTrack ? "check-circle" : "alert"), onTrack ? `On track · ${margin}% above the required ${required}%` : `Below required · ${margin}% under ${required}%`),
+      h("p.chip" + status.cls, icon(status.icon), status.text),
       report ? h("p.hero__sub", `College report, ${formatDate(report.fromDate)} to ${formatDate(report.toDate)}`) : null,
       h("ul.chips", h("li.chip", icon("target"), "Required ", h("strong", required + "%")), h("li.chip", icon("calendar"), "Classes held ", h("strong", held)), h("li.chip", icon("check"), "Attended ", h("strong", attended))),
     ),

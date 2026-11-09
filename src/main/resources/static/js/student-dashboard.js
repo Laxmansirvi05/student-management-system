@@ -1,4 +1,5 @@
 import { api } from "./api.js";
+import { DETAINED_BELOW, attendancePolicy } from "./attendance-plan.js";
 import { daysUntil, fill, formatDate, formatToday, h, icon, stagger, tag } from "./dom.js";
 import { countUp, enableTilt, reveal, ring } from "./motion.js";
 import { cardHead, categoryTag, dueText, empty, loadInto } from "./parts.js";
@@ -38,16 +39,19 @@ function attendanceCard({ overallPercent, requiredPercent }) {
   } else {
     const figure = h("p.figure");
     countUp(figure, overallPercent, { decimals: 2, suffix: "%" });
-    const below = Number(overallPercent) < Number(requiredPercent);
+    const policy = attendancePolicy(overallPercent, requiredPercent);
+    const below = policy.state !== "safe";
     body.push(
       h(
         "div.line",
         h("div.stack.stack--tight", h("p.eyebrow", "Total"), figure, h("p.row__meta", `Required: ${requiredPercent}%`)),
-        ring(overallPercent, { size: 104, stroke: 10, label: icon("cap"), kind: below ? "danger" : "" }),
+        ring(overallPercent, { size: 104, stroke: 10, label: icon("cap"), kind: policy.state === "detained" ? "danger" : "" }),
       ),
-      below
-        ? h("p.inset.inset--warning.inset--note", icon("alert"), `Below the required ${requiredPercent}%. The attendance page shows how many classes you need.`)
-        : h("p.inset.inset--note", icon("check-circle"), `At or above the required ${requiredPercent}%.`),
+      policy.state === "detained"
+        ? h("p.inset.inset--warning.inset--note", icon("alert"), `Below ${DETAINED_BELOW}%: you would be detained. The attendance page shows how many classes you need.`)
+        : policy.state === "condonation"
+          ? h("p.inset.inset--warning.inset--note", icon("alert"), `Between ${DETAINED_BELOW}% and ${requiredPercent}%: a condonation fee applies. The attendance page shows how many classes you need.`)
+          : h("p.inset.inset--note", icon("check-circle"), `At or above the required ${requiredPercent}%. No issue.`),
     );
   }
   return h("section.card.card--lift.reveal", cardHead("attendance", "Attendance", "/student/attendance.html"), body);
