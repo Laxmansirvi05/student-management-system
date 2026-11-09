@@ -35,3 +35,10 @@ Baseline was `main` at `5c0134e`; final state is `main` at `9d33dca` plus PR #4.
 - A12 README refresh: PR #4.
 - A05, A06, A07, A08, A09, A11, A13, A14, A15: open, see AUDIT_REPORT_V2.md section 3.
 - Hosted read-only note: the session did not enforce read-only on the first query; only SELECT was sent.
+
+## Round 2 (2026-11-09 evening)
+- B01 dashboard crash for a missing CGPA (19 hosted students affected): PR #9, deployed.
+- B02 seven unindexed foreign keys: PR #8 (V24), applied on the hosted database.
+- B03 stale documents removed: PR #7.
+- B04 Dependabot alerts, security updates, secret scanning and push protection enabled.
+- A05 closed (policy decided). PDF and Word reading removed: PR #6.
